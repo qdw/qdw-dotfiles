@@ -1,0 +1,3 @@
+cd ..
+cvs -d:pserver:anonymous@cvs.gna.org:/cvs/color-theme update color-theme
+

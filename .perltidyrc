@@ -1,0 +1,21 @@
+--check-syntax
+
+--continuation-indentation=4
+--no-outdent-labels
+--paren-tightness=2
+--square-bracket-tightness=2
+--brace-tightness=2
+--block-brace-tightness=0
+--no-space-for-semicolon
+
+# Sometimes I use whitespace to align statements, e.g.:
+#     $hostname = 'www.example.com'
+#     $port     = 80;
+# I want perltidy to preserve such whitespace.
+--no-delete-old-whitespace
+
+--no-outdent-long-comments
+--no-static-block-comments
+
+--stack-opening-tokens
+--stack-closing-tokens

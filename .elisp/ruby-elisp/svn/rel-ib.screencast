@@ -1,0 +1,75 @@
+;; REL - [R]uby [EL]isp
+
+;; ruby from elisp & elisp from ruby
+
+(rel-start)
+(ruby-eval "1 + 2")
+;; there is also rel-stop and rel-restart
+;; these functions are also interactive
+
+
+# REL-IB
+# REL - [I]nteractive [Ruby] [B]rowser
+# M-x rel-ib-init
+# Starts REL if needed and establishes
+# keybindings:
+# C-x C-e  rel-ib-eval-ruby-block
+# C-c C-c  rel-ib-clear-output
+# C-c C-r  rel-ib-clear-all-output
+
+# Simple tests (run rel-ib-init first)
+
+1 + 2 # (C-x C-e to eval)
+#id:>> 3 # (C-c C-c to clear)
+
+1 + 3
+2 + 3 # now change
+# output updated
+
+raise "An error!"
+#!!
+
+# Clearing all output (C-c C-r)
+# More fun!
+
+begin
+  # use top-level blocks to control C-x C-e ranges
+  class Hello < Struct.new(:name)
+    def hello
+      "Hello #{name}!"
+    end
+  end
+  name = "Bob"
+  Hello.new(name).hello
+end
+#>> "Hello bob!"
+
+BAR = 10
+BAR
+# persistent server...
+foo = 10
+foo
+# sorry, split bindings aren't currently supported :(
+
+# Now that I've shown running Ruby from Emacs,
+# it's time to show Ruby *using* Elisp!
+
+elisp '(concat "Fizz" "Buzz")'
+elisp [:concat, "Fizz", "Buzz"]
+call "concat", "Fizz", "Buzz"
+concat "Fizz", "Buzz"
+
+# Hello
+begin
+  save_excursion do
+    # make sure to move back up so re-search-backward
+    # won't catch itself! then C-x C-e
+    # look how the point didn't change but...
+    re_search_backward "hello"
+    goto_char match_end(0)
+    insert " world!"
+  end
+end
+
+# Okay, it's not perfect and parts are huge hacks.
+# Comments, suggestions and patches welcome!

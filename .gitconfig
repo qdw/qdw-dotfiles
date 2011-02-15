@@ -1,0 +1,15 @@
+[user]
+	name  = Quinn Weaver
+	email = quinn@fairpath.com
+
+[alias]
+	co = checkout
+
+[core]
+	excludesfile = ~/.gitignore
+	pager = cat # useful if your terminal is emacs shell-mode
+	# core.pager = less -FXR
+
+[diff]
+	color=auto
+	tool=git diff --patience
