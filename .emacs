@@ -1,3 +1,34 @@
+;; (require 'desire)
+;; FIXME: reimplement use-module terms of desire.
+
+(setq font-lock-maximum-decoration '((t 1))) ;; default: use the minimum level
+
+(defun use-module (module-name)
+  (load-file (concat (expand-file-name "~/.emacs.d/elisp/00-dot-emacs-modules/")
+                     module-name
+                     ".elc")))
+
+(use-module "javascript")
+;; ;; ;; (use-module "mozrepl")
+
+
+
+
+;; (add-hook 'text-mode-hook
+;;           (lamba ()
+;;             (setq 'indent-tabs-mode nil)))
+
+
+
+
+
+
+
+;; When I split a buffer (C-x 2), don't start both new buffers at the top
+;; of the file; just split the buffer in half along the viewport boundary.
+(load-file (expand-file-name "~/.emacs.d/elisp/slowsplit/slowsplit.elc"))
+
+
 ;; FIXME:  Figure out why M-s doesn't work right in text buffers, and fix;
 ;; FIXME:  Move all mode-specific requires to using something else... autoload?
 ;; FIXME:  Make man's "near point" functionality Respect::Perl::Modules.
@@ -6,7 +37,6 @@
 ;; FIXME:  Add a hook to run (dirs) after every shell command
 ;; (because emacs's not being able to figure out the working dir is inexcusably
 ;; lame)
-
 
 
 ;; Aquamacs-specific stuff
@@ -25,7 +55,7 @@
    )
   )
 
-;(add-to-list 'load-path (expand-file-name "~/.elisp/desire"))
+;(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/desire"))
 
 ;; Use cperl mode instead of the default perl mode
 (defalias 'perl-mode 'cperl-mode)
@@ -52,12 +82,14 @@
  '(cursor-type (quote box))
  '(custom-file "~/.emacs")
  '(default-frame-alist (width . 80))
- '(default-input-method "spanish-prefix")
+ '(default-input-method "greek")
  '(desktop-load-locked-desktop t)
  '(fill-column 78)
- '(font-lock-maximum-decoration (quote ((t . t))))
+ '(font-lock-maximum-decoration ((shell-mode nil) (t . t)))
  '(global-font-lock-mode nil)
  '(inhibit-startup-screen t)
+ '(js2-auto-indent-p nil)
+ '(js2-highlight-level 1)
  '(mac-option-modifier nil)
  '(one-buffer-one-frame-mode nil nil (aquamacs-frame-setup))
  '(perlnow-minimum-perl-version "v5.8" t)
@@ -65,6 +97,7 @@
  '(perlnow-test-policy-dot-definition "incspot")
  '(perlnow-test-policy-naming-style "hyphenized")
  '(perlnow-test-policy-test-location "~/t")
+ '(text-mode-hook (quote ((lambda nil (local-set-key "\363" (quote shell))))))
  '(transient-mark-mode t)
  '(x-select-enable-clipboard t))
 (setq-default visible-bell 't)
@@ -116,13 +149,13 @@
 ;;
 ;; Set my color theme.  The goals are easy-on-the-eyes readability and
 ;; esthetics, in that order.
-;(add-to-list 'load-path (expand-file-name "~/.elisp/color-theme"))
+;(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/color-theme"))
 ;(require 'color-theme)
 ;(color-theme-initialize)
 
 ;; My favorite color theme, an XEmacs clone with a slightly darker modeline.
 ;; Its grey background makes text very easy on the eyes.
-;(load (expand-file-name "~/.elisp/LOCAL/my-theme.elc"))
+;(load (expand-file-name "~/.emacs.d/elisp/LOCAL/my-theme.elc"))
 ;(color-theme-xemacs-tweaked)
 
 ;; Other good color themes:
@@ -228,6 +261,9 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 ;;;;;;;;;;;;;;;;;;;
 ;; Global Editor MACroS (a.k.a. keybindings)
 
+;; Run a shell.
+(global-set-key "\M-s" 'shell)
+
 ;; Make C-u delete the whole current line (regardless of the initial
 ;; position of the point), replacing the line with "~/".
 ;;
@@ -273,11 +309,14 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 (global-set-key "\M-r"  'perlnow-run)
 
 (global-set-key "\M-s"  'shell)
-(add-hook 'text-mode-hook  (lambda () (local-set-key "\M-s" 'shell)))
-(add-hook 'shell-mode-hook (lambda ()
-                             (local-set-key "\M-s" 'shell)
-                             (font-lock-mode 't)
-                             ))
+(add-hook 'text-mode-hook (lambda () (local-set-key "\M-s" 'shell)))
+(add-hook 'shell-mode-hook
+          (lambda ()
+            (font-lock-mode nil)
+
+            ;; When exiting emacs, kill the shell silently;
+            ;; don't ask the user whether or not to kill it.
+            (process-kill-without-query (get-process "shell"))))
 
 (global-unset-key "\M-t") ; Prevent accidental damage when I meant to hit M-r
 (global-set-key '[f1]   'perlnow-object-module)
@@ -327,7 +366,7 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 ; to be locked.  (Bug still exists as of CVS revision 1.125 of desktop.el.)
 
 
-(add-to-list 'load-path (expand-file-name "~/.elisp/desktop"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/desktop"))
 (load "desktop")
 (desktop-save-mode 1)
 (desktop-read "~")
@@ -378,7 +417,7 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 
 ; Actually, just use the version that comes pre-installed with Aquamacs.
 ;(add-to-list 'load-path
-;             (expand-file-name "~/.elisp/tramp/install/share/emacs/site-lisp"))
+;             (expand-file-name "~/.emacs.d/elisp/tramp/install/share/emacs/site-lisp"))
 
 
 (require 'tramp)
@@ -432,7 +471,7 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 ;;;;;;;;;;;;;;;;;;;
 ;; Writing:  human languages
 (prefer-coding-system 'utf-8)
-(set-input-method     'spanish-prefix)
+(set-input-method     'greek-babel)
 (inactivate-input-method) ; C-\ will activate it.
 
 ;;;;;;;;;;;;;;;;;;;
@@ -442,7 +481,7 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 ;; Coding:  general
 
 ;; Use monotone for version control.
-;(add-to-list 'load-path (expand-file-name "~/.elisp/monotone"))
+;(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/monotone"))
 ;(require 'monotone)
 ;(monotone-set-vc-prefix-key "\C-xv")
 
@@ -455,13 +494,13 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 
 ;; When I reach the end of a line, automatically insert a newline.
 ;FIXME:  Do this in text mode only?
-(auto-fill-mode 1)
+(auto-fill-mode 0)
 
 ;; Automatically make scripts executable when saving them.
 (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
 
 ;; Coding:  Apache config files
-(add-to-list 'load-path (expand-file-name "~/.elisp/apache-mode"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/apache-mode"))
 (autoload 'apache-mode "apache-mode" "autoloaded" t)
 
 (setq catalyst-controller-regexp "Controller/.*\\.pm")
@@ -510,7 +549,7 @@ when you save such files."
 ;; Coding:  XHTML
 
 ; Use nxml-mode for all XHTML files and templates.
-(add-to-list 'load-path (expand-file-name "~/.elisp/nxml-mode"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/nxml-mode"))
 (require 'nxml-mode)
 (defalias 'html-mode 'nxml-mode)
 (defalias 'html-helper-mode 'nxml-mode)
@@ -519,69 +558,13 @@ when you save such files."
 (add-to-list 'auto-mode-alist
              '("\\.tt2$" . nxml-mode))
 
-(add-to-list 'load-path (expand-file-name "~/.elisp/ecmascript-mode"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/ecmascript-mode"))
 (require 'ecmascript-mode)
 
 ; Use four-space indentation, as Nature and Nature's God intended:
 (setq nxml-child-indent 4)
 
-; Handle embedded JavaScript/ECMAScript
-(when (fboundp 'mmm-mode)
-  (mmm-add-group
-   'lzx
-   '((js-method-cdata
-      :submode ecmascript-mode
-      :face mmm-code-submode-face
-      :front "<method[^>]*>[ \t\n]*<!\\[CDATA\\[[ \t]*\n?"
-      :back "[ \t]*]]>[ \t\n]*</method>"
-      :insert ((?j js-tag nil @ "<method language=\"JavaScript\">"
-                   @ "\n" _ "\n" @ "</method>" @)))
 
-     (js-method
-      :submode ecmascript-mode
-      :face mmm-code-submode-face
-      :front "<method[^>]*>[ \t]*\n?"
-      :back "[ \t]*</method>"
-      :insert ((?j js-tag nil @ "<method language=\"JavaScript\">"
-                   @ "\n" _ "\n" @ "</method>" @)))
-
-     (js-handler-cdata
-      :submode ecmascript-mode
-      :face mmm-code-submode-face
-      :front "<handler[^>]*>[ \t\n]*<!\\[CDATA\\[[ \t]*\n?"
-      :back "[ \t]*]]>[ \t\n]*</handler>"
-      :insert ((?j js-tag nil @ "<handler language=\"JavaScript\">"
-                   @ "\n" _ "\n" @ "</handler>" @)))
-
-     (js-handler
-      :submode ecmascript-mode
-      :face mmm-code-submode-face
-      :front "<handler[^>]*>[ \t]*\n?"
-      :back "[ \t]*</handler>"
-      :insert ((?j js-tag nil @ "<handler language=\"JavaScript\">"
-                   @ "\n" _ "\n" @ "</handler>" @)))
-
-     (js-script-cdata
-      :submode ecmascript-mode
-      :face mmm-code-submode-face
-      :front "<script[^>]*>[ \t\n]*<!\\[CDATA\\[[ \t]*\n?"
-      :back "[ \t]*]]>[ \t\n]*</script>"
-      :insert ((?j js-tag nil @ "<script language=\"JavaScript\">"
-                   @ "\n" _ "\n" @ "</script>" @)))
-
-     (js-script
-      :submode ecmascript-mode
-      :face mmm-code-submode-face
-      :front "<script[^>]*>[ \t]*\n?"
-      :back "[ \t]*</script>"
-      :insert ((?j js-tag nil @ "<script language=\"JavaScript\">"
-                   @ "\n" _ "\n" @ "</script>" @)))
-
-     (js-inline
-      :submode ecmascript-mode
-      :face mmm-code-submode-face
-      :front "on\w+=\""
-      :back "\""))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Coding:  Asterisk config files
@@ -649,14 +632,16 @@ the next time you run emacs because you forgot to compile your code."
   (if (elisp-file-p)
       (byte-compile-file buffer-file-name)))
 
-(add-hook 'after-save-hook 'byte-compile-if-elisp-file)
+;; Disabled to speed up development cycle.  I've gotten in the habit of
+;; compiling, so the above isn't such an issue anymore.
+;;(add-hook 'after-save-hook 'byte-compile-if-elisp-file)
 
 (defvar running-xemacs (string-match "XEmacs\\|Lucid" emacs-version))
 
 ;;;;;;;;;;;;;;;;
 ;; Coding:  Perl
 
-(add-to-list 'load-path (expand-file-name "~/.elisp/perlcritic"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/perlcritic"))
 (autoload 'perlcritic          "perlcritic" "" t)
 (autoload 'perlcritic-region   "perlcritic" "" t)
 (autoload 'perlcritic-mode     "perlcritic" "" t)
@@ -696,11 +681,11 @@ the next time you run emacs because you forgot to compile your code."
 ;; Coding:  Perl:  perlnow
 ;; Speed up creation of Perl programs and modules by using templates.
 
-(add-to-list 'load-path (expand-file-name "~/.elisp/template"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/template"))
 (require 'template)
 (template-initialize)
 
-(add-to-list 'load-path (expand-file-name "~/.elisp/perlnow"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/perlnow"))
 (require 'perlnow)
 (setq user-mail-address "quinn@fairpath.com")
 
@@ -739,15 +724,15 @@ the next time you run emacs because you forgot to compile your code."
 
 ;;;;;;;;;;;;;;;;;;
 ;; Coding:  Python
-(add-to-list 'load-path (expand-file-name "~/.elisp/python-mode"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/python-mode"))
 (require 'python-mode)
 
 ;;;;;;;;;;;;;;;;;;
 ;; Coding: Ruby
 
-(add-to-list 'load-path (expand-file-name "~/.elisp/pabbrev"))
-(add-to-list 'load-path (expand-file-name "~/.elisp/mmm-mode"))
-(add-to-list 'load-path (expand-file-name "~/.elisp/ruby-elisp"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/pabbrev"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/mmm-mode"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/ruby-elisp"))
 (require 'ruby-mode)
 (require 'pabbrev)
 (require 'mmm-mode)
@@ -794,7 +779,7 @@ the next time you run emacs because you forgot to compile your code."
 ;;           (lambda ()
 ;;             ;; sql-indent doesn't do what I want it to do (its regexes are too limited).
 ;;             ;; Must I hack it, or can I find something better out there?
-;;             (add-to-list 'load-path (expand-file-name "~/.elisp/sql-indent"))
+;;             (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/sql-indent"))
 ;;             (require 'sql-indent)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -808,7 +793,7 @@ the next time you run emacs because you forgot to compile your code."
 ;;;;;;;;;;;;;;;;
 ;; Coding:  YAML
 
-(add-to-list 'load-path (expand-file-name "~/.elisp/yaml-mode/trunk"))
+(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/yaml-mode/trunk"))
 (require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
 

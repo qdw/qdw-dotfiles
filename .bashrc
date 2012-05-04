@@ -1,38 +1,173 @@
 umask 0022
 
-    set -a
-CATALYST_DEBUG=0
+# The order of these ##########################-demarcated sections matters.
+
+########################## PATH, INFOPATH, MANPATH (no LD_LIBRARY_PATH ATM)
+# For this to work right, PATH must not include $PATH. Otherwise subshells
+# will get the previous $PATH reinterpolated n times (for subshells n deep).
+# The effect of such an ever-growing PATH depends on the position of PATH
+# within $PATH, so it can easily cause errors.
+
+ELISP_INFOPATH=~/.elisp/tramp/install/share/info
+
+MACPORTS_INFOPATH=/opt/local/share/info
+MACPORTS_MANPATH=/opt/local/share/man
+MACPORTS_PATH=/opt/local/bin:/opt/local/sbin
+
+MYSQL_MANPATH=/usr/local/mysql/man
+MYSQL_PATH=/usr/local/mysql/bin # the MySQL AB release, not the MacPorts version
+
+# This is for perlbrew itself, not for perlbrew-installed Perl installations.
+PERLBREW_MANPATH=~/perl5/man
+PERLBREW_PATH=~/perl5/perlbrew/bin:~/perl5/bin
+
+PERSONAL_PATH=~/bin
+PERSONAL_PERL5LIB=~/lib
+
+POSTGRESQL_MANPATH=/usr/local/pgsql/share/man
+POSTGRESQL_PATH=/usr/local/pgsql/bin
+
+## Commented out for now, since it slows down shell init a lot.
+# VIRTUALENVWRAPPER_PYTHON=/opt/local/bin/python2.7
+# source /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/virtualenvwrapper.sh
+
+SYSTEM_INFOPATH=/usr/share/info:/usr/lib/info
+SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
+SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin:/usr/local/bin:/etc/init.d
+
+# FIXME: implement this in code. # The order of precedence, for INFOPATH, MANPATH, and PATH alike, is as follows (LD_LIBRARY_PATH is fine as it is, so don't mess with it)
+# # PERLBREW POSTGRESQL MYSQL MACPORTS SYSTEM ELISP PERSONAL
+# for CATEGORY in ELISP PERLBREW POSTGRESQL MYSQL MACPORTS SYSTEM PERSONAL; do
+#     for VARTYPE in INFOPATH MANPATH PERL5LIB PATH; do
+#         VARNAME="${CATEGORY}_${VARTYPE}"
+#         VARVAL=`eval '$VARNAME'
+#         eval "export VARNAME=$VARVAL"
+#     done
+# done
+
+set -a
+
+INFOPATH=$MACPORTS_INFOPATH:$SYSTEM_INFOPATH:$ELISP_INFOPATH
+
+MANPATH=$PERLBREW_MANPATH:$POSTGRESQL_MANPATH:$MYSQL_MANPATH:$MACPORTS_MANPATH:$SYSTEM_MANPATH
+
+###################################
+########### *** NEED TO CORRECT THIS ***
+########### quinn@tao:~$ which perl
+########### /opt/local/bin/perl
+###################################
+PATH=$PERLBREW_PATH:$PYTHON_PATH:$POSTGRESQL_PATH:$MYSQL_PATH:$MACPORTS_PATH:$SYSTEM_PATH:$PERSONAL_PATH
+
+# Python virtualenvwrapper (like Perl's Pinto). This must be initialized *after*
+# PATH is set; otherwise it tries to use the wrong Python.
+WORKON_HOME=~/.python-virtualenv
+
+set +a
+
+# Display all processes, in a style that I like.
+# If an argument is given, display only those that match that regex.
+p() {
+    A_COMMAND="ps auxww | grep -v grep"
+    if [[ $1 ]]; then
+	A_COMMAND="$A_COMMAND | grep $1"
+    fi
+
+    eval "$A_COMMAND"
+}
+
+# FIXME: stop using grep as a golden hammer; instead, use awk to separate fields in the output of ps(1).
+
+# Display my processes, except the ones attached to this tty.
+# If an argument is given, display only those that match that regex.
+pu() {
+    OS=`uname -s`
+
+    if   [[ $OS == 'Linux' ]]; then 
+        THIS_TTY=`tty | sed -e 's/\/dev\///'`
+    elif [[ $OS == 'Darwin' ]]; then
+        THIS_TTY=`tty | sed -e 's/\/dev\/tty//'` #FIXME: wrong regex!
+    fi
+    
+    COMMAND="p $USER | grep -v $THIS_TTY"
+
+    if [[ $1 ]]; then
+	COMMAND="$COMMAND | grep $1"
+    fi
+
+    eval "$COMMAND"
+}
+
+# grep the list of processes, but don't show any output.
+# This is useful for non-interactive functions that just need
+# to test whether a process is running.
+pq() {
+    p auxww | grep -q $1 | grep -qv grep
+}
+
+vrep() {
+    grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
+}
+
+########################## git convenience functions by Shawn O. Pearce
+source ~/git-completion.bash
+
+########################## Project-specific settings
+
+# (None for now)
+
+
+########################## Emacs (and bash, and less)
+
+MY_PROMPT="\u@\h:\w\$ "
+
+set -a
+
+if [[ $RUNNING_UNDER_EMACS ]]; then # set by ~/.emacs.d/init_bash.sh
+    # ANSI colors don't work here. Use a non-color shell prompt.
+    PS1=${MY_PROMPT}
+
+    # Pagers don't work here. Use cat(1) instead of less(1).
+    PAGER=cat
+else
+    # Color the shell prompt slate blue (to distinguish commands from output)
+    PS1="\[\e[34;m\]${MY_PROMPT}\[\e[0m\]"
+
+    LESS='--quit-if-one-screen --RAW-CONTROL-CHARS --no-init'
+    PAGER="less $LESS"
+    GIT_PAGER=$PAGER
+fi
+
 EDITOR=emacsclient
+VISUAL=$EDITOR
+
+set +a
+
+########################## Perl
+
+# Make Module::Install auto-follow dependencies.
+export PERL_MM_USE_DEFAULT=1
+
+########################## PostgreSQL
+
+set -a
+PGDATA=/usr/local/pgsql/data
+PGUSER=postgres
+set +a
+
+########################## FTP
+
+set -a
 FTP_LOGIN=ftp
 FTP_PASSIVE_MODE=yes
 FTP_PASSWORD=' '
-INFOPATH=~/.elisp/tramp/install/share/info:$INFOPATH
-MANPATH=/usr/local/share/man:/opt/local/share/man:$MANPATH
-PAGER=less
-PATH=/usr/local/pgsql/bin:/usr/local/bin:/opt/local/bin:/opt/local/sbin:/bin:/usr/bin:/sbin:/usr/sbin:/etc/init.d:/usr/local/mysql/bin:~/bin
-PERL_MM_USE_DEFAULT=1 # make Module::Install auto-follow dependencies
-PERL5LIB=~/Hack/pg-version-compare/lib:~/share/lexy3/lib:~/share/lib:~/share/lexy2perl/lib
-#PGDATA=/usr/local/pgsql-9.0alpha5-build1
-PS1="\u@\h:\w\\$ "
-RUBYOPT=rubygems
-SHLVL=1
-#TERM=${TERM:-cons25}
-#TERM=vt102
-VISUAL=$EDITOR
-    set +a
+set +a
 
-if [[ -e ~/.mac_os_x_login ]]; then
-    source ~/.mac_os_x_login
-fi
+########################## Ruby
 
-a() {
-    /usr/bin/sudo /usr/sbin/apache2ctl "$@"
-}
-
-alias aa='sudo apache2ctl graceful'
+export RUBYOPT=rubygems
 
 ###################### cheatsheet for David Wheeler's PGX::Build
-bt() {
+build_test() {
     # Run all tests or, if so directed, a specific test file.
     # (You must use this function; you can't run a single test file directly
     # using 'perl test.t', because it won't get the correct settings.)
@@ -44,16 +179,41 @@ bt() {
     fi
 }
 
-bd() {
+build_database_anew() {
     # Rebuild the database.
     ./Build db --drop_db 1
 }
-###################### end of cheatsheet for David Wheeler's PGX::Build
+
+########################## Aliases and shell functions - lots of them.
+
+a() {
+    sudo apache2ctl graceful
+}
+
+aa() {
+    sudo apache2ctl "$@"
+}
+
+ch() {
+    SUBJECT=$1
+    cat ~/Cheatsheets/${SUBJECT}-cheatsheet
+}
 
 cl() {
     emacs -nw -q -batch -f batch-byte-compile "$@"
 }
 
+cr() { # cd to a symlink's referent, not the symlink itself.  That way your prompt and pwd give the full path (and autocompletion will work properly in emacs shell-mode).
+    SYMLINK=$1
+    eval `cr_helper $SYMLINK`
+}
+
+cs() {
+    TOPIC=$1
+    less ~/Cheatsheets/${TOPIC}-cheatsheet
+}
+
+###################### specific to apt-based systems (e.g. Ubuntu, Debian)
 d() {
     apt-cache search ".*$1.*"
 }
@@ -61,17 +221,26 @@ d() {
 di() {
     dpkg -l "*$1*" | grep ^ii
 }
+###################### end commands for apt-based systems (e.g. Ubuntu, Debian)
 
 dido() {
     $DIDO_RUN_FROM_SOURCE_DIR/bin/dido.pl \
         $DIDO_RUN_FROM_SOURCE_DIR/var/lib/dido/Museum.xml
 }
 
+alias diff='diff -u'
+
+dos2unix() {
+    perl -pi -e ' s{ \r\n | \n | \r }{ \n }gx ' "$@"
+}
+
 dream() {
     /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background &
 }
 
-alias e=emacsclient_or_emacs
+e() {
+    find . -name "$@" | xargs emacsclient
+}
 
 ec() {
     emacsclient "$@"
@@ -88,14 +257,25 @@ ecw()
     ec `which $1`
 }
 
-ffind()
-{
+fd() {
+    find . -type d -name "*${1}*"
+}
+
+ffd() {
+    grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
+}
+
+ffind() {
     find "$@" | grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
+}
+
+fixmes() {
+    ggrep -ri fixme . | grep -v dojo-release
 }
 
 fix_spaces()
 {
-    # Leopard:  Spaces:
+    # Fix OS X Leopard's Spaces function.
     # Make it so that, for a currently open app, clicking on that app
     # in the Dock starts a new window (rather than transporting you
     # back to the virtual desktop where the original window lives).
@@ -127,7 +307,7 @@ gemi()
 }
 
 ggrep() {
-    grep $@ \
+    grep "$@" \
         | grep -v '\.git' \
         | grep -v _MTN \
         | grep -v '\.svn' \
@@ -138,18 +318,29 @@ ggrep() {
 }
 
 gc() {
-    MESSAGE=$0
+    MESSAGE="$@"
+
+    git add . \
+        || exit $?
+
     if [[ $MESSAGE ]]; then
-        git commit -a -m $MESSAGE
+        git commit -a -m "$MESSAGE"
     else
         git commit -a
-    fi   
+    fi
+}
+
+gi() {
+    git init && git add . && gc "Initial commit"
+}
+
+git-tree() {
+    git log --graph --decorate --pretty=oneline --abbrev-commit
 }
 
 alias gpg=gpg2
 
-crep()
-{
+crep() {
     ggrep -c $@ | grep -v ':0'
 }
 
@@ -167,8 +358,7 @@ firefox() {
 }
 
 # gsm:  play a series of .gsm files.  Works on Linux only.
-gsm()
-{
+gsm() {
     tcat "$@" > /dev/audio
 }
 
@@ -177,20 +367,22 @@ hide_hidden_files() {
     killall Finder 
 }
 
-ic() { # Install Cliphp.
-    ~/Hack/Cliphp/NUKE_DB_AND_INSTALL.sh
+hop() {
+    cd "$_"
 }
+
+alias js='socat READLINE TCP4:localhost:4242' # MozRepl console:  http://wiki.github.com/bard/mozrepl/
 
 kindle() { # Install a Project Gutenberg .mobi for use on my jailbroken iPhone.
     ADIR='root@te:/var/mobile/Applications/A063DC1A-20BF-4A66-9858-288FF88DB3ED/Documents/eBooks'
     scp "$@" $MOBI_PATH $ADIR/
 }
 
-l() {
-    lexy_fastagi.pl 4573
-}
+alias ls='ls -1F' # Must be written as an alias; a shell function would recurse.
 
-alias ls='ls -F'
+l() {
+    ls | less
+}
 
 lwhich() {
     perldoc -l "$1"
@@ -233,61 +425,51 @@ mp() {
 }
 
 mysqlstart() {
-    /opt/local/share/mysql5/mysql/mysql.server
+    mysql.server
 }
+
 mysqlstop() {
-    /opt/local/bin/mysqladmin5 -u root -p shutdown
+    mysqladmin5 -u root -p shutdown
 }
 
-newpassword()
-{
-    N_CHARS=$1
-    if [ ! $N_CHARS ]; then
-	N_CHARS=8
-    fi
-
-    apg -n 1 -a 1 -m $N_CHARS -x $N_CHARS -s
+newpassword() {
+    dd if=/dev/urandom bs=$1 count=1 | base64
 }
 
-newpassword_alphanumeric()
-{
+newpassword_alphanumeric() {
     N_CHARS=$1
     if [ ! $N_CHARS ]; then
-	N_CHARS=8
+	N_CHARS=10
     fi
 
     apg -n 1 -M Ncl -m $N_CHARS -x $N_CHARS -s
 }
 
-newpassword_wep()
-{
+newpassword_wep() {
     apg -n 1 -a 1 -M nc -m 26 -x 26 -E GHIJKLMNOPQRSTUVWXYZ
 }
 
-newpassword_mac()
-{
+newpassword_mac() {
     apg -n 1 -a 1 -M nc -m 12 -x 12 -E GHIJKLMNOPQRSTUVWXYZ | xargs /home/quinn/bin/colonize
 }
 
-newpin()
-{
+newpin() {
     apg -n 1 -a 1 -M nc -m 4 -x 4 -E ABCDEFGHIJKLMNOPQRSTUVWXYZ
 }
 
-p() {
-    ps auxww | grep $1 | grep -v grep
-}
-
-ppp()
-{
-    /usr/bin/psql -U postgres postgres
-}
-
 pa() {
-    /usr/bin/psql -U admin    postgres
+    psql -U admin postgres
 }
 
+alias pb=perlbrew
 
+ppp() {
+    psql -U postgres postgres
+}
+
+pws() {
+    plackup -MPlack::App::File -e 'Plack::App::File->new->to_app'
+}
 
 export GPGUSER=Nobody
 export GPGOPTS="--batch --quiet --no-tty --armor --user $GPGUSER"
@@ -327,8 +509,6 @@ padd() { # Add a line to my encrypted passwords file.
     fi
 }
 
-
-
 perms() {
     find $1 | xargs ls -ld
 }
@@ -340,55 +520,10 @@ pf() {
     sudo ./pgfouine.php -top 10 -logtype csvlog -file ~/Desktop/Zublogs/24.csv -report $REPORT_TYPE > ~/Desktop/Reports/$REPORT_TYPE.html
 }
 
-###################### Mac OS X cheat aliases
+###################### OS X cheat aliases
 if [[ $(uname) == Darwin ]]; then
     alias ldd='otool -L'
 fi
-
-###################### end Mac OS X cheat aliases
-
-###################### port cheatsheet (MacPorts)
-
-port_update_repository() {
-    sudo port -d sync
-}
-
-port_upgrade_all() { # Upgrade all (installed) ports to the latest version.
-    sudo port selfupdate
-    sudo port -d sync
-    sudo port upgrade outdated
-}
-
-port_installed() { # List installed ports that match substring $1
-    if [[ $1 ]]; then
-        PORT_NAME_SUBSTRING=$1
-        sudo port list installed | grep $PORT_NAME_SUBSTRING
-    else
-        sudo port list installed
-    fi
-}
-
-port_contents() { # List the files installed by a port.
-    sudo port contents "$@"
-}
-
-port_dependents() { # List ports that depend on the port named $1
-    PORT_NAME=$1
-    sudo port dependents $PORT_NAME
-}
-
-port_dependecies() { # List the ports the port named $1 depends on
-    PORT_NAME=$1
-    sudo port deps $PORT_NAME
-}
-
-ports() {
-    PATTERN=$1
-    sudo port list "*$PATTERN*"
-}
-
-###################### end port cheatsheet (MacPorts)
-
 
 #pperl_back_up_locally_installed_modules() {
 #    # Use CPAN's autobundle feature
@@ -396,18 +531,6 @@ ports() {
 
 unrarrr() {
     for f in *rar; do unrar x -o+ "$f" .; done
-}
-
-alias s=svn
-
-show_hidden_files()
-{
-    defaults write com.apple.finder AppleShowAllFiles TRUE
-    killall Finder 
-}
-
-show_paths_in_finder() {
-    defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
 }
 
 pull_from_lao()
@@ -450,29 +573,11 @@ push_to_demo()
         demo@192.168.0.2:~/
 }
 
-start()
-{
-    sudo /usr/sbin/apachectl -f \
-        /Users/quinn/Desktop/fun-with-css/httpd/httpd.conf
+s() {
+    ssh pgx-test
 }
 
-stop()
-{
-    sudo kill $(cat /Users/quinn/Desktop/fun-with-css/httpd/pid)
-}
-
-ta()
-{
-    tail "$@" /usr/local/var/log/asterisk/messages
-}
-
-td()
-{
-    /usr/bin/tail "$@" $DIDO_RUN_FROM_SOURCE_DIR/var/log/dido/messages
-}
-
-te()
-{
+te() {
     if [ $1 ]; then
         N_LINES=$1
     else
@@ -482,44 +587,35 @@ te()
     /usr/bin/sudo /usr/bin/tail -$N_LINES /var/log/apache/error.log
 }
 
-tget()
-{
-    ton
-    wget --mirror --convert-links --html-extension --domains $1 $2
+tor_wget() {
+    HTTP_PROXY=http://127.0.0.1:8118/ http_proxy=$HTTP_PROXY \
+        wget --mirror --convert-links --html-extension --domains $1 $2
 }
 
-tl() {
-    /usr/bin/sudo /usr/bin/tail -1 /var/log/apache/access.log
-}
-
-ton() {
+tor_on() {
     export HTTP_PROXY=http://127.0.0.1:8118/
     export http_proxy=$HTTP_PROXY    
 }
 
-toff() {
+tor_off() {
     unset HTTP_PROXY http_proxy    
 }
 
+# I can never remember the weird argument order for ssh tunneling, hence
+# this "executable cheatsheet."
+# Usage:
+# tunnel $REMOTE_HOST $REMOTE_PORT $LOCAL_PORT
 tunnel() {
-    ssh -R127.0.0.1:4575:127.0.0.1:4573 alexander.lexy.com
+    ssh -fNR $2:localhost:$3 $1
 }
 
-unix2dos() {
+# Translate newlines to the DOS convention (CRLF).
+2dos() {
     /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@"
 }
 
-mac_safari_unsmooth_fonts_smaller_than() {
-    POINT=$1
-    sudo defaults write com.apple.safari AppleAntiAliasingThreshold $POINT
-}
-
-mac_globally_disable_antialiasing() {
-    sudo defaults write CoreGraphics CGFontDisableAntialiasing YES
-}
-
-xb()
-{
+# Reload custom X11 keybindings.
+xb() {
     killall --user $USER xbindkeys
     xbindkeys
 }
@@ -528,3 +624,15 @@ xx()
 {
     find /etc/rc*.d -name "*$1*" | xargs sudo ~/bin/x
 }
+
+set +x
+
+########################## Run daemons, if installed but not already runnning.
+source ~/.bashrc-daemons && run_gpg_agent_idempotently
+source ~/.bashrc-python
+source ~/.bashrc-perlbrew
+
+
+if [[ ! $BASHRC_ALREADY_RAN ]]; then
+    export BASHRC_ALREADY_RAN=1
+fi

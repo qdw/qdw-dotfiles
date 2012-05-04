@@ -1,0 +1,9 @@
+# Red Hat derivates alias ls='ls --color=auto' in /etc/profile. That's bad!
+# It causes the following unexpected behavior:
+#
+#    bash$ touch filename
+#    bash$ chmod 400 $_
+#    chmod: unrecognized option '--color=auto'
+#
+# unalias ls so that doesn't happen.
+unalias ls

@@ -4,12 +4,12 @@
 
 [alias]
 	co = checkout
+        fc = diff --name-only
+        stat = status
 
 [core]
 	excludesfile = ~/.gitignore
-	pager = cat # useful if your terminal is emacs shell-mode
-	# core.pager = less -FXR
 
 [diff]
-	color=auto
-	tool=git diff --patience
+	color = auto
+	tool  = git diff --patience

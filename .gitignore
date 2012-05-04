@@ -1,2 +1,8 @@
+# Emacs backup files
 *~
+
+# OS X Finder metadata (icon position, et cetera)
 .DS_Store
+
+# OpenOffice lock files (for when you commit a file that's open in OOo)
+.~lock.*odt#
