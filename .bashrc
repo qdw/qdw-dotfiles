@@ -135,15 +135,6 @@ VIRTUALENVWRAPPER_PYTHON=$(which python)
 
 set -a # export all variables that I define from now until I say 'set +a'
 
-#######
-# emacs
-#######
-# ec FILE1 ...: because typing 'emacsclient' is too much work.
-ec() { emacsclient $@ ;}
-
-# ew /PATH ("edit which"): find a program in $PATH and edit it.
-ew() { ec `which $1` ;}
-
 ###########################
 # bash and emacs and pagers
 ###########################
@@ -274,6 +265,12 @@ dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' $@ ;}
 
 # dream: Dream of Electric Sheep.
 dream() { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
+
+# ec FILE1 ...: because typing 'emacsclient' is too much work.
+ec() { emacsclient $@ ;}
+
+# ew /PATH ("edit which"): find a program in $PATH and edit it.
+ew() { ec `which $1` ;}
 
 # fd SUBSTRING: find file by (name) substring. This is my common find(1) usage.
 fd() { find . -type d -name "*${1}*" ;}
