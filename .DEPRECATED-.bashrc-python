@@ -1,5 +1,5 @@
-# Initialize the 'hop' script
-# source /System/Library/Frameworks/Python.framework/Versions/2.6/hop/hop.bash
+# DEPRECATED. Don't use pythonbrew to build Python; use Homebrew
+# instead. Homebrew is more actively maintained.
 
 # Initialize pythonbrew.
-# [[ -s $HOME/.pythonbrew/etc/bashrc ]] && source $HOME/.pythonbrew/etc/bashrc
+[[ -s $HOME/.pythonbrew/etc/bashrc ]] && source $HOME/.pythonbrew/etc/bashrc

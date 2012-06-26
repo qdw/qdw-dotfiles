@@ -1,11 +1,12 @@
 [user]
 	name  = Quinn Weaver
-	email = quinn@fairpath.com
+	email = quinn@pgexperts.com
 
 [alias]
 	co = checkout
         fc = diff --name-only
         stat = status
+        tree = git log --graph --decorate --pretty=oneline --abbrev-commit
 
 [core]
 	excludesfile = ~/.gitignore

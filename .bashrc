@@ -1,68 +1,212 @@
 umask 0022
 
-# The order of these ##########################-demarcated sections matters.
+# if [[ ! $BASHRC_ALREADY_RAN ]]; then
 
-########################## PATH, INFOPATH, MANPATH (no LD_LIBRARY_PATH ATM)
-# For this to work right, PATH must not include $PATH. Otherwise subshells
-# will get the previous $PATH reinterpolated n times (for subshells n deep).
-# The effect of such an ever-growing PATH depends on the position of PATH
-# within $PATH, so it can easily cause errors.
+##########################
+########################## <- Sections demarcated in hashes, like this,
+########################## must appear in order in order for this code
+########################## to work.
+##########################
 
+##########################
+########################## *PATH variables for the custom software I use, in
+########################## the order I want (I ignore and override the default
+########################## paths provided by the system bash init files,
+########################## because I do not like them).
+########################## 
+########################## You might ask why I define these in ~/.bashrc,
+########################## such that they execute every time I start a shell,
+########################## rather than defining them in ~/.bash_profile,
+########################## such that they would execute only once, at
+########################## login time. The answer is that I like to ensure
+########################## that my shells always have an up-to-date
+########################## environment. I make small changes to ~/.bashrc
+########################## often, and I want them to be reflected as soon as
+########################## I start a new shell (whether or not the software
+########################## launching that shell ran it with --login).
+##########################
+########################## I even run certain daemons via my ~/.bashrc, iff
+########################## they're not already running. This allows me to
+########################## restart them if they die somehow.
+##########################
+
+DO_IT_THEORYS_WAY=1
+
+##########
+# Perlbrew (itself, as opposed to perlbrew-installed Perl installations).
+##########
+
+# Note: use of Perlbrew may be disabled below; search for DO_IT_THEORYS_WAY
+PERLBREW_ROOT=~/perl5/perlbrew # the default, but I like to state it explicily.
+PERLBREW_PATH=$PERLBREW_ROOT/bin
+
+############
+# PostgreSQL
+############
+if [[ $DO_IT_THEORYS_WAY ]]; then
+    # Use theory's custom PostgreSQL build
+    # (built using 'cd ~quinn/src/3/my-cap && cap my:build:postgres').
+    POSTGRESQL_MANPATH=/usr/local/pgsql/share/man:/usr/local/share/man
+    POSTGRESQL_PATH=/usr/local/pgsql/bin
+fi
+
+#######
+# MySQL
+#######
+MYSQL_MANPATH=/usr/local/mysql/man
+MYSQL_PATH=/usr/local/mysql/bin # from the MySQL AB/Oracle tarball release
+
+##########
+# Homebrew
+##########
+# HOMEBREW_ROOT=/usr/local # the default, but I like to state it explicitly
+HOMEBREW_ROOT=~/.homebrew # I keep my own private homebrew instance
+HOMEBREW_PATH=$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/sbin
+HOMEBREW_MANPATH=$HOMEBREW_ROOT/share/man
+
+#############
+# System path (OS-specific)
+#############
+OS=$(uname -s)
+if [[ $OS = 'Darwin' ]]; then
+   SYSTEM_INFOPATH=/usr/share/info:/usr/lib/info
+   SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
+   SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin:/usr/local/bin:/etc/init.d
+else
+    echo "Don't know what system path to use for $OS"
+    exit 43
+fi
+
+############
+# Emacs LISP (third-party) packages
+############
 ELISP_INFOPATH=~/.elisp/tramp/install/share/info
 
-MACPORTS_INFOPATH=/opt/local/share/info
-MACPORTS_MANPATH=/opt/local/share/man
-MACPORTS_PATH=/opt/local/bin:/opt/local/sbin
-
-MYSQL_MANPATH=/usr/local/mysql/man
-MYSQL_PATH=/usr/local/mysql/bin # the MySQL AB release, not the MacPorts version
-
-# This is for perlbrew itself, not for perlbrew-installed Perl installations.
-PERLBREW_MANPATH=~/perl5/man
-PERLBREW_PATH=~/perl5/perlbrew/bin:~/perl5/bin
-
+#####################
+# My own utility code (~/bin et cetera)
+#####################
 PERSONAL_PATH=~/bin
-PERSONAL_PERL5LIB=~/lib
+PERSONAL_PERL5LIB=~/perl5lib
 
-POSTGRESQL_MANPATH=/usr/local/pgsql/share/man
-POSTGRESQL_PATH=/usr/local/pgsql/bin
+# OK, now assemble PATH, MANPATH et cetera from the above-specified paths.
+for VAR in PATH MANPATH INFOPATH PERL5LIB; do
+    # 1. Clear the PATH, in order to get rid of OS-imposed cruft.
+    eval "$VAR=''"
 
-## Commented out for now, since it slows down shell init a lot.
-# VIRTUALENVWRAPPER_PYTHON=/opt/local/bin/python2.7
+    # 2. Append any package-specific paths (perlbrew, postgresql, et cetera)
+    # in the desired order.
+    for CATEGORY in PERLBREW POSTGRESQL MYSQL HOMEBREW SYSTEM ELISP PERSONAL; do
+        VALUE_BEFORE_APPENDING=$(eval echo \$$VAR)
+        VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$PERLBREW_MANPATH) yields ~/perl5/man
+        if [[ $VALUE_TO_APPEND ]]; then
+            if [[ ! $VALUE_BEFORE_APPENDING ]]; then
+                eval "$VAR=$VALUE_TO_APPEND"
+            else
+                eval "$VAR=$VALUE_BEFORE_APPENDING:$VALUE_TO_APPEND"
+            fi
+        fi
+    done
+done
+
+##########
+# Perlbrew
+##########
+if [[ $DO_IT_THEORYS_WAY ]]; then
+    # Use theory's Perl, which resides in /usr/local/bin, which is already in
+    # my path thanks to HOMEBREW_PATH. I built theory's Perl using
+    # 'cd ~quinn/src/3/my-cap && cap my:build:perl'.
+    PATH=/usr/local/bin:$PATH
+    MANPATH=/usr/local/man:$MANPATH
+else
+    # Use Perlbrew (specifically, use whatever version of Perl I set as the
+    # default using 'perlbrew switch').
+    source $PERLBREW_ROOT/etc/bashrc
+fi
+
+###################
+# Python virtualenv - commented out for now, since it majorly slows things down
+###################
+VIRTUALENVWRAPPER_PYTHON=$(which python)
 # source /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/virtualenvwrapper.sh
 
-SYSTEM_INFOPATH=/usr/share/info:/usr/lib/info
-SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
-SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin:/usr/local/bin:/etc/init.d
+########################## 
+########################## App-specific environment variable settings
+########################## 
 
-# FIXME: implement this in code. # The order of precedence, for INFOPATH, MANPATH, and PATH alike, is as follows (LD_LIBRARY_PATH is fine as it is, so don't mess with it)
-# # PERLBREW POSTGRESQL MYSQL MACPORTS SYSTEM ELISP PERSONAL
-# for CATEGORY in ELISP PERLBREW POSTGRESQL MYSQL MACPORTS SYSTEM PERSONAL; do
-#     for VARTYPE in INFOPATH MANPATH PERL5LIB PATH; do
-#         VARNAME="${CATEGORY}_${VARTYPE}"
-#         VARVAL=`eval '$VARNAME'
-#         eval "export VARNAME=$VARVAL"
-#     done
-# done
+set -a # export all variables that I define from now until I say 'set +a'
 
-set -a
+#######
+# emacs
+#######
+# ec FILE1 ...: because typing 'emacsclient' is too much work.
+ec() { emacsclient $@ ;}
 
-INFOPATH=$MACPORTS_INFOPATH:$SYSTEM_INFOPATH:$ELISP_INFOPATH
+# ew /PATH ("edit which"): find a program in $PATH and edit it.
+ew() { ec `which $1` ;}
 
-MANPATH=$PERLBREW_MANPATH:$POSTGRESQL_MANPATH:$MYSQL_MANPATH:$MACPORTS_MANPATH:$SYSTEM_MANPATH
+###########################
+# bash and emacs and pagers
+###########################
+MY_PROMPT="\u@tao:\w\$ "
 
-###################################
-########### *** NEED TO CORRECT THIS ***
-########### quinn@tao:~$ which perl
-########### /opt/local/bin/perl
-###################################
-PATH=$PERLBREW_PATH:$PYTHON_PATH:$POSTGRESQL_PATH:$MYSQL_PATH:$MACPORTS_PATH:$SYSTEM_PATH:$PERSONAL_PATH
+if [[ $RUNNING_UNDER_EMACS ]]; then # this var is set by ~/.emacs.d/init_bash.sh
+    # Emacs shell-mode is a dumb terminal, so don't use advanced features:
 
-# Python virtualenvwrapper (like Perl's Pinto). This must be initialized *after*
-# PATH is set; otherwise it tries to use the wrong Python.
-WORKON_HOME=~/.python-virtualenv
+    # ANSI colors don't work. Use a non-color shell prompt.
+    PS1=$MY_PROMPT
+
+    # Pagers don't work. Use cat(1) instead of less(1).
+    PAGER=cat
+
+    # emacsclient *does* work, so use that.
+    EDITOR=emacsclient; VISUAL=$EDITOR
+else
+    # Other terminals can do fancier stuff:
+
+    # Color the shell prompt slate blue (to distinguish commands from output)
+    PS1="\[\e[34;m\]${MY_PROMPT}\[\e[0m\]"
+
+    # Use my favorite pager and pager options.
+    LESS='--quit-if-one-screen --RAW-CONTROL-CHARS --no-init'
+    PAGER=less
+    GIT_PAGER=$PAGER
+
+    # Use vi for quick edits inside this terminal window.
+    EDITOR=vi; VISUAL=$EDITOR
+fi
+
+#####
+# FTP
+#####
+FTP_LOGIN=ftp
+FTP_PASSIVE_MODE=yes
+FTP_PASSWORD=''
+
+######
+# Perl
+######
+
+# Make Module::Install auto-follow dependencies. cpanm sets this by default,
+# but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
+# which means using MakeMaker directly).
+PERL_MM_USE_DEFAULT=1
+
+######
+# Ruby
+######
+RUBYOPT=rubygems
 
 set +a
+
+########################## 
+########################## Shell functions and aliases, for convenience
+##########################
+
+# FIXME: stop using grep as a golden hammer; instead, use awk to separate fields in the output of ps(1).
+
+###########
+# Processes
+###########
 
 # Display all processes, in a style that I like.
 # If an argument is given, display only those that match that regex.
@@ -74,8 +218,6 @@ p() {
 
     eval "$A_COMMAND"
 }
-
-# FIXME: stop using grep as a golden hammer; instead, use awk to separate fields in the output of ps(1).
 
 # Display my processes, except the ones attached to this tty.
 # If an argument is given, display only those that match that regex.
@@ -104,338 +246,110 @@ pq() {
     p auxww | grep -q $1 | grep -qv grep
 }
 
+# grep, excluding (D)VCS metadata and other metadata. # FIXME: implement in one grep command, not a pipeline, so that I don't have to wait for the whole thing to complete before I start seeing output.
 vrep() {
     grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
 }
 
-########################## git convenience functions by Shawn O. Pearce
-source ~/git-completion.bash
+#########################
+# Miscellaneous functions (ordered alphabetically, or meant to be)
+#########################
 
-########################## Project-specific settings
+# aa graceful|start|...: because typing 'sudo apache2ctl' is too much work.
+aa() { sudo apache2ctl $@ ;}
 
-# (None for now)
+# cl FILE.el ("compile LISP"): byte-compile an emacs LISP file.
+cl() { emacs -nw -q -batch -f batch-byte-compile $@ ;}
 
+# cr /SYMLINK ("cd to referent"): cd to a symlink's referent.
+# That way your $PS1 and pwd will show the full path, and autocompletion will
+# work properly in emacs shell-mode.
+cr() { cd $(~/bin/cr_helper $1) ;}
 
-########################## Emacs (and bash, and less)
+# diff *: I prefer git's color diffs. Override the diff command with 'git diff'.
+alias diff='git diff'
 
-MY_PROMPT="\u@\h:\w\$ "
+# dos2unix FILE1 ...: translate-in-place DOS newlines to Unix newlines.
+dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' $@ ;}
 
-set -a
+# dream: Dream of Electric Sheep.
+dream() { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
 
-if [[ $RUNNING_UNDER_EMACS ]]; then # set by ~/.emacs.d/init_bash.sh
-    # ANSI colors don't work here. Use a non-color shell prompt.
-    PS1=${MY_PROMPT}
+# fd SUBSTRING: find file by (name) substring. This is my common find(1) usage.
+fd() { find . -type d -name "*${1}*" ;}
 
-    # Pagers don't work here. Use cat(1) instead of less(1).
-    PAGER=cat
-else
-    # Color the shell prompt slate blue (to distinguish commands from output)
-    PS1="\[\e[34;m\]${MY_PROMPT}\[\e[0m\]"
+# ffind *: find, excluding , excluding (D)VCS metadata and other metadata.
+ffind() { find $@ | vrep ;}
 
-    LESS='--quit-if-one-screen --RAW-CONTROL-CHARS --no-init'
-    PAGER="less $LESS"
-    GIT_PAGER=$PAGER
-fi
-
-EDITOR=emacsclient
-VISUAL=$EDITOR
-
-set +a
-
-########################## Perl
-
-# Make Module::Install auto-follow dependencies.
-export PERL_MM_USE_DEFAULT=1
-
-########################## PostgreSQL
-
-set -a
-PGDATA=/usr/local/pgsql/data
-PGUSER=postgres
-set +a
-
-########################## FTP
-
-set -a
-FTP_LOGIN=ftp
-FTP_PASSIVE_MODE=yes
-FTP_PASSWORD=' '
-set +a
-
-########################## Ruby
-
-export RUBYOPT=rubygems
-
-###################### cheatsheet for David Wheeler's PGX::Build
-build_test() {
-    # Run all tests or, if so directed, a specific test file.
-    # (You must use this function; you can't run a single test file directly
-    # using 'perl test.t', because it won't get the correct settings.)
-    TEST_FILE=$1
-    if [[ $TEST_FILE ]]; then
-        ./Build test --test_files $TEST_FILE
-    else
-        ./Build test
-    fi
-}
-
-build_database_anew() {
-    # Rebuild the database.
-    ./Build db --drop_db 1
-}
-
-########################## Aliases and shell functions - lots of them.
-
-a() {
-    sudo apache2ctl graceful
-}
-
-aa() {
-    sudo apache2ctl "$@"
-}
-
-ch() {
-    SUBJECT=$1
-    cat ~/Cheatsheets/${SUBJECT}-cheatsheet
-}
-
-cl() {
-    emacs -nw -q -batch -f batch-byte-compile "$@"
-}
-
-cr() { # cd to a symlink's referent, not the symlink itself.  That way your prompt and pwd give the full path (and autocompletion will work properly in emacs shell-mode).
-    SYMLINK=$1
-    eval `cr_helper $SYMLINK`
-}
-
-cs() {
-    TOPIC=$1
-    less ~/Cheatsheets/${TOPIC}-cheatsheet
-}
-
-###################### specific to apt-based systems (e.g. Ubuntu, Debian)
-d() {
-    apt-cache search ".*$1.*"
-}
-
-di() {
-    dpkg -l "*$1*" | grep ^ii
-}
-###################### end commands for apt-based systems (e.g. Ubuntu, Debian)
-
-dido() {
-    $DIDO_RUN_FROM_SOURCE_DIR/bin/dido.pl \
-        $DIDO_RUN_FROM_SOURCE_DIR/var/lib/dido/Museum.xml
-}
-
-alias diff='diff -u'
-
-dos2unix() {
-    perl -pi -e ' s{ \r\n | \n | \r }{ \n }gx ' "$@"
-}
-
-dream() {
-    /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background &
-}
-
-e() {
-    find . -name "$@" | xargs emacsclient
-}
-
-ec() {
-    emacsclient "$@"
-}
-
-ecf()
-{
-    echo `find . -name $1`
-    ec `find . -name $1`
-}
-
-ecw()
-{
-    ec `which $1`
-}
-
-fd() {
-    find . -type d -name "*${1}*"
-}
-
-ffd() {
-    grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
-}
-
-ffind() {
-    find "$@" | grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
-}
-
-fixmes() {
-    ggrep -ri fixme . | grep -v dojo-release
-}
-
-fix_spaces()
-{
-    # Fix OS X Leopard's Spaces function.
-    # Make it so that, for a currently open app, clicking on that app
-    # in the Dock starts a new window (rather than transporting you
-    # back to the virtual desktop where the original window lives).
-    # For further explanation, see
-    # http://www.37signals.com/svn/posts/859-making-life-easier-with-spaces-on-leopard
-    defaults write com.apple.Dock workspaces-auto-swoosh -bool NO
-    killall Dock
-}
-
-fn()
-{
-    grep -A 5 "$1()" ~/.bashrc
-}
-
-fr() {
-    ssh qweaver@glacier.frostconsultingllc.com
-}
-
-alias func=fn
-
-gemi()
-{
+# gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
+gemi() {
     sudo gem install --remote \
                      --test \
                      --rdoc \
                      --ri \
-\
-                     "$@"
+                     $@
 }
 
-ggrep() {
-    grep "$@" \
-        | grep -v '\.git' \
-        | grep -v _MTN \
-        | grep -v '\.svn' \
-        | grep -v CVS \
-        | grep -v '\.DS_Store' \
-        | grep -v _build \
-        | grep -v blib
-}
+# gr REGEX ("grep recursively"): grep -ri . That's how I usually grep.
+gr() { grep -ri $1 . ;}
 
-gc() {
-    MESSAGE="$@"
+# gi ("git init"): go through the multi-command dance to create a local git repo
+gi() { git init && git add . && gc "Initial commit" ;}
 
-    git add . \
-        || exit $?
+# cg REGEX FILE1 ... ("count grep"): show matches per file, if not 0.
+cg() { ggrep -c $@ | grep -v ':0' ;}
 
-    if [[ $MESSAGE ]]; then
-        git commit -a -m "$MESSAGE"
-    else
-        git commit -a
-    fi
-}
-
-gi() {
-    git init && git add . && gc "Initial commit"
-}
-
-git-tree() {
-    git log --graph --decorate --pretty=oneline --abbrev-commit
-}
-
-alias gpg=gpg2
-
-crep() {
-    ggrep -c $@ | grep -v ':0'
-}
-
-# run the profile manager to create a new profile
-firefox() {
+# ff [PROFILE_NAME]: run Firefox with a profile. No args? List/create profiles.
+ff() {
     FIREFOX_EXECUTABLE="/Applications/Firefox\\ 3.app/Contents/MacOS/firefox-bin"
-    
     if [[ $1 ]]; then
         # Run with a specific profile, named in $1.
         sh -exec "$FIREFOX_EXECUTABLE -ProfileManager $1"
     else
-        # Run the Profile Manager (allows you to view all profiles or add a new one)
+        # Run the Profile Manager (which allows you to view all profiles and
+        # add a new one).
         sh -exec "$FIREFOX_EXECUTABLE -p"
     fi
 }
 
-# gsm:  play a series of .gsm files.  Works on Linux only.
-gsm() {
-    tcat "$@" > /dev/audio
+# mz: Use mozrepl to connect to Firefox for some interactive debugging.
+# See http://wiki.github.com/bard/mozrepl/
+mz() { socat READLINE TCP4:localhost:4242 ;}
+
+# kindle FILE1 ...: load free eBooks into iPhone Kindle app. Requires jailbreak.
+kindle() {
+    IPHONE_HOSTNAME=te
+    IPHONE_KINDLE_DIR=/var/mobile/Applications/A063DC1A-20BF-4A66-9858-288FF88DB3ED
+    DEST='root@${IPHONE_HOSTNAME}:${IPHONE_KINDLE_DIR}/Documents/eBooks/'
+    scp $@ $MOBI_PATH $ADIR/
 }
 
-hide_hidden_files() {
-    defaults write com.apple.finder AppleShowAllFiles FALSE
-    killall Finder 
-}
-
-hop() {
-    cd "$_"
-}
-
-alias js='socat READLINE TCP4:localhost:4242' # MozRepl console:  http://wiki.github.com/bard/mozrepl/
-
-kindle() { # Install a Project Gutenberg .mobi for use on my jailbroken iPhone.
-    ADIR='root@te:/var/mobile/Applications/A063DC1A-20BF-4A66-9858-288FF88DB3ED/Documents/eBooks'
-    scp "$@" $MOBI_PATH $ADIR/
-}
-
+# ls, always print one column, even if there are few files. It's easier to scan.
 alias ls='ls -1F' # Must be written as an alias; a shell function would recurse.
 
-l() {
-    ls | less
-}
+# lsl *: list files by mtime, with permissions and ownership. I do this a lot.
+lsl() { ls -lt $@ | less ;}
 
-lwhich() {
-    perldoc -l "$1"
-}
-lw() {
-    lwhich "$@"
-}
-eclw() {
-    ec $(lw "$@")
-}
+# lw Perl::Module, lw Perl/Module.pm ("library which"): show the path to Perl module in PERL5LIB. FIXME: test behavior
+lw() { perldoc -l "$1" ;}
 
-lo() {
-    deploy_fastagi
-}
+# elw Perl::Module, elw Perl/Module.pm ("edit library which"): find a perl module in PER5LIB and open it in EDITOR. #FIXME: test behavior.
+# elw() { $EDITOR $(lw $@) ;}
 
-alias m=mtn
+# start_mysql: I use MySQL seldom and forget its asymmetric start/stop commands.
+start_mysql() { mysql.server ;}
 
-alias mi='mtn automate inventory'
+# stop_mysql: I use MySQL seldom and forget its asymmetric start/stop commands.
+stop_mysql() { mysqladmin5 -u root -p shutdown ;}
 
-alias mtns="mtn9 sync --db ~/.monotone_dbs/com.getsnapdragon.mtn 66.93.182.98 '*'"
+#####################
+# Password-generating functions. All but newpass depend on apg.
+#####################
 
-#FIXME:  make an intelligent factory that detects whether you are running with
-# GNU grep or with BSD grep, and creates an mg that does the right thing.
-mg() {
-    # mg ("Mail Grep"):  grep for something in all my monthly mboxes, in order
-    # from most recent to oldest.
-    #
-    # Depends on GNU sort.  BSD ls has a general numeric sort option, so this
-    # could be made to detect the OS and work on *BSD*... if I cared.
-    ls ~/Mail/mbox* | sort --general-numeric-sort | xargs grep -i "$@"
-}
+# newpass: urandomly generate a new password base64-encoded).
+newpass() { dd if=/dev/urandom bs=$1 count=1 | base64 ;}
 
-mg_bsd() {
-    ls -gr ~/Mail/mbox* | xargs grep -i "$@"
-}
-
-mp() {
-    # mp ("My Processes"):  grep among all processes owned by my user ID.
-    ps axww -u $USER | grep $1 | grep -v grep
-}
-
-mysqlstart() {
-    mysql.server
-}
-
-mysqlstop() {
-    mysqladmin5 -u root -p shutdown
-}
-
-newpassword() {
-    dd if=/dev/urandom bs=$1 count=1 | base64
-}
-
+# newpassword_alphanumeric: as required by some dumb websites.
 newpassword_alphanumeric() {
     N_CHARS=$1
     if [ ! $N_CHARS ]; then
@@ -445,194 +359,67 @@ newpassword_alphanumeric() {
     apg -n 1 -M Ncl -m $N_CHARS -x $N_CHARS -s
 }
 
-newpassword_wep() {
-    apg -n 1 -a 1 -M nc -m 26 -x 26 -E GHIJKLMNOPQRSTUVWXYZ
-}
+# newpassword_wep: generate an appropriate-length hex string WEB password.
+newpassword_wep() { apg -n 1 -a 1 -M nc -m 26 -x 26 -E GHIJKLMNOPQRSTUVWXYZ ;}
 
-newpassword_mac() {
-    apg -n 1 -a 1 -M nc -m 12 -x 12 -E GHIJKLMNOPQRSTUVWXYZ | xargs /home/quinn/bin/colonize
-}
+# newpassword_mac: generate a random MAC address (with colons).
+newpassword_mac() { apg -n 1 -a 1 -M nc -m 12 -x 12 -E GHIJKLMNOPQRSTUVWXYZ | xargs /home/quinn/bin/colonize ;}
 
-newpin() {
-    apg -n 1 -a 1 -M nc -m 4 -x 4 -E ABCDEFGHIJKLMNOPQRSTUVWXYZ
-}
+# newpin: generate a new four-digit PIN, as required by many dumb ATMs.
+newpin() { apg -n 1 -a 1 -M nc -m 4 -x 4 -E ABCDEFGHIJKLMNOPQRSTUVWXYZ ;}
 
-pa() {
-    psql -U admin postgres
-}
+# pb *: because typing 'perlbrew' is too much work.
+pb() { perlbrew $@ ;}
 
-alias pb=perlbrew
+# unrar_plural FILE1 ...: because unraring one file at a time is tiresome.
+unrar_plural() { for f in *rar; do unrar x -o+ "$f" .; done ;}
 
-ppp() {
-    psql -U postgres postgres
-}
-
-pws() {
-    plackup -MPlack::App::File -e 'Plack::App::File->new->to_app'
-}
-
-export GPGUSER=Nobody
-export GPGOPTS="--batch --quiet --no-tty --armor --user $GPGUSER"
-export WALLET=~/wallet.asc
-
-# _dginit() { # Helper function:  create the key and file, iff they don't exist.
-#     if [ ! -e $WALLET ]; then
-#         touch $WALLET
-#     fi
-
-#     gpg --list-keys Nobody
-#     if [ $? != 0 ]; then
-#         gpg --gen-key
-# }
-
-_decryp() { # Helper function:  decrypt the encrypted passwords file.
-    gpg $GPGOPTS --decrypt $WALLET
-}
-
-pass() { # Grep lines from my encrypted passwords file.
-    if [ $# != 1 ]; then
-        echo 'Usage:  pass [regex_to_grep_for]'
-    else
-        _decryp | grep -i "$1"
-    fi        
-}
-
-padd() { # Add a line to my encrypted passwords file.
-    if [ $# == 0 ]; then
-        echo 'Usage:  padd some text to add to the file...'
-    else
-        cp $WALLET $WALLET.bak
-
-        TMPFILE=$WALLET.tmp
-        (_decryp $WALLET && echo "$@") | gpg $GPGOPTS --encrypt > $TMPFILE \
-            && mv $TMPFILE $WALLET
-    fi
-}
-
-perms() {
-    find $1 | xargs ls -ld
-}
-
-pf() {
-    REPORT_TYPE=$1
-
-    cd /usr/local/pgsql/pgfouine-1.1
-    sudo ./pgfouine.php -top 10 -logtype csvlog -file ~/Desktop/Zublogs/24.csv -report $REPORT_TYPE > ~/Desktop/Reports/$REPORT_TYPE.html
-}
-
-###################### OS X cheat aliases
-if [[ $(uname) == Darwin ]]; then
-    alias ldd='otool -L'
-fi
-
-#pperl_back_up_locally_installed_modules() {
-#    # Use CPAN's autobundle feature
-#}
-
-unrarrr() {
-    for f in *rar; do unrar x -o+ "$f" .; done
-}
-
-pull_from_lao()
-{
-    rsync -va \
-        "$@" \
-        --exclude '*cache*' \
-        --exclude '*Cache*' \
-        --exclude '.bash*' \
-        --exclude '.emacs*' \
-        --exclude '*RecentDocuments*' \
-        --exclude '*kcookiejar*' \
-        --exclude '*IconPositions' \
-        --exclude '.mozilla*' \
-        --exclude '.liferea_1.4*' \
-        --exclude '.openoffice.org2' \
-        quinn@192.168.0.99:~/ \
-        ~/
-}
-
-push_to_demo()
-{
-    rsync -va \
-        "$@" \
-        --exclude '.kde/socket*' \
-        --exclude '.kde/share/apps*' \
-        --exclude '.kde/share/config/session*' \
-        --exclude '*cache*' \
-        --exclude '*Cache*' \
-        --exclude '*RecentDocuments*' \
-        --exclude '*kcookiejar*' \
-        --exclude '*IconPositions' \
-        .bash_profile \
-        .bashrc \
-        .elisp \
-        .emacs \
-        .emacs.d/init_bash.sh \
-        .kde \
-        .xbindkeysrc \
-        demo@192.168.0.2:~/
-}
-
-s() {
-    ssh pgx-test
-}
-
-te() {
-    if [ $1 ]; then
-        N_LINES=$1
-    else
-        N_LINES=1
-    fi
-
-    /usr/bin/sudo /usr/bin/tail -$N_LINES /var/log/apache/error.log
-}
-
+# tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
 tor_wget() {
     HTTP_PROXY=http://127.0.0.1:8118/ http_proxy=$HTTP_PROXY \
         wget --mirror --convert-links --html-extension --domains $1 $2
 }
 
-tor_on() {
-    export HTTP_PROXY=http://127.0.0.1:8118/
-    export http_proxy=$HTTP_PROXY    
-}
+# tor_on: start proxying all this shell's HTTP traffic through Tor.
+tor_on() { export HTTP_PROXY=http://127.0.0.1:8118/ http_proxy=$HTTP_PROXY ;}
 
-tor_off() {
-    unset HTTP_PROXY http_proxy    
-}
+# tor_off: stop proxying this shell's HTTP traffic through Tor.
+tor_off() { unset HTTP_PROXY http_proxy ;}
 
-# I can never remember the weird argument order for ssh tunneling, hence
-# this "executable cheatsheet."
-# Usage:
-# tunnel $REMOTE_HOST $REMOTE_PORT $LOCAL_PORT
-tunnel() {
-    ssh -fNR $2:localhost:$3 $1
-}
+# tunnel REMOTE_HOST REMOTE_PORT LOCAL_PORT: ssh-tunnel out.
+tunnel() { ssh -fNR $2:localhost:$3 $1 ;}
 
-# Translate newlines to the DOS convention (CRLF).
-2dos() {
-    /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@"
-}
+# unix2dos FILE1 ...: translate-in-place newlines to the DOS convention (CRLF).
+unix2dos() { /usr/bin/perl -pi -e ' s{$}{\r}x; ' $@ ;}
 
-# Reload custom X11 keybindings.
-xb() {
-    killall --user $USER xbindkeys
-    xbindkeys
-}
+# xb ("xbindkeys"): reload custom (xbindkeys) X11 keybindings.
+xb() { killall --user $USER xbindkeys && xbindkeys ;}
 
-xx()
-{
-    find /etc/rc*.d -name "*$1*" | xargs sudo ~/bin/x
-}
+########################## 
+########################## bash shell completion for git,  by Shawn O. Pearce
+########################## 
 
-set +x
+source ~/git-completion.bash
 
-########################## Run daemons, if installed but not already runnning.
-source ~/.bashrc-daemons && run_gpg_agent_idempotently
-source ~/.bashrc-python
-source ~/.bashrc-perlbrew
+########################## 
+########################## OS-, distro-, and version-specific settings
+########################## 
 
-
-if [[ ! $BASHRC_ALREADY_RAN ]]; then
-    export BASHRC_ALREADY_RAN=1
+OS=$(uname)
+if [[ $OS = Darwin ]]; then
+    source ~/dotfiles/.bashrc.d/unixes/os-x/any-os-x.sh
+elif [[ $OS = Linux ]]; then
+    source ~/dotfiles/.bashrc.d/unixes/linux/any-linux.sh
 fi
+
+########################## 
+########################## Run daemons, if installed but not already runnning.
+########################## 
+
+# Load functions for running several daemons.
+if source ~/.bashrc-daemons; then
+    # gpg-agent is the only daemon I still use, though.
+    run_gpg_agent_idempotently 
+fi
+
+# source ~/.dotfiles/key-corto.sh #FIXME: use the github release instead.

@@ -82,7 +82,7 @@
  '(cursor-type (quote box))
  '(custom-file "~/.emacs")
  '(default-frame-alist (width . 80))
- '(default-input-method "greek")
+ '(default-input-method "greek-babel")
  '(desktop-load-locked-desktop t)
  '(fill-column 78)
  '(font-lock-maximum-decoration ((shell-mode nil) (t . t)))
@@ -275,7 +275,7 @@ Relies on an external Perl program, because doing this in elisp would be lame"
                              (move-beginning-of-line nil) ; same as C-a
                              (beginning-of-line nil))     ; same as C-a
                          (kill-line)                      ; same as C-k
-                         (insert "~/")))
+                         (insert "~/d/")))
 
 ;; Turn autoindenting on (code from Perl Best Practices)
 (global-set-key "\r" 'newline-and-indent)
@@ -303,7 +303,7 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 ;; So I have to modify some minor modes to make these keys work everywhere.
 ;; See M-s below for an example...
 (global-set-key "\M-c"  'compile)
-;(global-set-key "\M-g"  'goto-line)
+(global-set-key "\C-f"  'goto-line)
 (global-set-key "\M-m"  'man)
 (global-set-key "\M-p"  'perlnow-debug)
 (global-set-key "\M-r"  'perlnow-run)
