@@ -1,12 +1,16 @@
 umask 0022
 
-# if [[ ! $BASHRC_ALREADY_RAN ]]; then
-
 ##########################
 ########################## <- Sections demarcated in hashes, like this,
 ########################## must appear in order in order for this code
 ########################## to work.
 ##########################
+
+########################## 
+########################## bash shell completion for git,  by Shawn O. Pearce
+########################## 
+
+source ~/git-completion.bash
 
 ##########################
 ########################## *PATH variables for the custom software I use, in
@@ -48,7 +52,10 @@ if [[ $DO_IT_THEORYS_WAY ]]; then
     # (built using 'cd ~quinn/src/3/my-cap && cap my:build:postgres').
     POSTGRESQL_MANPATH=/usr/local/pgsql/share/man:/usr/local/share/man
     POSTGRESQL_PATH=/usr/local/pgsql/bin
+
+    PGDATA=/usr/local/pgsql/data
 fi
+
 
 #######
 # MySQL
@@ -135,32 +142,30 @@ VIRTUALENVWRAPPER_PYTHON=$(which python)
 
 set -a # export all variables that I define from now until I say 'set +a'
 
-###########################
-# bash and emacs and pagers
-###########################
-MY_PROMPT="\u@tao:\w\$ "
-
+###################
+# bash, emacs, less
+###################
 if [[ $RUNNING_UNDER_EMACS ]]; then # this var is set by ~/.emacs.d/init_bash.sh
     # Emacs shell-mode is a dumb terminal, so don't use advanced features:
 
     # ANSI colors don't work. Use a non-color shell prompt.
-    PS1=$MY_PROMPT
+    PS1='$(__git_ps1 "[%s] ")\u@\h:\w\$ '
 
     # Pagers don't work. Use cat(1) instead of less(1).
-    PAGER=cat
+    PAGER=cat; GIT_PAGER=$PAGER
 
     # emacsclient *does* work, so use that.
     EDITOR=emacsclient; VISUAL=$EDITOR
 else
     # Other terminals can do fancier stuff:
 
-    # Color the shell prompt slate blue (to distinguish commands from output)
-    PS1="\[\e[34;m\]${MY_PROMPT}\[\e[0m\]"
+    # Color the shell prompt slate blue (to distinguish commands from output).
+    # If I'm on a git branch, preend the branch name in purple.
+    PS1='\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\w\$\[\e[0m\] '
 
     # Use my favorite pager and pager options.
     LESS='--quit-if-one-screen --RAW-CONTROL-CHARS --no-init'
-    PAGER=less
-    GIT_PAGER=$PAGER
+    PAGER=less; GIT_PAGER=$PAGER
 
     # Use vi for quick edits inside this terminal window.
     EDITOR=vi; VISUAL=$EDITOR
@@ -181,6 +186,12 @@ FTP_PASSWORD=''
 # but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
 # which means using MakeMaker directly).
 PERL_MM_USE_DEFAULT=1
+
+############
+# PostgreSQL
+############
+# If I forget to specify a DB, use one that's safe to trash (not e.g. template1)
+PGDATABASE=sandbox
 
 ######
 # Ruby
@@ -294,7 +305,7 @@ gr() { grep -ri $1 . ;}
 gi() { git init && git add . && gc "Initial commit" ;}
 
 # cg REGEX FILE1 ... ("count grep"): show matches per file, if not 0.
-cg() { ggrep -c $@ | grep -v ':0' ;}
+cg() { vrep | grep -v ':0' ;}
 
 # ff [PROFILE_NAME]: run Firefox with a profile. No args? List/create profiles.
 ff() {
@@ -393,12 +404,6 @@ unix2dos() { /usr/bin/perl -pi -e ' s{$}{\r}x; ' $@ ;}
 xb() { killall --user $USER xbindkeys && xbindkeys ;}
 
 ########################## 
-########################## bash shell completion for git,  by Shawn O. Pearce
-########################## 
-
-source ~/git-completion.bash
-
-########################## 
 ########################## OS-, distro-, and version-specific settings
 ########################## 
 
@@ -419,4 +424,48 @@ if source ~/.bashrc-daemons; then
     run_gpg_agent_idempotently 
 fi
 
-# source ~/.dotfiles/key-corto.sh #FIXME: use the github release instead.
+########################## 
+########################## Keep my passwords encrypted.
+########################## These functions could use some work.
+########################## 
+
+#FIXME: use the github release of key-corto, not this copypasta.
+
+export GPGUSER=Nobody
+export GPGOPTS="--batch --quiet --no-tty --armor --user $GPGUSER"
+export WALLET=~/wallet.asc
+
+# _dginit() { # Helper function:  create the key and file, iff they don't exist.
+#     if [ ! -e $WALLET ]; then
+#         touch $WALLET
+#     fi
+
+#     gpg2 --list-keys Nobody
+#     if [ $? != 0 ]; then
+#         gpg2 --gen-key
+# }
+
+_decryp() { # Helper function:  decrypt the encrypted passwords file.
+    gpg2 $GPGOPTS --decrypt $WALLET
+}
+
+pass() { # Grep lines from my encrypted passwords file.
+    if [ $# != 1 ]; then
+        echo 'Usage:  pass [regex_to_grep_for]'
+    else
+        _decryp | grep -i "$1"
+    fi        
+}
+
+padd() { # Add a line to my encrypted passwords file.
+    if [ $# == 0 ]; then
+        echo 'Usage:  padd some text to add to the file...'
+    else
+        cp $WALLET $WALLET.bak
+
+        TMPFILE=$WALLET.tmp
+        (_decryp $WALLET && echo $@) | gpg2 $GPGOPTS --encrypt > $TMPFILE \
+            && mv $TMPFILE $WALLET
+    fi
+}
+

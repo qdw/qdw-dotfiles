@@ -1,4 +1,4 @@
 \x
 
--- Useful for DDL development: make psql's output less profix.
+-- Be less verbose.
 -- SET client_min_messages=WARNING;

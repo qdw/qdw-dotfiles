@@ -12,7 +12,5 @@ os_x_show_hidden_files() {
     killall Finder 
 }
 
-###################### OS X cheat aliases
-if [[ $(uname) == Darwin ]]; then
-    alias ldd='otool -L'
-fi
+# ldd LIBRARY: because I'm used to Linux's 'ldd' and not OS X's 'otool'
+alias ldd='otool -L'
