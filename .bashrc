@@ -446,7 +446,7 @@ fi
 ########################## 
 
 # Load functions for running several daemons.
-if source ~/dotfiles/.bashrc.d/daemons.sh
+if source ~/dotfiles/.bashrc.d/daemons.sh; then
     # gpg-agent is the only daemon I still use, though.
     run_gpg_agent_idempotently
 fi
