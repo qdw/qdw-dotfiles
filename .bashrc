@@ -347,6 +347,9 @@ ff() {
     fi
 }
 
+# ga *: because typing 'git commit -a' is too much work
+alias ga='git commit -a'
+
 # mz: Use mozrepl to connect to Firefox for some interactive debugging.
 # See http://wiki.github.com/bard/mozrepl/
 mz() { socat READLINE TCP4:localhost:4242 ;}
