@@ -446,9 +446,9 @@ fi
 ########################## 
 
 # Load functions for running several daemons.
-if source ~/.bashrc-daemons; then
+if source ~/dotfiles/.bashrc.d/daemons.sh
     # gpg-agent is the only daemon I still use, though.
-    run_gpg_agent_idempotently 
+    run_gpg_agent_idempotently
 fi
 
 ########################## 
@@ -495,4 +495,3 @@ padd() { # Add a line to my encrypted passwords file.
             && mv $TMPFILE $WALLET
     fi
 }
-
