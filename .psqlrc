@@ -1,4 +1,4 @@
 \x
 
--- Be less verbose.
--- SET client_min_messages=WARNING;
+-- Be less verbose: don't print NOTICE messages like "CREATE TABLE".
+SET client_min_messages=WARNING;

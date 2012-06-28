@@ -7,8 +7,8 @@ umask 0022
 ##########################
 
 ########################## 
-########################## bash shell completion for git,  by Shawn O. Pearce
-########################## 
+########################## bash shell completion for git,  by Shawn O. Pearce.
+########################## Must be loaded before I set PS1, as I use it there.
 
 source ~/git-completion.bash
 
@@ -48,14 +48,20 @@ PERLBREW_PATH=$PERLBREW_ROOT/bin
 # PostgreSQL
 ############
 if [[ $DO_IT_THEORYS_WAY ]]; then
-    # Use theory's custom PostgreSQL build
-    # (built using 'cd ~quinn/src/3/my-cap && cap my:build:postgres').
+    # Use theory's custom PostgreSQL build (built using
+    # ('cd ~quinn/src/3/my-cap && cap my:build:postgres').
     POSTGRESQL_MANPATH=/usr/local/pgsql/share/man:/usr/local/share/man
     POSTGRESQL_PATH=/usr/local/pgsql/bin
 
-    PGDATA=/usr/local/pgsql/data
+    export PGDATA=/usr/local/pgsql/data
 fi
 
+#######################
+# (Homebrewed) Python 3
+#######################
+# See https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python
+PYTHON3_PATH=~/.homebrew/share/python3 # install-scripts dir
+PYTHON3_PATH=$PYTHON3_PATH:/usr/local/share/python # location of easy_install
 
 #######
 # MySQL
@@ -70,6 +76,7 @@ MYSQL_PATH=/usr/local/mysql/bin # from the MySQL AB/Oracle tarball release
 HOMEBREW_ROOT=~/.homebrew # I keep my own private homebrew instance
 HOMEBREW_PATH=$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/sbin
 HOMEBREW_MANPATH=$HOMEBREW_ROOT/share/man
+HOMEBREW_DYLD_LIBRARY_PATH=$HOMEBREW_ROOT/lib
 
 #############
 # System path (OS-specific)
@@ -96,13 +103,13 @@ PERSONAL_PATH=~/bin
 PERSONAL_PERL5LIB=~/perl5lib
 
 # OK, now assemble PATH, MANPATH et cetera from the above-specified paths.
-for VAR in PATH MANPATH INFOPATH PERL5LIB; do
+for VAR in PATH MANPATH INFOPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
     # 1. Clear the PATH, in order to get rid of OS-imposed cruft.
     eval "$VAR=''"
 
     # 2. Append any package-specific paths (perlbrew, postgresql, et cetera)
     # in the desired order.
-    for CATEGORY in PERLBREW POSTGRESQL MYSQL HOMEBREW SYSTEM ELISP PERSONAL; do
+    for CATEGORY in PERLBREW POSTGRESQL PYTHON3 MYSQL HOMEBREW SYSTEM ELISP PERSONAL; do
         VALUE_BEFORE_APPENDING=$(eval echo \$$VAR)
         VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$PERLBREW_MANPATH) yields ~/perl5/man
         if [[ $VALUE_TO_APPEND ]]; then
@@ -129,12 +136,6 @@ else
     # default using 'perlbrew switch').
     source $PERLBREW_ROOT/etc/bashrc
 fi
-
-###################
-# Python virtualenv - commented out for now, since it majorly slows things down
-###################
-VIRTUALENVWRAPPER_PYTHON=$(which python)
-# source /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/virtualenvwrapper.sh
 
 ########################## 
 ########################## App-specific environment variable settings
@@ -171,6 +172,14 @@ else
     EDITOR=vi; VISUAL=$EDITOR
 fi
 
+######
+# bash completion
+######
+# Homebrew
+#if [ -f `brew --prefix`/etc/bash_completion ]; then
+#    source `brew --prefix`/etc/bash_completion
+#fi
+
 #####
 # FTP
 #####
@@ -190,8 +199,26 @@ PERL_MM_USE_DEFAULT=1
 ############
 # PostgreSQL
 ############
-# If I forget to specify a DB, use one that's safe to trash (not e.g. template1)
+# If I forget to specify a DB, use one that's safe to trash.
 PGDATABASE=sandbox
+
+########
+# Python virtualenv (as installed under the OS X preinstaled Python)
+########
+VIRTUALENVWRAPPER_PYTHON=/usr/bin/python
+source /usr/local/bin/virtualenvwrapper.sh
+
+# mkve ("make virtualenv"): create a new Python virtualenv, using
+# the OS X preinstalled Python.
+alias mkve='mkvirtualenv --no-site-packages'
+
+# mkhbve ("Make Homebrew virtualenv"): create a new Python virtualenv, using
+# Homebrew's Python 2.7. Commented out for now, since that formula breaks.
+alias mkhbve='mkvirtualenv --no-site-packages --python=/usr/local/Cellar/python/2.7.1/bin/python'
+
+# mkve3 ("make virtualenv for Python 3"): create a new Python virtualenv, using
+# Homebrew's Python 3.
+alias mkve3='mkvirtualenv --no-site-packages --python=/usr/local/Cellar/python3/3.2/bin/python3'
 
 ######
 # Ruby

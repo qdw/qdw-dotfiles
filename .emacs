@@ -477,15 +477,20 @@ Relies on an external Perl program, because doing this in elisp would be lame"
 ;;;;;;;;;;;;;;;;;;;
 ;; The rest of this file defines the behavior for coding in various languages.
 
+;;;;;;;;;;;;;;;;;;
+;; Version control
+
+;; I don't use Emacs for version control.
+;; Keep Emacs out of my way as much as possible.
+
+;; Don't prompt me about whether to follow symlinks to version-controlled code;
+;; just do it.
+(setq-default vc-follow-symlinks 't)
+
 ;;;;;;;;;;;;;;;;;;;
 ;; Coding:  general
 
-;; Use monotone for version control.
-;(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/monotone"))
-;(require 'monotone)
-;(monotone-set-vc-prefix-key "\C-xv")
-
-;; Don't color my syntax, please.
+;; Don't color my syntax.
 (global-font-lock-mode -1)
 
 (setq-default indent-tabs-mode nil)
