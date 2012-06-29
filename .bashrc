@@ -381,11 +381,11 @@ start_mysql() { mysql.server ;}
 stop_mysql() { mysqladmin5 -u root -p shutdown ;}
 
 #####################
-# Password-generating functions. All but newpass depend on apg.
+# Password-generating functions. All but pw depend on apg.
 #####################
 
-# newpass: urandomly generate a new password base64-encoded).
-newpass() { dd if=/dev/urandom bs=$1 count=1 | base64 ;}
+# pw: urandomly generate a new password base64-encoded).
+pw() { dd if=/dev/urandom bs=$1 count=1 | base64 ;}
 
 # newpassword_alphanumeric: as required by some dumb websites.
 newpassword_alphanumeric() {
