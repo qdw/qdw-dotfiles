@@ -231,10 +231,30 @@ set +a
 ########################## Shell functions and aliases, for convenience
 ##########################
 
-# FIXME: stop using grep as a golden hammer; instead, use awk to separate fields in the output of ps(1).
+#####################
+# Password-generation functions (all but pw depend on apg).
+#####################
+
+# pw [n_chars] ("password"): urandomly generate a new password, base64-encoded.
+pw() { dd if=/dev/urandom bs=$1 count=1 | base64 ;}
+
+# newpassword_alphanumeric LENGTH_IN_CHARS: as required by some dumb websites.
+newpassword_alphanumeric() {
+    N_CHARS=$1
+    apg -n 1 -M Ncl -m $1 -x $1 -s
+}
+
+# newpassword_wep: generate a new WEP password.
+newpassword_wep() { apg -n 1 -a 1 -M nc -m 26 -x 26 -E GHIJKLMNOPQRSTUVWXYZ ;}
+
+# newpin: generate a new four-digit PIN, as required by many dumb ATMs.
+newpin() { apg -n 1 -a 1 -M nc -m 4 -x 4 -E ABCDEFGHIJKLMNOPQRSTUVWXYZ ;}
+
+# random_mac_address: generate a random MAC address (with colons). Caveat hacker: some of the MAC addresses you get will, of course, be in use by real devices.
+newpassword_mac() { apg -n 1 -a 1 -M nc -m 12 -x 12 -E GHIJKLMNOPQRSTUVWXYZ | xargs /home/quinn/bin/colonize ;}
 
 ###########
-# Processes
+# Processes #FIXME: stop using grep as a golden hammer; instead, use awk to separate fields in the output of ps(1).
 ###########
 
 # Display all processes, in a style that I like.
@@ -285,10 +305,10 @@ vrep() {
 #########################
 
 # aa graceful|start|...: because typing 'sudo apache2ctl' is too much work.
-aa() { sudo apache2ctl $@ ;}
+aa() { sudo apache2ctl "$@" ;}
 
 # cl FILE.el ("compile LISP"): byte-compile an emacs LISP file.
-cl() { emacs -nw -q -batch -f batch-byte-compile $@ ;}
+cl() { emacs -nw -q -batch -f batch-byte-compile "$@" ;}
 
 # cr /SYMLINK ("cd to referent"): cd to a symlink's referent.
 # That way your $PS1 and pwd will show the full path, and autocompletion will
@@ -299,13 +319,13 @@ cr() { cd $(~/bin/cr_helper $1) ;}
 alias diff='git diff'
 
 # dos2unix FILE1 ...: translate-in-place DOS newlines to Unix newlines.
-dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' $@ ;}
+dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 
 # dream: Dream of Electric Sheep.
 dream() { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
 
 # ec FILE1 ...: because typing 'emacsclient' is too much work.
-ec() { emacsclient $@ ;}
+ec() { emacsclient "$@" ;}
 
 # ew /PATH ("edit which"): find a program in $PATH and edit it.
 ew() { ec `which $1` ;}
@@ -314,7 +334,7 @@ ew() { ec `which $1` ;}
 fd() { find . -type d -name "*${1}*" ;}
 
 # ffind *: find, excluding , excluding (D)VCS metadata and other metadata.
-ffind() { find $@ | vrep ;}
+ffind() { find "$@" | vrep ;}
 
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
 gemi() {
@@ -322,7 +342,7 @@ gemi() {
                      --test \
                      --rdoc \
                      --ri \
-                     $@
+                     "$@"
 }
 
 # gr REGEX ("grep recursively"): grep -ri . That's how I usually grep.
@@ -359,20 +379,20 @@ kindle() {
     IPHONE_HOSTNAME=te
     IPHONE_KINDLE_DIR=/var/mobile/Applications/A063DC1A-20BF-4A66-9858-288FF88DB3ED
     DEST='root@${IPHONE_HOSTNAME}:${IPHONE_KINDLE_DIR}/Documents/eBooks/'
-    scp $@ $MOBI_PATH $ADIR/
+    scp "$@" $MOBI_PATH $ADIR/
 }
 
 # ls, always print one column, even if there are few files. It's easier to scan.
 alias ls='ls -1F' # Must be written as an alias; a shell function would recurse.
 
 # lsl *: list files by mtime, with permissions and ownership. I do this a lot.
-lsl() { ls -lt $@ | less ;}
+lsl() { ls -lt "$@" | less ;}
 
 # lw Perl::Module, lw Perl/Module.pm ("library which"): show the path to Perl module in PERL5LIB. FIXME: test behavior
 lw() { perldoc -l "$1" ;}
 
 # elw Perl::Module, elw Perl/Module.pm ("edit library which"): find a perl module in PER5LIB and open it in EDITOR. #FIXME: test behavior.
-# elw() { $EDITOR $(lw $@) ;}
+# elw() { $EDITOR $(lw "$@") ;}
 
 # start_mysql: I use MySQL seldom and forget its asymmetric start/stop commands.
 start_mysql() { mysql.server ;}
@@ -380,34 +400,8 @@ start_mysql() { mysql.server ;}
 # stop_mysql: I use MySQL seldom and forget its asymmetric start/stop commands.
 stop_mysql() { mysqladmin5 -u root -p shutdown ;}
 
-#####################
-# Password-generating functions. All but pw depend on apg.
-#####################
-
-# pw: urandomly generate a new password base64-encoded).
-pw() { dd if=/dev/urandom bs=$1 count=1 | base64 ;}
-
-# newpassword_alphanumeric: as required by some dumb websites.
-newpassword_alphanumeric() {
-    N_CHARS=$1
-    if [ ! $N_CHARS ]; then
-	N_CHARS=10
-    fi
-
-    apg -n 1 -M Ncl -m $N_CHARS -x $N_CHARS -s
-}
-
-# newpassword_wep: generate an appropriate-length hex string WEB password.
-newpassword_wep() { apg -n 1 -a 1 -M nc -m 26 -x 26 -E GHIJKLMNOPQRSTUVWXYZ ;}
-
-# newpassword_mac: generate a random MAC address (with colons).
-newpassword_mac() { apg -n 1 -a 1 -M nc -m 12 -x 12 -E GHIJKLMNOPQRSTUVWXYZ | xargs /home/quinn/bin/colonize ;}
-
-# newpin: generate a new four-digit PIN, as required by many dumb ATMs.
-newpin() { apg -n 1 -a 1 -M nc -m 4 -x 4 -E ABCDEFGHIJKLMNOPQRSTUVWXYZ ;}
-
 # pb *: because typing 'perlbrew' is too much work.
-pb() { perlbrew $@ ;}
+pb() { perlbrew "$@" ;}
 
 # unrar_plural FILE1 ...: because unraring one file at a time is tiresome.
 unrar_plural() { for f in *rar; do unrar x -o+ "$f" .; done ;}
@@ -428,7 +422,7 @@ tor_off() { unset HTTP_PROXY http_proxy ;}
 tunnel() { ssh -fNR $2:localhost:$3 $1 ;}
 
 # unix2dos FILE1 ...: translate-in-place newlines to the DOS convention (CRLF).
-unix2dos() { /usr/bin/perl -pi -e ' s{$}{\r}x; ' $@ ;}
+unix2dos() { /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@" ;}
 
 # xb ("xbindkeys"): reload custom (xbindkeys) X11 keybindings.
 xb() { killall --user $USER xbindkeys && xbindkeys ;}
@@ -454,10 +448,9 @@ if source ~/dotfiles/.bashrc.d/daemons.sh; then
     run_gpg_agent_idempotently
 fi
 
-########################## 
-########################## Keep my passwords encrypted.
-########################## These functions could use some work.
-########################## 
+##################
+# Password storage
+##################
 
 #FIXME: use the github release of key-corto, not this copypasta.
 
@@ -469,7 +462,7 @@ export WALLET=~/wallet.asc
 #     if [ ! -e $WALLET ]; then
 #         touch $WALLET
 #     fi
-
+# 
 #     gpg2 --list-keys Nobody
 #     if [ $? != 0 ]; then
 #         gpg2 --gen-key
@@ -480,21 +473,20 @@ _decryp() { # Helper function:  decrypt the encrypted passwords file.
 }
 
 pass() { # Grep lines from my encrypted passwords file.
-    if [ $# != 1 ]; then
-        echo 'Usage:  pass [regex_to_grep_for]'
-    else
-        _decryp | grep -i "$1"
-    fi        
+    read -p 'Enter a regex to grep for (case-insensitive): ' REGEX
+       # -s silent, i.e. don't echo
+       # -e use the readline library
+       
+    _decryp | grep -i "$REGEX"
 }
 
 padd() { # Add a line to my encrypted passwords file.
-    if [ $# == 0 ]; then
-        echo 'Usage:  padd some text to add to the file...'
-    else
-        cp $WALLET $WALLET.bak
+    read -p 'Enter a password line to add (freeform, all one line): ' NEW_ENTRY
+       # -s silent, i.e. don't echo
+       # -e use the readline library
 
-        TMPFILE=$WALLET.tmp
-        (_decryp $WALLET && echo $@) | gpg2 $GPGOPTS --encrypt > $TMPFILE \
-            && mv $TMPFILE $WALLET
-    fi
+    cp $WALLET $WALLET.bak
+    SWAP_FILE=$WALLET.tmp
+    (_decryp $WALLET && echo $NEW_ENTRY) | gpg2 $GPGOPTS --encrypt > $SWAP_FILE \
+        && mv $SWAP_FILE $WALLET
 }
