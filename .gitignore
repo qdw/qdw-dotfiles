@@ -6,3 +6,5 @@
 
 # OpenOffice lock files (for when you commit a file that's open in OOo)
 .~lock.*odt#
+
+key-corto

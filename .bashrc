@@ -452,41 +452,4 @@ fi
 # Password storage
 ##################
 
-#FIXME: use the github release of key-corto, not this copypasta.
-
-export GPGUSER=Nobody
-export GPGOPTS="--batch --quiet --no-tty --armor --user $GPGUSER"
-export WALLET=~/wallet.asc
-
-# _dginit() { # Helper function:  create the key and file, iff they don't exist.
-#     if [ ! -e $WALLET ]; then
-#         touch $WALLET
-#     fi
-# 
-#     gpg2 --list-keys Nobody
-#     if [ $? != 0 ]; then
-#         gpg2 --gen-key
-# }
-
-_decryp() { # Helper function:  decrypt the encrypted passwords file.
-    gpg2 $GPGOPTS --decrypt $WALLET
-}
-
-pass() { # Grep lines from my encrypted passwords file.
-    read -p 'Enter a regex to grep for (case-insensitive): ' REGEX
-       # -s silent, i.e. don't echo
-       # -e use the readline library
-       
-    _decryp | grep -i "$REGEX"
-}
-
-padd() { # Add a line to my encrypted passwords file.
-    read -p 'Enter a password line to add (freeform, all one line): ' NEW_ENTRY
-       # -s silent, i.e. don't echo
-       # -e use the readline library
-
-    cp $WALLET $WALLET.bak
-    SWAP_FILE=$WALLET.tmp
-    (_decryp $WALLET && echo $NEW_ENTRY) | gpg2 $GPGOPTS --encrypt > $SWAP_FILE \
-        && mv $SWAP_FILE $WALLET
-}
+source ~/dotfiles/key-corto/key-corto.sh
