@@ -349,7 +349,7 @@ gemi() {
 gr() { grep -ri $1 . ;}
 
 # gi ("git init"): go through the multi-command dance to create a local git repo
-gi() { git init && git add . && gc "Initial commit" ;}
+gi() { git init && git add . && git commit -a -m 'Initial commit' ;}
 
 # cg REGEX FILE1 ... ("count grep"): show matches per file, if not 0.
 cg() { vrep | grep -v ':0' ;}
