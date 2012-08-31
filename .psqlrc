@@ -1,6 +1,2 @@
+\set client_min_messages warning
 \x
-
--- Be less verbose: don't print NOTICE messages like "CREATE TABLE".
-set client_min_messages=warning;
-
-

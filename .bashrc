@@ -78,6 +78,25 @@ HOMEBREW_PATH=$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/sbin
 HOMEBREW_MANPATH=$HOMEBREW_ROOT/share/man
 HOMEBREW_DYLD_LIBRARY_PATH=$HOMEBREW_ROOT/lib
 
+##########
+# (Homebrewed) readline
+#
+# The installation process for readline explains,
+#
+#    This formula is keg-only, so it was not symlinked into
+#    /Users/quinn/.homebrew. OS X provides the BSD libedit library, which
+#    shadows libreadline. In order to prevent conflicts when programs look
+#    for libreadline we are defaulting this GNU Readline installation to
+#    keg-only.
+#    
+#    Generally there are no consequences of this for you.  If you build your
+#    own software and it requires this formula, you'll need to add its lib &
+#    include paths to your build variables:
+#     
+#        LDFLAGS  -L/Users/quinn/.homebrew/Cellar/readline/6.2.4/lib
+#        CPPFLAGS -I/Users/quinn/.homebrew/Cellar/readline/6.2.4/include
+##########
+
 #############
 # System path (OS-specific)
 #############
@@ -143,6 +162,10 @@ fi
 
 set -a # export all variables that I define from now until I say 'set +a'
 
+# In grep (1) output, highlight matches, line numbers, et cetera
+# iff the terminal supports colors.
+GREP_COLORS=auto
+
 ###################
 # bash, emacs, less
 ###################
@@ -206,7 +229,8 @@ PGDATABASE=sandbox
 # Python virtualenv (as installed under the OS X preinstaled Python)
 ########
 VIRTUALENVWRAPPER_PYTHON=/usr/bin/python
-source /usr/local/bin/virtualenvwrapper.sh
+## Commented out, since it introduces a delay of several seconds. :(
+## source /usr/local/bin/virtualenvwrapper.sh
 
 # mkve ("make virtualenv"): create a new Python virtualenv, using
 # the OS X preinstalled Python.
@@ -295,6 +319,10 @@ pq() {
     p auxww | grep -q $1 | grep -qv grep
 }
 
+# For some asinine reason, psql doesn't listen to options when I specify
+# them in ~/.psqlrc, so I'm just aliasing it to change its behavior.
+alias psql="PGOPTIONS='--client-min-messages=warning' psql --quiet -x"
+
 # grep, excluding (D)VCS metadata and other metadata. # FIXME: implement in one grep command, not a pipeline, so that I don't have to wait for the whole thing to complete before I start seeing output.
 vrep() {
     grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
@@ -344,6 +372,9 @@ gemi() {
                      --ri \
                      "$@"
 }
+
+# gc: git commit -a (that is, add changes, but not new files, to the index).
+gc() { git commit -a ;}
 
 # gr REGEX ("grep recursively"): grep -ri . That's how I usually grep.
 gr() { grep -ri $1 . ;}
