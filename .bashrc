@@ -63,6 +63,12 @@ fi
 PYTHON3_PATH=~/.homebrew/share/python3 # install-scripts dir
 PYTHON3_PATH=$PYTHON3_PATH:/usr/local/share/python # location of easy_install
 
+###################
+# (Homebrewed) Ruby
+###################
+# This dir will be the the location of any binaries installed by Ruby gems.
+RUBYGEMS_PATH=~/.homebrew/Cellar/ruby/1.9.3-p194/bin
+
 #######
 # MySQL
 #######
@@ -128,7 +134,7 @@ for VAR in PATH MANPATH INFOPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
 
     # 2. Append any package-specific paths (perlbrew, postgresql, et cetera)
     # in the desired order.
-    for CATEGORY in PERLBREW POSTGRESQL PYTHON3 MYSQL HOMEBREW SYSTEM ELISP PERSONAL; do
+    for CATEGORY in PERLBREW POSTGRESQL PYTHON3 MYSQL HOMEBREW SYSTEM ELISP RUBYGEMS PERSONAL; do
         VALUE_BEFORE_APPENDING=$(eval echo \$$VAR)
         VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$PERLBREW_MANPATH) yields ~/perl5/man
         if [[ $VALUE_TO_APPEND ]]; then
