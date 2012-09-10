@@ -743,6 +743,9 @@ the next time you run emacs because you forgot to compile your code."
 (require 'mmm-mode)
 (setq mmm-global-mode 'maybe)
 
+;; Ruby debugger
+(require 'rdebug)
+
 (setq ruby-indent-level 2)
 
 (autoload 'run-ruby "inf-ruby"

@@ -63,9 +63,9 @@ fi
 PYTHON3_PATH=~/.homebrew/share/python3 # install-scripts dir
 PYTHON3_PATH=$PYTHON3_PATH:/usr/local/share/python # location of easy_install
 
-###################
-# (Homebrewed) Ruby
-###################
+#########################
+# (Homebrewed) Ruby 1.9.3
+#########################
 # This dir will be the the location of any binaries installed by Ruby gems.
 RUBYGEMS_PATH=~/.homebrew/Cellar/ruby/1.9.3-p194/bin
 
@@ -111,6 +111,7 @@ if [[ $OS = 'Darwin' ]]; then
    SYSTEM_INFOPATH=/usr/share/info:/usr/lib/info
    SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
    SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin:/usr/local/bin:/etc/init.d
+   SYSTEM_DYLD_LIBRARY_PATH=/usr/local/pgsql/lib
 else
     echo "Don't know what system path to use for $OS"
     exit 43
@@ -134,7 +135,7 @@ for VAR in PATH MANPATH INFOPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
 
     # 2. Append any package-specific paths (perlbrew, postgresql, et cetera)
     # in the desired order.
-    for CATEGORY in PERLBREW POSTGRESQL PYTHON3 MYSQL HOMEBREW SYSTEM ELISP RUBYGEMS PERSONAL; do
+    for CATEGORY in PERLBREW POSTGRESQL PYTHON3 MYSQL HOMEBREW RUBYGEMS SYSTEM ELISP PERSONAL; do
         VALUE_BEFORE_APPENDING=$(eval echo \$$VAR)
         VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$PERLBREW_MANPATH) yields ~/perl5/man
         if [[ $VALUE_TO_APPEND ]]; then
@@ -373,7 +374,6 @@ ffind() { find "$@" | vrep ;}
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
 gemi() {
     sudo gem install --remote \
-                     --test \
                      --rdoc \
                      --ri \
                      "$@"
