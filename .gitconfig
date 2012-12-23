@@ -1,13 +1,16 @@
+[push]
+	default = current
+
 [user]
 	name  = Quinn Weaver
 	email = quinn@pgexperts.com
 
 [alias]
 	co = checkout
-        fc = diff --name-only
-        stat = status
-        tree = log --graph --decorate --pretty=oneline --abbrev-commit
-        no = diff --name-only
+	fc = diff --name-only
+	stat = status
+	tree = log --graph --decorate --pretty=oneline --abbrev-commit
+	no = diff --name-only
 
 [core]
 	excludesfile = ~/.gitignore

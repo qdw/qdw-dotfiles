@@ -34,15 +34,7 @@ source ~/git-completion.bash
 ########################## restart them if they die somehow.
 ##########################
 
-DO_IT_THEORYS_WAY=1
-
-##########
-# Perlbrew (itself, as opposed to perlbrew-installed Perl installations).
-##########
-
-# Note: use of Perlbrew may be disabled below; search for DO_IT_THEORYS_WAY
-PERLBREW_ROOT=~/perl5/perlbrew # the default, but I like to state it explicily.
-PERLBREW_PATH=$PERLBREW_ROOT/bin
+export DO_IT_THEORYS_WAY=1
 
 ############
 # PostgreSQL
@@ -52,9 +44,10 @@ if [[ $DO_IT_THEORYS_WAY ]]; then
     # ('cd ~quinn/src/3/my-cap && cap my:build:postgres').
     POSTGRESQL_MANPATH=/usr/local/pgsql/share/man:/usr/local/share/man
     POSTGRESQL_PATH=/usr/local/pgsql/bin
-
     export PGDATA=/usr/local/pgsql/data
 fi
+# else use homebrew's version (if it exists)
+# or OS X's bundled /usr/bin/postgres (if it doesn't)
 
 #######################
 # (Homebrewed) Python 3
@@ -108,10 +101,10 @@ HOMEBREW_DYLD_LIBRARY_PATH=$HOMEBREW_ROOT/lib
 #############
 OS=$(uname -s)
 if [[ $OS = 'Darwin' ]]; then
-   SYSTEM_INFOPATH=/usr/share/info:/usr/lib/info
-   SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
-   SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin:/usr/local/bin:/etc/init.d
-   SYSTEM_DYLD_LIBRARY_PATH=/usr/local/pgsql/lib
+    SYSTEM_INFOPATH=/usr/share/info:/usr/lib/info
+    SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
+    SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin
+    SYSTEM_DYLD_LIBRARY_PATH=/usr/local/pgsql/lib
 else
     echo "Don't know what system path to use for $OS"
     exit 43
@@ -130,14 +123,13 @@ PERSONAL_PERL5LIB=~/perl5lib
 
 # OK, now assemble PATH, MANPATH et cetera from the above-specified paths.
 for VAR in PATH MANPATH INFOPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
-    # 1. Clear the PATH, in order to get rid of OS-imposed cruft.
+    # 1. Clear the path, in order to get rid of OS-imposed cruft.
     eval "$VAR=''"
 
-    # 2. Append any package-specific paths (perlbrew, postgresql, et cetera)
-    # in the desired order.
-    for CATEGORY in PERLBREW POSTGRESQL PYTHON3 MYSQL HOMEBREW RUBYGEMS SYSTEM ELISP PERSONAL; do
+    # 2. Append any package-specific paths, in the desired order.
+    for CATEGORY in POSTGRESQL PYTHON3 MYSQL HOMEBREW RUBYGEMS SYSTEM ELISP PERSONAL; do
         VALUE_BEFORE_APPENDING=$(eval echo \$$VAR)
-        VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$PERLBREW_MANPATH) yields ~/perl5/man
+        VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$POSTGRESQL_PATH) yields /usr/local/pgsql/bin
         if [[ $VALUE_TO_APPEND ]]; then
             if [[ ! $VALUE_BEFORE_APPENDING ]]; then
                 eval "$VAR=$VALUE_TO_APPEND"
@@ -148,18 +140,20 @@ for VAR in PATH MANPATH INFOPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
     done
 done
 
-##########
-# Perlbrew
-##########
+######
+# Perl: a special case not handled by the preceding FOR loop
+######
 if [[ $DO_IT_THEORYS_WAY ]]; then
-    # Use theory's Perl, which resides in /usr/local/bin, which is already in
-    # my path thanks to HOMEBREW_PATH. I built theory's Perl using
-    # 'cd ~quinn/src/3/my-cap && cap my:build:perl'.
+    # Use theory's Perl, built using
+    # 'cd ~quinn/src/3/my-cap && cap my:build:perl'
     PATH=/usr/local/bin:$PATH
-    MANPATH=/usr/local/man:$MANPATH
+    MANPATH=/usr/local/man:/usr/local/share/man:$PATH
 else
-    # Use Perlbrew (specifically, use whatever version of Perl I set as the
-    # default using 'perlbrew switch').
+    # First add perlbrew itself to paths.
+    PERLBREW_ROOT=~/perl5/perlbrew
+    PERLBREW_PATH=$PERLBREW_ROOT/bin
+
+    # Then add perlbrew's version of perl to paths.
     source $PERLBREW_ROOT/etc/bashrc
 fi
 
@@ -189,6 +183,13 @@ if [[ $RUNNING_UNDER_EMACS ]]; then # this var is set by ~/.emacs.d/init_bash.sh
     EDITOR=emacsclient; VISUAL=$EDITOR
 else
     # Other terminals can do fancier stuff:
+
+
+    # Set the window title to the name of the current process.
+    ## Agh, this doesn't work. PROMPT_COMMAND doesn't get executed when I wish
+    ## it would.  See http://www.ibiblio.org/pub/Linux/docs/HOWTO/Xterm-Title,
+    ## particularly the section on zsh's precmd() hook.
+    ## PROMPT_COMMAND='echo -ne    "\033]2;"   $(ps uxwc | grep $$ | awk "{ print \$11 }")   "\007"'
 
     # Color the shell prompt slate blue (to distinguish commands from output).
     # If I'm on a git branch, preend the branch name in purple.
@@ -368,8 +369,11 @@ ew() { ec `which $1` ;}
 # fd SUBSTRING: find file by (name) substring. This is my common find(1) usage.
 fd() { find . -type d -name "*${1}*" ;}
 
-# ffind *: find, excluding , excluding (D)VCS metadata and other metadata.
+# ffind *: find, excluding (D)VCS metadata and other metadata.
 ffind() { find "$@" | vrep ;}
+
+# ggrep *: grep, excluding (D)VCS metadata and other metadata.
+ggrep() { grep "$@" | vrep ;}
 
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
 gemi() {
@@ -440,8 +444,8 @@ stop_mysql() { mysqladmin5 -u root -p shutdown ;}
 # pb *: because typing 'perlbrew' is too much work.
 pb() { perlbrew "$@" ;}
 
-# unrar_plural FILE1 ...: because unraring one file at a time is tiresome.
-unrar_plural() { for f in *rar; do unrar x -o+ "$f" .; done ;}
+# title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
+title() { echo -ne "\033]2;" $1 "\007" ;}
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
 tor_wget() {
@@ -460,6 +464,9 @@ tunnel() { ssh -fNR $2:localhost:$3 $1 ;}
 
 # unix2dos FILE1 ...: translate-in-place newlines to the DOS convention (CRLF).
 unix2dos() { /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@" ;}
+
+# unrar_plural FILE1 ...: because unraring one file at a time is tiresome.
+unrar_plural() { for f in *rar; do unrar x -o+ "$f" .; done ;}
 
 # xb ("xbindkeys"): reload custom (xbindkeys) X11 keybindings.
 xb() { killall --user $USER xbindkeys && xbindkeys ;}
@@ -490,3 +497,13 @@ fi
 ##################
 
 source ~/dotfiles/key-corto/key-corto.sh
+
+if [[ ! DO_IT_THEORYS_WAY ]]; then
+    source ~/.bashrc--chop
+fi
+
+prp() { cd ~/tig/ddl/corp/functions ;}
+
+pr() {
+    prp && pg_prove -U postgres -d corp_schema tests/*.sql
+}

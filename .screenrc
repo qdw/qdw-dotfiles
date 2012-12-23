@@ -35,8 +35,7 @@ vbell_msg " *beep* "
 # I know about screen.  I don't need to see it every time I start the program.
 # (Which is, admittedly, rarely.)
 startup_message off
-# don't log new screen windows in utmp.
-deflogin off
+
 # Never, ever turn this off.
 autodetach on
 # Just in case it isn't clear...
@@ -92,12 +91,6 @@ bindkey -m "^[[6;2~" stuff ^d
 
 bind c screen 0
 #bind 0 select 10
-
-# Login toggle is too close to screen redraw.  How about explicitly setting
-# login state, anyway?
-bind 'L'
-bind 'I' login on
-bind 'O' login off
 
 # It's sometimes useful to have a quote key.
 bind ^Q mapdefault
@@ -173,3 +166,18 @@ aclchg :window: +x select
  # # erase background with current bg color
   defbce "on" 
 
+#########################################################################
+# The following doesn't work on OS X (version 10.7.5), which bundles    #
+# the latest screen release ('Screen version 4.00.03 (FAU) 23-Oct-06'). #
+# I'm not terribly interested in investigating the problem.             #
+# The exception is bind 'L', which still works.                         #
+# -QDW 2012-11-19                                                       #
+#########################################################################
+
+## don't log new screen windows in utmp.
+#deflogin off ## This doesn't work on OS X. I'm commenting it out.
+## Login toggle is too close to screen redraw.  How about explicitly setting
+## login state, anyway?
+bind 'L'
+## bind 'I' login on
+## bind 'O' login off
