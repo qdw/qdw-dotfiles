@@ -2,13 +2,13 @@ umask 0022
 
 ##########################
 ########################## <- Sections demarcated in hashes, like this,
-########################## must appear in order in order for this code
-########################## to work.
-##########################
+########################## must appear in their present order, or code
+########################## will break.
 
 ########################## 
 ########################## bash shell completion for git,  by Shawn O. Pearce.
 ########################## Must be loaded before I set PS1, as I use it there.
+########################## 
 
 source ~/git-completion.bash
 
@@ -233,23 +233,11 @@ PERL_MM_USE_DEFAULT=1
 PGDATABASE=sandbox
 
 ########
-# Python virtualenv (as installed under the OS X preinstaled Python)
+# Python virtualenv (as installed under the system version of Python)
 ########
 VIRTUALENVWRAPPER_PYTHON=/usr/bin/python
-## Commented out, since it introduces a delay of several seconds. :(
-## source /usr/local/bin/virtualenvwrapper.sh
-
-# mkve ("make virtualenv"): create a new Python virtualenv, using
-# the OS X preinstalled Python.
-alias mkve='mkvirtualenv --no-site-packages'
-
-# mkhbve ("Make Homebrew virtualenv"): create a new Python virtualenv, using
-# Homebrew's Python 2.7. Commented out for now, since that formula breaks.
-alias mkhbve='mkvirtualenv --no-site-packages --python=/usr/local/Cellar/python/2.7.1/bin/python'
-
-# mkve3 ("make virtualenv for Python 3"): create a new Python virtualenv, using
-# Homebrew's Python 3.
-alias mkve3='mkvirtualenv --no-site-packages --python=/usr/local/Cellar/python3/3.2/bin/python3'
+WORKON_HOME=~/.virtualenvs
+source /usr/local/bin/virtualenvwrapper.sh # adds a delay of several seconds. :(
 
 ######
 # Ruby
@@ -334,6 +322,19 @@ alias psql="PGOPTIONS='--client-min-messages=warning' psql --quiet -x"
 vrep() {
     grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
 }
+
+####################
+# Python virtualenvs
+####################
+
+# venv27: make a Python 2.7 virtualenv.
+venv27() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python ;}
+
+# venv33: make a Python 3.3 virtualenv.
+venv33() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python ;}
+
+# qt_designer, for writing PyQt apps
+qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
 
 #########################
 # Miscellaneous functions (ordered alphabetically, or meant to be)
