@@ -34,7 +34,7 @@ source ~/git-completion.bash
 ########################## restart them if they die somehow.
 ##########################
 
-export DO_IT_THEORYS_WAY=1
+unset DO_IT_THEORYS_WAY
 
 ############
 # PostgreSQL
@@ -46,8 +46,7 @@ if [[ $DO_IT_THEORYS_WAY ]]; then
     POSTGRESQL_PATH=/usr/local/pgsql/bin
     export PGDATA=/usr/local/pgsql/data
 fi
-# else use homebrew's version (if it exists)
-# or OS X's bundled /usr/bin/postgres (if it doesn't)
+# else we default to using homebrew's version (see homebrew setup, below).
 
 #######################
 # (Homebrewed) Python 3
@@ -385,6 +384,9 @@ gemi() {
 
 # gc: git commit -a (that is, add changes, but not new files, to the index).
 gc() { git commit -a ;}
+
+# gpg and gpg2 have identical UIs, so it's safe to alias them.
+alias gpg=gpg2
 
 # gr REGEX ("grep recursively"): grep -ri . That's how I usually grep.
 gr() { grep -ri $1 . ;}

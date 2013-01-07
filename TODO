@@ -1,0 +1,4 @@
+- Figure out if perlbrew has a way of switching MANPATHs. If not, roll
+  your own.
+
+
