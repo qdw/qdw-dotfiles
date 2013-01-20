@@ -10,8 +10,6 @@ umask 0022
 ########################## Must be loaded before I set PS1, as I use it there.
 ########################## 
 
-source ~/git-completion.bash
-
 ##########################
 ########################## *PATH variables for the custom software I use, in
 ########################## the order I want (I ignore and override the default
@@ -130,9 +128,16 @@ for VAR in PATH MANPATH INFOPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
     done
 done
 
+########################## 
+########################## Programming language settings
+########################## 
+
+set -a
+
 ######
-# Perl: a special case not handled by the preceding FOR loop
+# Perl: a special case not handled by the preceding 'for' loop
 ######
+
 # First add perlbrew itself to paths.
 PERLBREW_ROOT=~/perl5/perlbrew
 PERLBREW_PATH=$PERLBREW_ROOT/bin
@@ -140,15 +145,65 @@ PERLBREW_PATH=$PERLBREW_ROOT/bin
 # Then add perlbrew's version of perl to paths.
 source $PERLBREW_ROOT/etc/bashrc
 
-########################## 
-########################## App-specific environment variable settings
-########################## 
-
-set -a # export all variables that I define from now until I say 'set +a'
-
 # In grep (1) output, highlight matches, line numbers, et cetera
 # iff the terminal supports colors.
 GREP_COLORS=auto
+
+# Make Module::Install auto-follow dependencies. cpanm sets this by default,
+# but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
+# which means using MakeMaker directly).
+PERL_MM_USE_DEFAULT=1
+
+############
+# PostgreSQL
+############
+
+# If I forget to specify a DB, use one that's safe to trash.
+PGDATABASE=sandbox
+
+########
+# Python virtualenv
+########
+
+# easy_install pip
+# pip install virtualenv
+# pip install virtualenvwrapper
+VIRTUALENVWRAPPER_PYTHON=~/.homebrew/bin/python
+VIRTUALENV_SCRIPT=~/.homebrew/share/python/virtualenv
+VIRTUALENV_SCRIPT_DIR=$(dirname $VIRTUALENV_SCRIPT)
+PATH=$PATH:$VIRTUALENV_SCRIPT_DIR
+VIRTUALENVWRAPPER_SCRIPT=~/.homebrew/share/python/virtualenvwrapper.sh
+source $VIRTUALENVWRAPPER_SCRIPT # adds a delay of several seconds. :(
+WORKON_HOME=~/.virtualenvs
+MKVE_OPTS='--no-site-packages'
+
+# mkve-2.6: make a Python 2.6 virtualenv.
+mkve-2.6() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@" ;}
+
+# mkve-2.7: make a Python 2.7 virtualenv.
+mkve-2.7() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@" ;}
+
+# mkve-3: make a Python 3.3 virtualenv.
+# mkve-3() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@" ;}
+
+# qt_designer, for writing PyQt apps
+qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
+
+# ve: short for 'virtualenv'
+ve() { virtualenv "$@" ;}
+
+######
+# Ruby
+######
+RUBYOPT=rubygems
+
+set +a
+
+########################## 
+########################## App-language settings
+########################## 
+
+set -a
 
 ###################
 # bash, emacs, less
@@ -190,9 +245,12 @@ fi
 # bash completion
 ######
 # Homebrew
-#if [ -f `brew --prefix`/etc/bash_completion ]; then
-#    source `brew --prefix`/etc/bash_completion
-#fi
+# if [ -f $(brew --prefix)/etc/bash_completion ]; then
+#    source $(brew --prefix)/etc/bash_completion
+# fi
+
+# Git
+source ~/git-completion.bash
 
 #####
 # FTP
@@ -201,37 +259,10 @@ FTP_LOGIN=ftp
 FTP_PASSIVE_MODE=yes
 FTP_PASSWORD=''
 
-######
-# Perl
-######
-
-# Make Module::Install auto-follow dependencies. cpanm sets this by default,
-# but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
-# which means using MakeMaker directly).
-PERL_MM_USE_DEFAULT=1
-
-############
-# PostgreSQL
-############
-# If I forget to specify a DB, use one that's safe to trash.
-PGDATABASE=sandbox
-
-########
-# Python virtualenv (as installed under the system version of Python)
-########
-VIRTUALENVWRAPPER_PYTHON=/usr/bin/python
-WORKON_HOME=~/.virtualenvs
-source /usr/local/bin/virtualenvwrapper.sh # adds a delay of several seconds. :(
-
-######
-# Ruby
-######
-RUBYOPT=rubygems
-
 set +a
 
 ########################## 
-########################## Shell functions and aliases, for convenience
+########################## Shell functions and aliases, by category
 ##########################
 
 #####################
@@ -307,21 +338,9 @@ vrep() {
     grep -v '\.git' | grep -v _MTN | grep -v '\.svn' | grep -v CVS | grep -v '\.DS_Store'
 }
 
-####################
-# Python virtualenvs
-####################
-
-# venv27: make a Python 2.7 virtualenv.
-venv27() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python $@ ;}
-
-# venv33: make a Python 3.3 virtualenv.
-venv33() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python $@ ;}
-
-# qt_designer, for writing PyQt apps
-qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
-
-#########################
-# Miscellaneous functions (ordered alphabetically, or meant to be)
+########################## 
+########################## Miscellaneous shell functions and aliases
+########################## (sorted alphabetically)
 #########################
 
 # aa graceful|start|...: because typing 'sudo apache2ctl' is too much work.
