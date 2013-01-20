@@ -1,0 +1,16 @@
+unset DO_IT_THEORYS_WAY
+
+if [[ $DO_IT_THEORYS_WAY ]]; then
+    # Use theory's Perl, built using
+    # 'cd ~quinn/src/3/my-cap && cap my:build:perl'
+    PATH=/usr/local/bin:$PATH
+    MANPATH=/usr/local/man:/usr/local/share/man:$PATH
+else
+
+if [[ $DO_IT_THEORYS_WAY ]]; then
+    # Use theory's custom PostgreSQL build, built using
+    # 'cd ~quinn/src/3/my-cap && cap my:build:postgres'.
+    POSTGRESQL_MANPATH=/usr/local/pgsql/share/man:/usr/local/share/man
+    POSTGRESQL_PATH=/usr/local/pgsql/bin
+    export PGDATA=/usr/local/pgsql/data
+fi

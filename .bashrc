@@ -34,19 +34,10 @@ source ~/git-completion.bash
 ########################## restart them if they die somehow.
 ##########################
 
-unset DO_IT_THEORYS_WAY
-
 ############
 # PostgreSQL
 ############
-if [[ $DO_IT_THEORYS_WAY ]]; then
-    # Use theory's custom PostgreSQL build (built using
-    # ('cd ~quinn/src/3/my-cap && cap my:build:postgres').
-    POSTGRESQL_MANPATH=/usr/local/pgsql/share/man:/usr/local/share/man
-    POSTGRESQL_PATH=/usr/local/pgsql/bin
-    export PGDATA=/usr/local/pgsql/data
-fi
-# else we default to using homebrew's version (see homebrew setup, below).
+# Just use homebrew's version (see Section '# Homebrew', below).
 
 #######################
 # (Homebrewed) Python 3
@@ -142,19 +133,12 @@ done
 ######
 # Perl: a special case not handled by the preceding FOR loop
 ######
-if [[ $DO_IT_THEORYS_WAY ]]; then
-    # Use theory's Perl, built using
-    # 'cd ~quinn/src/3/my-cap && cap my:build:perl'
-    PATH=/usr/local/bin:$PATH
-    MANPATH=/usr/local/man:/usr/local/share/man:$PATH
-else
-    # First add perlbrew itself to paths.
-    PERLBREW_ROOT=~/perl5/perlbrew
-    PERLBREW_PATH=$PERLBREW_ROOT/bin
+# First add perlbrew itself to paths.
+PERLBREW_ROOT=~/perl5/perlbrew
+PERLBREW_PATH=$PERLBREW_ROOT/bin
 
-    # Then add perlbrew's version of perl to paths.
-    source $PERLBREW_ROOT/etc/bashrc
-fi
+# Then add perlbrew's version of perl to paths.
+source $PERLBREW_ROOT/etc/bashrc
 
 ########################## 
 ########################## App-specific environment variable settings
@@ -328,10 +312,10 @@ vrep() {
 ####################
 
 # venv27: make a Python 2.7 virtualenv.
-venv27() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python ;}
+venv27() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python $@ ;}
 
 # venv33: make a Python 3.3 virtualenv.
-venv33() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python ;}
+venv33() { mkvirtualenv --no-site-packages --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python $@ ;}
 
 # qt_designer, for writing PyQt apps
 qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
@@ -501,12 +485,16 @@ fi
 
 source ~/dotfiles/key-corto/key-corto.sh
 
-if [[ ! DO_IT_THEORYS_WAY ]]; then
-    source ~/.bashrc--chop
-fi
+##########################
+# Client-specific settings
+##########################
+
+source ~/.bashrc--chop
 
 prp() { cd ~/tig/ddl/corp/functions ;}
 
 pr() {
     prp && pg_prove -U postgres -d corp_schema tests/*.sql
 }
+
+DESIRED_RAM_DISK_SIZE=256

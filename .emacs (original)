@@ -1,74 +1,56 @@
-;(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/findr")
-;(autoload 'findr-query-replace "findr" "Replace text in files." t)
-;(define-key global-map [(meta control r)] 'findr-query-replace)
-
-
-;; (require 'desire)
 ;; FIXME: reimplement use-module terms of desire.
-
-(setq font-lock-maximum-decoration '((t 1))) ;; default: use the minimum level
-
+(defconst elisp-dir (expand-file-name "~/.emacs.d/elisp"))
 (defun use-module (module-name)
-  (load-file (concat (expand-file-name "~/.emacs.d/elisp/00-dot-emacs-modules/")
-                     module-name
-                     ".el")))
+  (load-file
+   (concat elisp-dir "/00-dot-emacs-modules/" module-name ".elc")))
+(defun use-lib (lib-rel-path)
+  (load-file
+   (concat elisp-dir "/" lib-rel-path ".elc")))
 
-;; (use-module "javascript")
+(use-module "javascript")
+(use-lib "slowsplit/slowsplit")
 
+;;;;;;;;;;;;;
+;; Appearance
 
-
-
-;; (add-hook 'text-mode-hook
-;;           (lamba ()
-;;             (setq 'indent-tabs-mode nil)))
-
-
-
-
-
-
-
-;; When I split a buffer (C-x 2), don't start both new buffers at the top
-;; of the file; just split the buffer in half along the viewport boundary.
-(load-file (expand-file-name "~/.emacs.d/elisp/slowsplit/slowsplit.elc"))
-
-
-;; FIXME:  Figure out why M-s doesn't work right in text buffers, and fix;
-;; FIXME:  Move all mode-specific requires to using something else... autoload?
-;; FIXME:  Make man's "near point" functionality Respect::Perl::Modules.
-;; FIXME:  Add feature:  When I open certain files (e.g. ~/Blog), do
-;; (end-of-buffer)
-;; FIXME:  Add a hook to run (dirs) after every shell command
-;; (because emacs's not being able to figure out the working dir is inexcusably
-;; lame)
-
-
-;; Aquamacs-specific stuff
-(if (and (featurep 'aquamacs) (eq aquamacs-version "1.9"))
-    ;; To indicate lines that are longer than the buffer is wide,
-    ;; show a "fringe" at the edge of the buffer.
-    ;; I've chosen to have no fringe (0) at the left and a 24-pixel-wide
-    ;; fringe (24) at the right.
-    (set-fringe-mode '(0 24))
-  (custom-set-variables
-   '(custom-file "~/.emacs")
-   '(default-frame-alist (width . 80) (height . 45))
-   '(aquamacs-styles-mode nil nil (color-theme))
-   '(one-buffer-one-frame-mode nil nil (aquamacs-frame-setup))
-   '(x-select-enable-clipboard t)
-   )
-  )
-
-;(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/desire"))
-
-;; Use cperl mode instead of the default perl mode
-(defalias 'perl-mode 'cperl-mode)
-
-;;;;;;;;;;;;;;;;;;;
 ;; Appearance:  basics
-;;
+
 (blink-cursor-mode 0)
-(custom-set-variables
+(setq-default visible-bell 't)
+(require 'tool-bar)
+(tool-bar-mode -1)
+(require 'menu-bar)
+(menu-bar-mode -1)
+(require 'scroll-bar)
+(scroll-bar-mode -1)
+
+;; Some code depends on which version of emacs we're running.
+;; (cond (string-match "XEmacs\\|Lucid" emacs-version) nil)
+;; ('t ((require 'mouse) (xterm-mouse-mode t) (defun track-mouse (e))))
+
+;; Appearance: fonts
+
+;; When coloring syntax using font-lock-mode, use the minimum level of coloring.
+(setq font-lock-maximum-decoration '((t 1)))
+
+;; My font of choice is Bitstream Vera Sans Mono bold 14.
+;; 
+;; In order for this to work, you need to download the free, TrueType
+;; Bitstream fonts, available from GNOME among other places:
+;; http://www.gnome.org/fonts/
+;; 
+;; Under X11, TrueType fonts are set in ~/.Xresources, which see.
+;;
+;; Under Aquamacs, you can still use TrueType fonts, but you have to do it
+;; manually: Go to Options -> Show Fonts (this Frame), then set the font using
+;; the nice Mac GUI, then select Options -> Frame Appearance Styles -> Use
+;; Current Style as Default, and then select Options -> Save Options.
+
+;; Appearance: custom-set-variables
+;; Aquamacs dumps your configuration into a big custom string. This is it.
+
+(if (featurep 'aquamacs)
+  (custom-set-variables
   ;; custom-set-variables was added by Custom.
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
@@ -103,637 +85,561 @@
  '(perlnow-test-policy-test-location "~/t")
  '(text-mode-hook (quote ((lambda nil (local-set-key "\363" (quote shell))))))
  '(transient-mark-mode t)
- '(x-select-enable-clipboard t))
-(setq-default visible-bell 't)
-(require 'tool-bar)
-(tool-bar-mode -1)
-(require 'menu-bar)
-(menu-bar-mode -1)
-(require 'scroll-bar)
-(scroll-bar-mode -1)
+ '(x-select-enable-clipboard t)))
 
-;;;;;;;;;;
-;; Appearance:  colors, fonts, and window sizes
-;;
-
-;; Fonts
-;;
-;; My favorite fixed-width font is Bitstream Vera Sans Mono,
-;; a TrueType font that Bitstream gives away for free.
-;; It is available in various places on the Internet, e.g. here:
-;; http://www.gnome.org/fonts/
-;;
-;; Under X11, TrueType fonts are set in ~/.Xresources, which see.
-;;
-;; Under Aquamacs (the awesome Mac OS X native port of Emacs),
-;; you can still use TrueType fonts, but you have to do it manually:
-;; Go to Options -> Show Fonts (this Frame), then set the font
-;; using the nice Mac GUI, then select Options -> Frame Appearance
-;; Styles -> Use Current Style as Default, and then select Options ->
-;; Save Options.
-
-;; Unfortunately, GNU emacs can't really do computations with fonts, so it can't
-;; figure out on its own how many lines of text in a given font will fill up
-;; the screen).
-(defun maximize-vertically ()
-  (set-frame-size (selected-frame) 80 57))
-
-
-;; (define
-;;     afternoon
-;;     (lambda ()
-;;       (set-background-color "")
-;;       (set-foreground-color "")))
-
-
-;; Note that this requires that you first install the Bitstream Vera fonts,
-;; which are freely available on the Web.
-
-;; Update:  I now 
-;;
-;; Set my color theme.  The goals are easy-on-the-eyes readability and
-;; esthetics, in that order.
-;(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/color-theme"))
-;(require 'color-theme)
-;(color-theme-initialize)
-
-;; My favorite color theme, an XEmacs clone with a slightly darker modeline.
-;; Its grey background makes text very easy on the eyes.
-;(load (expand-file-name "~/.emacs.d/elisp/LOCAL/my-theme.elc"))
-;(color-theme-xemacs-tweaked)
-
-;; Other good color themes:
-;(color-theme-xemacs)                 ;; high-contrast, yet not too bright
-;(set-background-color "FloralWhite") ;; tweak with lighter background
-;(set-background-color "WhiteSmoke")  ;; tweak with lighter background
-;
-;(color-theme-standard) ;; high-contrast, but white bg is a little too bright.
-;(color-theme-gray30)  ;; easy on the eyes, but grey background is depressing.
-;(color-theme-classic) ;; easy on the eyes, but grey background is depressing.
-
-;; Color themes that are close, but a little too hard on the eyes:
-;(color-theme-snowish)
-;(color-theme-deep-blue)
-;(color-theme-gnome)
-;(color-theme-subtle-blue)
-;(color-theme-white-on-grey)
-
-;;;;;;;;;;
-;; Utility functions and settings, used later in this file
-;;
-
-;; from http://www.emacswiki.org/cgi-bin/wiki/extraedit.el
-;; comment out current line
-(defun line-comment()
-  "Comments out current line."
-  (interactive)
-  (comment-region (line-beginning-position) (+ 1 (line-end-position))))
-
-;; from http://www.emacswiki.org/cgi-bin/wiki/extraedit.el
-;; Uncomment current line
-(defun line-uncomment()
-  "Uncomments current line."
-  (interactive)
-  (uncomment-region (line-beginning-position) (+ 1 (line-end-position))))
-
-;; from http://www.emacswiki.org/cgi-bin/wiki/extraedit.el
-;; Comment out a paragraph and duplicate it
-(defun para-comment-and-duplicate()
-  "Comment out a paragraph and duplicate it"
-  (interactive)
-  (let ((beg (line-beginning-position))
-        (end (save-excursion (forward-paragraph) (point))))
-    (copy-region-as-kill beg end)
-    (para-comment-forward)
-    (yank)))
-
-(defun indenture ()
-  (interactive)
-  "Forcibly indent the whole buffer to my preferences."
-  (indent-region (point-min) (point-max) 't))
-
-; FIXME:  Abstract this into a macro, so it tells you if an arbitrary
-; expression is true for any element in a sequence.
-(defun matches-any-regexp-p (string list-of-regexps)
-  (let ((index  0)
-        (len    (length list-of-regexps))
-        (retval nil))
-    (while (and (< index len)
-                (not retval))
-           (if (string-match (nth index list-of-regexps)
-                             string)
-               (setq retval 't)
-               (setq index (1+ index))))
-    retval))
-
-;;;;;;;;;;;;;;;;;;;
-;; Global Editor MACroS (a.k.a. keybindings)
+;; ;;;;;;;;;;;;;;;;;;;
+;; ;; Global Editor MACroS (a.k.a. keybindings)
 
 ;; Make C-u delete the whole current line (regardless of the initial
 ;; position of the point), replacing the line with "~/".
 ;;
 ;; I use this to clear the minibuffer when I want to find a file in
 ;; my home directory, not in the current working directory.
+
+
+
 (global-set-key "\C-u" (lambda ()
                          (interactive)
                          (if (string-match "^23" emacs-version)
                              (move-beginning-of-line nil) ; same as C-a
                              (beginning-of-line nil))     ; same as C-a
-                         (kill-line)                      ; same as C-k
+                         (delete-line)                      ; same as C-k
                          (insert "~/")))
 
-;; Turn autoindenting on (code from Perl Best Practices)
-(global-set-key "\r" 'newline-and-indent)
-
-;; Use % to match various kinds of brackets (code from Perl Best Practices)
-;; (global-set-key "%" 'match-paren)
-
-;; Use C-; to switch buffers; the default C-x b is too cumbersome for this
-;; frequently used command.
-;;
-;; We have to use a vector to represent this key sequence,
-;; because ; in a string is interpreted as a LISP comment.
-;; See http://www.gnu.org/software/emacs/elisp-manual/html_node/Strings-of-Events.html
-(global-set-key [67108923] 'switch-to-buffer)
-
-;; Load up the kill ring with a monotone ID (one of those crazy-long SHA
-;; checksums that identify revisions) so that I can easily yank it.
-(global-set-key "\C-x\C-z" 'monotone-grab-id)
-
-;; Convenience keybindings
-;;
-;; Unfortunately, buffer-local bindings shadow global ones,
-;; and minor-mode bindings shadow buffer-local ones.
-;; So I have to modify some minor modes to make these keys work everywhere.
-;; See M-s below for an example...
-(global-set-key "\M-c"  'compile)
-(global-set-key "\C-f"  'goto-line)
-(global-set-key "\M-m"  'man)
-(global-set-key "\M-p"  'perlnow-debug)
-(global-set-key "\M-r"  'perlnow-run)
-(global-set-key "\M-s"  'shell)
-(add-hook 'text-mode-hook (lambda () (local-set-key "\M-s" 'shell)))
-
-(add-hook 'shell-mode-hook
-          (lambda ()
-            (font-lock-mode nil)
-
-            ;; When exiting emacs, kill the shell silently;
-            ;; don't ask the user whether or not to kill it.
-            (process-kill-without-query (get-process "shell"))))
-
-(global-unset-key "\M-t") ; Prevent accidental damage when I meant to hit M-r
-(global-set-key '[f1]   'perlnow-object-module)
-(global-set-key '[f2]   'perlnow-edit-test-file)
-(global-set-key '[f2]   'perlnow-toggle-between-module-and-test)
-(global-set-key '[f3]   'perlnow-module)
-(global-set-key '[f4]   'perlnow-script)
-
-;; Use C-o to switch windows; the default C-x o is too cumbersome,
-;; and the default binding for C-o just inserts a newline,
-;; which you can do with Enter.
-(global-set-key "\C-o" 'other-window)
-(add-hook 'dired-mode-hook  (lambda () (local-set-key "\C-o" 'other-window)))
-
-;;;;;;;;;;;;;;;;;;;
-;; General Configuration
-
-;; Make kill and yank use the X clipboard.  That is:
-;;
-;; - Killing text "foo" in emacs (e.g by using Ctrl-k) sticks "foo" on the
-;;   X clipboard.  Doing "paste" in another application then calls up "foo".
-;;
-;; - Cutting or copying text "bar" in another application, then doing
-;;   a yank in emacs (e.g. by using Ctrl-y) calls up "bar".
-;;
-;; This is not the default behavior in emacs.  The default is for emacs
-;; to maintain its own private clipboard, ignoring the X clipboard,
-;; _unless you use the mouse_ to select text.  I find that confusing.
-;; This is much better:  just one clipboard to think about.  Thanks
-;; to whoever implemented this option! :)
-;; 
-(setq x-select-enable-clipboard 't)
-
-;; Restore state (files, positions in files) from my last session.
-
-; Work around a bug in desktop.el where it thinks the desktop file is
-; locked because this very emacs instance is using it(!)  The workaround
-; is always to load without prompting, even when the desktop appears
-; to be locked.  (Bug still exists as of CVS revision 1.125 of desktop.el.)
-
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/desktop"))
-(load "desktop")
-(desktop-save-mode 1)
-(desktop-read "~")
-
-;; Accept files sent to us via emacsclient. FIXME: use gnuclient instead.
-(server-start nil)
-;; Automatically save files from emacsclient when I close them.
-(set 'server-temp-file-regexp ".") ; i.e. match all files.
-
-;; When opening a compressed file (e.g. FAQ.gz), uncompress it on the fly
-;; and let me see the uncompressed version.  This makes is much easier
-;; to read docs from /usr/share/doc, Ubuntu insists on keeping in compressed
-;; form.
-(auto-compression-mode 1)
-
-;; When opening a GPG-encrypted file, decrypt automatically (prompting
-;; me for the passphrase if necessary)
-(defvar pgg-gpg-user-id "Nobody")
-(autoload 'pgg-make-temp-file "pgg" "PGG")
-(autoload 'pgg-gpg-decrypt-region "pgg-gpg" "PGG GnuPG")
-(define-generic-mode 'gpg-file-mode
-  (list ?#)
-  nil nil
-  '(".gpg\\'" ".gpg-encrypted\\'")
-  (list (lambda ()
-	    (add-hook 'before-save-hook
-                      (lambda () 
-                        (let ((pgg-output-buffer (current-buffer)))
-                          (pgg-gpg-encrypt-region (point-min) (point-max)
-                                                  (list pgg-gpg-user-id))))
-                      nil t)
-	    (add-hook 'after-save-hook 
-		      (lambda ()
-                        (let ((pgg-output-buffer (current-buffer)))
-                          (pgg-gpg-decrypt-region (point-min) (point-max)))
-			(set-buffer-modified-p nil)
-			(auto-save-mode nil))
-		      nil t)
-            (let ((pgg-output-buffer (current-buffer)))
-              (pgg-gpg-decrypt-region (point-min) (point-max)))
-	    (auto-save-mode nil)
-	    (set-buffer-modified-p nil)))
-  "Mode for gpg encrypted files")
-
-;; Use Tramp for transparent access to remote files (and version-control
-;; repositories)
-
-; Actually, just use the version that comes pre-installed with Aquamacs.
-;(add-to-list 'load-path
-;             (expand-file-name "~/.emacs.d/elisp/tramp/install/share/emacs/site-lisp"))
-
-
-(require 'tramp)
-
-(setq tramp-default-method "sshx")
-
-;; Convenience code for sudo edit-tramp
-;; Copied from http://www.emacswiki.org/cgi-bin/wiki/TrampMode
-;; written by Erik Bourget, http://www.emacswiki.org/cgi-bin/wiki/ErikBourget
-;;
-;; The overall effect of this code is that you can C-x C-r filename
-;; to edit a file as root.
-(defvar find-file-root-prefix (if (featurep 'xemacs) "/[sudo/root@localhost]" "/sudo:root@localhost:" )
-        "*The filename prefix used to open a file with `find-file-root'.")
-
-(defvar find-file-root-history nil
-  "History list for files found using `find-file-root'.")
-
-(defvar find-file-root-hook nil
-  "Normal hook for functions to run after finding a \"root\" file.")
-
-(defun find-file-root ()
-  "*Open a file as the root user.
-   Prepends `find-file-root-prefix' to the selected file name so that it
-   maybe accessed via the corresponding tramp method."
-
-  (interactive)
-  (require 'tramp)
-  (let* (;; We bind the variable `file-name-history' locally so we can
-         ;; use a separate history list for "root" files.
-         (file-name-history find-file-root-history)
-         (name (or buffer-file-name default-directory))
-         (tramp (and (tramp-tramp-file-p name)
-                     (tramp-dissect-file-name name)))
-         path dir file)
-
-    ;; If called from a "root" file, we need to fix up the path.
-    (when tramp
-      (setq path (tramp-file-name-path tramp)
-            dir (file-name-directory path)))
-
-    (when (setq file (read-file-name "Find file (UID = 0): " dir path))
-      (find-file (concat find-file-root-prefix file))
-      ;; If this all succeeded save our new history list.
-      (setq find-file-root-history file-name-history)
-      ;; allow some user customization
-      (run-hooks 'find-file-root-hook))))
-
-(global-set-key [(control x) (control r)] 'find-file-root)
-
-;;;;;;;;;;;;;;;;;;;
-;; Writing:  human languages
-(prefer-coding-system 'utf-8)
-(set-input-method     'greek-babel)
-(inactivate-input-method) ; C-\ will activate it.
-
-;;;;;;;;;;;;;;;;;;;
-;; The rest of this file defines the behavior for coding in various languages.
-
-;;;;;;;;;;;;;;;;;;
-;; Version control
-
-;; I don't use Emacs for version control.
-;; Keep Emacs out of my way as much as possible.
-
-;; Don't prompt me about whether to follow symlinks to version-controlled code;
-;; just do it.
-(setq-default vc-follow-symlinks 't)
-
-;;;;;;;;;;;;;;;;;;;
-;; Coding: general
-
-;; Don't color my syntax.
-(global-font-lock-mode -1)
-
-(setq-default indent-tabs-mode nil)
-
-;FIXME:  Do this in text mode only?
-(auto-fill-mode 0)
-
-;; Automatically make scripts executable when saving them.
-(add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
-
-;; Coding:  Apache config files
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/apache-mode"))
-(autoload 'apache-mode "apache-mode" "autoloaded" t)
-
-(setq catalyst-controller-regexp "Controller/.*\\.pm")
-
-(setq apache-config-file-regexps (list
-                                  ;; catalyst-controller-regexp
-                                  "\\.htaccess$"
-                                  "httpd\\.conf$"
-                                  "srm\\.conf$"
-                                  "access\\.conf$"))
-
-(dolist (regexp apache-config-file-regexps)
-  (add-to-list 'auto-mode-alist (cons regexp 'apache-mode)))
-
-(defun apache-config-file-p ()
-  (interactive)
-  (matches-any-regexp-p buffer-file-name apache-config-file-regexps))
-
-(defun catalyst-controller-p ()
-  (interactive)
-  (string-match catalyst-controller-regexp buffer-file-name))
-
-(defun restart-apache-if-apache-config-file ()
-  "If this file is an Apache config file, then restart Apache.
-
-Add this function to `after-save-hook' to make it happen automatically
-when you save such files."
-  (if (apache-config-file-p)
-      ;FIXME:  Report success/failure somehow?
-      (call-process "/usr/bin/sudo" nil nil nil "/etc/init.d/apache" "restart")))
-
-(add-hook 'after-save-hook 'restart-apache-if-apache-config-file)
-
-(defun restart-catalyst-server-if-controller ()
-  "If this file is a catalyst controller, then restart Catalyst.
-
-Add this function to `after-save-hook' to make it happen automatically
-when you save such files."
-  (if (catalyst-controller-p)
-      ;FIXME:  Report success/failure somehow?
-      (call-process "/home/quinn/bin/restart_catalyst_server" nil 0 nil)))
-
-;(add-hook 'after-save-hook 'restart-catalyst-server-if-controller)
-
-;;;;;;;;;;;;;;;;;;
-;; Coding:  XHTML
-
-; Use nxml-mode for all XHTML files and templates.
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/nxml-mode"))
-(require 'nxml-mode)
-(defalias 'html-mode 'nxml-mode)
-(defalias 'html-helper-mode 'nxml-mode)
-
-; Also use nxml-mode for Template Toolkit templates.
-(add-to-list 'auto-mode-alist
-             '("\\.tt2$" . nxml-mode))
-
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/ecmascript-mode"))
-(require 'ecmascript-mode)
-
-; Use four-space indentation, as Nature and Nature's God intended:
-(setq nxml-child-indent 4)
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Coding:  Asterisk config files
-
-(defun asterisk-config-file-p ()
-  (string-match "/extensions.conf$" buffer-file-name))
-
-(defun hup-asterisk-if-asterisk-config-file ()
-  "If this file is an Asterisk config file, then tell Asterisk to re-read
-its config files (e.g. extensions.conf).
-
-Add this function to `after-save-hook' to make it happen automatically
-when you save such files."
-  (if (asterisk-config-file-p)
-      ;FIXME:  Report success/failure to a buffer?
-      (call-process "/bin/sh" nil nil nil
-                   "-c" "/usr/bin/sudo kill -HUP `cat /var/run/asterisk.pid`")))
-
-(add-hook 'after-save-hook 'hup-asterisk-if-asterisk-config-file)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Coding:  C-like languages
-
-(add-hook 'c-mode-common-hook
-          (lambda ()
-            (c-set-style "ellemtel")
-
-            ;; Get rid of the behavior of c-electric-colon,
-            ;; which left-justifies the line whenever you type a colon :/
-            (global-set-key ":" 'self-insert-command)))
-
-;;;;;;;;;;;;;
-;; Coding:  C
-
-;; Help me find the definitions of C functions when I run across them in code
-;; (commented out because it litters semantic.cache files all over the place).
-;(require 'cedet)
-
-;; Here is one possible fix for the semantic.cache problem.  It tells CEDET
-;; to place all semantic.cache files in one directory, rather than placing
-;; them next to files you are editing.  Thanks to
-;; http://blog.ox.cx/archives/113-Getting-rid-of-semantic.caches.html
-;; for the tip.
-(setq semanticdb-default-save-directory
-      (expand-file-name "~/tmp/semantic.cache"))
-
-(setq c-indent-level 4)
-
-;;;;;;;;;;;;;;;;;
-;; Coding:  elisp
-
-; Is this an Emacs LISP file?
-(defun elisp-file-p ()
-  (string-match "\\.el$" buffer-file-name))
-
-(defun byte-compile-if-elisp-file ()
-  "If this file is Emacs LISP source code, then compile it.  Also \"load\" it
-in the interactive interpreter, so it starts affecting Emacs's behavior
-right now.
-
-Add this function to `after-save-hook' to make it happen automatically when
-you save elisp code.  This can be a life-saver; there's nothing more annoying
-than fixing a bug using the interactive interpreter, then seeing a regression
-the next time you run emacs because you forgot to compile your code."
-  (if (elisp-file-p)
-      (byte-compile-file buffer-file-name)))
-
-;; Disabled to speed up development cycle.  I've gotten in the habit of
-;; compiling, so the above isn't such an issue anymore.
-;;(add-hook 'after-save-hook 'byte-compile-if-elisp-file)
-
-(defvar running-xemacs (string-match "XEmacs\\|Lucid" emacs-version))
-
-;;;;;;;;;;;;;;;;
-;; Coding:  Perl
-
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/perlcritic"))
-(autoload 'perlcritic          "perlcritic" "" t)
-(autoload 'perlcritic-region   "perlcritic" "" t)
-(autoload 'perlcritic-mode     "perlcritic" "" t)
-(add-hook 'cperl-mode-hook      (lambda ()
-                                 (local-set-key "\C-q"
-                                                'perlcritic)
-
-                                 (local-set-key "\M-q"
-                                                (lambda ()
-                                                  (interactive)
-                                                  (query-replace "\"" "'")))))
-
-;(set      'perlcritic-profile  "/usr/local/share/codenazi/cfg/perlcritic.cfg")
-(set      'perlcritic-severity 1)
-
-;; Recognize .t files as Perl code; open them in perl-mode
-(setq auto-mode-alist (cons '("\\.t$" . cperl-mode)
-                            auto-mode-alist))
-
-;; The following code was lifted (selectively) from Appendix C of
-;;_Perl Best Practices_.
-
-;; Use % to match various kinds of brackets...
-;; See: http://www.lifl.fr/~hodique/uploads/Perso/patches.el
-(defun match-paren (arg)
-  "Go to the matching paren if on a paren; otherwise insert %."
-  (interactive "p")
-  (let ((prev-char (char-to-string (preceding-char)))
-        (next-char (char-to-string (following-char))))
-    (cond ((string-match "[[{(<]" next-char) (forward-sexp 1))
-          ((string-match "[\]})>]" prev-char) (backward-sexp 1))
-          (t (self-insert-command (or arg 1))))))
-
-;; end of code from _Perl Best Practices_
-;
-
-;;;;;;;;;;;;;;;;
-;; Coding:  Perl
-(use-module "perl")
-
-;;;;;;;;;;;;;;;;;;
-;; Coding:  Python
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/python-mode"))
-(require 'python-mode)
-
-;;;;;;;;;;;;;;;;;;
-;; Coding: Ruby
-
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/pabbrev"))
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/mmm-mode"))
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/ruby-elisp"))
-(require 'ruby-mode)
-(require 'pabbrev)
-(require 'mmm-mode)
-(setq mmm-global-mode 'maybe)
-
-;; Ruby debugger
-;; Not installed by default. Upgrade to Emacs 22 to get it, or use emacsmirror?
-;; (require 'rdebug)
-
-(setq ruby-indent-level 2)
-
-(autoload 'run-ruby "inf-ruby"
-  "Run an inferior Ruby process")
-(autoload 'inf-ruby-keys "inf-ruby"
-  "Set local key defs for inf-ruby in ruby-mode")
-(add-hook 'ruby-mode-hook '(lambda () (inf-ruby-keys)))
-
-(add-hook
- 'ruby-mode-hook
- (lambda ()
-   (local-set-key [return] 'ruby-reindent-then-newline-and-indent))
- 't
-)
-
-; (defun ruby-eval-buffer ()
-;   (interactive)
-;   "Evaluate the buffer with ruby"
-;   (shell-command-on-region (point-min) (point-max) "ruby"))
-  
-;;;;;;;;;;;;;;;;;;
-;; Coding:  SQL
-
-; The variables sql-user and sql-password do not play properly
-; with postgres.  Instead, you have to specify them in
-; sql-postgres-options (you may use ~/.pgpass for the
-; password, which I have elected to do here).
-(setq sql-user "build")
-(setq sql-database "")
-(setq sql-host "")
-(setq sql-postgres-options '("-U" "build" "pager=off"))
-
-;;;;; Some databases
-;; The local sqlite database for Tracks (my GTD system)
-;(setq sql-sqlite-program "sqlite3")
-;(setq sql-database (expand-file-name "~/tracks/db/tracks-104.db"))
-
-;; (add-hook 'sql-mode-hook
+;; FIXME: Write a toggle for commenting, rather than using these two functions.
+;; (global-set-key "C-=" comment-region)
+;; (global-set-key "C-." uncomment-region)
+
+;; ;; Turn autoindenting on (code from Perl Best Practices)
+;; (global-set-key "\r" 'newline-and-indent)
+
+;; ;; Use % to match various kinds of brackets (code from Perl Best Practices)
+;; ;; (global-set-key "%" 'match-paren)
+
+;; ;; Use C-; to switch buffers; the default C-x b is too cumbersome for this
+;; ;; frequently used command.
+;; ;;
+;; ;; We have to use a vector to represent this key sequence,
+;; ;; because ; in a string is interpreted as a LISP comment.
+;; ;; See http://www.gnu.org/software/emacs/elisp-manual/html_node/Strings-of-Events.html
+;; (global-set-key [67108923] 'switch-to-buffer)
+
+;; ;; Load up the kill ring with a monotone ID (one of those crazy-long SHA
+;; ;; checksums that identify revisions) so that I can easily yank it.
+;; (global-set-key "\C-x\C-z" 'monotone-grab-id)
+
+;; ;; Convenience keybindings
+;; ;;
+;; ;; Unfortunately, buffer-local bindings shadow global ones,
+;; ;; and minor-mode bindings shadow buffer-local ones.
+;; ;; So I have to modify some minor modes to make these keys work everywhere.
+;; ;; See M-s below for an example...
+;; (global-set-key "\M-c"  'compile)
+;; (global-set-key "\C-f"  'goto-line)
+;; (global-set-key "\M-m"  'man)
+;; (global-set-key "\M-p"  'perlnow-debug)
+;; (global-set-key "\M-r"  'perlnow-run)
+;; (global-set-key "\M-s"  'shell)
+;; (add-hook 'text-mode-hook (lambda () (local-set-key "\M-s" 'shell)))
+
+;; (add-hook 'shell-mode-hook
 ;;           (lambda ()
-;;             ;; sql-indent doesn't do what I want it to do (its regexes are too limited).
-;;             ;; Must I hack it, or can I find something better out there?
-;;             (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/sql-indent"))
-;;             (require 'sql-indent)))
+;;             (font-lock-mode nil)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Coding:  XML (and SGML)
+;;             ;; When exiting emacs, kill the shell silently;
+;;             ;; don't ask the user whether or not to kill it.
+;;             (process-kill-without-query (get-process "shell"))))
 
-;; Disable sgml-mode and James Clark's nxml-mode; instead, use psgml-mode,
-;; which supports code-folding. :)
-;(autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t)
-;(autoload 'xml-mode "psgml" "Major mode to edit XML files." t)
+;; (global-unset-key "\M-t") ; Prevent accidental damage when I meant to hit M-r
+;; (global-set-key '[f1]   'perlnow-object-module)
+;; (global-set-key '[f2]   'perlnow-edit-test-file)
+;; (global-set-key '[f2]   'perlnow-toggle-between-module-and-test)
+;; (global-set-key '[f3]   'perlnow-module)
+;; (global-set-key '[f4]   'perlnow-script)
 
-;;;;;;;;;;;;;;;;
-;; Coding:  YAML
+;; ;; Use C-o to switch windows; the default C-x o is too cumbersome,
+;; ;; and the default binding for C-o just inserts a newline,
+;; ;; which you can do with Enter.
+;; (global-set-key "\C-o" 'other-window)
+;; (add-hook 'dired-mode-hook  (lambda () (local-set-key "\C-o" 'other-window)))
 
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/yaml-mode/trunk"))
-(require 'yaml-mode)
-(add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
+;; ;;;;;;;;;;;;;;;;;;;
+;; ;; General Configuration
 
-;; Indent four spaces
-(setq yaml-indent-offset 4)
+;; ;; Make kill and yank use the X clipboard.  That is:
+;; ;;
+;; ;; - Killing text "foo" in emacs (e.g by using Ctrl-k) sticks "foo" on the
+;; ;;   X clipboard.  Doing "paste" in another application then calls up "foo".
+;; ;;
+;; ;; - Cutting or copying text "bar" in another application, then doing
+;; ;;   a yank in emacs (e.g. by using Ctrl-y) calls up "bar".
+;; ;;
+;; ;; This is not the default behavior in emacs.  The default is for emacs
+;; ;; to maintain its own private clipboard, ignoring the X clipboard,
+;; ;; _unless you use the mouse_ to select text.  I find that confusing.
+;; ;; This is much better:  just one clipboard to think about.  Thanks
+;; ;; to whoever implemented this option! :)
+;; ;; 
+;; (setq x-select-enable-clipboard 't)
 
-;; When I hit enter, auto-indent the next line.
-(add-hook 'yaml-mode-hook
-          '(lambda ()
-             (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
+;; ;; Restore state (files, positions in files) from my last session.
 
-(custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
- '(tool-bar ((t (:background "darkslategray")))))
+;; ; Work around a bug in desktop.el where it thinks the desktop file is
+;; ; locked because this very emacs instance is using it(!)  The workaround
+;; ; is always to load without prompting, even when the desktop appears
+;; ; to be locked.  (Bug still exists as of CVS revision 1.125 of desktop.el.)
 
-;; (maximize-vertically)
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/desktop"))
+;; (load "desktop")
+;; (desktop-save-mode 1)
+;; (desktop-read "~")
 
-;; for compatibility with older Aquamacs versions
-(defvar aquamacs-140-custom-file-upgraded t)
-(unless (fboundp 'auto-detect-longlines) (defun auto-detect-longlines () t))
+;; ;; Accept files sent to us via emacsclient. FIXME: use gnuclient instead.
+;; (server-start nil)
+;; ;; Automatically save files from emacsclient when I close them.
+;; (set 'server-temp-file-regexp ".") ; i.e. match all files.
+
+;; ;; When opening a compressed file (e.g. FAQ.gz), uncompress it on the fly
+;; ;; and let me see the uncompressed version.  This makes is much easier
+;; ;; to read docs from /usr/share/doc, Ubuntu insists on keeping in compressed
+;; ;; form.
+;; (auto-compression-mode 1)
+
+;; ;; When opening a GPG-encrypted file, decrypt automatically (prompting
+;; ;; me for the passphrase if necessary)
+;; (defvar pgg-gpg-user-id "Nobody")
+;; (autoload 'pgg-make-temp-file "pgg" "PGG")
+;; (autoload 'pgg-gpg-decrypt-region "pgg-gpg" "PGG GnuPG")
+;; (define-generic-mode 'gpg-file-mode
+;;   (list ?#)
+;;   nil nil
+;;   '(".gpg\\'" ".gpg-encrypted\\'")
+;;   (list (lambda ()
+;; 	    (add-hook 'before-save-hook
+;;                       (lambda () 
+;;                         (let ((pgg-output-buffer (current-buffer)))
+;;                           (pgg-gpg-encrypt-region (point-min) (point-max)
+;;                                                   (list pgg-gpg-user-id))))
+;;                       nil t)
+;; 	    (add-hook 'after-save-hook 
+;; 		      (lambda ()
+;;                         (let ((pgg-output-buffer (current-buffer)))
+;;                           (pgg-gpg-decrypt-region (point-min) (point-max)))
+;; 			(set-buffer-modified-p nil)
+;; 			(auto-save-mode nil))
+;; 		      nil t)
+;;             (let ((pgg-output-buffer (current-buffer)))
+;;               (pgg-gpg-decrypt-region (point-min) (point-max)))
+;; 	    (auto-save-mode nil)
+;; 	    (set-buffer-modified-p nil)))
+;;   "Mode for gpg encrypted files")
+
+;; ;; Use Tramp for transparent access to remote files (and version-control
+;; ;; repositories)
+
+;; ; Actually, just use the version that comes pre-installed with Aquamacs.
+;; ;(add-to-list 'load-path
+;; ;             (expand-file-name "~/.emacs.d/elisp/tramp/install/share/emacs/site-lisp"))
+
+
+;; (require 'tramp)
+
+;; (setq tramp-default-method "sshx")
+
+;; ;; Convenience code for sudo edit-tramp
+;; ;; Copied from http://www.emacswiki.org/cgi-bin/wiki/TrampMode
+;; ;; written by Erik Bourget, http://www.emacswiki.org/cgi-bin/wiki/ErikBourget
+;; ;;
+;; ;; The overall effect of this code is that you can C-x C-r filename
+;; ;; to edit a file as root.
+;; (defvar find-file-root-prefix (if (featurep 'xemacs) "/[sudo/root@localhost]" "/sudo:root@localhost:" )
+;;         "*The filename prefix used to open a file with `find-file-root'.")
+
+;; (defvar find-file-root-history nil
+;;   "History list for files found using `find-file-root'.")
+
+;; (defvar find-file-root-hook nil
+;;   "Normal hook for functions to run after finding a \"root\" file.")
+
+;; (defun find-file-root ()
+;;   "*Open a file as the root user.
+;;    Prepends `find-file-root-prefix' to the selected file name so that it
+;;    maybe accessed via the corresponding tramp method."
+
+;;   (interactive)
+;;   (require 'tramp)
+;;   (let* (;; We bind the variable `file-name-history' locally so we can
+;;          ;; use a separate history list for "root" files.
+;;          (file-name-history find-file-root-history)
+;;          (name (or buffer-file-name default-directory))
+;;          (tramp (and (tramp-tramp-file-p name)
+;;                      (tramp-dissect-file-name name)))
+;;          path dir file)
+
+;;     ;; If called from a "root" file, we need to fix up the path.
+;;     (when tramp
+;;       (setq path (tramp-file-name-path tramp)
+;;             dir (file-name-directory path)))
+
+;;     (when (setq file (read-file-name "Find file (UID = 0): " dir path))
+;;       (find-file (concat find-file-root-prefix file))
+;;       ;; If this all succeeded save our new history list.
+;;       (setq find-file-root-history file-name-history)
+;;       ;; allow some user customization
+;;       (run-hooks 'find-file-root-hook))))
+
+;; (global-set-key [(control x) (control r)] 'find-file-root)
+
+;; ;;;;;;;;;;;;;;;;;;;
+;; ;; Writing:  human languages
+;; (prefer-coding-system 'utf-8)
+;; (set-input-method     'greek-babel)
+;; (inactivate-input-method) ; C-\ will activate it.
+
+;; ;;;;;;;;;;;;;;;;;;;
+;; ;; The rest of this file defines the behavior for coding in various languages.
+
+;; ;;;;;;;;;;;;;;;;;;
+;; ;; Version control
+
+;; ;; I don't use Emacs for version control.
+;; ;; Keep Emacs out of my way as much as possible.
+
+;; ;; Don't prompt me about whether to follow symlinks to version-controlled code;
+;; ;; just do it.
+;; (setq-default vc-follow-symlinks 't)
+
+;; ;;;;;;;;;;;;;;;;;;;
+;; ;; Coding: general
+
+;; ;; Don't color my syntax.
+;; (global-font-lock-mode -1)
+
+;; (setq-default indent-tabs-mode nil)
+
+;; ;FIXME:  Do this in text mode only?
+;; (auto-fill-mode 0)
+
+;; ;; Automatically make scripts executable when saving them.
+;; (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+
+;; ;; Coding:  Apache config files
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/apache-mode"))
+;; (autoload 'apache-mode "apache-mode" "autoloaded" t)
+
+;; (setq catalyst-controller-regexp "Controller/.*\\.pm")
+
+;; (setq apache-config-file-regexps (list
+;;                                   ;; catalyst-controller-regexp
+;;                                   "\\.htaccess$"
+;;                                   "httpd\\.conf$"
+;;                                   "srm\\.conf$"
+;;                                   "access\\.conf$"))
+
+;; (dolist (regexp apache-config-file-regexps)
+;;   (add-to-list 'auto-mode-alist (cons regexp 'apache-mode)))
+
+;; ;; FIXME:  Abstract this into a macro, so it tells you if an arbitrary
+;; ;; expression is true for any element in a sequence.
+;; (defun matches-any-regexp-p (string list-of-regexps)
+;;   (let ((index  0)
+;;         (len    (length list-of-regexps))
+;;         (retval nil))
+;;     (while (and (< index len)
+;;                 (not retval))
+;;            (if (string-match (nth index list-of-regexps)
+;;                              string)
+;;                (setq retval 't)
+;;                (setq index (1+ index))))
+;;     retval))
+
+;; (defun apache-config-file-p ()
+;;   (interactive)
+;;   (matches-any-regexp-p buffer-file-name apache-config-file-regexps))
+
+;; (defun catalyst-controller-p ()
+;;   (interactive)
+;;   (string-match catalyst-controller-regexp buffer-file-name))
+
+;; (defun restart-apache-if-apache-config-file ()
+;;   "If this file is an Apache config file, then restart Apache.
+
+;; Add this function to `after-save-hook' to make it happen automatically
+;; when you save such files."
+;;   (if (apache-config-file-p)
+;;       ;FIXME:  Report success/failure somehow?
+;;       (call-process "/usr/bin/sudo" nil nil nil "/etc/init.d/apache" "restart")))
+
+;; (add-hook 'after-save-hook 'restart-apache-if-apache-config-file)
+
+;; (defun restart-catalyst-server-if-controller ()
+;;   "If this file is a catalyst controller, then restart Catalyst.
+
+;; Add this function to `after-save-hook' to make it happen automatically
+;; when you save such files."
+;;   (if (catalyst-controller-p)
+;;       ;FIXME:  Report success/failure somehow?
+;;       (call-process "/home/quinn/bin/restart_catalyst_server" nil 0 nil)))
+
+;; ;(add-hook 'after-save-hook 'restart-catalyst-server-if-controller)
+
+;; ;;;;;;;;;;;;;;;;;;
+;; ;; Coding:  XHTML
+
+;; ; Use nxml-mode for all XHTML files and templates.
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/nxml-mode"))
+;; (require 'nxml-mode)
+;; (defalias 'html-mode 'nxml-mode)
+;; (defalias 'html-helper-mode 'nxml-mode)
+
+;; ; Also use nxml-mode for Template Toolkit templates.
+;; (add-to-list 'auto-mode-alist
+;;              '("\\.tt2$" . nxml-mode))
+
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/ecmascript-mode"))
+;; (require 'ecmascript-mode)
+
+;; ; Use four-space indentation, as Nature and Nature's God intended:
+;; (setq nxml-child-indent 4)
+
+
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; Coding:  Asterisk config files
+
+;; (defun asterisk-config-file-p ()
+;;   (string-match "/extensions.conf$" buffer-file-name))
+
+;; (defun hup-asterisk-if-asterisk-config-file ()
+;;   "If this file is an Asterisk config file, then tell Asterisk to re-read
+;; its config files (e.g. extensions.conf).
+
+;; Add this function to `after-save-hook' to make it happen automatically
+;; when you save such files."
+;;   (if (asterisk-config-file-p)
+;;       ;FIXME:  Report success/failure to a buffer?
+;;       (call-process "/bin/sh" nil nil nil
+;;                    "-c" "/usr/bin/sudo kill -HUP `cat /var/run/asterisk.pid`")))
+
+;; (add-hook 'after-save-hook 'hup-asterisk-if-asterisk-config-file)
+
+;; (defun active-minor-modes ()
+;;   "Return a list of minor modes that are active in this buffer.
+;; There's probably a better way to do this.
+;; Based on http://stackoverflow.com/a/1511827 "
+;;   (let ((active-modes '()))
+;;     (mapc (lambda (mode) (condition-case nil
+;;                              (if (and (symbolp mode) (symbol-value mode))
+;;                                  (add-to-list 'active-modes mode))
+;;                            (error nil) ))
+;;           minor-mode-list))
+;;   active-modes)
+
+;; (defun perl-buffer-p ()
+;;   "Return 't if the current buffer looks like Perl code, nil otherwise.
+;; We consider a buffer to be Perl code if it is in perl-mode or cperl-mode,
+;; or if the underlying filename ends in .pl or .pm"
+;;   (let (active-minor-mode-list (active-minor-modes))
+;;     (if (or (memq 'cperl-mode minor-mode-list)
+;;             (memq 'perl-mode minor-mode-list)
+;;             (string-match "[.]pm$" buffer-file-name)
+;;             (string-match "[.]pl$" buffer-file-name))
+;;         't
+;;         nil)))
+
+;; ;(use-module)
+           
+;; ;(defun kick-firefox ()
+;; ;  (interactive)
+;; ;  (
+  
+
+;; (defun kick-firefox-if-perl-file-p ()
+;;   (if (perl-buffer-p) (kick-firefox)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; Coding:  C-like languages
+
+;; (add-hook 'c-mode-common-hook
+;;           (lambda ()
+;;             (c-set-style "ellemtel")
+
+;;             ;; Get rid of the behavior of c-electric-colon,
+;;             ;; which left-justifies the line whenever you type a colon :/
+;;             (global-set-key ":" 'self-insert-command)))
+
+;; ;;;;;;;;;;;;;
+;; ;; Coding:  C
+
+;; ;; Help me find the definitions of C functions when I run across them in code
+;; ;; (commented out because it litters semantic.cache files all over the place).
+;; ;(require 'cedet)
+
+;; ;; Here is one possible fix for the semantic.cache problem.  It tells CEDET
+;; ;; to place all semantic.cache files in one directory, rather than placing
+;; ;; them next to files you are editing.  Thanks to
+;; ;; http://blog.ox.cx/archives/113-Getting-rid-of-semantic.caches.html
+;; ;; for the tip.
+;; (setq semanticdb-default-save-directory
+;;       (expand-file-name "~/tmp/semantic.cache"))
+
+;; (setq c-indent-level 4)
+
+;; ;;;;;;;;;;;;;;;;;
+;; ;; Coding:  elisp
+
+;; ; Is this an Emacs LISP file?
+;; (defun elisp-file-p ()
+;;   (string-match "\\.el$" buffer-file-name))
+
+;; (defun byte-compile-if-elisp-file ()
+;;   "If this file is Emacs LISP source code, then compile it.  Also \"load\" it
+;; in the interactive interpreter, so it starts affecting Emacs's behavior
+;; right now.
+
+;; Add this function to `after-save-hook' to make it happen automatically when
+;; you save elisp code.  This can be a life-saver; there's nothing more annoying
+;; than fixing a bug using the interactive interpreter, then seeing a regression
+;; the next time you run emacs because you forgot to compile your code."
+;;   (if (elisp-file-p)
+;;       (byte-compile-file buffer-file-name)))
+
+;; ;; Disabled to speed up development cycle.  I've gotten in the habit of
+;; ;; compiling, so the above isn't such an issue anymore.
+;; ;;(add-hook 'after-save-hook 'byte-compile-if-elisp-file)
+
+
+
+
+
+
+;; (defun perlnow-toggle-between-module-and-test ()
+;;   "If the current buffer contains a Perl module, switch to its associated test;
+;;    if the current buffer is a test, switch to its associated Perl module."
+;;   (interactive)
+;;   (cond ((and (symbolp 'perlnow-associated-code) perlnow-associated-code)
+;;          (perlnow-back-to-code))
+           
+;;         ((string-match "\\.t$" buffer-file-name)
+;;          (error "This test file is missing a module"))
+
+;;         ('t
+;;          (perlnow-edit-test-file (perlnow-get-test-file-name)))))
+
+;; (defun perlnow-debug (run-string)
+;;   "Run the perl debugger on this file (or its associated .pl or test file).
+
+;;   To determine the file to run, this function uses the same
+;;   algorithm as the rest of perlnow:  If `perlnow-run-string'
+;;   is set, it uses that; otherwise, it prompts for a value
+;;   by calling \\[perlnow-set-run-string] THEEND."
+;;   (interactive
+;;     ; This code was lifted from the function perlnow-run in perlnow.el
+;;     (let (input)
+;;       (if (eq perlnow-run-string nil)
+;;           (setq input (perlnow-set-run-string))
+;;           (setq input perlnow-run-string))
+;;       (list input)))
+;;   ; End lifted code
+
+;;   (perldb run-string))
+
+;; ;;;;;;;;;;;;;;;;;;
+;; ;; Coding:  Python
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/python-mode"))
+;; (require 'python-mode)
+
+;; ;;;;;;;;;;;;;;;;;;
+;; ;; Coding: Ruby
+
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/pabbrev"))
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/mmm-mode"))
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/ruby-elisp"))
+;; (require 'ruby-mode)
+;; (require 'pabbrev)
+;; (require 'mmm-mode)
+;; (setq mmm-global-mode 'maybe)
+
+;; ;; Ruby debugger
+;; ;; Not installed by default. Upgrade to Emacs 22 to get it, or use emacsmirror?
+;; ;; (require 'rdebug)
+
+;; (setq ruby-indent-level 2)
+
+;; (autoload 'run-ruby "inf-ruby"
+;;   "Run an inferior Ruby process")
+;; (autoload 'inf-ruby-keys "inf-ruby"
+;;   "Set local key defs for inf-ruby in ruby-mode")
+;; (add-hook 'ruby-mode-hook '(lambda () (inf-ruby-keys)))
+
+;; (add-hook
+;;  'ruby-mode-hook
+;;  (lambda ()
+;;    (local-set-key [return] 'ruby-reindent-then-newline-and-indent))
+;;  't
+;; )
+
+;; ; (defun ruby-eval-buffer ()
+;; ;   (interactive)
+;; ;   "Evaluate the buffer with ruby"
+;; ;   (shell-command-on-region (point-min) (point-max) "ruby"))
+  
+;; ;;;;;;;;;;;;;;;;;;
+;; ;; Coding:  SQL
+
+;; ; The variables sql-user and sql-password do not play properly
+;; ; with postgres.  Instead, you have to specify them in
+;; ; sql-postgres-options (you may use ~/.pgpass for the
+;; ; password, which I have elected to do here).
+;; (setq sql-user "build")
+;; (setq sql-database "")
+;; (setq sql-host "")
+;; (setq sql-postgres-options '("-U" "build" "pager=off"))
+
+;; ;;;;; Some databases
+;; ;; The local sqlite database for Tracks (my GTD system)
+;; ;(setq sql-sqlite-program "sqlite3")
+;; ;(setq sql-database (expand-file-name "~/tracks/db/tracks-104.db"))
+
+;; ;; (add-hook 'sql-mode-hook
+;; ;;           (lambda ()
+;; ;;             ;; sql-indent doesn't do what I want it to do (its regexes are too limited).
+;; ;;             ;; Must I hack it, or can I find something better out there?
+;; ;;             (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/sql-indent"))
+;; ;;             (require 'sql-indent)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;; Coding:  XML (and SGML)
+
+;; ;; Disable sgml-mode and James Clark's nxml-mode; instead, use psgml-mode,
+;; ;; which supports code-folding. :)
+;; ;(autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t)
+;; ;(autoload 'xml-mode "psgml" "Major mode to edit XML files." t)
+
+;; ;;;;;;;;;;;;;;;;
+;; ;; Coding:  YAML
+
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/yaml-mode/trunk"))
+;; (require 'yaml-mode)
+;; (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
+
+;; ;; Indent four spaces
+;; (setq yaml-indent-offset 4)
+
+;; ;; When I hit enter, auto-indent the next line.
+;; (add-hook 'yaml-mode-hook
+;;           '(lambda ()
+;;              (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
+
+;; (custom-set-faces
+;;   ;; custom-set-faces was added by Custom.
+;;   ;; If you edit it by hand, you could mess it up, so be careful.
+;;   ;; Your init file should contain only one such instance.
+;;   ;; If there is more than one, they won't work right.
+;;  '(tool-bar ((t (:background "darkslategray")))))
+
+;; ;; (maximize-vertically)
+
+;; ;; for compatibility with older Aquamacs versions
+;; (defvar aquamacs-140-custom-file-upgraded t)
+;; (unless (fboundp 'auto-detect-longlines) (defun auto-detect-longlines () t))
