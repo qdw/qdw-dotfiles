@@ -20,13 +20,28 @@ run_gpg_agent_idempotently() {
     fi
 }
 
-# ssh-agent(1)
-# run_ssh_agent_idempotently() {
-#     if test -z "$SSH_AUTH_SOCK" -a -x "$SSHAGENT"; then
-#         ssh-agent
-#         trap "kill $SSH_AGENT_PID" 0
-#     fi
-# }
+# ssh-agent(1).
+SSH_ADD=~/.homebrew/bin/ssh-add
+SSH_AGENT=~/.homebrew/bin/ssh-agent
+SSH_ENV="$HOME/.ssh/environment"
+
+function start_agent {
+     $SSH_AGENT | sed 's/^echo/#echo/' > "${SSH_ENV}"
+     chmod 600 "${SSH_ENV}"
+     . "${SSH_ENV}" > /dev/null
+     $SSH_ADD;
+}
+
+run_ssh_agent_idempotently() {
+    if [ -f "${SSH_ENV}" ]; then
+        . "${SSH_ENV}" > /dev/null
+        ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+            start_agent;
+        }
+    else
+        start_agent;
+    fi
+}
 
 # Subversion server. I used to have to run this for some clients.
 #

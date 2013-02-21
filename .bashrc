@@ -518,9 +518,9 @@ fi
 ########################## 
 
 # Load functions for running several daemons.
-if source ~/.bashrc.d/daemons.sh; then
-    # gpg-agent is the only daemon I still use, though.
+if source ~/.bashrc.d/daemons.bash; then
     run_gpg_agent_idempotently
+    run_ssh_agent_idempotently
 fi
 
 ##########################
