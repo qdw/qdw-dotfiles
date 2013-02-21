@@ -1,120 +1,41 @@
-# For the benefit of emacs users: -*- shell-script -*-
+# Setting emacs mode... -*- shell-script -*-
 ###########################
 # xbindkeys configuration #
 ###########################
-#
-# Version: 1.7.2
-#
-# If you edit this file, do not forget to uncomment any lines
-# that you change.
-# The pound(#) symbol may be used anywhere for comments.
-#
+
+# Adapted from the Ubuntu boilerplate
+# Originally edited circa 2007
+# Edited 2013-02-20
+
+##########
+# Preamble (mostly boilerplate)
+##########
+
 # To specify a key, you can use 'xbindkeys --key' or
 # 'xbindkeys --multikey' and put one of the two lines in this file.
-#
+# 
 # The format of a command line is:
 #    "command to start"
 #       associated key
-#
-#
+# 
 # A list of keys is in /usr/include/X11/keysym.h and in
 # /usr/include/X11/keysymdef.h
 # The XK_ is not needed.
-#
-# List of modifier:
+# 
+# List of modifiers:
 #   Release, Control, Shift, Mod1 (Alt), Mod2 (NumLock),
 #   Mod3 (CapsLock), Mod4, Mod5 (Scroll).
-#
-
+# 
 # The release modifier is not a standard X modifier, but you can
-# use it if you want to catch release events instead of press events
-
-# By defaults, xbindkeys does not pay attention with the modifiers
+# use it if you want to catch release events instead of press events.
+#
+# By default, xbindkeys does not pay attention to the modifiers
 # NumLock, CapsLock and ScrollLock.
-# Uncomment the lines above if you want to pay attention to them.
-
+# Uncomment these lines above if you want to pay attention to them:
 #keystate_numlock = enable
 #keystate_capslock = enable
 #keystate_scrolllock= enable
-
-"/usr/bin/kopete"
-    F1
-
-"/usr/bin/konsole"
-    F4
-
-"/usr/bin/konsole -e /usr/bin/ssh fu.funkspiel.org"
-    F6
-
-# rxvt starts up instantly, while konsole has a slight but annoying delay.
-# On the other hand, konsole has an actual config GUI and Xft fonts.
 #
-# Ultimately the right solution is to use an Xft-enabled rxvt fork
-# like rxvt-unicode.  However, I've had trouble getting rxvt-unicode to
-# recognize my Xft fonts, so I'm sticking to konsole for now.
-
-"/usr/bin/vncviewer -passwd ~/.vnc/passwd 192.168.0.103"
-    F9
-
-"/usr/bin/firefox -P Safari -no-remote"
-    F11
-
-"/usr/bin/firefox -P default"
-    F12
-
-"/usr/bin/dcop amarok player prev"
-    Alt + Left
-
-"/usr/bin/dcop amarok player next"
-    Alt + Right
-
-"/usr/bin/dcop amarok player volumeDown"
-    Alt + Down
-
-"/usr/bin/dcop amarok player volumeUp"
-    Alt + Up
-
-# Toggle between playing and pausing amarok.  Muy conveniente.
-"/usr/bin/dcop amarok player playPause"
-    Alt + period
-
-# Ever since IBM replaced my subcard, this doesn't work; the
-# keyboard and mouse are hosed on resume.  (However, KDE's laptop support
-# works fine; I can set it to suspend when I close the lid, and it
-# resumes properly.)  WTF?
-#"/usr/bin/sudo /home/quinn/bin/s2ram"
-#    Control + 0
-
-"/usr/bin/Eterm"
-    Control + 2
-
-"/usr/bin/konsole"
-    Control + 3
-
-"/usr/bin/twinkle"
-    Control + 5
-
-"/usr/bin/killall kwalletmanager; /usr/bin/kwalletmanager --show"
-    Control + 9
-
-"/usr/bin/dcop kdesktop KDesktopIface popupExecuteCommand"
-    Control + period
-
-"/usr/bin/env --unset HTTP_PROXY --unset http_proxy /usr/bin/kdesu /usr/bin/adept_manager"
-    Control + shift + a
-
-"/usr/bin/sudo /etc/init.d/tor restart"
-    Control + shift + r
-
-"/home/quinn/bin/restart_catalyst_server"
-    Control + shift + l
-
-"emacs"
-    Control + i
-
-"/usr/bin/amarok"
-    Control + m
-
 # Examples of commands:
 #
 #"xbindkeys_show" 
@@ -142,6 +63,112 @@
 ## Control + mouse button 2 release event starts rxvt
 #"rxvt"
 #  Control + b:2 + Release
+
+
+######
+# Apps
+######
+
+# Kopete, the KDE IM client
+"/usr/bin/kopete"
+    F1
+
+# Twinkle, a KDE SIP client
+"/usr/bin/twinkle"
+    Control + 5
+
+# Firefox with various profiles
+"/usr/bin/firefox -P Safari -no-remote"
+    F11
+"/usr/bin/firefox -P default"
+    F12
+
+
+
+####################
+# Terminal emulators
+####################
+# 
+# Which terminal emulator to use?
+# 
+# rxvt starts up instantly, while konsole has a slight but annoying delay.
+# On the other hand, konsole has an actual config GUI and supports Xft fonts.
+# 
+# Ultimately the right solution is to use an Xft-enabled rxvt fork
+# like rxvt-unicode.  However, I've had trouble getting rxvt-unicode to
+# recognize my Xft fonts, so I'm sticking to konsole for now.
+#
+# Edited 2013-02-20: Ugh, I can't believe I wrote the preceding paragraph.
+# It's nonsense like this that made me switch to OS X.
+
+# Konsole, a KDE terminal emulator
+"/usr/bin/konsole"
+    F4
+
+# Eterm, a fast and flashy terminal emulator.
+"/usr/bin/Eterm"
+    Control + 2
+
+################
+# Control Amarok, the KDE music player:
+################
+
+# Previous track
+"/usr/bin/dcop amarok player prev"
+    Alt + Left
+
+# Next track
+"/usr/bin/dcop amarok player next"
+    Alt + Right
+
+# Turn the volume down a notch
+"/usr/bin/dcop amarok player volumeDown"
+    Alt + Down
+
+# Turn the volume up a notch
+"/usr/bin/dcop amarok player volumeUp"
+    Alt + Up
+
+# Toggle between playing and pausing.
+"/usr/bin/dcop amarok player playPause"
+    Alt + period
+
+#######
+# Sleep
+#######
+
+# Ever since IBM replaced my subcard, this doesn't work; the
+# keyboard and mouse are hosed on resume.  (However, KDE's laptop support
+# works fine; I can set it to suspend when I close the lid, and it
+# resumes properly.)
+# 
+# Edited 2013-02-20: again, I can't believe the stuff I put up with
+# back when I was using Linux.
+# 
+#"/usr/bin/sudo /home/quinn/bin/s2ram"
+#    Control + 0
+
+
+"/usr/bin/killall kwalletmanager; /usr/bin/kwalletmanager --show"
+    Control + 9
+
+"/usr/bin/dcop kdesktop KDesktopIface popupExecuteCommand"
+    Control + period
+
+"/usr/bin/env --unset HTTP_PROXY --unset http_proxy /usr/bin/kdesu /usr/bin/adept_manager"
+    Control + shift + a
+
+"/usr/bin/sudo /etc/init.d/tor restart"
+    Control + shift + r
+
+"/home/quinn/bin/restart_catalyst_server"
+    Control + shift + l
+
+"emacs"
+    Control + i
+
+"/usr/bin/amarok"
+    Control + m
 
 ##################################
 # End of xbindkeys configuration #

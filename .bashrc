@@ -106,7 +106,7 @@ ELISP_INFOPATH=~/.elisp/tramp/install/share/info
 #####################
 # My own utility code (~/bin et cetera)
 #####################
-PERSONAL_PATH=~/bin
+PERSONAL_PATH=~/bin:~/src/continuous
 PERSONAL_PERL5LIB=~/perl5lib
 
 # OK, now assemble PATH, MANPATH et cetera from the above-specified paths.
@@ -177,14 +177,14 @@ source $VIRTUALENVWRAPPER_SCRIPT # adds a delay of several seconds. :(
 WORKON_HOME=~/.virtualenvs
 MKVE_OPTS='--no-site-packages'
 
-# mkve-2.6: make a Python 2.6 virtualenv.
-mkve-2.6() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@" ;}
+# mkve26: make a Python 2.6 virtualenv.
+mkve26() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@" ;}
 
-# mkve-2.7: make a Python 2.7 virtualenv.
-mkve-2.7() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@" ;}
+# mkve27: make a Python 2.7 virtualenv.
+mkve27() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@" ;}
 
-# mkve-3: make a Python 3.3 virtualenv.
-# mkve-3() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@" ;}
+# mkve3: make a Python 3.3 virtualenv.
+# mkve3() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@" ;}
 
 # qt_designer, for writing PyQt apps
 qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
@@ -250,7 +250,7 @@ fi
 # fi
 
 # Git
-source ~/git-completion.bash
+source ~/.git-completion.bash
 
 #####
 # FTP
@@ -331,7 +331,7 @@ pq() {
 
 # For some asinine reason, psql doesn't listen to options when I specify
 # them in ~/.psqlrc, so I'm just aliasing it to change its behavior.
-alias psql="PGOPTIONS='--client-min-messages=warning' psql --quiet -x"
+alias psql="PGOPTIONS='--client-min-messages=warning' $(which psql) --quiet -x"
 
 # grep, excluding (D)VCS metadata and other metadata. # FIXME: implement in one grep command, not a pipeline, so that I don't have to wait for the whole thing to complete before I start seeing output.
 vrep() {
@@ -369,7 +369,10 @@ ec() { emacsclient "$@" ;}
 # ew /PATH ("edit which"): find a program in $PATH and edit it.
 ew() { ec `which $1` ;}
 
-# fd SUBSTRING: find file by (name) substring. This is my common find(1) usage.
+# fn SUBSTRING: find a file by case-insens name (my common find(1) case)
+fn() { STAR='*'; find $1 -iname "${STAR}${2}${STAR}" ;}
+
+# fd SUBSTRING: find file by (name) substring (next common find(1) usage).
 fd() { find . -type d -name "*${1}*" ;}
 
 # ffind *: find, excluding (D)VCS metadata and other metadata.
@@ -429,7 +432,17 @@ kindle() {
     scp "$@" $MOBI_PATH $ADIR/
 }
 
-# ls, always print one column, even if there are few files. It's easier to scan.
+# Some Red Hat versions alias ls='ls --color=auto' in /etc/profile. That's bad!
+# It causes the following unexpected behavior:
+#
+#    bash$ touch filename
+#    bash$ chmod 400 $_
+#    chmod: unrecognized option '--color=auto'
+#
+# unalias ls so that doesn't happen.
+unalias ls
+
+# ls: always print one column, even if there are few files. It's easier to scan.
 alias ls='ls -1F' # Must be written as an alias; a shell function would recurse.
 
 # lsl *: list files by mtime, with permissions and ownership. I do this a lot.
@@ -452,6 +465,18 @@ pb() { perlbrew "$@" ;}
 
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
 title() { echo -ne "\033]2;" $1 "\007" ;}
+
+# tc $SESSION_NAME ("tmux connect"): connect to an existing tmux session.
+tc() { tmux -2 attach-session -t $1 ;}
+
+# ta $SESSION_NAME ("tmux attach"): alias for tc(), which see.
+alias ta=tc
+
+# tls ("tmux list"): list running tmux sessions.
+tls() { tmux list-sessions ;}
+
+# tl: alias for tls, so I don't have to do all that extra typing!
+alias tl=tls
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
 tor_wget() {
@@ -483,9 +508,9 @@ xb() { killall --user $USER xbindkeys && xbindkeys ;}
 
 OS=$(uname)
 if [[ $OS = Darwin ]]; then
-    source ~/dotfiles/.bashrc.d/unixes/os-x/any-os-x.sh
+    source ~/.bashrc.d/unixes/os-x/any-os-x.sh
 elif [[ $OS = Linux ]]; then
-    source ~/dotfiles/.bashrc.d/unixes/linux/any-linux.sh
+    source ~/.bashrc.d/unixes/linux/any-linux.sh
 fi
 
 ########################## 
@@ -493,22 +518,16 @@ fi
 ########################## 
 
 # Load functions for running several daemons.
-if source ~/dotfiles/.bashrc.d/daemons.sh; then
+if source ~/.bashrc.d/daemons.sh; then
     # gpg-agent is the only daemon I still use, though.
     run_gpg_agent_idempotently
 fi
-
-##################
-# Password storage
-##################
-
-source ~/dotfiles/key-corto/key-corto.sh
 
 ##########################
 # Client-specific settings
 ##########################
 
-source ~/.bashrc--chop
+source ~/.bashrc--client-0
 
 prp() { cd ~/tig/ddl/corp/functions ;}
 
@@ -516,4 +535,6 @@ pr() {
     prp && pg_prove -U postgres -d corp_schema tests/*.sql
 }
 
-DESIRED_RAM_DISK_SIZE=256
+if [[ -f ~/.bashrc--personal ]]; then
+    source ~/.bashrc--personal
+fi

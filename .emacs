@@ -327,7 +327,7 @@
 (desktop-read "~")
 
 ;; Accept files sent to us via emacsclient. FIXME: use gnuclient instead.
-(server-start nil)
+(server-start 't)
 ;; Automatically save files from emacsclient when I close them.
 (set 'server-temp-file-regexp ".") ; i.e. match all files.
 
@@ -441,19 +441,8 @@
 ;; just do it.
 (setq-default vc-follow-symlinks 't)
 
-;;;;;;;;;;;;;;;;;;;
 ;; Coding: general
-
-;; Don't color my syntax.
-(global-font-lock-mode -1)
-
-(setq-default indent-tabs-mode nil)
-
-;FIXME:  Do this in text mode only?
-(auto-fill-mode 0)
-
-;; Automatically make scripts executable when saving them.
-(add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+(use-module "coding-general")
 
 ;; Coding:  Apache config files
 (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/apache-mode"))
@@ -588,9 +577,7 @@ the next time you run emacs because you forgot to compile your code."
   (if (elisp-file-p)
       (byte-compile-file buffer-file-name)))
 
-;; Disabled to speed up development cycle.  I've gotten in the habit of
-;; compiling, so the above isn't such an issue anymore.
-;;(add-hook 'after-save-hook 'byte-compile-if-elisp-file)
+(add-hook 'after-save-hook 'byte-compile-if-elisp-file)
 
 (defvar running-xemacs (string-match "XEmacs\\|Lucid" emacs-version))
 
@@ -640,8 +627,7 @@ the next time you run emacs because you forgot to compile your code."
 
 ;;;;;;;;;;;;;;;;;;
 ;; Coding:  Python
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/python-mode"))
-(require 'python-mode)
+(use-module "python")
 
 ;;;;;;;;;;;;;;;;;;
 ;; Coding: Ruby

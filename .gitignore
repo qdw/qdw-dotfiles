@@ -7,4 +7,15 @@
 # OpenOffice lock files (for when you commit a file that's open in OOo)
 .~lock.*odt#
 
+# PyCharm project files
+.idea
+
+# Stuff ~/dotfiles should ignore (temporarily). Don't mess with this.
 key-corto
+
+# Compiled objects
+.pyc .elc .o
+
+# Quinn's special off-the-record notes-to-self. Nonsensical to others.
+DEVELOPER-NOTES
+

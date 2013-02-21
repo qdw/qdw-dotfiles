@@ -1,5 +1,0 @@
-# DEPRECATED. Don't use pythonbrew to build Python; use Homebrew
-# instead. Homebrew is more actively maintained.
-
-# Initialize pythonbrew.
-[[ -s $HOME/.pythonbrew/etc/bashrc ]] && source $HOME/.pythonbrew/etc/bashrc

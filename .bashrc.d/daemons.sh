@@ -20,6 +20,14 @@ run_gpg_agent_idempotently() {
     fi
 }
 
+# ssh-agent(1)
+# run_ssh_agent_idempotently() {
+#     if test -z "$SSH_AUTH_SOCK" -a -x "$SSHAGENT"; then
+#         ssh-agent
+#         trap "kill $SSH_AGENT_PID" 0
+#     fi
+# }
+
 # Subversion server. I used to have to run this for some clients.
 #
 # It uses one of two ports, depending on how you run it:
