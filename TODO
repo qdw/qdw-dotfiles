@@ -1,5 +1,6 @@
 - Fix run_ssh_agent_idempotently in .bashrc.d/daemons.sh
 - Rename all .sh files to .bash files
+- Get INSTALL.bash working
 - Figure out if perlbrew has a way of switching MANPATHs. If not, roll my own
 - Fix .emacs.d and .elisp (cf. ~)
 - Move key-corto into its own separate project (again!)
