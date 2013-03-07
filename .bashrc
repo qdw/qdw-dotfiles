@@ -439,8 +439,9 @@ kindle() {
 #    bash$ chmod 400 $_
 #    chmod: unrecognized option '--color=auto'
 #
-# unalias ls so that doesn't happen.
-unalias ls
+# unalias ls (in case it's aliased) so that doesn't happen.
+# Ignore errors complaining that it isn't aliased.
+unalias ls 2>/dev/null
 
 # ls: always print one column, even if there are few files. It's easier to scan.
 alias ls='ls -1F' # Must be written as an alias; a shell function would recurse.
@@ -466,16 +467,19 @@ pb() { perlbrew "$@" ;}
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
 title() { echo -ne "\033]2;" $1 "\007" ;}
 
-# tc $SESSION_NAME ("tmux connect"): connect to an existing tmux session.
-tc() { tmux -2 attach-session -t $1 ;}
+# tan $SESSION_NAME (Tmux Attach New): create a named session and attach to it.
+tan() { tn $1 && ta $1 ;}
 
-# ta $SESSION_NAME ("tmux attach"): alias for tc(), which see.
-alias ta=tc
+# tn $SESSION_NAME (Tmux New-session): create a new, named tmux session.
+tn() { tmux new-session -d -s $1 -n $1 ;}
 
-# tls ("tmux list"): list running tmux sessions.
+# ta $SESSION_NAME ("Tmux Attach"): connect to an existing tmux session.
+ta() { tmux attach-session -t $1 ;}
+
+# tls ("Tmux List"): list running tmux sessions.
 tls() { tmux list-sessions ;}
 
-# tl: alias for tls, so I don't have to do all that extra typing!
+# tl: alias for tls, so I don't have to do all that tiresome extra typing!
 alias tl=tls
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
