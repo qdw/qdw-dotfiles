@@ -473,8 +473,12 @@ tan() { tn $1 && ta $1 ;}
 # tn $SESSION_NAME (Tmux New-session): create a new, named tmux session.
 tn() { tmux new-session -d -s $1 -n $1 ;}
 
-# ta $SESSION_NAME ("Tmux Attach"): connect to an existing tmux session.
-ta() { tmux attach-session -t $1 ;}
+# ta $SESSION_NAME ("Tmux Attach"): attach to named session, creating if needed.
+ta() {
+    tmux has-session -t $1
+    if [[ $? -ne 0 ]]; then tmux new-session -d -s $1 -n $1; fi
+    tmux -2 attach-session -t $1
+}
 
 # tls ("Tmux List"): list running tmux sessions.
 tls() { tmux list-sessions ;}

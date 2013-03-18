@@ -30,7 +30,7 @@
 
 ;; When I split a buffer (C-x 2), don't start both new buffers at the top
 ;; of the file; just split the buffer in half along the viewport boundary.
-(load-file (expand-file-name "~/.emacs.d/elisp/slowsplit/slowsplit.elc"))
+;; (load-file (expand-file-name "~/.emacs.d/elisp/slowsplit/slowsplit.elc"))
 
 
 ;; FIXME:  Figure out why M-s doesn't work right in text buffers, and fix;
@@ -87,7 +87,7 @@
  '(custom-file "~/.emacs")
  '(default-frame-alist (width . 80))
  '(default-input-method "greek-babel")
- '(desktop-load-locked-desktop t)
+;; '(desktop-load-locked-desktop t)
  '(fill-column 78)
  '(font-lock-maximum-decoration ((shell-mode nil) (t . t)))
  '(global-font-lock-mode nil)
@@ -234,6 +234,11 @@
 ;;
 ;; I use this to clear the minibuffer when I want to find a file in
 ;; my home directory, not in the current working directory.
+;; Keyboard shortcuts
+(global-set-key "\C-ci" 'indent-region)
+(global-set-key "\C-cc" 'comment-region)
+(global-set-key "\C-cu" 'uncomment-region)
+(global-set-key "\M-5"  'query-replace-regexp)
 (global-set-key "\C-u" (lambda ()
                          (interactive)
                          (if (string-match "^23" emacs-version)
@@ -283,11 +288,6 @@
             (process-kill-without-query (get-process "shell"))))
 
 (global-unset-key "\M-t") ; Prevent accidental damage when I meant to hit M-r
-(global-set-key '[f1]   'perlnow-object-module)
-(global-set-key '[f2]   'perlnow-edit-test-file)
-(global-set-key '[f2]   'perlnow-toggle-between-module-and-test)
-(global-set-key '[f3]   'perlnow-module)
-(global-set-key '[f4]   'perlnow-script)
 
 ;; Use C-o to switch windows; the default C-x o is too cumbersome,
 ;; and the default binding for C-o just inserts a newline,
@@ -316,15 +316,15 @@
 
 ;; Restore state (files, positions in files) from my last session.
 
-; Work around a bug in desktop.el where it thinks the desktop file is
-; locked because this very emacs instance is using it(!)  The workaround
-; is always to load without prompting, even when the desktop appears
-; to be locked.  (Bug still exists as of CVS revision 1.125 of desktop.el.)
+;; ; Work around a bug in desktop.el where it thinks the desktop file is
+;; ; locked because this very emacs instance is using it(!)  The workaround
+;; ; is always to load without prompting, even when the desktop appears
+;; ; to be locked.  (Bug still exists as of CVS revision 1.125 of desktop.el.)
 
-(add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/desktop"))
-(load "desktop")
-(desktop-save-mode 1)
-(desktop-read "~")
+;; (add-to-list 'load-path (expand-file-name "~/.emacs.d/elisp/desktop"))
+;; (load "desktop")
+;; (desktop-save-mode 1)
+;; (desktop-read "~")
 
 ;; Accept files sent to us via emacsclient. FIXME: use gnuclient instead.
 (server-start 't)
