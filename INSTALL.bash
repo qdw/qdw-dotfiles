@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
 
 # Install only some dotfiles by default - not all.
-DEFAULTS='.bashrc .bashrc.d .bash_logout .git-completion.bash .gitconfig .gitignore .psqlrc .psqlrc-9.2 .tmux.conf'
+FILES_TO_INSTALL='
+.bashrc
+.bashrc.d
+.bash_logout
+.git-completion.bash
+.gitconfig
+.gitignore
+.newsbeuter
+.psqlrc
+.psqlrc-9.2
+.tmux.conf'
 
-DIR=`pwd`
-cd
-for DOTFILE in $DEFAULTS; do
-    ln -s $DIR/$DOTFILE .
+for DOTFILE in $FILES_TO_INSTALL; do
+    COMMAND="ln -sf ~/dotfiles/$DOTFILE ~"
+    echo "*Not* running command '$COMMAND'"    
 done
-cd -
 
-# Special case: ~/.ssh/config must go in a directory with the write permissions,
+# Special case: ~/.ssh/config must go in a directory with the right permissions
 # and it must be copied, not symlinked. These requirements prevent exploits.
 mkdir -p ~/.ssh
 chmod 0700 ~/.ssh
-cp $DIR/.ssh/config ~/.ssh/config
+cp ~/dotfiles/.ssh/config ~/.ssh/config
 chmod 600 ~/.ssh/config

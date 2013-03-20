@@ -19,7 +19,6 @@
 (blink-cursor-mode 0)                ;; Solid cursor (blinking is distracting).
 (setq-default cursor-type 'box)      ;; Box cursor (line is too hard to see).
 (setq column-number-mode nil)        ;; Turn off col num display (distracting).
-(setq fill-column 79)                ;; Wrap at 79 columns (per PEP 8).
 (setq global-font-lock-mode nil)     ;; Stop junking up my display with colors.
 (setq font-lock-maximum-decoration '((t nil))) ;; Only minimal syntax coloring.
 (setq inhibit-startup-screen 't)     ;; No GNU spam.
