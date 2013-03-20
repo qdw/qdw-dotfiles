@@ -189,6 +189,8 @@ mkve27() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/b
 # qt_designer, for writing PyQt apps
 qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
 
+alias rss=newsbeuter
+
 # ve: short for 'virtualenv'
 ve() { virtualenv "$@" ;}
 
@@ -215,7 +217,7 @@ if [[ $RUNNING_UNDER_EMACS ]]; then # this var is set by ~/.emacs.d/init_bash.sh
     PS1='$(__git_ps1 "[%s] ")\u@\h:\w\$ '
 
     # Pagers don't work. Use cat(1) instead of less(1).
-    PAGER=cat; GIT_PAGER=$PAGER
+    PAGER=cat; GIT_PAGER=$PAGER; ACK_PAGER=$PAGER
 
     # emacsclient *does* work, so use that.
     EDITOR=emacsclient; VISUAL=$EDITOR
@@ -235,7 +237,7 @@ else
 
     # Use my favorite pager and pager options.
     LESS='--quit-if-one-screen --RAW-CONTROL-CHARS --no-init'
-    PAGER=less; GIT_PAGER=$PAGER
+    PAGER=less; GIT_PAGER=$PAGER; ACK_PAGER=$PAGER
 
     # Use vi for quick edits inside this terminal window.
     EDITOR=vi; VISUAL=$EDITOR
@@ -345,6 +347,8 @@ vrep() {
 
 # aa graceful|start|...: because typing 'sudo apache2ctl' is too much work.
 aa() { sudo apache2ctl "$@" ;}
+
+alias atom=newsbeuter
 
 # cl FILE.el ("compile LISP"): byte-compile an emacs LISP file.
 cl() { emacs -nw -q -batch -f batch-byte-compile "$@" ;}
