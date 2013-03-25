@@ -107,6 +107,9 @@ ELISP_INFOPATH=~/.elisp/tramp/install/share/info
 # My own utility code (~/bin et cetera)
 #####################
 PERSONAL_PATH=~/bin:~/src/continuous
+if [[ $OS = 'Darwin' ]]; then
+    PERSONAL_PATH=~/bin/mac:$PERSONAL_PATH
+fi
 PERSONAL_PERL5LIB=~/perl5lib
 
 # OK, now assemble PATH, MANPATH et cetera from the above-specified paths.
@@ -148,6 +151,7 @@ source $PERLBREW_ROOT/etc/bashrc
 # In grep (1) output, highlight matches, line numbers, et cetera
 # iff the terminal supports colors.
 GREP_COLORS=auto
+GREP_COLOR=$GREP_COLORS # deprecated
 
 # Make Module::Install auto-follow dependencies. cpanm sets this by default,
 # but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
@@ -212,33 +216,32 @@ set -a
 ###################
 if [[ $RUNNING_UNDER_EMACS ]]; then # this var is set by ~/.emacs.d/init_bash.sh
     # Emacs shell-mode is a dumb terminal, so don't use advanced features:
-
+    
     # ANSI colors don't work. Use a non-color shell prompt.
     PS1='$(__git_ps1 "[%s] ")\u@\h:\w\$ '
-
+    
     # Pagers don't work. Use cat(1) instead of less(1).
     PAGER=cat; GIT_PAGER=$PAGER; ACK_PAGER=$PAGER
-
+    
     # emacsclient *does* work, so use that.
     EDITOR=emacsclient; VISUAL=$EDITOR
 else
     # Other terminals can do fancier stuff:
-
-
+    
     # Set the window title to the name of the current process.
     ## Agh, this doesn't work. PROMPT_COMMAND doesn't get executed when I wish
-    ## it would.  See http://www.ibiblio.org/pub/Linux/docs/HOWTO/Xterm-Title,
-    ## particularly the section on zsh's precmd() hook.
+    ## it would (bash can't do this, but zsh's precmd() hook can.
+    ## See http://www.ibiblio.org/pub/Linux/docs/HOWTO/Xterm-Title
     ## PROMPT_COMMAND='echo -ne    "\033]2;"   $(ps uxwc | grep $$ | awk "{ print \$11 }")   "\007"'
-
+    
     # Color the shell prompt slate blue (to distinguish commands from output).
     # If I'm on a git branch, preend the branch name in purple.
     PS1='\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\w\$\[\e[0m\] '
-
+    
     # Use my favorite pager and pager options.
     LESS='--quit-if-one-screen --RAW-CONTROL-CHARS --no-init'
     PAGER=less; GIT_PAGER=$PAGER; ACK_PAGER=$PAGER
-
+    
     # Use vi for quick edits inside this terminal window.
     EDITOR=vi; VISUAL=$EDITOR
 fi
@@ -295,34 +298,10 @@ newpassword_mac() { apg -n 1 -a 1 -M nc -m 12 -x 12 -E GHIJKLMNOPQRSTUVWXYZ | xa
 
 # Display all processes, in a style that I like.
 # If an argument is given, display only those that match that regex.
-p() {
-    A_COMMAND="ps auxww | grep -v grep"
-    if [[ $1 ]]; then
-	A_COMMAND="$A_COMMAND | grep $1"
-    fi
+p() { ps aux | grep -v grep | grep "$@" --color=auto ;}
 
-    eval "$A_COMMAND"
-}
-
-# Display my processes, except the ones attached to this tty.
-# If an argument is given, display only those that match that regex.
-pu() {
-    OS=`uname -s`
-
-    if   [[ $OS == 'Linux' ]]; then 
-        THIS_TTY=`tty | sed -e 's/\/dev\///'`
-    elif [[ $OS == 'Darwin' ]]; then
-        THIS_TTY=`tty | sed -e 's/\/dev\/tty//'` #FIXME: wrong regex!
-    fi
-    
-    COMMAND="p $USER | grep -v $THIS_TTY"
-
-    if [[ $1 ]]; then
-	COMMAND="$COMMAND | grep $1"
-    fi
-
-    eval "$COMMAND"
-}
+# Display my processes.
+pu() { p $USER ;}
 
 # grep the list of processes, but don't show any output.
 # This is useful for non-interactive functions that just need
@@ -459,6 +438,9 @@ lw() { perldoc -l "$1" ;}
 # elw Perl::Module, elw Perl/Module.pm ("edit library which"): find a perl module in PER5LIB and open it in EDITOR. #FIXME: test behavior.
 # elw() { $EDITOR $(lw "$@") ;}
 
+# serve: shares all the files in the current folder over HTTP, port 8080
+serve() { python -m SimpleHTTPServer 8080 ;}
+
 # start_mysql: I use MySQL seldom and forget its asymmetric start/stop commands.
 start_mysql() { mysql.server ;}
 
@@ -467,6 +449,12 @@ stop_mysql() { mysqladmin5 -u root -p shutdown ;}
 
 # pb *: because typing 'perlbrew' is too much work.
 pb() { perlbrew "$@" ;}
+
+# sw: switch to a shorter bash prompt (for when I'm in dirs with long paths).
+alias sw='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\W\$\[\e[0m\] "'
+
+# sww: switch back to a longer bash prompt.
+alias sww='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\w\$\[\e[0m\] "'
 
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
 title() { echo -ne "\033]2;" $1 "\007" ;}
@@ -489,6 +477,8 @@ tls() { tmux list-sessions ;}
 
 # tl: alias for tls, so I don't have to do all that tiresome extra typing!
 alias tl=tls
+
+top() { echo "Don't use top; use htop instead." ;}
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
 tor_wget() {

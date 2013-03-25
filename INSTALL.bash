@@ -8,6 +8,7 @@ FILES_TO_INSTALL='
 .git-completion.bash
 .gitconfig
 .gitignore
+.inputrc
 .newsbeuter
 .psqlrc
 .psqlrc-9.2

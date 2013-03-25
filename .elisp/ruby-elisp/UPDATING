@@ -1,2 +1,0 @@
-svn co http://rel.rubyforge.org/svn/
-ln -sf svn/trunk* .
