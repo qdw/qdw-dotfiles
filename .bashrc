@@ -150,8 +150,7 @@ source $PERLBREW_ROOT/etc/bashrc
 
 # In grep (1) output, highlight matches, line numbers, et cetera
 # iff the terminal supports colors.
-GREP_COLORS=auto
-GREP_COLOR=$GREP_COLORS # deprecated
+alias grep='grep --color=auto'
 
 # Make Module::Install auto-follow dependencies. cpanm sets this by default,
 # but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
@@ -193,7 +192,7 @@ mkve27() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/b
 # qt_designer, for writing PyQt apps
 qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
 
-alias rss=newsbeuter
+rss() { newsbeuter "$@" ;}
 
 # ve: short for 'virtualenv'
 ve() { virtualenv "$@" ;}
@@ -327,7 +326,7 @@ vrep() {
 # aa graceful|start|...: because typing 'sudo apache2ctl' is too much work.
 aa() { sudo apache2ctl "$@" ;}
 
-alias atom=newsbeuter
+atom() { newsbeuter "$@" ;}
 
 # cl FILE.el ("compile LISP"): byte-compile an emacs LISP file.
 cl() { emacs -nw -q -batch -f batch-byte-compile "$@" ;}
@@ -376,7 +375,7 @@ gemi() {
 gc() { git commit -a ;}
 
 # gpg and gpg2 have identical UIs, so it's safe to alias them.
-alias gpg=gpg2
+gpg() { gpg2 "$@" ;}
 
 # gr REGEX ("grep recursively"): grep -ri . That's how I usually grep.
 gr() { grep -ri $1 . ;}
@@ -401,7 +400,7 @@ ff() {
 }
 
 # ga *: because typing 'git commit -a' is too much work
-alias ga='git commit -a'
+ga() { git commit -a "$@" ;}
 
 # mz: Use mozrepl to connect to Firefox for some interactive debugging.
 # See http://wiki.github.com/bard/mozrepl/
@@ -473,10 +472,17 @@ ta() {
 }
 
 # tls ("Tmux List"): list running tmux sessions.
-tls() { tmux list-sessions ;}
+tls() {
+    OUTPUT=`tmux list-sessions 2>/dev/null`
+    if [[ $? == 0 ]]; then
+        echo $OUTPUT
+    else
+        echo -n
+    fi
+}
 
 # tl: alias for tls, so I don't have to do all that tiresome extra typing!
-alias tl=tls
+tl() { tls "$@" ;}
 
 top() { echo "Don't use top; use htop instead." ;}
 
@@ -526,17 +532,10 @@ if source ~/.bashrc.d/daemons.bash; then
 fi
 
 ##########################
-# Client-specific settings
+# Client-specific settings (not in git, as they may contain sensitive info).
 ##########################
 
-source ~/.bashrc--client-0
-
-prp() { cd ~/tig/ddl/corp/functions ;}
-
-pr() {
-    prp && pg_prove -U postgres -d corp_schema tests/*.sql
-}
-
-if [[ -f ~/.bashrc--personal ]]; then
-    source ~/.bashrc--personal
+CSFILE=~/.bashrcs.client-specific.d/Source-me.bash
+if [[ -f "$CSFILE" ]]; then
+    source "$CSFILE"
 fi
