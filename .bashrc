@@ -458,16 +458,12 @@ alias sww='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
 title() { echo -ne "\033]2;" $1 "\007" ;}
 
-# tan $SESSION_NAME (Tmux Attach New): create a named session and attach to it.
-tan() { tn $1 && ta $1 ;}
-
-# tn $SESSION_NAME (Tmux New-session): create a new, named tmux session.
-tn() { tmux new-session -d -s $1 -n $1 ;}
-
 # ta $SESSION_NAME ("Tmux Attach"): attach to named session, creating if needed.
 ta() {
-    tmux has-session -t $1
-    if [[ $? -ne 0 ]]; then tmux new-session -d -s $1 -n $1; fi
+    tmux has-session -t $1 2>/dev/null
+    if [[ $? -ne 0 ]]; then
+        tmux new-session -d -s $1 -n $1
+    fi
     tmux -2 attach-session -t $1
 }
 
