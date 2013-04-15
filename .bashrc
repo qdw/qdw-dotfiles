@@ -4,6 +4,7 @@ umask 0022
 ########################## <- Sections demarcated in hashes, like this,
 ########################## must appear in their present order, or code
 ########################## will break.
+##########################
 
 ########################## 
 ########################## bash shell completion for git,  by Shawn O. Pearce.
@@ -213,6 +214,12 @@ set -a
 ###################
 # bash, emacs, less
 ###################
+
+# Editor: emacsclient. The empty ALTERNATE_EDITOR setting tells emacsclient
+# to start an emacs session ('emacs --daemon') if one is not running already.
+EDITOR=emacsclient; VISUAL=$EDITOR
+## ALTERNATE_EDITOR='' ## murr, doesn't pick up ~/.emacs correctly. Fix later.
+
 if [[ $RUNNING_UNDER_EMACS ]]; then # this var is set by ~/.emacs.d/init_bash.sh
     # Emacs shell-mode is a dumb terminal, so don't use advanced features:
     
@@ -222,8 +229,6 @@ if [[ $RUNNING_UNDER_EMACS ]]; then # this var is set by ~/.emacs.d/init_bash.sh
     # Pagers don't work. Use cat(1) instead of less(1).
     PAGER=cat; GIT_PAGER=$PAGER; ACK_PAGER=$PAGER
     
-    # emacsclient *does* work, so use that.
-    EDITOR=emacsclient; VISUAL=$EDITOR
 else
     # Other terminals can do fancier stuff:
     
@@ -235,7 +240,7 @@ else
     
     # Color the shell prompt slate blue (to distinguish commands from output).
     # If I'm on a git branch, preend the branch name in purple.
-    PS1='\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\w\$\[\e[0m\] '
+    PS1='\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;1m\]\u@\h:\w\$\[\e[0m\] '
     
     # Use my favorite pager and pager options.
     LESS='--quit-if-one-screen --RAW-CONTROL-CHARS --no-init'
@@ -345,8 +350,11 @@ dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 # dream: Dream of Electric Sheep.
 dream() { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
 
-# ec FILE1 ...: because typing 'emacsclient' is too much work.
-ec() { emacsclient "$@" ;}
+# ec FILE1 ...: because typing 'emacsclient' is too much work. '-c' means GUI.
+ec() { emacsclient -c "$@" ;}
+
+# et FILE1 ...: run emacsclient in terminal mode, not GUI mode.
+et() { emacsclient -t "$@" ;}
 
 # ew /PATH ("edit which"): find a program in $PATH and edit it.
 ew() { ec `which $1` ;}
@@ -426,7 +434,18 @@ kindle() {
 unalias ls 2>/dev/null
 
 # ls: always print one column, even if there are few files. It's easier to scan.
-alias ls='ls -1F' # Must be written as an alias; a shell function would recurse.
+# This must be written as an alias, because a shell function would recurse.
+if [[ $OS = Darwin ]]; then
+    # Use homebrewed GNU ls.
+    alias ls='gls -1F -G --group-directories-first'
+elif [[ $OS = Linux ]]; then
+    # GNU ls is the standard ls (unless this is some really eccentric distro).
+    alias ls='ls -1F -G --group-directories-first'
+else
+    # Other OS'es may or may not use GNU ls. Until we learn more, play it safe
+    # by omitting the GNU-specific --group-directories-first option.
+    alias ls='ls -1F -G'
+fi
 
 # lsl *: list files by mtime, with permissions and ownership. I do this a lot.
 lsl() { ls -lt "$@" | less ;}
@@ -436,6 +455,13 @@ lw() { perldoc -l "$1" ;}
 
 # elw Perl::Module, elw Perl/Module.pm ("edit library which"): find a perl module in PER5LIB and open it in EDITOR. #FIXME: test behavior.
 # elw() { $EDITOR $(lw "$@") ;}
+
+# rmds: remove a directory, including .DS_Store droppings left by OS X Finder.
+# Fails if the directory contains anything besides .DS_Store.
+rmds() {
+    rm -rfi "$1/.DS_Store"
+    rmdir "$1"
+}
 
 # serve: shares all the files in the current folder over HTTP, port 8080
 serve() { python -m SimpleHTTPServer 8080 ;}
@@ -450,10 +476,10 @@ stop_mysql() { mysqladmin5 -u root -p shutdown ;}
 pb() { perlbrew "$@" ;}
 
 # sw: switch to a shorter bash prompt (for when I'm in dirs with long paths).
-alias sw='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\W\$\[\e[0m\] "'
+#alias sw='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\W\$\[\e[0m\] "'
 
 # sww: switch back to a longer bash prompt.
-alias sww='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\w\$\[\e[0m\] "'
+#alias sww='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\w\$\[\e[0m\] "'
 
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
 title() { echo -ne "\033]2;" $1 "\007" ;}

@@ -1,0 +1,24 @@
+################################################################
+# This file contains my favorite global ssh settings.
+# It doesn't contain any per-host settings,
+# because that would be a security fail.
+#
+# To use it, insert its contents at the top of ~/.ssh/config.
+# If you're creating ~/.ssh/config for the first timn, make sure
+# to 'chmod 600' it, or you'll be exposing yourself to
+# a different security risk, and ssh will refuse to work.
+################################################################
+
+# When I ssh to A and then ssh from A to B, use my local ssh-agent's
+# cached keys to authenticate with B. This is so convenient, and much safer
+# than putting private keys on A!
+ForwardAgent yes
+
+# Poll the server. Some servers are misconfigured to kick you off
+# after a really short period of inactivity; this prevents that.
+# The value is given in seconds.
+ServerAliveInterval 29
+
+# Give up and disconnect after this many polling attempts. If this var is not
+# set, never give up.
+# ServerAliveCountMax 6

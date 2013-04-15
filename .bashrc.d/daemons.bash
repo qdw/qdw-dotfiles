@@ -1,7 +1,18 @@
+# Run emacs as a daemon, so it's there and ready for emacsclient to reach.
+# If the daemon is killed for some reason, emacsclient will just run it again,
+# since I have the ALTERNATE_EDITOR environment variable set to ''.
+# But it's nice to get the overhead of running emacs out of the way early.
+# For further reading, see http://www.emacswiki.org/emacs/EmacsAsDaemon
+run_emacs_daemon_idempotently() {
+    if (! ps auxwww | grep $USER | grep 'emacs --daemon' >/dev/null 2>&1); then
+        emacs --daemon &
+    fi
+}
+
 # rubygems documentation server
 # port 8080
 run_gem_server_idempotently() {
-    if (! p 'gem server' >/dev/null 2>&1); then
+    if (! ps auxwww | grep $USER | 'gem server' >/dev/null 2>&1); then
         sudo /bin/bash -c 'gem server >/dev/null 2>&1 &'
     fi
 }
