@@ -7,9 +7,15 @@ umask 0022
 ##########################
 
 ########################## 
-########################## bash shell completion for git,  by Shawn O. Pearce.
-########################## Must be loaded before I set PS1, as I use it there.
+########################## bash shell completion
 ########################## 
+# Homebrew
+# if [ -f $(brew --prefix)/etc/bash_completion ]; then
+#    source $(brew --prefix)/etc/bash_completion
+# fi
+
+# Git
+source ~/.git-completion.bash
 
 ##########################
 ########################## *PATH variables for the custom software I use, in
@@ -249,17 +255,6 @@ else
     # Use vi for quick edits inside this terminal window.
     EDITOR=vi; VISUAL=$EDITOR
 fi
-
-######
-# bash completion
-######
-# Homebrew
-# if [ -f $(brew --prefix)/etc/bash_completion ]; then
-#    source $(brew --prefix)/etc/bash_completion
-# fi
-
-# Git
-source ~/.git-completion.bash
 
 #####
 # FTP
