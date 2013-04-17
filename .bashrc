@@ -212,7 +212,7 @@ RUBYOPT=rubygems
 set +a
 
 ########################## 
-########################## App-language settings
+########################## App-specific settings
 ########################## 
 
 set -a
@@ -321,7 +321,7 @@ vrep() {
 ########################## 
 ########################## Miscellaneous shell functions and aliases
 ########################## (sorted alphabetically)
-#########################
+##########################
 
 # aa graceful|start|...: because typing 'sudo apache2ctl' is too much work.
 aa() { sudo apache2ctl "$@" ;}
@@ -424,22 +424,22 @@ kindle() {
 #    bash$ chmod 400 $_
 #    chmod: unrecognized option '--color=auto'
 #
-# unalias ls (in case it's aliased) so that doesn't happen.
-# Ignore errors complaining that it isn't aliased.
+# unalias ls (in case it's aliased) so that doesn't happen
+# (ignoring complaints that it isn't aliased anyway).
 unalias ls 2>/dev/null
 
 # ls: always print one column, even if there are few files. It's easier to scan.
 # This must be written as an alias, because a shell function would recurse.
 if [[ $OS = Darwin ]]; then
     # Use homebrewed GNU ls.
-    alias ls='gls -1F -G --group-directories-first'
+    alias ls='gls -1 -G --group-directories-first'
 elif [[ $OS = Linux ]]; then
     # GNU ls is the standard ls (unless this is some really eccentric distro).
-    alias ls='ls -1F -G --group-directories-first'
+    alias ls='ls -1 -G --group-directories-first'
 else
     # Other OS'es may or may not use GNU ls. Until we learn more, play it safe
     # by omitting the GNU-specific --group-directories-first option.
-    alias ls='ls -1F -G'
+    alias ls='ls -1 -G'
 fi
 
 # lsl *: list files by mtime, with permissions and ownership. I do this a lot.
@@ -514,9 +514,6 @@ tor_on() { export HTTP_PROXY=http://127.0.0.1:8118/ http_proxy=$HTTP_PROXY ;}
 
 # tor_off: stop proxying this shell's HTTP traffic through Tor.
 tor_off() { unset HTTP_PROXY http_proxy ;}
-
-# tunnel REMOTE_HOST REMOTE_PORT LOCAL_PORT: ssh-tunnel out.
-tunnel() { ssh -fNR $2:localhost:$3 $1 ;}
 
 # unix2dos FILE1 ...: translate-in-place newlines to the DOS convention (CRLF).
 unix2dos() { /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@" ;}
