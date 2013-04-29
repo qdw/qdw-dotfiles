@@ -101,7 +101,6 @@ if [[ $OS = 'Darwin' ]]; then
     SYSTEM_DYLD_LIBRARY_PATH=/usr/local/pgsql/lib
 else
     echo "Don't know what system path to use for $OS"
-    exit 43
 fi
 
 #####################
