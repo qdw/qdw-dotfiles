@@ -1,8 +1,11 @@
-# Emacs backup files
-*~
+# Running notes for the next commit(s)
+commit-message*
 
-# OS X Finder metadata (icon position, et cetera)
-.DS_Store
+# Quinn's special off-the-record notes-to-self.
+qdw-*
+
+# Compiled objects
+.pyc .elc .o
 
 # OpenOffice lock files (for when you commit a file that's open in OOo)
 .~lock.*odt#
@@ -10,11 +13,30 @@
 # PyCharm project files
 .idea
 
+# Emacs
+*~
+*.elc
+auto-save-list
+recentf
+savehist
+saveplace
+eshell
+elpa
+el-get
+semanticdb
+url
+ede-projects.el
+.DS_Store
+custom.el
+places
+.smex-items
+savefile/
+/prelude-modules.el
+projectile-bookmarks.eld
+tramp
+history
+auto-save-list
+desktop
+
 # Stuff ~/dotfiles should ignore (temporarily). Don't mess with this.
 key-corto
-
-# Compiled objects
-.pyc .elc .o
-
-# Quinn's special off-the-record notes-to-self. Nonsensical to others.
-qdw-*

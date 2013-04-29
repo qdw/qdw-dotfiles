@@ -96,7 +96,6 @@ HOMEBREW_DYLD_LIBRARY_PATH=$HOMEBREW_ROOT/lib
 #############
 OS=$(uname -s)
 if [[ $OS = 'Darwin' ]]; then
-    SYSTEM_INFOPATH=/usr/share/info:/usr/lib/info
     SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
     SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin
     SYSTEM_DYLD_LIBRARY_PATH=/usr/local/pgsql/lib
@@ -104,11 +103,6 @@ else
     echo "Don't know what system path to use for $OS"
     exit 43
 fi
-
-############
-# Emacs LISP (third-party) packages
-############
-ELISP_INFOPATH=~/.elisp/tramp/install/share/info
 
 #####################
 # My own utility code (~/bin et cetera)
@@ -120,7 +114,7 @@ fi
 PERSONAL_PERL5LIB=~/perl5lib
 
 # OK, now assemble PATH, MANPATH et cetera from the above-specified paths.
-for VAR in PATH MANPATH INFOPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
+for VAR in PATH MANPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
     # 1. Clear the path, in order to get rid of OS-imposed cruft.
     eval "$VAR=''"
 
@@ -348,6 +342,11 @@ dream() { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaver
 # ec FILE1 ...: because typing 'emacsclient' is too much work. '-c' means GUI.
 ec() { emacsclient -c "$@" ;}
 
+# Run Cocoa Emacs from a shell. That way it inherits the shell's environment.
+# If you run Emacs by clicking its icon, that doesn't happen, because OS X
+# does not run ~/.bash_profile or ~/.bash_login when you log in.
+emacs() { /Applications/Emacs.app/Contents/MacOS/Emacs ;}
+
 # et FILE1 ...: run emacsclient in terminal mode, not GUI mode.
 et() { emacsclient -t "$@" ;}
 
@@ -408,6 +407,14 @@ ga() { git commit -a "$@" ;}
 # mz: Use mozrepl to connect to Firefox for some interactive debugging.
 # See http://wiki.github.com/bard/mozrepl/
 mz() { socat READLINE TCP4:localhost:4242 ;}
+
+info() {
+    if [[ $OS = Darwin ]]; then
+        echo "Don't use info on OS X; it will give you out-of-date docs."
+    else
+        info "$@"
+    fi
+}
 
 # kindle FILE1 ...: load free eBooks into iPhone Kindle app. Requires jailbreak.
 kindle() {
@@ -490,12 +497,7 @@ ta() {
 
 # tls ("Tmux List"): list running tmux sessions.
 tls() {
-    OUTPUT=`tmux list-sessions 2>/dev/null`
-    if [[ $? == 0 ]]; then
-        echo $OUTPUT
-    else
-        echo -n
-    fi
+    tmux list-sessions 2>/dev/null
 }
 
 # tl: alias for tls, so I don't have to do all that tiresome extra typing!
