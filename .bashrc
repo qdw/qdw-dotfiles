@@ -1,5 +1,12 @@
 umask 0022
 
+# Platform-specific aliases
+if [[ $OS = Darwin ]]; then
+    source ~/.bashrc.d/unixes/os-x/any-os-x.sh
+elif [[ $OS = Linux ]]; then
+    source ~/.bashrc.d/unixes/linux/any-linux.sh
+fi
+
 ##########################
 ########################## <- Sections demarcated in hashes, like this,
 ########################## must appear in their present order, or code
@@ -171,6 +178,17 @@ PERL_MM_USE_DEFAULT=1
 
 # If I forget to specify a DB, use one that's safe to trash.
 PGDATABASE=sandbox
+
+# Start postgres (if it's not running already).
+HB_PGDATA=~/.homebrew/var/postgres
+if [[ -d "$HB_PGDATA" ]]; then
+    PGDATA="$HB_PGDATA"
+
+    pg_ctl status >/dev/null
+    if [[ $? = 3 ]]; then
+        pg_ctl -D $PGDATA -l $PGDATA/server.log start
+    fi
+fi
 
 ########
 # Python virtualenv
@@ -535,17 +553,6 @@ unrar_plural() { for f in *rar; do unrar x -o+ "$f" .; done ;}
 xb() { killall --user $USER xbindkeys && xbindkeys ;}
 
 ########################## 
-########################## OS-, distro-, and version-specific settings
-########################## 
-
-OS=$(uname)
-if [[ $OS = Darwin ]]; then
-    source ~/.bashrc.d/unixes/os-x/any-os-x.sh
-elif [[ $OS = Linux ]]; then
-    source ~/.bashrc.d/unixes/linux/any-linux.sh
-fi
-
-########################## 
 ########################## Run daemons, if installed but not already runnning.
 ########################## Applies to my personal Mac only.
 ##########################
@@ -562,6 +569,6 @@ fi
 # Client-specific settings (not in git, as they may contain sensitive info).
 ##########################
 CSFILE=~/.bashrcs.client-specific.d/Source-me.bash
-if [[ -f $CSFILE ]]; then
+if [[ -f "$CSFILE" ]]; then
     source "$CSFILE"
 fi
