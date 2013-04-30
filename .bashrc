@@ -10,7 +10,7 @@ umask 0022
 ########################## bash shell completion
 ########################## 
 # Homebrew
-# if [ -f $(brew --prefix)/etc/bash_completion ]; then
+# if [[ -f $(brew --prefix)/etc/bash_completion ]]; then
 #    source $(brew --prefix)/etc/bash_completion
 # fi
 
@@ -95,10 +95,17 @@ HOMEBREW_DYLD_LIBRARY_PATH=$HOMEBREW_ROOT/lib
 # System path (OS-specific)
 #############
 OS=$(uname -s)
-if [[ $OS = 'Darwin' ]]; then
+if [[ "$OS" = 'Darwin' ]]; then
     SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
     SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin
     SYSTEM_DYLD_LIBRARY_PATH=/usr/local/pgsql/lib
+elif [[ "$OS" == 'Linux' ]]; then
+    if (grep Debian /etc/issue >/dev/null); then
+        SYSTEM_PATH=/usr/local/bin:/usr/bin:/bin:/usr/games:/usr/local/sbin:/usr/sbin:/sbin
+    else
+        # Guess.
+        SYSTEM_PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+    fi
 else
     echo "Don't know what system path to use for $OS"
 fi
@@ -142,11 +149,12 @@ set -a
 ######
 
 # First add perlbrew itself to paths.
-PERLBREW_ROOT=~/perl5/perlbrew
-PERLBREW_PATH=$PERLBREW_ROOT/bin
-
-# Then add perlbrew's version of perl to paths.
-source $PERLBREW_ROOT/etc/bashrc
+if [[ -d ~/perl5/perlbrew ]]; then
+    PERLBREW_ROOT=~/perl5/perlbrew
+    PERLBREW_PATH=$PERLBREW_ROOT/bin
+    # Then add perlbrew's version of perl to paths.
+    source $PERLBREW_ROOT/etc/bashrc
+fi
 
 # In grep (1) output, highlight matches, line numbers, et cetera
 # iff the terminal supports colors.
@@ -172,25 +180,24 @@ PGDATABASE=sandbox
 # pip install virtualenv
 # pip install virtualenvwrapper
 VIRTUALENVWRAPPER_PYTHON=~/.homebrew/bin/python
-VIRTUALENV_SCRIPT=~/.homebrew/share/python/virtualenv
-VIRTUALENV_SCRIPT_DIR=$(dirname $VIRTUALENV_SCRIPT)
-PATH=$PATH:$VIRTUALENV_SCRIPT_DIR
-VIRTUALENVWRAPPER_SCRIPT=~/.homebrew/share/python/virtualenvwrapper.sh
-source $VIRTUALENVWRAPPER_SCRIPT # adds a delay of several seconds. :(
-WORKON_HOME=~/.virtualenvs
-MKVE_OPTS='--no-site-packages'
+if [[ -e $VIRTUALENVWRAPPER_PYTHON ]]; then
+    VIRTUALENV_SCRIPT=~/.homebrew/share/python/virtualenv
+    VIRTUALENV_SCRIPT_DIR=$(dirname $VIRTUALENV_SCRIPT)
+    PATH=$PATH:$VIRTUALENV_SCRIPT_DIR
+    VIRTUALENVWRAPPER_SCRIPT=~/.homebrew/share/python/virtualenvwrapper.sh
+    source $VIRTUALENVWRAPPER_SCRIPT # adds a delay of several seconds. :(
+    WORKON_HOME=~/.virtualenvs
+    MKVE_OPTS='--no-site-packages'
 
-# mkve26: make a Python 2.6 virtualenv.
-mkve26() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@" ;}
+    # mkve26: make a Python 2.6 virtualenv.
+    mkve26() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@" ;}
 
-# mkve27: make a Python 2.7 virtualenv.
-mkve27() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@" ;}
+    # mkve27: make a Python 2.7 virtualenv.
+    mkve27() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@" ;}
 
-# mkve3: make a Python 3.3 virtualenv.
-# mkve3() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@" ;}
-
-# qt_designer, for writing PyQt apps
-qt_designer() { open '/usr/local/Cellar/qt/4.7.2/bin/Designer.app' ;}
+    # mkve3: make a Python 3.3 virtualenv.
+    # mkve3() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@" ;}
+fi
 
 rss() { newsbeuter "$@" ;}
 
@@ -344,7 +351,9 @@ ec() { emacsclient -c "$@" ;}
 # Run Cocoa Emacs from a shell. That way it inherits the shell's environment.
 # If you run Emacs by clicking its icon, that doesn't happen, because OS X
 # does not run ~/.bash_profile or ~/.bash_login when you log in.
-emacs() { /Applications/Emacs.app/Contents/MacOS/Emacs ;}
+if [[ -x /Applications/Emacs.app/Contents/MacOS/Emacs ]]; then
+    alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs "$@"'
+fi
 
 # et FILE1 ...: run emacsclient in terminal mode, not GUI mode.
 et() { emacsclient -t "$@" ;}
@@ -538,10 +547,13 @@ fi
 
 ########################## 
 ########################## Run daemons, if installed but not already runnning.
-########################## 
+########################## Applies to my personal Mac only.
+##########################
 
 # Load functions for running several daemons.
-if source ~/.bashrc.d/daemons.bash; then
+DAEMON_HELPERS=~/.bashrc.d/daemons.bash
+if [[ -f "$DAEMON_HELPERS" ]]; then
+    source "$DAEMON_HELPERS"
     run_gpg_agent_idempotently
     run_ssh_agent_idempotently
 fi
@@ -549,8 +561,7 @@ fi
 ##########################
 # Client-specific settings (not in git, as they may contain sensitive info).
 ##########################
-
 CSFILE=~/.bashrcs.client-specific.d/Source-me.bash
-if [[ -f "$CSFILE" ]]; then
+if [[ -f $CSFILE ]]; then
     source "$CSFILE"
 fi
