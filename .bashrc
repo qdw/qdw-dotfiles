@@ -52,11 +52,15 @@ source ~/.git-completion.bash
 # Just use homebrew's version (see Section '# Homebrew', below).
 
 #######################
-# (Homebrewed) Python 3
+# Homebrewed Python 2.7
 #######################
+PYTHON_PATH=~/.homebrew/share/python
+
+#####################
+# Homebrewed Python 3
+#####################
 # See https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python
 PYTHON3_PATH=~/.homebrew/share/python3 # install-scripts dir
-PYTHON3_PATH=$PYTHON3_PATH:/usr/local/share/python # location of easy_install
 
 #########################
 # (Homebrewed) Ruby 1.9.3
@@ -132,7 +136,7 @@ for VAR in PATH MANPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
     eval "$VAR=''"
 
     # 2. Append any package-specific paths, in the desired order.
-    for CATEGORY in POSTGRESQL PYTHON3 MYSQL HOMEBREW RUBYGEMS SYSTEM ELISP PERSONAL; do
+    for CATEGORY in POSTGRESQL PYTHON PYTHON3 MYSQL HOMEBREW RUBYGEMS SYSTEM ELISP PERSONAL; do
         VALUE_BEFORE_APPENDING=$(eval echo \$$VAR)
         VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$POSTGRESQL_PATH) yields /usr/local/pgsql/bin
         if [[ $VALUE_TO_APPEND ]]; then
