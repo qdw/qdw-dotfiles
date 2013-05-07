@@ -5,6 +5,9 @@ if [[ $OS = Darwin ]]; then
     source ~/.bashrc.d/unixes/os-x/any-os-x.sh
 elif [[ $OS = Linux ]]; then
     source ~/.bashrc.d/unixes/linux/any-linux.sh
+    if (grep ^Debian /etc/issue > /dev/null 2>&1); then
+        source ~/.bashrc.d/unixes/linux/debian.sh
+    fi
 fi
 
 ##########################
@@ -506,6 +509,13 @@ stop_mysql() { mysqladmin5 -u root -p shutdown ;}
 
 # pb *: because typing 'perlbrew' is too much work.
 pb() { perlbrew "$@" ;}
+
+# pi ("Perl @INC"): print @INC dirs, one per line, preceded by the path to Perl.
+pi() {
+    echo -n "perl = "; which perl
+    echo
+    perl -e 'print (join "\n", @INC); print "\n";'
+}
 
 # sw: switch to a shorter bash prompt (for when I'm in dirs with long paths).
 #alias sw='export PS1="\[\e[35;m\]$(__git_ps1 "[%s] ")\[\e[0m\]\[\e[34;m\]\u@\h:\W\$\[\e[0m\] "'
