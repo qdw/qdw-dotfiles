@@ -1,12 +1,22 @@
 umask 0022
 
-# Platform-specific aliases
+# Environment variables. Define these idempotently in ~/.bashrc rather than in
+# ~/.bash_profile so that each new shell will get the new settings.
+set -a
+
+# Platform-specific env var settings
+OS=$(uname -s)
 if [[ $OS = Darwin ]]; then
-    source ~/.bashrc.d/unixes/os-x/any-os-x.sh
+    source ~/.bashrc.d/unix/os-x/any-os-x.bash
 elif [[ $OS = Linux ]]; then
-    source ~/.bashrc.d/unixes/linux/any-linux.sh
+    source ~/.bashrc.d/unix/linux/any-linux.bash
     if (grep ^Debian /etc/issue > /dev/null 2>&1); then
-        source ~/.bashrc.d/unixes/linux/debian.sh
+        source ~/.bashrc.d/unix/linux/debian-gnu-linux.bash
+    else
+        # Guess.
+        DIST_FILE=~/.bashrc.d/unix/linux/unknown-linux.bash
+        echo "Warning: unrecognized distro. Defaulting to config in $DIST_FILE"
+        source $DIST_FILE
     fi
 fi
 
@@ -19,181 +29,66 @@ fi
 ########################## 
 ########################## bash shell completion
 ########################## 
-# Homebrew
+
+# shell completion for brew(1)
 # if [[ -f $(brew --prefix)/etc/bash_completion ]]; then
 #    source $(brew --prefix)/etc/bash_completion
 # fi
 
-# Git
+# shell completion for git(1)
 source ~/.git-completion.bash
 
-##########################
-########################## *PATH variables for the custom software I use, in
-########################## the order I want (I ignore and override the default
-########################## paths provided by the system bash init files,
-########################## because I do not like them).
-########################## 
-########################## You might ask why I define these in ~/.bashrc,
-########################## such that they execute every time I start a shell,
-########################## rather than defining them in ~/.bash_profile,
-########################## such that they would execute only once, at
-########################## login time. The answer is that I like to ensure
-########################## that my shells always have an up-to-date
-########################## environment. I make small changes to ~/.bashrc
-########################## often, and I want them to be reflected as soon as
-########################## I start a new shell (whether or not the software
-########################## launching that shell ran it with --login).
-##########################
-########################## I even run certain daemons via my ~/.bashrc, iff
-########################## they're not already running. This allows me to
-########################## restart them if they die somehow.
-##########################
-
-############
-# PostgreSQL
-############
-# Just use homebrew's version (see Section '# Homebrew', below).
+##########
+# Homebrew (OS X)
+##########
+HOMEBREW_BUILD_FROM_SOURCE=1
 
 #######################
-# Homebrewed Python 2.7
+# perlbrew (all Unixes)
 #######################
-PYTHON_PATH=~/.homebrew/share/python
+source ~/perl5/perlbrew/etc/bashrc
 
-#####################
-# Homebrewed Python 3
-#####################
-# See https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python
-PYTHON3_PATH=~/.homebrew/share/python3 # install-scripts dir
-
-#########################
-# (Homebrewed) Ruby 1.9.3
-#########################
-# This dir will be the the location of any binaries installed by Ruby gems.
-RUBYGEMS_PATH=~/.homebrew/Cellar/ruby/1.9.3-p194/bin
-
-#######
-# MySQL
-#######
-MYSQL_MANPATH=/usr/local/mysql/man
-MYSQL_PATH=/usr/local/mysql/bin # from the MySQL AB/Oracle tarball release
-
-##########
-# Homebrew
-##########
-# HOMEBREW_ROOT=/usr/local # the default, but I like to state it explicitly
-HOMEBREW_ROOT=~/.homebrew # I keep my own private homebrew instance
-HOMEBREW_PATH=$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/sbin
-HOMEBREW_MANPATH=$HOMEBREW_ROOT/share/man
-HOMEBREW_DYLD_LIBRARY_PATH=$HOMEBREW_ROOT/lib
-
-##########
-# (Homebrewed) readline
+#################
+# perl in general
+#################
 #
-# The installation process for readline explains,
-#
-#    This formula is keg-only, so it was not symlinked into
-#    /Users/quinn/.homebrew. OS X provides the BSD libedit library, which
-#    shadows libreadline. In order to prevent conflicts when programs look
-#    for libreadline we are defaulting this GNU Readline installation to
-#    keg-only.
-#    
-#    Generally there are no consequences of this for you.  If you build your
-#    own software and it requires this formula, you'll need to add its lib &
-#    include paths to your build variables:
-#     
-#        LDFLAGS  -L/Users/quinn/.homebrew/Cellar/readline/6.2.4/lib
-#        CPPFLAGS -I/Users/quinn/.homebrew/Cellar/readline/6.2.4/include
-##########
-
-#############
-# System path (OS-specific)
-#############
-OS=$(uname -s)
-if [[ "$OS" = 'Darwin' ]]; then
-    SYSTEM_MANPATH=/usr/share/man:/usr/X11/share/man
-    SYSTEM_PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11/bin
-    SYSTEM_DYLD_LIBRARY_PATH=/usr/local/pgsql/lib
-elif [[ "$OS" == 'Linux' ]]; then
-    if (grep Debian /etc/issue >/dev/null); then
-        SYSTEM_PATH=/usr/local/bin:/usr/bin:/bin:/usr/games:/usr/local/sbin:/usr/sbin:/sbin
-    else
-        # Guess.
-        SYSTEM_PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
-    fi
-else
-    echo "Don't know what system path to use for $OS"
-fi
-
-#####################
-# My own utility code (~/bin et cetera)
-#####################
-PERSONAL_PATH=~/bin:~/src/continuous
-if [[ $OS = 'Darwin' ]]; then
-    PERSONAL_PATH=~/bin/mac:$PERSONAL_PATH
-fi
-PERSONAL_PERL5LIB=~/perl5lib
-
-# OK, now assemble PATH, MANPATH et cetera from the above-specified paths.
-for VAR in PATH MANPATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH PERL5LIB; do
-    # 1. Clear the path, in order to get rid of OS-imposed cruft.
-    eval "$VAR=''"
-
-    # 2. Append any package-specific paths, in the desired order.
-    for CATEGORY in POSTGRESQL PYTHON PYTHON3 MYSQL HOMEBREW RUBYGEMS SYSTEM ELISP PERSONAL; do
-        VALUE_BEFORE_APPENDING=$(eval echo \$$VAR)
-        VALUE_TO_APPEND=$(eval echo \$${CATEGORY}_${VAR}) # e.g. $(eval echo \$POSTGRESQL_PATH) yields /usr/local/pgsql/bin
-        if [[ $VALUE_TO_APPEND ]]; then
-            if [[ ! $VALUE_BEFORE_APPENDING ]]; then
-                eval "$VAR=$VALUE_TO_APPEND"
-            else
-                eval "$VAR=$VALUE_BEFORE_APPENDING:$VALUE_TO_APPEND"
-            fi
-        fi
-    done
-done
-
-########################## 
-########################## Programming language settings
-########################## 
-
-set -a
-
-######
-# Perl: a special case not handled by the preceding 'for' loop
-######
-
-# First add perlbrew itself to paths.
-if [[ -d ~/perl5/perlbrew ]]; then
-    PERLBREW_ROOT=~/perl5/perlbrew
-    PERLBREW_PATH=$PERLBREW_ROOT/bin
-    # Then add perlbrew's version of perl to paths.
-    source $PERLBREW_ROOT/etc/bashrc
-fi
-
-# In grep (1) output, highlight matches, line numbers, et cetera
-# iff the terminal supports colors.
-alias grep='grep --color=auto'
-
 # Make Module::Install auto-follow dependencies. cpanm sets this by default,
 # but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
 # which means using MakeMaker directly).
 PERL_MM_USE_DEFAULT=1
 
+#####################
+# My own utility code
+#####################
+PERSONAL_PATH=~/bin:~/src/continuous
+if [[ $OS = 'Darwin' ]]; then
+    #FIXME: convert these (from shell scripts) to aliases in any-os-x.sh
+    PERSONAL_PATH=~/bin/mac:$PERSONAL_PATH
+fi
+PATH=$PATH:$PERSONAL_PATH
+
+PERSONAL_PERL5LIB=~/perl5lib
+PERL5LIB=$PERL5LIB:$PERSONAL_PERL5LIB
+
 ############
 # PostgreSQL
 ############
+
+# psql: keep all history forever
+HISTFILESIZE=
+HISTSIZE=
 
 # If I forget to specify a DB, use one that's safe to trash.
 PGDATABASE=sandbox
 
 # Start postgres (if it's not running already).
-HB_PGDATA=~/.homebrew/var/postgres
-if [[ -d "$HB_PGDATA" ]]; then
-    PGDATA="$HB_PGDATA"
+HOMEBREW_PGDATA=$HOMEBREW_ROOT/var/postgres
+if [[ -d "$HOMEBREW_PGDATA" ]]; then
+    PGDATA="$HOMEBREW_PGDATA"
 
     pg_ctl status >/dev/null
     if [[ $? = 3 ]]; then
-        pg_ctl -D $PGDATA -l $PGDATA/server.log start
+        pg_ctl -D $PGDATA -l $PGDATA/server.log start > /dev/null
     fi
 fi
 
@@ -201,46 +96,43 @@ fi
 # Python virtualenv
 ########
 
-# easy_install pip
+# One-time setup:
+# easy_install pp
 # pip install virtualenv
 # pip install virtualenvwrapper
-VIRTUALENVWRAPPER_PYTHON=~/.homebrew/bin/python
-if [[ -e $VIRTUALENVWRAPPER_PYTHON ]]; then
-    VIRTUALENV_SCRIPT=~/.homebrew/share/python/virtualenv
-    VIRTUALENV_SCRIPT_DIR=$(dirname $VIRTUALENV_SCRIPT)
-    PATH=$PATH:$VIRTUALENV_SCRIPT_DIR
-    VIRTUALENVWRAPPER_SCRIPT=~/.homebrew/share/python/virtualenvwrapper.sh
-    source $VIRTUALENVWRAPPER_SCRIPT # adds a delay of several seconds. :(
-    WORKON_HOME=~/.virtualenvs
-    MKVE_OPTS='--no-site-packages'
 
-    # mkve26: make a Python 2.6 virtualenv.
-    mkve26() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@" ;}
+# VIRTUALENVWRAPPER_PYTHON=$HOMEBREW_ROOT/bin/python
+# VIRTUALENV_SCRIPT=$HOMEBREW_ROOT/share/python/virtualenv
 
-    # mkve27: make a Python 2.7 virtualenv.
-    mkve27() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@" ;}
+# VIRTUALENV_SCRIPT_DIR=$(dirname $VIRTUALENV_SCRIPT)
+# PATH=$PATH:$VIRTUALENV_SCRIPT_DIR
+# VIRTUALENVWRAPPER_SCRIPT=$HOMEBREW_ROOT/share/python/virtualenvwrapper.sh
+# source $VIRTUALENVWRAPPER_SCRIPT
+# WORKON_HOME=~/.virtualenvs
+# MKVE_OPTS='--no-site-packages'
 
-    # mkve3: make a Python 3.3 virtualenv.
-    # mkve3() { mkvirtualenv $MKVE_OPTS --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@" ;}
-fi
+# # mkve26: make a Python 2.6 virtualenv.
+# mkve26() {
+#     mkvirtualenv $MKVE_OPTS \
+#         --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@"
+# }
 
-rss() { newsbeuter "$@" ;}
+# # mkve27: make a Python 2.7 virtualenv.
+# mkve27() {
+#     mkvirtualenv $MKVE_OPTS \
+#         --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@"
+# }
 
-# ve: short for 'virtualenv'
-ve() { virtualenv "$@" ;}
+# # mkve3: make a Python 3.3 virtualenv.
+# mkve3() {
+#     mkvirtualenv $MKVE_OPTS \
+#         --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@"
+# }
 
 ######
 # Ruby
 ######
 RUBYOPT=rubygems
-
-set +a
-
-########################## 
-########################## App-specific settings
-########################## 
-
-set -a
 
 ###################
 # bash, emacs, less
@@ -289,6 +181,15 @@ FTP_PASSIVE_MODE=yes
 FTP_PASSWORD=''
 
 set +a
+
+#############################
+# Aliases and shell functions
+#############################
+
+rss() { newsbeuter "$@" ;}
+
+# ve: short for 'virtualenv'
+ve() { virtualenv "$@" ;}
 
 ########################## 
 ########################## Shell functions and aliases, by category
@@ -361,9 +262,6 @@ cl() { emacs -nw -q -batch -f batch-byte-compile "$@" ;}
 # work properly in emacs shell-mode.
 cr() { cd $(~/bin/cr_helper $1) ;}
 
-# diff *: I prefer git's color diffs. Override the diff command with 'git diff'.
-alias diff='git diff'
-
 # dos2unix FILE1 ...: translate-in-place DOS newlines to Unix newlines.
 dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 
@@ -376,8 +274,9 @@ ec() { emacsclient -c "$@" ;}
 # Run Cocoa Emacs from a shell. That way it inherits the shell's environment.
 # If you run Emacs by clicking its icon, that doesn't happen, because OS X
 # does not run ~/.bash_profile or ~/.bash_login when you log in.
-if [[ -x /Applications/Emacs.app/Contents/MacOS/Emacs ]]; then
-    alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs "$@"'
+COCOA_EMACS=~/Applications/Emacs.app/Contents/MacOS/Emacs
+if [[ -x "$COCOA_EMACS" ]]; then
+    alias emacs="$COCOA_EMACS"
 fi
 
 # et FILE1 ...: run emacsclient in terminal mode, not GUI mode.
@@ -395,8 +294,9 @@ fd() { find . -type d -name "*${1}*" ;}
 # ffind *: find, excluding (D)VCS metadata and other metadata.
 ffind() { find "$@" | vrep ;}
 
-# ggrep *: grep, excluding (D)VCS metadata and other metadata.
-ggrep() { grep "$@" | vrep ;}
+alias grep='/usr/local/bin/ggrep --color'
+
+gggrep() { grep "$@" | vrep ;}
 
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
 gemi() {
@@ -409,9 +309,6 @@ gemi() {
 # gc: git commit -a (that is, add changes, but not new files, to the index).
 gc() { git commit -a ;}
 
-# gpg and gpg2 have identical UIs, so it's safe to alias them.
-gpg() { gpg2 "$@" ;}
-
 # gr REGEX ("grep recursively"): grep -ri . That's how I usually grep.
 gr() { grep -ri $1 . ;}
 
@@ -423,7 +320,7 @@ cg() { vrep | grep -v ':0' ;}
 
 # ff [PROFILE_NAME]: run Firefox with a profile. No args? List/create profiles.
 ff() {
-    FIREFOX_EXECUTABLE="/Applications/Firefox\\ 3.app/Contents/MacOS/firefox-bin"
+    FIREFOX_EXECUTABLE='/Applications/Firefox.app/Contents/MacOS/firefox-bin'
     if [[ $1 ]]; then
         # Run with a specific profile, named in $1.
         sh -exec "$FIREFOX_EXECUTABLE -ProfileManager $1"
@@ -449,6 +346,12 @@ info() {
     fi
 }
 
+js() {
+    FILE=$1
+    shift
+    jsl -process "$FILE" "$@"
+}
+
 # kindle FILE1 ...: load free eBooks into iPhone Kindle app. Requires jailbreak.
 kindle() {
     IPHONE_HOSTNAME=te
@@ -472,10 +375,10 @@ unalias ls 2>/dev/null
 # This must be written as an alias, because a shell function would recurse.
 if [[ $OS = Darwin ]]; then
     # Use homebrewed GNU ls.
-    alias ls='gls -1 -G --group-directories-first'
+    alias ls='gls -1 --color=auto --group-directories-first'
 elif [[ $OS = Linux ]]; then
     # GNU ls is the standard ls (unless this is some really eccentric distro).
-    alias ls='ls -1 -G --group-directories-first'
+    alias ls='ls  -1 --color=auto --group-directories-first'
 else
     # Other OS'es may or may not use GNU ls. Until we learn more, play it safe
     # by omitting the GNU-specific --group-directories-first option.
@@ -494,7 +397,7 @@ lw() { perldoc -l "$1" ;}
 # rmds: remove a directory, including .DS_Store droppings left by OS X Finder.
 # Fails if the directory contains anything besides .DS_Store.
 rmds() {
-    rm -rfi "$1/.DS_Store"
+    rm -fi "$1/.DS_Store"
     rmdir "$1"
 }
 

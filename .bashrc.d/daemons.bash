@@ -32,8 +32,8 @@ run_gpg_agent_idempotently() {
 }
 
 # ssh-agent(1).
-SSH_ADD=~/.homebrew/bin/ssh-add
-SSH_AGENT=~/.homebrew/bin/ssh-agent
+SSH_ADD=/usr/local/bin/ssh-add
+SSH_AGENT=/usr/local/bin/ssh-agent
 SSH_ENV="$HOME/.ssh/environment"
 
 function start_agent {
@@ -78,8 +78,8 @@ run_tor_idempotently() {
 
 # Tracks (a Rails GTD app). This copy is ancient and bitrotten.
 # port 3000
-run_tracks_idempotently() {
-    if ( ! pq ~/tracks/script/server); then
-        ~/tracks/script/server -e production & >/dev/null 2>&1
-    fi
-}
+# run_tracks_idempotently() {
+#     if ( ! pq ~/tracks/script/server); then
+#         ~/tracks/script/server -e production & >/dev/null 2>&1
+#     fi
+# }

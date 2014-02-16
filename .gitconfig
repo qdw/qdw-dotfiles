@@ -7,7 +7,7 @@
 
 [alias]
 	co = checkout
-	fc = diff --name-only
+        # dry-run-merge = merge --no-commit --no-ff
 	no = diff --name-only
 	stat = status
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit

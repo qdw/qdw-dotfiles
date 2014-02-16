@@ -12,5 +12,5 @@ os_x_show_hidden_files() {
     killall Finder 
 }
 
-# ldd LIBRARY: because I'm used to Linux's 'ldd' and not OS X's 'otool'
-alias ldd='otool -L'
+# Because I'm used to typing GCC's 'ldd' and not OS X's 'otool'
+ldd() { otool -L "$@" ;}
