@@ -65,7 +65,7 @@ if [[ $OS = 'Darwin' ]]; then
     #FIXME: convert these (from shell scripts) to aliases in any-os-x.sh
     PERSONAL_PATH=~/bin/mac:$PERSONAL_PATH
 fi
-PATH=$PATH:$PERSONAL_PATH
+PATH=/usr/local/bin:$PATH:$PERSONAL_PATH
 
 PERSONAL_PERL5LIB=~/perl5lib
 PERL5LIB=$PERL5LIB:$PERSONAL_PERL5LIB
@@ -373,20 +373,15 @@ unalias ls 2>/dev/null
 
 # ls: always print one column, even if there are few files. It's easier to scan.
 # This must be written as an alias, because a shell function would recurse.
-if [[ $OS = Darwin ]]; then
-    # Use homebrewed GNU ls.
-    alias ls='gls -1 --color=auto --group-directories-first'
+if [[ $OS = Darwin ]] && [[ -d /usr/local/opt/coreutils/libexec/gnubin ]]; then
+    PATH=/usr/local/opt/coreutils/libexec/gnubin:$PATH
+    MANPATH=/usr/local/opt/coreutils/libexec/gnuman:$MANPATH
+    alias ls='ls  -1 --color=auto --group-directories-first'
 elif [[ $OS = Linux ]]; then
-    # GNU ls is the standard ls (unless this is some really eccentric distro).
     alias ls='ls  -1 --color=auto --group-directories-first'
 else
-    # Other OS'es may or may not use GNU ls. Until we learn more, play it safe
-    # by omitting the GNU-specific --group-directories-first option.
     alias ls='ls -1 -G'
 fi
-
-# lsl *: list files by mtime, with permissions and ownership. I do this a lot.
-lsl() { ls -lt "$@" | less ;}
 
 # lw Perl::Module, lw Perl/Module.pm ("library which"): show the path to Perl module in PERL5LIB. FIXME: test behavior
 lw() { perldoc -l "$1" ;}
