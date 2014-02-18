@@ -2,10 +2,28 @@ umask 0022
 
 # Environment variables. Define these idempotently in ~/.bashrc rather than in
 # ~/.bash_profile so that each new shell will get the new settings.
+
 set -a
 
-# Platform-specific env var settings
 OS=$(uname -s)
+
+#####################
+# My own utility code
+#####################
+PERSONAL_PATH=~/bin:~/src/continuous
+if [[ $OS = 'Darwin' ]]; then
+    #FIXME: convert these (from shell scripts) to aliases in any-os-x.sh
+    PERSONAL_PATH=$PERSONAL_PATH:~/bin/mac
+fi
+
+######
+# PATH
+######
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:$PERSONAL_PATH
+PERSONAL_PERL5LIB=~/perl5lib
+PERL5LIB=$PERL5LIB:$PERSONAL_PERL5LIB
+
+# Platform-specific env var settings
 if [[ $OS = Darwin ]]; then
     source ~/.bashrc.d/unix/os-x/any-os-x.bash
 elif [[ $OS = Linux ]]; then
@@ -41,7 +59,9 @@ source ~/.git-completion.bash
 ##########
 # Homebrew (OS X)
 ##########
-HOMEBREW_BUILD_FROM_SOURCE=1
+if [[ $(uname -n) != 'tao.local' ]]; then
+    HOMEBREW_BUILD_FROM_SOURCE=1
+fi
 
 #######################
 # perlbrew (all Unixes)
@@ -56,19 +76,6 @@ source ~/perl5/perlbrew/etc/bashrc
 # but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
 # which means using MakeMaker directly).
 PERL_MM_USE_DEFAULT=1
-
-#####################
-# My own utility code
-#####################
-PERSONAL_PATH=~/bin:~/src/continuous
-if [[ $OS = 'Darwin' ]]; then
-    #FIXME: convert these (from shell scripts) to aliases in any-os-x.sh
-    PERSONAL_PATH=~/bin/mac:$PERSONAL_PATH
-fi
-PATH=$PATH:$PERSONAL_PATH
-
-PERSONAL_PERL5LIB=~/perl5lib
-PERL5LIB=$PERL5LIB:$PERSONAL_PERL5LIB
 
 ############
 # PostgreSQL
@@ -238,6 +245,8 @@ pq() {
 # For some asinine reason, psql doesn't listen to options when I specify
 # them in ~/.psqlrc, so I'm just aliasing it to change its behavior.
 alias psql="PGOPTIONS='--client-min-messages=warning' $(which psql) --quiet -x"
+
+alias vi=vim
 
 # grep, excluding (D)VCS metadata and other metadata. # FIXME: implement in one grep command, not a pipeline, so that I don't have to wait for the whole thing to complete before I start seeing output.
 vrep() {
