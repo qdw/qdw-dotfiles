@@ -65,7 +65,7 @@ if [[ $OS = 'Darwin' ]]; then
     #FIXME: convert these (from shell scripts) to aliases in any-os-x.sh
     PERSONAL_PATH=~/bin/mac:$PERSONAL_PATH
 fi
-PATH=/usr/local/bin:$PATH:$PERSONAL_PATH
+PATH=$PATH:$PERSONAL_PATH
 
 PERSONAL_PERL5LIB=~/perl5lib
 PERL5LIB=$PERL5LIB:$PERSONAL_PERL5LIB
