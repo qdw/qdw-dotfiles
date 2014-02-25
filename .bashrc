@@ -19,7 +19,7 @@ fi
 ######
 # PATH
 ######
-PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:$PERSONAL_PATH
+PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/opt/X11/bin:$PERSONAL_PATH
 PERSONAL_PERL5LIB=~/perl5lib
 PERL5LIB=$PERL5LIB:$PERSONAL_PERL5LIB
 
