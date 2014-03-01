@@ -5,6 +5,10 @@ umask 0022
 
 set -a
 
+if (! which gpg > /dev/null 2>&1); then
+    alias gpg=gpg2
+fi
+
 OS=$(uname -s)
 
 #####################
@@ -36,6 +40,8 @@ elif [[ $OS = Linux ]]; then
         echo "Warning: unrecognized distro. Defaulting to config in $DIST_FILE"
         source $DIST_FILE
     fi
+else
+    echo "Warning: unsupported OS $OS. Falling back to system defaults."
 fi
 
 ##########################
@@ -207,7 +213,7 @@ ve() { virtualenv "$@" ;}
 #####################
 
 # pw [n_chars] ("password"): urandomly generate a new password, base64-encoded.
-pw() { dd if=/dev/urandom bs=$1 count=1 | base64 ;}
+pw() { /bin/dd if=/dev/urandom bs=$1 count=1 | base64 ;}
 
 # newpassword_alphanumeric LENGTH_IN_CHARS: as required by some dumb websites.
 newpassword_alphanumeric() {

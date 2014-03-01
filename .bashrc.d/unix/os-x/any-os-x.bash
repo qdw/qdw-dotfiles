@@ -2,6 +2,11 @@
 ########################## OS X-specific settings and functions
 ##########################
 
+os_x_show_full_path_in_finder_titlebar() {
+    defaults write com.apple.finder _FXShowPosixPathInTitle -bool YES
+    killall Finder
+}
+
 os_x_hide_hidden_files() {
     defaults write com.apple.finder AppleShowAllFiles FALSE
     killall Finder 
