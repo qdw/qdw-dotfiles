@@ -309,7 +309,7 @@ fd() { find . -type d -name "*${1}*" ;}
 # ffind *: find, excluding (D)VCS metadata and other metadata.
 ffind() { find "$@" | vrep ;}
 
-alias grep='/usr/local/bin/ggrep --color'
+alias grep='grep --color'
 
 gggrep() { grep "$@" | vrep ;}
 
