@@ -3,6 +3,10 @@ umask 0022
 # Environment variables. Define these idempotently in ~/.bashrc rather than in
 # ~/.bash_profile so that each new shell will get the new settings.
 
+if [[ -e ~/.bashrc.d/local.bash ]]; then
+    source ~/.bashrc.d/local.bash
+fi
+
 set -a
 
 if (! which gpg > /dev/null 2>&1); then

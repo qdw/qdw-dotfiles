@@ -17,5 +17,18 @@ os_x_show_hidden_files() {
     killall Finder 
 }
 
+# Start (homebrewed) PostgreSQL.
+os_x_start_postgres_idempotently() {
+    if (! ps -ef | grep postgres | grep -v grep > /dev/null 2>&1); then
+        HOMEBREW_ROOT=/usr/local
+        PGDATA=$HOMEBREW_ROOT/var/postgres
+        if [[ -d $PGDATA ]]; then
+            $HOMEBREW_ROOT/bin/pg_ctl -D $PGDATA start
+        fi
+    fi
+}
+
+os_x_start_postgres_idempotently
+
 # Because I'm used to typing GCC's 'ldd' and not OS X's 'otool'
 ldd() { otool -L "$@" ;}
