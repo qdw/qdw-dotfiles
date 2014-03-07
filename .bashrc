@@ -98,17 +98,6 @@ HISTSIZE=
 # If I forget to specify a DB, use one that's safe to trash.
 PGDATABASE=sandbox
 
-# Start postgres (if it's not running already).
-HOMEBREW_PGDATA=$HOMEBREW_ROOT/var/postgres
-if [[ -d "$HOMEBREW_PGDATA" ]]; then
-    PGDATA="$HOMEBREW_PGDATA"
-
-    pg_ctl status >/dev/null
-    if [[ $? = 3 ]]; then
-        pg_ctl -D $PGDATA -l $PGDATA/server.log start > /dev/null
-    fi
-fi
-
 ########
 # Python virtualenv
 ########

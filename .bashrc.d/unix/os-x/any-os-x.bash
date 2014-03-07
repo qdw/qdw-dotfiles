@@ -22,7 +22,7 @@ export PGDATA=/usr/local/var/postgres
 os_x_start_postgres_idempotently() {
     if (! ps -ef | grep postgres | grep -v grep > /dev/null 2>&1); then
         if [[ -d $PGDATA ]]; then
-            $HOMEBREW_ROOT/bin/pg_ctl -D $PGDATA start > /dev/null
+            /usr/local/bin/pg_ctl -D $PGDATA start > /dev/null
         fi
     fi
 }
