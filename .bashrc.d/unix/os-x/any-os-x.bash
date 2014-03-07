@@ -18,12 +18,11 @@ os_x_show_hidden_files() {
 }
 
 # Start (homebrewed) PostgreSQL.
+export PGDATA=/usr/local/var/postgres
 os_x_start_postgres_idempotently() {
     if (! ps -ef | grep postgres | grep -v grep > /dev/null 2>&1); then
-        HOMEBREW_ROOT=/usr/local
-        PGDATA=$HOMEBREW_ROOT/var/postgres
         if [[ -d $PGDATA ]]; then
-            $HOMEBREW_ROOT/bin/pg_ctl -D $PGDATA start
+            $HOMEBREW_ROOT/bin/pg_ctl -D $PGDATA start > /dev/null
         fi
     fi
 }
