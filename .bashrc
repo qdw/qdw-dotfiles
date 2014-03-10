@@ -434,8 +434,7 @@ title() { echo -ne "\033]2;" $1 "\007" ;}
 
 # ta $SESSION_NAME ("Tmux Attach"): attach to named session, creating if needed.
 ta() {
-    tmux has-session -t $1 2>/dev/null
-    if [[ $? -ne 0 ]]; then
+    if (! tmux has-session -t $1 2>/dev/null); then
         tmux new-session -d -s $1 -n $1
     fi
     tmux -2 attach-session -t $1
