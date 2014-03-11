@@ -18,7 +18,7 @@ OS=$(uname -s)
 #####################
 # My own utility code
 #####################
-PERSONAL_PATH=~/bin:~/src/continuous
+PERSONAL_PATH=~/bin/3:~/bin:~/src/continuous
 if [[ $OS = 'Darwin' ]]; then
     #FIXME: convert these (from shell scripts) to aliases in any-os-x.sh
     PERSONAL_PATH=$PERSONAL_PATH:~/bin/mac
