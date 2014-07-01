@@ -13,6 +13,7 @@ FILES_TO_INSTALL='
 .newsbeuter
 .psqlrc
 .psqlrc-9.2
+.screenrc
 .tmux.conf'
 
 cd

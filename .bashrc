@@ -1,11 +1,8 @@
 umask 0022
 
-# Environment variables. Define these idempotently in ~/.bashrc rather than in
-# ~/.bash_profile so that each new shell will get the new settings.
-
-if [[ -e ~/.bashrc.d/local.bash ]]; then
-    source ~/.bashrc.d/local.bash
-fi
+# Do everything in ~/.bashrc and nothing in ~/.bash_profile, so that
+# each new shell will get the new settings. Where necessary, write code
+# idempotently (e.g., for starting daemons).
 
 set -a
 
@@ -15,27 +12,35 @@ fi
 
 OS=$(uname -s)
 
-#####################
+###############################
+# The Go programming language #
+###############################
+GOPATH=~/go
+
+############################
+# PATH, MANPATH, et cetera #
+############################
+
 # My own utility code
-#####################
-PERSONAL_PATH=~/bin/3:~/bin:~/src/continuous
+PERSONAL_PATH=~/bin/3:~/bin:~/bin/tmux-scripts:~/src/continuous
 if [[ $OS = 'Darwin' ]]; then
     #FIXME: convert these (from shell scripts) to aliases in any-os-x.sh
     PERSONAL_PATH=$PERSONAL_PATH:~/bin/mac
 fi
 
-######
-# PATH
-######
-PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/opt/X11/bin:$PERSONAL_PATH
+########
+# PATH #
+#######
+PATH=/opt/rsync-2.4.1/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/opt/X11/bin:$GOPATH/bin:$PERSONAL_PATH
 PERSONAL_PERL5LIB=~/perl5lib
 PERL5LIB=$PERL5LIB:$PERSONAL_PERL5LIB
 
-# Platform-specific env var settings
+# Platform-specific environment variable settings
 if [[ $OS = Darwin ]]; then
     source ~/.bashrc.d/unix/os-x/any-os-x.bash
 elif [[ $OS = Linux ]]; then
     source ~/.bashrc.d/unix/linux/any-linux.bash
+
     if (grep ^Debian /etc/issue > /dev/null 2>&1); then
         source ~/.bashrc.d/unix/linux/debian-gnu-linux.bash
     else
@@ -48,48 +53,34 @@ else
     echo "Warning: unsupported OS $OS. Falling back to system defaults."
 fi
 
-##########################
-########################## <- Sections demarcated in hashes, like this,
-########################## must appear in their present order, or code
-########################## will break.
-##########################
+#### <- Sections demarcated in hashes, like this,
+#### must appear in their present order, or code
+#### will break.
 
-########################## 
-########################## bash shell completion
-########################## 
+#### bash shell completion
 
-# shell completion for brew(1)
-# if [[ -f $(brew --prefix)/etc/bash_completion ]]; then
-#    source $(brew --prefix)/etc/bash_completion
-# fi
+# git(1)
+source ~/.bashrc.d/completion/git.bash
 
-# shell completion for git(1)
-source ~/.git-completion.bash
+# vagrant(1)
+source ~/.bashrc.d/completion/vagrant.bash
 
-##########
-# Homebrew (OS X)
-##########
+#### Homebrew (OS X)
 if [[ $(uname -n) != 'tao.local' ]]; then
     HOMEBREW_BUILD_FROM_SOURCE=1
 fi
 
-#######################
+#### Perl
+
 # perlbrew (all Unixes)
-#######################
 source ~/perl5/perlbrew/etc/bashrc
 
-#################
-# perl in general
-#################
-#
 # Make Module::Install auto-follow dependencies. cpanm sets this by default,
 # but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
 # which means using MakeMaker directly).
 PERL_MM_USE_DEFAULT=1
 
-############
-# PostgreSQL
-############
+#### PostgreSQL
 
 # psql: keep all history forever
 HISTFILESIZE=
@@ -98,51 +89,22 @@ HISTSIZE=
 # If I forget to specify a DB, use one that's safe to trash.
 PGDATABASE=sandbox
 
-########
-# Python virtualenv
-########
+#### Python virtualenv
 
 # One-time setup:
 # easy_install pp
 # pip install virtualenv
 # pip install virtualenvwrapper
 
-# VIRTUALENVWRAPPER_PYTHON=$HOMEBREW_ROOT/bin/python
-# VIRTUALENV_SCRIPT=$HOMEBREW_ROOT/share/python/virtualenv
+#### Ruby
 
-# VIRTUALENV_SCRIPT_DIR=$(dirname $VIRTUALENV_SCRIPT)
-# PATH=$PATH:$VIRTUALENV_SCRIPT_DIR
-# VIRTUALENVWRAPPER_SCRIPT=$HOMEBREW_ROOT/share/python/virtualenvwrapper.sh
-# source $VIRTUALENVWRAPPER_SCRIPT
-# WORKON_HOME=~/.virtualenvs
-# MKVE_OPTS='--no-site-packages'
-
-# # mkve26: make a Python 2.6 virtualenv.
-# mkve26() {
-#     mkvirtualenv $MKVE_OPTS \
-#         --python $HOMEBREW_ROOT/Cellar/python26/2.6.8/bin/python "$@"
-# }
-
-# # mkve27: make a Python 2.7 virtualenv.
-# mkve27() {
-#     mkvirtualenv $MKVE_OPTS \
-#         --python $HOMEBREW_ROOT/Cellar/python/2.7.1/bin/python "$@"
-# }
-
-# # mkve3: make a Python 3.3 virtualenv.
-# mkve3() {
-#     mkvirtualenv $MKVE_OPTS \
-#         --python $HOMEBREW_ROOT/Cellar/python/3.3.3/bin/python "$@"
-# }
-
-######
-# Ruby
-######
 RUBYOPT=rubygems
 
-###################
-# bash, emacs, less
-###################
+#### bash, emacs, less
+
+# Add a timestamp to history(1) and ~/.bash_history
+# using strftime(3) formatting.
+HISTTIMEFORMAT='%A, %Y-%m-%d at %H:%M:%S %Z:%n       '
 
 # Editor: emacsclient. The empty ALTERNATE_EDITOR setting tells emacsclient
 # to start an emacs session ('emacs --daemon') if one is not running already.
@@ -179,18 +141,15 @@ else
     EDITOR=vi; VISUAL=$EDITOR
 fi
 
-#####
-# FTP
-#####
+#### FTP
+
 FTP_LOGIN=ftp
 FTP_PASSIVE_MODE=yes
 FTP_PASSWORD=''
 
 set +a
 
-#############################
-# Aliases and shell functions
-#############################
+#### Aliases and shell functions
 
 rss() { newsbeuter "$@" ;}
 
@@ -270,6 +229,9 @@ cl() { emacs -nw -q -batch -f batch-byte-compile "$@" ;}
 # work properly in emacs shell-mode.
 cr() { cd $(~/bin/cr_helper $1) ;}
 
+# d ("date"): give today's date in YYYY-MM-DD format. Useful for interpolating.
+d() { date +%Y-%m-%d ;}
+
 # dos2unix FILE1 ...: translate-in-place DOS newlines to Unix newlines.
 dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 
@@ -339,12 +301,10 @@ ff() {
     fi
 }
 
+alias hb=heartbleeder
+
 # ga *: because typing 'git commit -a' is too much work
 ga() { git commit -a "$@" ;}
-
-# mz: Use mozrepl to connect to Firefox for some interactive debugging.
-# See http://wiki.github.com/bard/mozrepl/
-mz() { socat READLINE TCP4:localhost:4242 ;}
 
 info() {
     if [[ $OS = Darwin ]]; then
@@ -384,9 +344,9 @@ unalias ls 2>/dev/null
 if [[ $OS = Darwin ]] && [[ -d /usr/local/opt/coreutils/libexec/gnubin ]]; then
     PATH=/usr/local/opt/coreutils/libexec/gnubin:$PATH
     MANPATH=/usr/local/opt/coreutils/libexec/gnuman:$MANPATH
-    alias ls='ls  -1 --color=auto --group-directories-first'
+    alias ls='ls  -1 --color=auto'
 elif [[ $OS = Linux ]]; then
-    alias ls='ls  -1 --color=auto --group-directories-first'
+    alias ls='ls  -1 --color=auto'
 else
     alias ls='ls -1 -G'
 fi
@@ -396,6 +356,10 @@ lw() { perldoc -l "$1" ;}
 
 # elw Perl::Module, elw Perl/Module.pm ("edit library which"): find a perl module in PER5LIB and open it in EDITOR. #FIXME: test behavior.
 # elw() { $EDITOR $(lw "$@") ;}
+
+# mz: Use mozrepl to connect to Firefox for some interactive debugging.
+# See http://wiki.github.com/bard/mozrepl/
+mz() { socat READLINE TCP4:localhost:4242 ;}
 
 # rmds: remove a directory, including .DS_Store droppings left by OS X Finder.
 # Fails if the directory contains anything besides .DS_Store.
@@ -434,19 +398,16 @@ title() { echo -ne "\033]2;" $1 "\007" ;}
 
 # ta $SESSION_NAME ("Tmux Attach"): attach to named session, creating if needed.
 ta() {
-    if (! tmux has-session -t $1 2>/dev/null); then
+    if (! tmux has-session -t $1 2> /dev/null); then
         tmux new-session -d -s $1 -n $1
     fi
     tmux -2 attach-session -t $1
 }
 
-# tls ("Tmux List"): list running tmux sessions.
-tls() {
-    tmux list-sessions 2>/dev/null
+# tl ("Tmux List"): list running tmux sessions.
+tl() {
+    tmux list-sessions 2> /dev/null
 }
-
-# tl: alias for tls, so I don't have to do all that tiresome extra typing!
-tl() { tls "$@" ;}
 
 top() { echo "Don't use top; use htop instead." ;}
 
@@ -491,3 +452,4 @@ CSFILE=~/.bashrcs.client-specific.d/Source-me.bash
 if [[ -f "$CSFILE" ]]; then
     source "$CSFILE"
 fi
+
