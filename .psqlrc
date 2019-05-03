@@ -1,2 +1,7 @@
 \set ON_ERROR_ROLLBACK interactive
 \set history unlimited
+-- 
+-- 
+-- \set ECHO all
+-- \set ON_ERROR_STOP on
+-- \timing on

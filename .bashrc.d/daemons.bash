@@ -19,21 +19,25 @@ run_gem_server_idempotently() {
 
 # gpg-agent(1)
 # Unix domain socket; no TCP/IP port
-run_gpg_agent_idempotently() {
-    # This code is from gpg-agent(1) man page:
-    if test -f $HOME/.gpg-agent-info && \
-        kill -0 $(cut -d: -f 2 $HOME/.gpg-agent-info) 2>/dev/null; then
-        GPG_AGENT_INFO=$(cat $HOME/.gpg-agent-info)
-        export GPG_AGENT_INFO
-    else
-        eval $(gpg-agent --daemon)
-        echo $GPG_AGENT_INFO >$HOME/.gpg-agent-info
-    fi
-}
+# run_gpg_agent_idempotently() {
+#     # This code is from gpg-agent(1) man page:
+#     if test -f $HOME/.gpg-agent-info && \
+#         kill -0 $(cut -d: -f 2 $HOME/.gpg-agent-info) 2>/dev/null; then
+#         GPG_AGENT_INFO=$(cat $HOME/.gpg-agent-info)
+#         export GPG_AGENT_INFO
+#     else
+#         eval $(gpg-agent --daemon)
+#         echo $GPG_AGENT_INFO >$HOME/.gpg-agent-info
+#     fi
+# }
 
 # ssh-agent(1).
-SSH_ADD=/usr/local/bin/ssh-add
-SSH_AGENT=/usr/local/bin/ssh-agent
+#SSH_ADD=/usr/local/bin/ssh-add
+#SSH_AGENT=/usr/local/bin/ssh-agent
+#SSH_ENV="$HOME/.ssh/environment"
+
+SSH_ADD=/usr/bin/ssh-add
+SSH_AGENT=/usr/bin/ssh-agent
 SSH_ENV="$HOME/.ssh/environment"
 
 function start_agent {
@@ -41,6 +45,16 @@ function start_agent {
      chmod 600 "${SSH_ENV}"
      . "${SSH_ENV}" > /dev/null
      $SSH_ADD;
+
+     # Or do it the way the homebrew formula suggests,
+     # by putting this in ~/.bash_profile
+     # 
+     # eval $(ssh-agent)
+     # function cleanup {
+     #     echo "Killing SSH-Agent"
+     #     kill -9 $SSH_AGENT_PID
+     # }
+     # trap cleanup EXIT
 }
 
 run_ssh_agent_idempotently() {
@@ -53,6 +67,12 @@ run_ssh_agent_idempotently() {
         start_agent;
     fi
 }
+
+# run_sshd_idempotently() {
+#     if (! ps auxwww | grep ' /usr/local/sbin/sshd$' >/dev/null); then
+#         sudo /usr/local/sbin/sshd
+#     fi
+# }
 
 # Subversion server. I used to have to run this for some clients.
 #
