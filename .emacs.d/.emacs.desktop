@@ -1,0 +1,175 @@
+;; -*- mode: emacs-lisp; lexical-binding:t; coding: utf-8-emacs; -*-
+;; --------------------------------------------------------------------------
+;; Desktop File for Emacs
+;; --------------------------------------------------------------------------
+;; Created Fri Mar 19 00:05:42 2021
+;; Desktop file format version 208
+;; Emacs version 27.1
+
+;; Global section:
+(setq desktop-saved-frameset [frameset 1 (24660 19782 270141 0) (desktop . "208") "qweaver@qweaver-imac" nil nil ((((minibuffer . t) (tty-type . "screen-256color") (tty . "/dev/tty") (display-type . color) (background-mode . dark) (tool-bar-lines . 0) (menu-bar-lines . 0) (vertical-scroll-bars) (foreground-color . "unspecified-fg") (background-color . "unspecified-bg") (font . "tty") (height . 24) (width . 80) (modeline . t) (unsplittable) (tab-bar-lines . 0) (frameset--id . "3BDA-9330-0395-6DE3") (frameset--mini t)) ((min-height . 4) (min-width . 10) (min-height-ignore . 2) (min-width-ignore . 2) (min-height-safe . 1) (min-width-safe . 2) (min-pixel-height . 4) (min-pixel-width . 10) (min-pixel-height-ignore . 2) (min-pixel-width-ignore . 2) (min-pixel-height-safe . 1) (min-pixel-width-safe . 2)) leaf (pixel-width . 80) (pixel-height . 23) (total-width . 80) (total-height . 23) (normal-height . 1.0) (normal-width . 1.0) (buffer "site-lisp.el" (selected . t) (hscroll . 0) (fringes 0 0 nil nil) (margins nil) (scroll-bars nil 0 t nil 0 t nil) (vscroll . 0) (dedicated) (point . 271) (start . 1))))])
+(setq desktop-missing-file-warning nil)
+(setq tags-file-name nil)
+(setq tags-table-list nil)
+(setq search-ring '(#("hook" 0 4 (isearch-regexp-function nil isearch-case-fold-search t)) #("desktop" 0 7 (isearch-case-fold-search t isearch-regexp-function nil)) #("\"" 0 1 (isearch-regexp-function nil isearch-case-fold-search t)) #("lam" 0 3 (isearch-case-fold-search t isearch-regexp-function nil)) #("keyb" 0 4 (isearch-case-fold-search t isearch-regexp-function nil)) #("pg" 0 2 (isearch-case-fold-search t isearch-regexp-function nil))))
+(setq regexp-search-ring nil)
+(setq register-alist nil)
+(setq file-name-history '("~/.emacs.d/site-lisp.el" "~/src/devops/provisioners/datawarehouse/ansible/roles/pull-code-datamart/tasks/main.yaml" "~/src/devops/provisioners/datawarehouse/ansible/roles/pull-code-datamart/" "~/src/devops/provisioners/datawarehouse/ansible/roles/pull-code-datamart" "~/src/devops/provisioners/datawarehouse/ansible/roles/" "~/src/devops/provisioners/build/ansible/roles/pull-code-hotelenrichment/tasks/main.yaml" "/provisioners/build/ansible/roles/pull-code-hotelenrichment/tasks/main.yaml" "~/src/devops/provisioners/datawarehouse/ansible/roles/datamart-code-install/tasks/main.yaml" "~/src/devops/provisioners/datawarehouse/ansible/roles/datamart-code-install/tasks" "~/src/devops/provisioners/datawarehouse/ansible/roles/datamart-code-install" "~/src/devops/provisioners/datawarehouse/ansible/roles/datamart-install" "~/.emacs" "~/src/devops/provisioners/datawarehouse/" "~/src/devops/provisioners/datawarehouse/ansible/roles/oci-attach-volume/" "~/src/devops/provisioners/datawarehouse/ansible/" "~/src/devops/provisioners/datawarehouse/ansible/group_vars/prod/vars.yaml" "~/src/devops/provisioners/datawarehouse/ansible/group_vars/all/vars.yaml" "~/src/devops/provisioners/datawarehouse/ansible/" "~/.emacs" "~/.emacs.d/" "~/.bashrc"))
+
+;; Buffer section -- buffers listed in same order as in buffer list:
+(desktop-create-buffer 208
+  "/Users/qweaver/.emacs.d/site-lisp.el"
+  "site-lisp.el"
+  'emacs-lisp-mode
+  '(eldoc-mode)
+  271
+  '(nil nil)
+  nil
+  nil
+  '((buffer-display-time 24660 19781 822390 0) (buffer-file-coding-system . prefer-utf-8-unix))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/Users/qweaver/OneDrive - Switchfly Inc/src/1/qdw-dotfiles/.emacs"
+  ".emacs"
+  'emacs-lisp-mode
+  '(eldoc-mode)
+  737
+  '(622 nil)
+  nil
+  nil
+  '((buffer-display-time 24660 19773 405042 788000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring (1))))
+
+(desktop-create-buffer 208
+  "/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/roles/pull-code-datamart/tasks/main.yaml"
+  "main.yaml"
+  'fundamental-mode
+  nil
+  197
+  '(21 nil)
+  nil
+  nil
+  '((buffer-display-time 24660 19455 605373 356000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring (21 21 21 21))))
+
+(desktop-create-buffer 208
+  nil
+  "pull-code-datamart"
+  'dired-mode
+  nil
+  296
+  '(nil nil)
+  t
+  '("/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/roles/pull-code-datamart/")
+  '((buffer-display-time 24659 58300 923132 485000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "tasks"
+  'dired-mode
+  nil
+  296
+  '(nil nil)
+  t
+  '("/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/roles/pull-code-datamart/tasks/")
+  '((buffer-display-time 24657 45213 67702 485000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "roles"
+  'dired-mode
+  nil
+  687
+  '(nil nil)
+  t
+  '("/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/roles/")
+  '((buffer-display-time 24657 45204 453290 485000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "tasks"
+  'dired-mode
+  nil
+  299
+  '(nil nil)
+  t
+  '("/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/roles/postgresql-install/tasks/")
+  '((buffer-display-time 24657 44868 485329 485000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/roles/postgresql-install/tasks/main.yaml"
+  "main.yaml"
+  'fundamental-mode
+  nil
+  1
+  '(nil nil)
+  nil
+  nil
+  '((buffer-display-time 24657 44865 443073 485000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "postgresql-install"
+  'dired-mode
+  nil
+  296
+  '(nil nil)
+  t
+  '("/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/roles/postgresql-install/")
+  '((buffer-display-time 24657 44846 590685 485000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  nil
+  "provisioners"
+  'dired-mode
+  nil
+  477
+  '(nil nil)
+  t
+  '("/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/")
+  '((buffer-display-time 24657 44789 471268 485000))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/group_vars/prod/vars.yaml"
+  "group-vars--prod.yaml"
+  'fundamental-mode
+  nil
+  1
+  '(nil nil)
+  nil
+  nil
+  '((buffer-display-time 24657 42826 242706 485000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/group_vars/all/vars.yaml"
+  "group-vars--all.yaml"
+  'fundamental-mode
+  nil
+  829
+  '(5 nil)
+  nil
+  nil
+  '((buffer-display-time 24657 59 310148 628000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "/Users/qweaver/src/devops/provisioners/datawarehouse/ansible/attach-volume.yaml"
+  "attach-volume.yaml"
+  'fundamental-mode
+  nil
+  1
+  '(nil nil)
+  nil
+  nil
+  '((buffer-display-time 24656 61637 899522 903000) (buffer-file-coding-system . undecided-unix))
+  '((mark-ring nil)))
+
