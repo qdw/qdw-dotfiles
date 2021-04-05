@@ -1,25 +1,29 @@
-[push]
-	default = current
-
 [user]
 	name  = Quinn Weaver
-	email = quinn@pgexperts.com
+	email = quinn@fairpath.com
 
-[alias]
-	co = checkout
-        # dry-run-merge = merge --no-commit --no-ff
-	no = diff --name-only
-	stat = status
-	tree = log --graph --decorate --pretty=oneline --abbrev-commit
-        last = "!sh -c 'if [ $# -eq 0 ] ; then git diff HEAD~1 HEAD ; else git diff HEAD~`expr $1 + 1` HEAD~$1 ; fi' -"
+[push]
+	default = upstream
 
-[core]
-	excludesfile = ~/.gitignore
+[merge]
+	renamelimit=10500
+
+[branch]
+	autosetuprebase = always
 
 [diff]
 	color = auto
 	tool  = git diff --patience
 
-[merge]
-	renamelimit=10500
+[alias]
+	co = checkout
+        dry-run = merge --no-commit --no-ff
+	no = diff --name-only
+	stat = status
+	tree = log --graph --decorate --pretty=oneline --abbrev-commit
+	last = "!sh -c 'if [ $# -eq 0 ] ; then git diff HEAD~1 HEAD ; else git diff HEAD~`expr $1 + 1` HEAD~$1 ; fi' -"
+	last-no = "!sh -c 'if [ $# -eq 0 ] ; then git diff --name-only HEAD~1 HEAD ; else git diff --name-only HEAD~`expr $1 + 1` HEAD~$1 ; fi' -"
 
+[core]
+	excludesfile = ~/.gitignore
+	ignorecase = false

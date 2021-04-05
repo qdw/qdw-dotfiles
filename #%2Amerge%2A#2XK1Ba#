@@ -1,6 +1,7 @@
 \set ON_ERROR_ROLLBACK interactive
 \set history unlimited
 \timing on
-\setenv pager less
-\x auto
-\pset null 🐙
+-- 
+-- 
+-- \set ECHO all
+-- \set ON_ERROR_STOP on

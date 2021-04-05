@@ -1,2 +1,3 @@
 set bell-style visible
 set editing-mode emacs
+set enable-bracketed-paste on
