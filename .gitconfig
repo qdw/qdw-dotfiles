@@ -1,0 +1,65 @@
+[user]
+	name = Quinn Weaver
+
+[pull]
+	ff = only
+
+[push]
+	default = upstream
+	autoSetupRemote = true
+
+[blame]
+	coloring = highlightRecent
+	
+[color "diff"]
+	old = red
+	new = green
+	oldMoved = blue
+	newMoved = magenta
+	oldMovedAlternative = black
+	newMovedAlternative = cyan
+
+[color "blame"]
+       repeatedLines = "black"
+       highlightRecent = "black,6 months ago,cyan,3 months ago,blue,6 weeks ago,red"
+
+[core]
+	excludesfile = ~/.gitignore
+	ignorecase = false
+
+[diff]
+	tool = git diff --patience
+	color = auto
+	colorMoved = dimmed-zebra
+	# difft: semantic diff that understands various programming languages
+	#tool = difft #--background dark --color always --missing-as-empty --skip-unchanged
+
+[merge]
+	tool = emerge
+	renamelimit = 10500
+
+[pager]
+	#difftool = true
+
+[alias]
+	char-diff = diff --word-diff-regex=.
+	co = checkout
+        comp = diff --compact-summary
+        dry = merge --no-commit --no-ff
+	ff = pull --ff-only
+	last = "!function _last() { CMT=${1:HEAD}; git diff \"${CMT}^\" \"$CMT\" ;}; _last"
+	main = "!sh -c 'git checkout `/Users/quinn.weaver/.gitconfig-helper--get-main-branch-name`'"
+	no = diff --name-only
+	report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
+	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
+	stat = status
+	tree = log --graph --decorate --pretty=oneline --abbrev-commit
+
+[init]
+	defaultBranch = main
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

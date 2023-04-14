@@ -1,0 +1,7 @@
+# For documentation of this file's format, 'man inputrc' or see
+# https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
+
+set bell-style visible
+set editing-mode emacs
+set enable-bracketed-paste on
+# set active-region-start-color [some_escape_sequence]

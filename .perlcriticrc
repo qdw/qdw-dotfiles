@@ -1,0 +1,24 @@
+# Display the name of the violated policy, so I can disable it selectively
+# if I so choose.
+
+#### Oops, this breaks emacs perlcritic.el . :(  Why?
+#### Level 3 plus policy name (breaks perlcritic.el)
+####verbose = %m at %f line %l %p\n
+
+#### My favorite custom level (breaks perlcritic.el.  Why?)
+#### #verbose = %m at line %l, column %c.  %e.  (Severity: %s) %p\n
+
+verbose = 3
+
+m# In POD, require those sections specified in Damian's later Module::Starter
+# templates, not those sections specified in the _Perl Best Practices_ book.
+[Perl::Critic::Policy::Documentation::RequirePodSections]
+source   = module_starter_pbp_0_0_3
+language = en_US
+
+# Allow POD in the body of the Perl program.  (I use =head2 sections to
+# document individual methods/subroutines.)
+[-Perl::Critic::Policy::Documentation::RequirePodAtEnd]
+
+# I use git, not RCS or CVS, so this policy does not work for me.
+[-Perl::Critic::Policy::Miscellanea::RequireRcsKeywords]
