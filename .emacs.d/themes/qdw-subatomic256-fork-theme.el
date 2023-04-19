@@ -452,7 +452,7 @@
       ((t (:foreground ,deep-gold))))
 
     `(outline-3
-      ((t (:foreground ,sea-blue))))
+      ((t (:foreground ,victory-blue))))
 
     `(outline-4
       ((t (:foreground ,low-key-magenta))))
@@ -479,6 +479,9 @@
     `(org-level-3
       ((t (:inherit outline-3))))
 
+    `(org-level-3
+      ((t (:inherit org-level-2))))
+    
     `(org-level-4
       ((t (:inherit outline-4))))
 
