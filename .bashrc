@@ -805,6 +805,16 @@ function gline() {
     fi
 }
 
+function branch() {
+    local BRANCH_NAME
+    BRANCH_NAME="$1"
+    if [[ -z "$BRANCH_NAME" ]]; then
+        echo "branch: error: missing argument. Usage: branch BRANCH_NAME"
+    else
+        gh browse --branch "$1"
+    fi
+}
+
 function readme() {
     gh repo view
 }
