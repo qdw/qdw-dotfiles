@@ -1,7 +1,8 @@
 project.org
 site.bash
 .site.bash
-gitignore.d       
+gitignore.d
+.projectile
         
 # I'm not sure whether I want to commit the files in old/.
 old
