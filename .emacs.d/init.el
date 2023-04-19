@@ -117,12 +117,12 @@ Test cases
     ))
 
 
-(defun qdw-open-current-file-in-emacs-gui ()
+(defun open-current-file-in-emacs-gui ()
   (interactive)
-  (xah-qdw-open-file-in-external-program "emacs -c"))
+  (xah-open-file-in-external-program "emacs -c"))
 
 ;; FIXME: abstract this repetitive code
-(defun qdw-open-current-file-in-sublime-text ()
+(defun open-current-file-in-sublime-text ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -131,7 +131,7 @@ Test cases
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
-(defun qdw-open-current-file-in-gvim ()
+(defun open-current-file-in-gvim ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -141,9 +141,9 @@ Test cases
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
       
-(global-set-key (kbd "C-c s") 'qdw-open-current-file-in-sublime-text)
+(global-set-key (kbd "C-c s") 'open-current-file-in-sublime-text)
 
-(defun qdw-open-current-file-in-vscode ()
+(defun open-current-file-in-vscode ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -153,7 +153,7 @@ Test cases
              (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
 (global-set-key (kbd "C-c v")
-                'qdw-open-current-file-in-vscode)
+                'open-current-file-in-vscode)
 
 
 ;; (if (getenv "TMUX")
@@ -186,28 +186,28 @@ Test cases
 (load-theme 'qdw-subatomic256-fork 't)
 
 ;;T  Selenized: medium-contrast white-on-green 256-color w/ bright font-lock
-;; (load-theme 'solarized-selenized-dark 't)
+;; (oad-theme 'solarized-selenized-dark 't)
 
 ;; Less-favored themes
 
 ;;T  Niflheim: high-contrast white-on-brown 256-color theme w/ muted font-lock
-;; (load-theme 'niflheim 't)
+;; (oad-theme 'niflheim 't)
 
 ;;T  birds-of-paradise-plus: very loud red theme for use on production boxes
-;; (load-theme 'birds-of-paradise-plus 't) ;; RED, loud, for prod box
+;; (oad-theme 'birds-of-paradise-plus 't) ;; RED, loud, for prod box
 
 ;;T  base16-greenscreen: green-phosphor nostalgia theme
-;; (load-theme 'base16-greenscreen 't)
+;; (oad-theme 'base16-greenscreen 't)
 
 ;;T  Quinnokai: medium-contrast, dark >256-color theme. No good for terminals.
 ;;   This is is my very slightly tweaked version of the third-party theme
-;; (load-theme 'quinnokai 't)
+;; (oad-theme 'quinnokai 't)
 
 ;; Light themes
 
 ;; (add-to-list 'load-path
 ;;              (expand-file-name "~/.emacs.d/themes"))
-;; (load-theme 'almost-mono-cream 't)
+;; (oad-theme 'almost-mono-cream 't)
 
 ;; No matter what theme I chose above,
 ;; make the cursor orange.
@@ -416,8 +416,7 @@ This command does the reverse of `fill-region'."
 (defun org-archive-read-only-hook ()
   (when (string-match "[.]org_archive" buffer-file-name)
         (read-only-mode)))
-  
-(add-hook 'find-file-hook 'org-archive-read-only-hook)
+;; (add-hook 'find-file-hook 'org-archive-read-only-hook)
 
 (defun qdw-org-insert-subheading-respect-content (arg)
   (interactive "P")
@@ -447,6 +446,15 @@ This command does the reverse of `fill-region'."
 (define-key 'help-command (kbd "C-f") 'find-function) ;; Look up Emacs func src.
 (define-key 'help-command (kbd "C-k") 'find-function-on-key) ;; " " macro src.
 (define-key 'help-command (kbd "C-v") 'find-variable) ;; " " variable definition
+
+;;;; Projectile
+
+
+(require 'ivy)
+(require 'projectile)
+(grep-apply-setting 'grep-command "ggrep -E --with-filename --line-number --regexp ")
+(projectile-mode +1)
+(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
 ;;;; Viewport management
 
@@ -694,10 +702,17 @@ This command does the reverse of `fill-region'."
  '(neo-theme 'classic)
  '(ns-alternate-modifier 'none)
  '(ns-right-alternate-modifier 'meta)
- '(org-agenda-files
-   '("/Users/quinn.weaver/main.org"))
+ '(org-agenda-files '("/Users/quinn.weaver/main.org"))
+ '(org-emphasis-alist
+   '(("*" bold)
+     ("/" italic)
+     ("_" underline)
+     ("=" org-verbatim verbatim)
+     ("`" org-code verbatim)
+     ("~"
+      (:strike-through t))))
  '(package-selected-packages
-   '(fish-mode origami blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode org-jira typescript-mode ox-jira)))
+   '(ivy fish-mode origami blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode org-jira typescript-mode ox-jira)))
 (put 'narrow-to-region 'disabled nil)
 
 ;; color defs copied from ~/.emacs.d/themes/qdw-subatomic256-fork-theme.el
