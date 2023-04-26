@@ -1,26 +1,55 @@
+(load (expand-file-name "~/.emacs.d/secrets.el") 't)
+
 ;;;;;;;; Experimental area
+
+;; OpenAI API
+;; (require 'gptai)
+;; (setq-default gptai-model "text-davinci-003")
+;; (defun lispy-ai (prompt)
+;;   "Send a prompt to the OpenAI API, showing its reply in a new window below the current one."
+;;   (interactive "MGPT prompt: ")
+;;   (split-window-below)
+;;   (other-window 1)
+;;   (switch-to-buffer "*gpt-3.5*" 't)
+;;   (other-window -1)
+;;   (gptai-send-query prompt))
+
+(defun ai (prompt)
+  "Send a prompt to OpenAI *using my shell script*, and print its response in a separate buffer"
+  (interactive "MGPT prompt: ")
+
+  (let ((output-buffer "ai"))
+    (split-window-below)
+    (other-window 1)
+    (switch-to-buffer output-buffer 't)
+    (other-window -1)
   
-(defun bing (prompt)
-  "Send a prompt to Bing Chat and return its response"
-  (interactive "MBing prompt: ")
-  (let ((output-buffer (get-buffer-create "*bing*"))
-        (orig-point (point)))
-    ;; (print (concat "bing" "'" (shell-quote-argument prompt) "'"))))
+    (start-process "/Users/quinn.weaver/bin/ai"
+                   output-buffer
+                   "ai-gpt-3.5-turbo"
+                   prompt)))
+
+;; (defun bing (prompt)
+;;   "Send a prompt to Bing Chat and return its response"
+;;   (interactive "MBing prompt: ")
+;;   (let ((output-buffer (get-buffer-create "*bing*"))
+;;         (orig-point (point)))
+;;     ;; (print (concat "bing" "'" (shell-quote-argument prompt) "'"))))
     
-    ;; (set-process-sentinel
-     (start-process "async-shell"
-                    output-buffer
-                    shell-file-name
-                    shell-command-switch
-                    "bing" "'" (shell-quote-argument prompt) "'")))
-     ;; `(lambda (process signal)
-     ;;    (when (= 0 (process-exit-status process))
-     ;;      (with-current-buffer ,output-buffer
-     ;;        (let ((output-text (buffer-string)))
-     ;;          (with-current-buffer ,(current-buffer)
-     ;;            (save-excursion
-     ;;              (goto-char ,orig-point)
-     ;;              (insert output-text))))))))))
+;;     ;; (set-process-sentinel
+;;      (start-process "async-shell"
+;;                     output-buffer
+;;                     shell-file-name
+;;                     shell-command-switch
+;;                     "bing" "'" (shell-quote-argument prompt) "'")))
+;;      ;; `(lambda (process signal)
+;;      ;;    (when (= 0 (process-exit-status process))
+;;      ;;      (with-current-buffer ,output-buffer
+;;      ;;        (let ((output-text (buffer-string)))
+;;      ;;          (with-current-buffer ,(current-buffer)
+;;      ;;            (save-excursion
+;;      ;;              (goto-char ,orig-point)
+;;      ;;              (insert output-text))))))))))
 
 ;; org-mode: support for exporting org_mode -> JIRA markdown
 
@@ -117,12 +146,12 @@ Test cases
     ))
 
 
-(defun open-current-file-in-emacs-gui ()
+(defun open-in-emacs-gui ()
   (interactive)
   (xah-open-file-in-external-program "emacs -c"))
 
 ;; FIXME: abstract this repetitive code
-(defun open-current-file-in-sublime-text ()
+(defun open-in-sublime-text ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -131,7 +160,7 @@ Test cases
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
-(defun open-current-file-in-gvim ()
+(defun open-in-gvim ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -141,9 +170,9 @@ Test cases
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
       
-(global-set-key (kbd "C-c s") 'open-current-file-in-sublime-text)
+(global-set-key (kbd "C-c s") 'open-in-sublime-text)
 
-(defun open-current-file-in-vscode ()
+(defun open-in-vscode ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -153,7 +182,7 @@ Test cases
              (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
 (global-set-key (kbd "C-c v")
-                'open-current-file-in-vscode)
+                'open-in-vscode)
 
 
 ;; (if (getenv "TMUX")
@@ -296,6 +325,12 @@ This command does the reverse of `fill-region'."
 ;; ~/.bashrc
 (setq shell-command-switch "-ic")
 
+;; Don't display the STDOUT or STDERR of quick shell commands
+(add-to-list 'display-buffer-alist
+             '("\\*Async Shell Command\\*"
+               (display-buffer-no-window)
+               (allow-no-window . t)))
+
 ;; Don't prompt me about shell sessions, debug sessions, et cetera
 ;; when I quit emacs. Just kill them.
 (add-hook 'comint-exec-hook
@@ -395,9 +430,9 @@ This command does the reverse of `fill-region'."
 
 
 ;; (add-hook 'find-file-hook
-;;           (qdw-open-current-file-in-sublime-text)
-;;           (qdw-open-current-file-in-gvim)
-;;           (qdw-open-current-file-in-vscode))
+;;           (open-in-sublime-text)
+;;           (open-in-gvim)
+;;           (open-in-vscode))
                                 
 ;;   (add-hook 'find-file-hook
 ;;             (lambda ()
@@ -405,9 +440,9 @@ This command does the reverse of `fill-region'."
 ;;                       basename (file-name-nondirectory (buffer-file-name current-buffer))
 ;;                       path (concat dirname basename))
 ;;               (when (file-exists-p path)
-;;                 (qdw-open-current-file-in-sublime-text)
-;;                 (qdw-open-current-file-in-gvim)
-;;                 (qdw-open-current-file-in-vscode))))
+;;                 (open-in-sublime-text)
+;;                 (open-in-gvim)
+;;                 (open-in-vscode))))
 
 ;;;; The insidious cult of org-mode
 
@@ -493,6 +528,8 @@ This command does the reverse of `fill-region'."
   
 
 ;; Editor macros
+(global-set-key (kbd "C-(") 'eval-expression)
+(global-set-key (kbd "C-c 0") 'async-shell-command)
 (global-set-key (kbd "C-c i") 'indent-region)
 (global-set-key (kbd "C-c c") 'comment-region)
 (global-set-key (kbd "C-c u") 'uncomment-region)
@@ -648,6 +685,14 @@ This command does the reverse of `fill-region'."
 ;;;; Lisp settings FIXME: use slime.el instead
 (setq lisp-indent-function 'common-lisp-indent-function)
 
+;; When I run C-( or M-:
+;; (which lets me write and eval a quick Lisp expression
+;; in the minibuffer),
+;; add the opening parenthesis for me.
+(add-hook 'eval-expression-minibuffer-setup-hook
+	  (lambda ()
+	    (insert "(")))
+
 ;;;;;;;; JavaScript, JSON, and TypeScript settings
 
 ;;;; JSON settings
@@ -712,7 +757,7 @@ This command does the reverse of `fill-region'."
      ("~"
       (:strike-through t))))
  '(package-selected-packages
-   '(ivy fish-mode origami blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode org-jira typescript-mode ox-jira)))
+   '(gptai ivy fish-mode origami blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode org-jira typescript-mode ox-jira)))
 (put 'narrow-to-region 'disabled nil)
 
 ;; color defs copied from ~/.emacs.d/themes/qdw-subatomic256-fork-theme.el
@@ -789,3 +834,4 @@ This command does the reverse of `fill-region'."
 ;; Load Emacs settings specific to this organization
 ;; (may override any of the settings above)
 (load (expand-file-name "~/.emacs.d/site-lisp.el") 't)
+
