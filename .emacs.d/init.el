@@ -675,6 +675,7 @@ This command does the reverse of `fill-region'."
 
 ;;;; Code-folding settings
 
+(require 'origami)
 (add-hook 'origami-mode-hook
           (lambda ()
             (define-key origami-mode-map
