@@ -683,6 +683,16 @@ This command does the reverse of `fill-region'."
                         'origami-toggle-node)))
 (global-origami-mode)
 
+;;;; C settings
+(add-hook 'c-mode-hook
+          (lambda ()
+            (local-set-key
+             "\r"
+             (lambda ()
+               (electric-newline-and-maybe-indent)
+               (clang-format-buffer)))))
+
+
 ;;;; Lisp settings FIXME: use slime.el instead
 (setq lisp-indent-function 'common-lisp-indent-function)
 
