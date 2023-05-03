@@ -1842,7 +1842,8 @@ or set the environment variable JENKINS_BASE_URL"
         echo "not logged in to Jenkins"
         echo "first log in at $JENKINS_BASE_URL" > /dev/stderr
     elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "SUCCESS" ]]; then
-        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq
+        echo "$PENULTIMATE_LINE_LAST_WORD"
+        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq > /dev/stderr
     elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "FAILURE" ]]; then
         command cat "$LOGFILE" > /dev/stderr
         echo "$PENULTIMATE_LINE_LAST_WORD"
@@ -1889,7 +1890,7 @@ function jenkins() {
         echo 'jenkins: error: first call jenkins-branch $BRANCH_NAME'
     else
         BUILD_SUMMARY=$(jenkins-fetch-and-summarize-console-output "$REPO" "$BRANCH")
-        MY_OUTPUT="jenkins: $REPO.$BRANCH: $BUILD_SUMMARY"
+        MY_OUTPUT="jenkins: $BUILD_SUMMARY (repo $REPO, branch $BRANCH)"
       
         echo "$MY_OUTPUT" | command tee >(pbcopy)
       

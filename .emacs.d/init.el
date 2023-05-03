@@ -348,7 +348,8 @@ This command does the reverse of `fill-region'."
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-;; (package-refresh-contents)
+
+(package-refresh-contents) (package-install-selected-packages)
 
 ;;;; Basic comfort
 
@@ -674,13 +675,22 @@ This command does the reverse of `fill-region'."
 
 ;;;; Code-folding settings
 
-(require 'origami)
-(add-hook 'origami-mode-hook
+;; (require 'origami)
+;; (add-hook 'origami-mode-hook
+;;           (lambda ()
+;;             (define-key origami-mode-map
+;;                         (kbd "C-c C-f")
+;;                         'origami-toggle-node)))
+;; (global-origami-mode)
+
+;;;; Bash-(and-other)-shell-script-editing settings
+
+;; Don't auto-insert '<< EOF'-style heredocs when I type <<
+;; I have my own preferred way of writing heredocs.
+(add-hook 'sh-mode-hook
           (lambda ()
-            (define-key origami-mode-map
-                        (kbd "C-c C-f")
-                        'origami-toggle-node)))
-(global-origami-mode)
+            (setq 'sh-electric-here-document-mode nil)))
+
 
 ;;;; C settings
 (add-hook 'c-mode-hook
@@ -767,7 +777,8 @@ This command does the reverse of `fill-region'."
      ("~"
       (:strike-through t))))
  '(package-selected-packages
-   '(gptai ivy fish-mode origami blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode org-jira typescript-mode ox-jira)))
+   '(projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+ '(sh-indent-statement-after-and nil))
 (put 'narrow-to-region 'disabled nil)
 
 ;; color defs copied from ~/.emacs.d/themes/qdw-subatomic256-fork-theme.el
