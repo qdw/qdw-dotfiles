@@ -2,17 +2,12 @@
 
 ;;;;;;;; Experimental area
 
-;; OpenAI API
-;; (require 'gptai)
-;; (setq-default gptai-model "text-davinci-003")
-;; (defun lispy-ai (prompt)
-;;   "Send a prompt to the OpenAI API, showing its reply in a new window below the current one."
-;;   (interactive "MGPT prompt: ")
-;;   (split-window-below)
-;;   (other-window 1)
-;;   (switch-to-buffer "*gpt-3.5*" 't)
-;;   (other-window -1)
-;;   (gptai-send-query prompt))
+;; org-mode: let me specify colors for text;
+;; these colors show up both when editing
+;; and in the export.
+;; (add-to-list 'load-path
+;;              (expand-file-name "~/.emacs.d/3"))
+;; (load "org-colored-text" nil 't)
 
 (defun ai (prompt)
   "Send a prompt to OpenAI *using my shell script*, and print its response in a separate buffer"
@@ -24,9 +19,9 @@
     (switch-to-buffer output-buffer 't)
     (other-window -1)
   
-    (start-process "/Users/quinn.weaver/bin/ai"
+    (start-process "ai"
                    output-buffer
-                   "ai-gpt-3.5-turbo"
+                   "/Users/quinn.weaver/bin/ai"
                    prompt)))
 
 ;; (defun bing (prompt)
@@ -74,6 +69,8 @@
 ;;               (shell-process-cd dir)
 ;;             (error "my-cd failed somehow")))))
 ;; (my-cd "/Applications")
+
+;;;; Settings for opening files in external applications
 
 (defun xah-open-in-external-app (&optional @fname)
   "Open the current file or dired marked files in external app.
@@ -159,6 +156,8 @@ Test cases
       "subl --background %S:%d"
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
+      
+(defalias 'sublime 'open-in-sublime-text)
 
 (defun open-in-gvim ()
   (interactive)
@@ -349,7 +348,8 @@ This command does the reverse of `fill-region'."
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-;; (package-refresh-contents)
+
+(package-refresh-contents) (package-install-selected-packages)
 
 ;;;; Basic comfort
 
@@ -675,13 +675,22 @@ This command does the reverse of `fill-region'."
 
 ;;;; Code-folding settings
 
-(require 'origami)
-(add-hook 'origami-mode-hook
+;; (require 'origami)
+;; (add-hook 'origami-mode-hook
+;;           (lambda ()
+;;             (define-key origami-mode-map
+;;                         (kbd "C-c C-f")
+;;                         'origami-toggle-node)))
+;; (global-origami-mode)
+
+;;;; Bash-(and-other)-shell-script-editing settings
+
+;; Don't auto-insert '<< EOF'-style heredocs when I type <<
+;; I have my own preferred way of writing heredocs.
+(add-hook 'sh-mode-hook
           (lambda ()
-            (define-key origami-mode-map
-                        (kbd "C-c C-f")
-                        'origami-toggle-node)))
-(global-origami-mode)
+            (setq 'sh-electric-here-document-mode nil)))
+
 
 ;;;; C settings
 (add-hook 'c-mode-hook
@@ -768,7 +777,8 @@ This command does the reverse of `fill-region'."
      ("~"
       (:strike-through t))))
  '(package-selected-packages
-   '(gptai ivy fish-mode origami blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode org-jira typescript-mode ox-jira)))
+   '(projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+ '(sh-indent-statement-after-and nil))
 (put 'narrow-to-region 'disabled nil)
 
 ;; color defs copied from ~/.emacs.d/themes/qdw-subatomic256-fork-theme.el

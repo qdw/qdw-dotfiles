@@ -1,26 +1,14 @@
+.DS_Store
+gitignore.d
+.idea
+jenkins_output.*
 project.org
+.projectile
 site.bash
 .site.bash
-gitignore.d
-.projectile
-        
-# I'm not sure whether I want to commit the files in old/.
-old
-
-# Running notes for the next commit(s)
-commit-message*
 
 # Compiled objects
 .pyc .elc .o
-
-# OpenOffice lock files (for when you commit a file that's open in OOo)
-.~lock.*odt#
-
-# PyCharm project files
-.idea
-
-# macOS Finder droppings
-.DS_Store
 
 # Emacs droppings
 \#*

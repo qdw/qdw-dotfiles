@@ -21,20 +21,15 @@
 for HDIR in "/opt/homebrew" "/usr/local"; do
     if [[ -x "$HDIR/bin/brew" ]]; then
         set -a
-
         HOMEBREW_ROOT="$HDIR"
-
         HOMEBREW_MANPATH="$HDIR/share/man"
         MANPATH="$HOMEBREW_MANPATH:${MANPATH}"
-
 	HOMEBREW_BIN="$HDIR/bin"
         HOMEBREW_SBIN="$HDIR/sbin"
-
 	PATH="$HOMEBREW_BIN:$HOMEBREW_SBIN:${PATH}"
-	
 	set +a
-
-	break
+	
+        break
     fi
 done
 
@@ -470,6 +465,7 @@ function bi() { brew install "$@" ;}
 function bl() { brew list "$@" ;}
 # function bo() { brew doctor; brew update && brew outdated ;}
 function bo() { brew update && brew outdated ;}
+function bs() { brew search "$@" ;}
 function bu() { brew update && brew upgrade --formula && brew outdated ;}
 
 function brew-lock() {
@@ -714,7 +710,7 @@ function git-backup {
 }
 
 
-function get_main_branch_name() {
+function get-main-branch-name() {
     local MAIN_OR_MASTER
     
     MAIN_OR_MASTER="$(command git branch --remotes | command ggrep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
@@ -723,21 +719,21 @@ function get_main_branch_name() {
 
 
 function pull_main_branch() {
-    local BRANCH_NAME="$(get_main_branch_name)"
+    local BRANCH_NAME="$(get-main-branch-name)"
     git co "$BRANCH_NAME" \
         && command git pull --ff-only
 }
 
 
-# gb (Git Branch) -
-function gb {
+# gb (Git Branch) - create a new branch based on the main one, and check it out
+function gb() {
     local NEW_BRANCH_NAME MAIN
 
     if [[ $# -eq 0 ]]; then
         git branch --show-current
     elif [[ $# -eq 1 ]]; then
         NEW_BRANCH_NAME="$1"
-        MAIN=$(get_main_branch_name)
+        MAIN=$(get-main-branch-name)
         pull_main_branch
         [[ $(git branch --show-current) = "$MAIN" ]] \
             && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
@@ -748,6 +744,9 @@ function gb {
     fi
 }
 
+function gbb() {
+    git branch "$@"
+}
 
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
 function gu() {
@@ -807,12 +806,17 @@ function gline() {
 
 function branch() {
     local BRANCH_NAME
-    BRANCH_NAME="$1"
-    if [[ -z "$BRANCH_NAME" ]]; then
-        echo "branch: error: missing argument. Usage: branch BRANCH_NAME"
+    
+    if [[ $# -eq 0 ]]; then
+        BRANCH_NAME=$(gb)
+    elif
+        [[ $# -eq 1 ]]; then
+        BRANCH_NAME="$1"
     else
-        gh browse --branch "$1"
+        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME" > /dev/stderr
     fi
+    
+    gh browse --branch "$BRANCH_NAME"
 }
 
 function readme() {
@@ -997,9 +1001,19 @@ GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir .github --exclude-dir node_m
 function grep() { $MY_GREP -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
 function fgrep() { $MY_FGREP -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
 function g() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER ;}
-function ack() { g "$@" ;} # :P
 function gg() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@";}
 function gbr() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+
+function gfd() {
+    local REGEX
+    
+    if [[ $# -eq 0 ]]; then
+	echo "gfd: error: missing argument. Usage: gfd REGEX"
+    else
+	REGEX="$1"
+	(g "$REGEX"; fd "$REGEX")
+    fi
+}
 
 # count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
 function count() { 
@@ -1404,15 +1418,20 @@ function vim() { command nvim "$@" ;}
 ## where each file consists of one or more lines.
 ## Each file is treated as a set,
 ## and each line is treated as an element of that set.
-function intersection() {
+function set-intersection() {
     if [[ $# -eq 2 ]]; then
         command grep -xF -f "$1" "$2"
     else
         echo "$0: error: wrong number of arguments ($#). Usage: $0 SET_FILE_1 SET_FILE_2"
     fi
 }
-function intersect() { intersection "$@" ;}
-function isect() { intersection "$@" ;}
+function set-intersect() { intersection "$@" ;}
+
+
+function set-difference() {
+     cat "$@" | sort | uniq -u
+}
+function set-disjunctive-union() { set-difference "$@" ;}
 
 # [Broken] recursive version, for arbitrary numbers of sets
 #
@@ -1445,7 +1464,7 @@ function quinnify_host() {
 
     if [[ ! $1 ]]; then
         echo "Error: missing argument. Usage: quinnify_host $HOSTNAME_OR_SSH_HOSTALIAS"
-        return 255
+        return
     fi
 
     NODE="$1"
@@ -1681,28 +1700,6 @@ if (tty > /dev/null 2>&1); then # don't run when I do 'ssh MY_HOST MY_COMMAND'
     stty -ixon -ixoff > /dev/null 2>&1
 fi
 
-function job_running() {
-    JENKINS_JOB_URL="$1/api/json?pretty=true"
-    curl -k -L "$JENKINS_JOB_URL" 2>/dev/null | grep '"building" : ' | awk '{print $3}' | sed 's/,$//'
-}
-
-function job_notify() {
-    JENKINS_JOB_URL="$1"
-
-    echo "Job started before $(date)"
-    until [[ $(job_running "$JENKINS_JOB_URL") == 'false' ]]; do
-        echo '.'
-        sleep 60
-    done
-    echo "Job finished at $(date)"
-    ~/...sms-me "Jenkins job finished" > /dev/null 2>&1
-
-
-    curl -L "$JENKINS_JOB_URL/consoleText"
-}
-
-function jn() { job_notify "$@" ;}
-
 #### Source some third-party and site-specific bash code {
 
 ## Perlbrew (this must come after the part in this file where PATH is set):
@@ -1751,6 +1748,10 @@ set +a
 
 #### Web settings
 
+function brow() { defaultbrowser "$@" ;}
+function brc() { brow "chrome" ;}
+function brs() { brow "safari" ;}
+
 # Adapted from a function posted by user Chubler_XL, in a comment on
 # https://www.unix.com/shell-programming-and-scripting/277083-url-encoding-string-using-sed.html
 
@@ -1792,6 +1793,121 @@ function google() {
 
 function goog() { google "$@" ;}
 
+#### Jenkins settings
+
+function jenkins-fetch-console-output() {
+    local URL
+    if [[ $# -eq 1 ]]; then
+        URL="$1"
+        osascript ~/bin/jenkins-fetch-console-output.osascript "$URL"
+    else
+        echo "jenkins-fetch-console-output: error: missing argument. Usage: jenkins-fetch-console-output URL" > /dev/stderr
+    fi
+}
+
+function jenkins-fetch-and-summarize-console-output() {
+    local  REPO  BRANCH  BASE_URL
+    local  CONSOLE_URL  LOGFILE  RESULT  LAST_LINE  PENULTIMATE_LINE  LOGIN_NEEDED_REGEX
+    
+    LOGIN_NEEDED_REGEX="Log in with OpenShift"
+
+    if [[ $# -lt 2 ]] || [[ $# -gt 3 ]]; then
+        echo "error: jenkins-summarize-console-output: wrong number of arguments. Usage: jenkins-summarize-console-output REPO_NAME BRANCH_NAME [JENKINS_BASE_URL]"
+        return
+    else
+        REPO="$1"
+        BRANCH="$2"
+    fi
+    
+    if [[ $# -eq 3 ]]; then
+        BASE_URL="$3"
+    elif [[ -n "$JENKINS_BASE_URL" ]]; then
+        BASE_URL="$JENKINS_BASE_URL"
+    else
+        echo "error: jenkins-summarize-console-output: you must either
+pass the Jenkins base URL as the third argument,
+or set the environment variable JENKINS_BASE_URL"
+        return
+    fi
+    
+    
+    CONSOLE_URL="$BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
+    LOGFILE=$(command mktemp "/tmp/jenkins-output.XXXXX")
+    # echo "[DEBUG]: LOGFILE is '$LOGFILE'"
+    # echo "[DEBUG]: CONSOLE_URL is '$CONSOLE_URL'"
+    jenkins-fetch-console-output \
+        "$CONSOLE_URL" \
+        > "$LOGFILE"
+
+    LAST_LINE="$(command tail -1 "$LOGFILE")"
+    PENULTIMATE_LINE_LAST_WORD="$(command tail -2 "$LOGFILE" | head -1 | command awk '{print $NF}')"
+    # echo "[DEBUG] PENULTIMATE_LINE_LAST_WORD is '$PENULTIMATE_LINE_LAST_WORD'"
+    # echo "[DEBUG] LAST_LINE is '$LAST_LINE'"
+    
+    if [[ "$LAST_LINE" =~ $LOGIN_NEEDED_REGEX ]]; then
+        echo "not logged in to Jenkins"
+        echo "first log in at $JENKINS_BASE_URL" > /dev/stderr
+    elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "SUCCESS" ]]; then
+        echo "$PENULTIMATE_LINE_LAST_WORD"
+        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq > /dev/stderr
+    elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "FAILURE" ]]; then
+        command cat "$LOGFILE" > /dev/stderr
+        echo "$PENULTIMATE_LINE_LAST_WORD"
+    else
+        command cat "$LOGFILE" > /dev/stderr
+        echo "unrecognized"
+    fi
+}
+
+function jenkins-repo() {
+    local REPOFILE
+    REPOFILE="$HOME/tmp/jenkins_repo"
+
+    if [[ $# -eq 0 ]]; then
+        cat "$REPOFILE"
+    elif [[ $# -eq 1 ]]; then
+        echo "$1" > "$REPOFILE"
+    else
+        echo "jenkins-repo: error: too many arguments" > /dev/stderr
+    fi
+}
+
+function jenkins-branch() {
+    local BRANCHFILE
+    BRANCHFILE="$HOME/tmp/jenkins_branch"
+
+    if [[ $# -eq 0 ]]; then
+        cat "$BRANCHFILE"
+    elif [[ $# -eq 1 ]]; then
+        echo "$1" > "$BRANCHFILE"
+    else
+        echo "jenkins-branch: error: too many arguments" > /dev/stderr
+    fi
+}
+
+function jenkins() {
+    local REPO  BRANCH  BUILD_SUMMARY  MY_OUTPUT
+
+    REPO=$(jenkins-repo)
+    BRANCH=$(jenkins-branch)
+    if [[ -z "$REPO" ]]; then
+        echo 'jenkins: error: first call jenkins-repo $REPO_NAME'
+    elif [[ -z "$BRANCH" ]]; then
+        echo 'jenkins: error: first call jenkins-branch $BRANCH_NAME'
+    else
+        BUILD_SUMMARY=$(jenkins-fetch-and-summarize-console-output "$REPO" "$BRANCH")
+        MY_OUTPUT="jenkins: $BUILD_SUMMARY (repo $REPO, branch $BRANCH)"
+      
+        echo "$MY_OUTPUT" | command tee >(pbcopy)
+      
+        if [[ -n "$JENKINS_SMS_ME" ]]; then
+            ~/...sms-me "$MY_OUTPUT"
+        fi
+    fi
+}
+
+function j() { jenkins "$@" ;}    
+
 #### JIRA settings, regrettably
 
 ## For these to work, JIRA_BASE_URL must be set
@@ -1807,7 +1923,7 @@ function goog() { google "$@" ;}
 # Thanks to Keri Savoca for documenting this URL format:
 # https://kerisavoca.medium.com/how-to-make-a-link-that-creates-a-new-issue-in-jira-54ff93c61e24
 
-function jira-create-ticket {
+function jira-create-ticket() {
     local USAGE ISSUE_TYPE PROJECT_ID ERROR_OCCURRED
 
     USAGE="jira-create-ticket [ISSUE_TYPE [PROJECT_ID]]
@@ -1833,7 +1949,7 @@ function jc() {
     jira-create-ticket > /dev/null
 }
 
-function jira-open-existing-ticket {
+function jira-open-existing-ticket() {
     TICKET_NUMBER="$1"
 
     if [[ -z "$JIRA_BASE_URL" ]]; then
@@ -1851,7 +1967,7 @@ function jira-browse-site {
     fi
 }
 
-function j {
+function jira() {
     if [[ $# -eq 0 ]]; then
         jira-browse-site
     elif [[ $# -eq 1 ]]; then
@@ -1879,9 +1995,14 @@ function jql() {
     fi
 }
 
+function jepic() {
+    jql '(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic'
+}
+
 function jmine() {
     jql '(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved order by updated DESC'
 }
+
 
 #### YAML and JSON settings
 

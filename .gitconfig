@@ -44,12 +44,14 @@
 [alias]
 	char-diff = diff --word-diff-regex=.
 	co = checkout
-        comp = diff --compact-summary
-        dry = merge --no-commit --no-ff
+	comp = diff --compact-summary
+	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
-	last = "!function _last() { CMT=${1:HEAD}; git diff \"${CMT}^\" \"$CMT\" ;}; _last"
+	last = "!function _last() { COMMIT=${1:HEAD}; git diff \"${COMMIT}^\" \"${COMMIT}\" ;}; _last "
 	main = "!sh -c 'git checkout `/Users/quinn.weaver/.gitconfig-helper--get-main-branch-name`'"
 	no = diff --name-only
+	nol = "!function _nol() { COMMIT=${1:HEAD}; git diff --name-only \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
+	coml = "!function _nol() { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
 	report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	stat = status
