@@ -1733,11 +1733,17 @@ set -a
 ## executable PATH
 PATH="$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/sublime-text:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
 
-## dynamic library path settings
-LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
+## C settings/dynamic library path settings
 CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
 PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+export SDKROOT="`xcrun --show-sdk-path`"
 
+function sd2lcompile() {
+    gcc -o "$@"  `sdl2-config --cflags --libs`
+}
+function sdd() { sdl2compile "$@" ;}
+    
 ## golang path
 GOPATH="$HOME/go"
 
