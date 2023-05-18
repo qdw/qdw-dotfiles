@@ -1753,6 +1753,23 @@ function tips() { psql-tips "$@" ;}
 function mutt() { neomutt "$@" ;}
 function zo() { open https://mail.zophar.net/music/nintendo-nes-nsf ;}
 
+
+#### paths (global)
+set -a
+
+## executable PATH
+PATH="$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/sublime-text:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+
+## dynamic library path settings
+LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
+CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
+PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+
+## golang path
+GOPATH="$HOME/go"
+
+set +a
+
 #### Web settings
 
 function brow() { defaultbrowser "$@" ;}
