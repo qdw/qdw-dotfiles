@@ -23,10 +23,11 @@ for HDIR in "/opt/homebrew" "/usr/local"; do
         set -a
         HOMEBREW_ROOT="$HDIR"
         HOMEBREW_MANPATH="$HDIR/share/man"
-        MANPATH="$HOMEBREW_MANPATH:${MANPATH}"
+        MANPATH="$HOMEBREW_MANPATH:$MANPATH"
 	HOMEBREW_BIN="$HDIR/bin"
         HOMEBREW_SBIN="$HDIR/sbin"
-	PATH="$HOMEBREW_BIN:$HOMEBREW_SBIN:${PATH}"
+	PATH="$HOMEBREW_BIN:$HOMEBREW_SBIN:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
+        PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 	set +a
 	
         break
@@ -57,7 +58,6 @@ source-if-exists ~/.bashrc.d/daemons.bash
 source-if-exists ~/.site.bash.d/preamble.bash 
 source-if-exists ~/.secrets.bash
 source-if-exists ~/.bashrc.d/third-party.bash
-source-if-exists ~/src/1/ssh-over-amazon-systems-manager-made-easy/ssh-over-amazon-systems-manager-made-easy.sh
 
 ## Bash completion settings
 ## Dependencies:
@@ -296,6 +296,7 @@ function emacs() {
 
 export VISUAL="emacs"
 export EDITOR="$VISUAL"
+export GIT_EDITOR=~/bin/emacsclient-or-emacs.bash
 export PSQL_EDITOR="emacs -nw"
 
 #### Permission settings
@@ -462,7 +463,17 @@ function leaf() { brew-next-leaf "$@" ;}
 
 
 function bi() { brew install "$@" ;}
-function bl() { brew list "$@" ;}
+function bl() {
+    if [[ $# -eq 0 ]]; then
+        brew list
+    elif [[ $# -eq 1 ]]; then
+        local REGEX
+        REGEX="$1"
+        brew list | grep "$REGEX"
+    else
+        echo "bl: error: too many arguments. Usage: bl [REGEX]"
+    fi
+}
 # function bo() { brew doctor; brew update && brew outdated ;}
 function bo() { brew update && brew outdated ;}
 function bs() { brew search "$@" ;}
@@ -477,7 +488,7 @@ function brew-lock() {
         ls "$HOMEBREW_LOCK_DIR"
     elif [[ $# -eq 1 ]]; then
         if [[ $1 = "--remove-all" ]]; then
-            brew clean
+            brew cleanup
         else
             echo "brew-lock: error: unrecognized argument '$1'. $USAGE"
         fi
@@ -516,30 +527,27 @@ function brew-n-deps() {
 
 ## Homebrewed alternatives to bundled system utilities
 MY_LS_BASE_OPTIONS="--color=always -1AF"
-if test -x "$HOMEBREW_BIN/brew"; then
-
-    if test -e "$HOMEBREW_BIN/gls"; then
-        export MY_LS=gls
-        export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS --group-directories-first"
-    else
-        export MY_LS=ls
-        export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
-    fi
-
-    if test -e "$HOMEBREW_BIN/gcut"; then function cut() { gcut "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/gfind"; then function find() { gfind "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/ggrep"; then export MY_GREP="ggrep -E"; else export MY_GREP=egrep; fi
-    if test -e "$HOMEBREW_BIN/gfgrep"; then export MY_FGREP=gfgrep; else export MY_FGREP=fgrep; fi
-    if test -e "$HOMEBREW_BIN/man"; then export MY_FGREP=man; else export MY_FGREP=fgrep; fi    
-    if test -e "$HOMEBREW_BIN/gsed"; then function sed() { gsed "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/gsort"; then function sort() { gsort "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/gstat"; then function stat() { gstat "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/gtac"; then function tac() { gtac "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/gtail"; then function tail() { gtail "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/gdircolors"; then function dircolors() { gdircolors "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/groff"; then function roff() { groff "$@" ;}; fi
-    if test -e "$HOMEBREW_BIN/lsof"; then function lsof() { "$HOMEBREW_BIN/lsof" "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gls"; then
+    export MY_LS=gls
+    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS --group-directories-first"
+else
+    export MY_LS=ls
+    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
 fi
+
+if test -e "$HOMEBREW_BIN/gcut"; then function cut() { gcut "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gfind"; then function find() { gfind "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/ggrep"; then export MY_GREP="ggrep -E"; else export MY_GREP=egrep; fi
+if test -e "$HOMEBREW_BIN/gfgrep"; then export MY_FGREP=gfgrep; else export MY_FGREP=fgrep; fi
+if test -e "$HOMEBREW_BIN/man"; then export MY_FGREP=man; else export MY_FGREP=fgrep; fi    
+if test -e "$HOMEBREW_BIN/gsed"; then function sed() { gsed "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gsort"; then function sort() { gsort "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gstat"; then function stat() { gstat "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gtac"; then function tac() { gtac "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gtail"; then function tail() { gtail "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gdircolors"; then function dircolors() { gdircolors "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/groff"; then function roff() { groff "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/lsof"; then function lsof() { "$HOMEBREW_BIN/lsof" "$@" ;}; fi
 
 #### Other macOS-specific settings
 
@@ -701,7 +709,7 @@ function git-backup {
         REPO_NAME="$1"
         ORIG_DIR=$(pwd)
         cd ~/src \
-        && rsync -va \
+        && rsync -qa \
             "$REPO_NAME" \
             "$HOME/git-backups/${REPO_NAME}-$(date +%Y-%m-%d-%H%M%S%z)"
 
@@ -746,6 +754,10 @@ function gb() {
 
 function gbb() {
     git branch "$@"
+}
+
+function gbs() {
+    git branch
 }
 
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
@@ -929,7 +941,11 @@ function pr() {
     }
 
     commit_it() {
-        git commit -m "$COMMIT_MESSSAGE" > /dev/null
+        if [[ -n "$COMMIT_MESSAGE" ]]; then
+            git commit -m "$COMMIT_MESSSAGE" > /dev/null
+        else
+            git commit
+        fi
     }
     
     push_it() {
@@ -976,6 +992,7 @@ function pr() {
         open "$URL" #FIXME: unbreak this. Why am I getting only one slash after "http:"?
     else
         gh pr view --web "$1"
+        
     fi
     # elif [[ "$1" =~ '^[0123456789]' ]]; then
     #     # If they pass in a PR number, open the GitHub web page for that PR
@@ -987,6 +1004,12 @@ function pr() {
 
 function prs() {
     pr list
+}
+
+# pru ("Pull Request URL") - print the URL of the latest pull request on this branch.
+# Also copy it to the clipboard.
+function pru() {
+    gh pr view | command grep --color=never --only-matching 'https://.*' | tee >(pbcopy)
 }
 
 function pulls() {
@@ -1005,13 +1028,16 @@ function gg() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@";}
 function gbr() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
 
 function gfd() {
-    local REGEX
+    local REGEX USAGE
+    USAGE="Usage: gfd REGEX"
     
     if [[ $# -eq 0 ]]; then
-	echo "gfd: error: missing argument. Usage: gfd REGEX"
-    else
+	echo "gfd: error: missing argument. $USAGE"
+    elif [[ $# -eq 1 ]]; then
 	REGEX="$1"
 	(g "$REGEX"; fd "$REGEX")
+    else
+        echo "gfd: error: wrong number of arguments. $USAGE"
     fi
 }
 
@@ -1039,7 +1065,11 @@ function fdd() {
 }
 
 function fd() {
-    fdd --color=always "$@" | $PAGER
+    if [[ "$INSIDE_EMACS" ]]; then
+        fdd --color=auto "$@"
+    else
+        fdd --color=always "$@" | $PAGER
+    fi
 }
 
 function fdgrep() {
@@ -1723,23 +1753,6 @@ function tips() { psql-tips "$@" ;}
 function mutt() { neomutt "$@" ;}
 function zo() { open https://mail.zophar.net/music/nintendo-nes-nsf ;}
 
-
-#### paths (global)
-set -a
-
-## executable PATH
-PATH="$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/sublime-text:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
-
-## dynamic library path settings
-LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
-CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
-PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
-
-## golang path
-GOPATH="$HOME/go"
-
-set +a
-
 #### Web settings
 
 function brow() { defaultbrowser "$@" ;}
@@ -1772,6 +1785,29 @@ function urlencode() {
     fi
 }
 
+function gmail-search() {
+    local QUERY  BASE_URL
+    BASE_URL="https://mail.google.com/mail/u/0/#search"
+    
+    if [[ $# -ne 1 ]]; then
+        echo "gmail-search: error: wrong number of arguments. Usage: gmail-search QUERY_STRING"
+    else
+        QUERY="$1"
+        URLENCODED_QUERY=$(urlencode "$QUERY")
+        open -u "$BASE_URL/$URLENCODED_QUERY"
+    fi
+}
+
+function gmail() {
+    if [[ $# -eq 0 ]]; then
+        open -u "https://mail.google.com/"
+    elif [[ $# -eq 1 ]]; then
+        gmail-search "$1"
+    else
+        echo "gmail: error: wrong number of arguments. Usage: gmail [SEARCH_STRING]"
+    fi
+}
+
 function google() {
     local BASE_URL="http://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q="
 
@@ -1781,11 +1817,20 @@ function google() {
         local INPUT_QUERY MASSAGED_QUERY
         INPUT_QUERY="$1"
         URLENCODED_QUERY=$(urlencode "$INPUT_QUERY")
-        open "${BASE_URL}${URL_ENCODED_QUERY}"
+        open -u "${BASE_URL}${URL_ENCODED_QUERY}"
     fi
 }
 
 function goog() { google "$@" ;}
+
+#### Java settings
+
+export JPATH="/usr/local/opt/openjdk/bin"
+
+#### JavaScript settings
+
+export NODE_PATH="/opt/node/bin"
+export NODE_MANPATH="/opt/node/share/man:/opt/node/lib/node_modules/npm/man/"
 
 #### Jenkins settings
 
@@ -1843,7 +1888,7 @@ or set the environment variable JENKINS_BASE_URL"
         echo "first log in at $JENKINS_BASE_URL" > /dev/stderr
     elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "SUCCESS" ]]; then
         echo "$PENULTIMATE_LINE_LAST_WORD"
-        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq > /dev/stderr
+        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq | tee >(pbcopy) > /dev/stderr
     elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "FAILURE" ]]; then
         command cat "$LOGFILE" > /dev/stderr
         echo "$PENULTIMATE_LINE_LAST_WORD"
@@ -1898,6 +1943,12 @@ function jenkins() {
             ~/...sms-me "$MY_OUTPUT"
         fi
     fi
+}
+
+function jenkins-log() {
+    local LATEST_LOGFILE
+    LATEST_LOGFILE="$(ls -t /tmp/jenkins-output.* | head -1)"
+    command bat --color=always "$LATEST_LOGFILE" | $PAGER
 }
 
 function j() { jenkins "$@" ;}    
@@ -2034,5 +2085,35 @@ function yaml2json() {
         yq eval -p yaml -o json "$YAML_FILENAME" "$@"
     fi
 }
+
+#### path settings (global)
+
+set -a
+
+## executable PATH
+qPATH="/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+
+## man page path
+MANPATH="$NODE_MANPATH:$MANPATH"
+
+# If some of those variables that I interpolated in my PATH are undefined,
+# then I will wind up with '::' in my PATH. That's equivalent to having
+# '.' (the current working directory) in one's path, which is a security
+# risk, because there's a silly trick that hackers can use where they
+# put a malicious binary named ls or grep or something inside a directory
+# and a privileged user cd's there and accidentally runs it.
+# So remove any instances of two (or more) consecutive colons.
+# Same goes for a single trailing colon.
+PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
+
+## dynamic library path settings
+LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
+CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
+PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+
+## golang path
+GOPATH="$HOME/go"
+
+set +a
 
 source-if-exists ~/.site.bash.d/postamble.bash

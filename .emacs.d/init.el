@@ -254,7 +254,7 @@ Test cases
         
 ;;;; GUI Emacs settings
 
-(defvar current-favorite-font "SF Mono-16")
+(defvar current-favorite-font "SF Mono-18")
 ;; (defvar current-favorite-font "Hack-14-Regular")
 ;; (defvar current-favorite-font "JetBrains Mono-14")
 ;; (defvar current-favorite-font "Fira Code-16")
@@ -322,7 +322,7 @@ This command does the reverse of `fill-region'."
 
 ;; When running a quick shell command via 'M-!', make it source my
 ;; ~/.bashrc
-(setq shell-command-switch "-ic")
+;; (setq shell-command-switch "-ic")
 
 ;; Don't display the STDOUT or STDERR of quick shell commands
 (add-to-list 'display-buffer-alist
@@ -348,8 +348,7 @@ This command does the reverse of `fill-region'."
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-
-(package-refresh-contents) (package-install-selected-packages)
+;; (package-refresh-contents) (package-install-selected-packages)
 
 ;;;; Basic comfort
 
@@ -660,7 +659,7 @@ This command does the reverse of `fill-region'."
 (global-set-key "\r" 'my-enter)
 
 (require 'blacken)
-(setq-default blacken-skip-string-normalization 't)
+;; (setq-default blacken-skip-string-normalization 't)
 (add-hook 'python-mode-hook
           (lambda ()
             (local-set-key "\r" 'electric-newline-and-maybe-indent)
@@ -689,7 +688,7 @@ This command does the reverse of `fill-region'."
 ;; I have my own preferred way of writing heredocs.
 (add-hook 'sh-mode-hook
           (lambda ()
-            (setq 'sh-electric-here-document-mode nil)))
+            (setq sh-electric-here-document-mode nil)))
 
 
 ;;;; C settings
@@ -839,6 +838,7 @@ This command does the reverse of `fill-region'."
  '(ansi-color-red ((t (:background "#af5f00" :foreground "#af5f00" :underline nil :weight normal))))
  '(ansi-color-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil :weight normal))))
  '(ansi-color-yellow ((t (:background "HotPink" :foreground "#f5b5ff" :underline nil :weight normal))))
+ '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
  '(org-done ((t (:foreground "color-22" :weight normal))))
  '(org-headline-done ((t (:foreground "color-22" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))

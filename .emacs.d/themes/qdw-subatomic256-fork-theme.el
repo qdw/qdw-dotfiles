@@ -57,6 +57,8 @@
       (piggy-pink        "#ffd7d7")
       ;; (dim-gray          "#a9a9a9")
       (dim-gray          "#91908f")
+      (color-236         "#303030")
+      (darker-gray       color-236)
       ;; (relaxed-white     "#d7d7d7")
       ;; (relaxed-white     "#a3a49a")
       ;; (relaxed-white     "#7a7979")
@@ -108,25 +110,17 @@
    `(trailing-whitespace
      ((t (:inherit show-paren-mismatch-face :underline t))))
 
+;  `(modeline-inactive
+;     ((t (:foreground ,darker-gray :background ,full-black))))
+   
    `(mode-line
-     ((t (:background ,midnight-3 :foreground ,relaxed-white))))
-        	      ;; :box (:line-width 1 :style released-button)))))
+     ((t (:foreground ,dim-gray :background ,darker-gray ))))
+   
+   `(minibuffer-prompt
+     ;; ((t (:foreground ,axiomatic-purple :weight bold))))
+     ((t (:foreground ,blueish-purple :weight bold))))
 
-   `(powerline-active1
-     ((t (:background ,midnight-2))))
-
-   `(powerline-active2
-     ((t (:background ,midnight-2 :foreground ,relaxed-white))))
-
-   `(modeline-inactive
-     ((t (:background ,midnight-2 :foreground ,relaxed-white :foreground ,relaxed-white))))
-
-   `(powerline-inactive1
-     ((t (:background ,midnight-2 :foreground ,relaxed-white :foreground ,relaxed-white))))
-
-   `(powerline-inactive2
-     ((t (:background ,midnight-2 :foreground ,relaxed-white))))
-
+     
    `(header-line
      ((t (:background ,midnight-2 :foreground ,relaxed-white :foreground ,full-white :weight bold))))
 
@@ -136,15 +130,24 @@
    `(highlight-current-line-face
      ((t (:inherit hl-line))))
 
-   `(minibuffer-prompt
-     ;; ((t (:foreground ,axiomatic-purple :weight bold))))
-     ((t (:foreground ,blueish-purple :weight bold))))
+   ;; `(powerline-active1
+   ;;   ((t (:background ,darker-gray))))
+
+   ;; `(powerline-active2
+   ;;   ((t (:background ,darker-gray :foreground ,relaxed-white))))
+
+   ;; `(powerline-inactive1
+   ;;   ((t (:background ,midnight-2 :foreground ,relaxed-white :foreground ,relaxed-white))))
+
+   ;; `(powerline-inactive2
+   ;;   ((t (:background ,midnight-2 :foreground ,relaxed-white))))
 
    `(escape-glyph
      ((t (:foreground ,cold-mud :weight bold))))
 
    `(link
-     ((t (:foreground ,victory-blue :weight bold :underline t))))
+     ;; ((t (:foreground ,victory-blue :weight bold :underline t))))
+     ((t (:foreground ,blueish-purple :weight bold :underline t))))
 
    ;; font lock
 
@@ -161,7 +164,7 @@
      ((t ((:foreground ,brick-red)))))
 
    `(font-lock-builtin-face
-     ((t (:foreground ,deep-gold))))
+     ((t (:foreground ,phosphor-amber))))
 
    ;; `(font-lock-variable-name-face
    ;;   ((t (:foreground ,victory-blue))))
