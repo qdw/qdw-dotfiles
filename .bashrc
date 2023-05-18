@@ -1440,7 +1440,6 @@ function _pq() {
 
 # vl ("Vim Less") - use vim as a colorizing pager
 function vl() { $VIMRUNTIME/macros/less.sh "$@" ;}
-function vim() { command nvim "$@" ;}
 
 #### Set operations
 
