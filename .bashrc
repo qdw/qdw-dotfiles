@@ -1,6 +1,5 @@
 # shellcheck shell=bash
 
-### Profiling/timing
 ## Uncomment the following lines if you want to time each command in this file.
 #     export TIMEFORMAT='    real %3R'; export PS4=''
 #     set -xT
@@ -15,6 +14,8 @@
 #     time source "$1"
 #     echo
 # }
+
+QDW_OS=$(uname -s)
 
 #### Homebrew basic settings
 
@@ -195,10 +196,7 @@ function ldd-app() {
 }
 
 function ldd() {
-    local OS
-    
-    OS=$(uname -s)
-    if [[ $OS = "Darwin" ]]; then
+    if [[ $QDW_OS = "Darwin" ]]; then
         if [[ "$1" =~ ^[[:upper:]] ]] || [[ "$1" =~ [.]app$ ]]; then
             ldd-app "$@" | $PAGER
         else
@@ -272,25 +270,55 @@ function secret() { get-secret "$@" ;}
 
 ## Emacs settings
 
+function the_emacs_daemon_is_running() {
+    local OUTPUT
+
+    if [[ "$QDW_OS" = "Darwin" ]]; then
+        command ps auxwww | command grep -v grep | command grep "Emacs.app/Contents/MacOS/Emacs --fg-daemon" >/dev/null 2>&1
+        OUTPUT=$?
+    elif [[ "$QDW_OS" =~ Linux ]]; then
+        command ps auxwww | command grep "$USER" | command grep -v grep | command grep -E -- "emacs.*--(daemon|bg-daemon|fg-daemon)"
+        OUTPUT=$?
+    else
+        OUTPUT="error: edit your ~/.bashrc and add support for OS "$QDW_OS" to function the_emacs_daemon_is_running()"
+    fi
+
+    echo "$OUTPUT"
+}
+
+function print_instructions_for_starting_the_emacs_daemon() {
+    if [[ "$QDW_OS" = "Darwin" ]] then
+        echo "brew services start emacs-plus"
+    elif [[ "$QDW_OS" =~ Linux ]]; then
+        echo "command emacs --bg-daemon"
+    else
+        echo "[error: edit your ~/.bashrc and add support for OS $QDW_OS to function print_instructions_for_starting_the_emacs_daemon"
+    fi
+}
+
 # If we're in a terminal session, start an emacsclient session inside that terminal
 # (first starting the Emacs server, if it's not already running).
 # 
 # This looks just like a normal terminal emacs session, but starts faster
 # (and can see buffers from other emacsclient sessions, but whatever).
-
 function emacs() {
     # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
     # I directly type "emacs my-file", then...
     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
-        emacsclient --no-wait --alternate-editor="" "$@"
+        emacsclient --no-wait "$@"
     else
-        # If I'm in a terminal emulator,
-        # then edit 'my-file' in the same terminal window
-        # (but talk to the Emacs daemon on the back end
-        # ... and if the daemon isn't already running, start it).
-        emacsclient --tty --alternate-editor="" "$@"
+        local DAEMON_STATUS
+        DAEMON_STATUS="$(the_emacs_daemon_is_running)"
+        # echo "[DEBUG] in bash function emacs(), a call to bash function the_emacs_daemon_is_running() yielded output '$DAEMON_STATUS'"
+
+        if [[ "$DAEMON_STATUS" = "0" ]]; then
+            emacsclient --tty "$@"
+        else
+            echo "error: the emacs daemon is not running. Start it as follows:"
+            print_instructions_for_starting_the_emacs_daemon
+        fi
     fi
 }
 
@@ -477,6 +505,7 @@ function bl() {
 # function bo() { brew doctor; brew update && brew outdated ;}
 function bo() { brew update && brew outdated ;}
 function bs() { brew search "$@" ;}
+function bser() { brew services "$@" ;}
 function bu() { brew update && brew upgrade --formula && brew outdated ;}
 
 function brew-lock() {
@@ -1409,9 +1438,9 @@ function pe() {
     p "emacs.*-daemon"
 }
 
-function ke() {
-    kill  "$(p emacs | tail -1 | awk '{print $2}')"
-}
+# function ke() {
+#     kill  "$(p emacs | tail -1 | awk '{print $2}')"
+# }
 
 # pbc ('(p)aste(b)oard (c)opy') - macOS only: copy file to the system clipboard
 function pbc() { 
