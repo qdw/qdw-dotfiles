@@ -348,7 +348,7 @@ This command does the reverse of `fill-region'."
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-;; (package-refresh-contents) (package-install-selected-packages)
+;; (package-refresh-contents)(package-install-selected-packages)
 
 ;;;; Basic comfort
 
@@ -611,6 +611,9 @@ This command does the reverse of `fill-region'."
  (defun tail ()
   (interactive)
   (auto-revert-tail-mode))
+  
+;;;; Docker settings
+(require 'dockerfile-mode)
 
 ;;;; diff, merge, and git settings
 
