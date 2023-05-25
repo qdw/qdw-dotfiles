@@ -18,6 +18,9 @@
 MY_OS=$(uname -s)
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
+#### Meta-settings
+function cdq() { cd ~/src/1/qdw-dotfiles; }
+
 #### Homebrew basic settings
 
 for HDIR in "/opt/homebrew" "/usr/local"; do
