@@ -15,7 +15,8 @@
 #     echo
 # }
 
-QDW_OS=$(uname -s)
+MY_OS=$(uname -s)
+MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
 #### Homebrew basic settings
 
@@ -80,7 +81,6 @@ set +a
 
 
 if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
-    # source "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh"
     export BASH_COMPLETION_DIR="$HOMEBREW_ROOT/etc/bash_completion.d"
 
     # comp - activate shell completion
@@ -168,7 +168,6 @@ else
     if command -v jless >/dev/null; then
         export AWS_PAGER="jless"
     else
-        echo "Warning: the jless pager is not installed; defaulting to less for 'aws' paging"
         export AWS_PAGER="$PAGER"
     fi
 fi
@@ -196,7 +195,7 @@ function ldd-app() {
 }
 
 function ldd() {
-    if [[ $QDW_OS = "Darwin" ]]; then
+    if [[ $MY_OS = "Darwin" ]]; then
         if [[ "$1" =~ ^[[:upper:]] ]] || [[ "$1" =~ [.]app$ ]]; then
             ldd-app "$@" | $PAGER
         else
@@ -273,26 +272,26 @@ function secret() { get-secret "$@" ;}
 function the_emacs_daemon_is_running() {
     local OUTPUT
 
-    if [[ "$QDW_OS" = "Darwin" ]]; then
+    if [[ "$MY_OS" = "Darwin" ]]; then
         command ps auxwww | command grep -v grep | command grep "Emacs.app/Contents/MacOS/Emacs --fg-daemon" >/dev/null 2>&1
         OUTPUT=$?
-    elif [[ "$QDW_OS" =~ Linux ]]; then
+    elif [[ "$MY_OS" =~ Linux ]]; then
         command ps auxwww | command grep "$USER" | command grep -v grep | command grep -E -- "emacs.*--(daemon|bg-daemon|fg-daemon)"
         OUTPUT=$?
     else
-        OUTPUT="error: edit your ~/.bashrc and add support for OS "$QDW_OS" to function the_emacs_daemon_is_running()"
+        OUTPUT="error: edit your ~/.bashrc and add support for OS "$MY_OS" to function the_emacs_daemon_is_running()"
     fi
 
     echo "$OUTPUT"
 }
 
 function print_instructions_for_starting_the_emacs_daemon() {
-    if [[ "$QDW_OS" = "Darwin" ]] then
+    if [[ "$MY_OS" = "Darwin" ]]; then
         echo "brew services start emacs-plus"
-    elif [[ "$QDW_OS" =~ Linux ]]; then
+    elif [[ "$MY_OS" =~ Linux ]]; then
         echo "command emacs --bg-daemon"
     else
-        echo "[error: edit your ~/.bashrc and add support for OS $QDW_OS to function print_instructions_for_starting_the_emacs_daemon"
+        echo "[error: edit your ~/.bashrc and add support for OS $MY_OS to function print_instructions_for_starting_the_emacs_daemon"
     fi
 }
 
@@ -502,11 +501,17 @@ function bl() {
         echo "bl: error: too many arguments. Usage: bl [REGEX]"
     fi
 }
+
+function be() { brew edit "$@" ;}
 # function bo() { brew doctor; brew update && brew outdated ;}
-function bo() { brew update && brew outdated ;}
+function bo() { brew update; brew outdated ;}
 function bs() { brew search "$@" ;}
 function bser() { brew services "$@" ;}
 function bu() { brew update && brew upgrade --formula && brew outdated ;}
+function buc() {
+    (brew update && brew upgrade --formula) \
+        && (brew cleanup; brew doctor)
+}
 
 function brew-lock() {
     local HOMEBREW_LOCK_DIR USAGE
@@ -564,6 +569,33 @@ else
     export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
 fi
 
+# Use a function rather than adding $HOMEBREW_BIN to my path;
+# that way I can easily get the bundled macOS version of the function
+# by doing "command tail" (or whatever)
+# for MY_FORMULA in \
+    # curl \
+    # lsof \
+    # man \
+    # ssh \
+    # ssh-add \
+    # ssh-add-all \
+    # ssh-agent \
+    # ssh-copy-id \
+    # ssh-keygen \
+    # ssh-keyscan; do
+#     if [[ -e "$HOMEBREW_BIN/MY_FORMULA" ]]; then
+#         eval "function $MY_FORMULA() { $HOMEBREW_BIN/$MY_FORMULA \"\$@\" ;}"
+#     fi
+# done
+
+# for GNU_FORMULA in cut dircolors find grep roff sed sort stat tac tail; do
+#     if [[ -e "$HOMEBREW_BIN/g${GNU_FORMULA}" ]]; then
+#         eval "function $GNU_FORMULA() { $HOMEBREW_BIN/g${GNU_FORMULA} \"\$@\" ;}"
+#     fi
+# done
+    
+    
+if test -e "$HOMEBREW_BIN/curl"; then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
 if test -e "$HOMEBREW_BIN/gcut"; then function cut() { gcut "$@" ;}; fi
 if test -e "$HOMEBREW_BIN/gfind"; then function find() { gfind "$@" ;}; fi
 if test -e "$HOMEBREW_BIN/ggrep"; then export MY_GREP="ggrep -E"; else export MY_GREP=egrep; fi
@@ -775,7 +807,7 @@ function gb() {
         [[ $(git branch --show-current) = "$MAIN" ]] \
             && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
                    | command grep -v -E 'remote:' \
-            && git push --set-upstream origin --quiet
+            && git push --set-upstream origin # --quiet
     else
         echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
     fi
@@ -869,7 +901,18 @@ function gac() { git commit -a "$@" ;}
 function gcm() { git commit -m "$@" ;}
 function gd()  { git diff "$@" ;}
 function gdo() { git diff origin HEAD ;}
-function gl()  { git log "$@" ;}
+function gl() {
+    local N_COMMITS
+
+    if [[ "$1" ]]; then
+        N_COMMITS="$1"
+        shift
+    else
+        N_COMMITS="2"
+    fi
+    
+    git log -n "$N_COMMITS" "$@"
+}
 function gn()  { git diff --name-only "$@" ;}
 function gs()  { git status "$@" ;}
 
@@ -959,6 +1002,8 @@ function repo() {
 #
 # PR (Pull Request) - manipulate GitHub pull requests
 function pr() {
+    set -euo pipefail
+
     add_it() {
         ORIG_DIR=$(pwd)
 
@@ -1029,6 +1074,7 @@ function pr() {
     # else
     #     echo "Invalid subcommand '$1'. Try 'pr list' or 'pr create', or just 'gh pr --help'"
     # fi
+    set +euo pipefail
 }
 
 function prs() {
@@ -1183,6 +1229,10 @@ function pd_encode() {
     fi
 }
 
+#### Data risotto kitchen tools
+
+function csview() { command csview "$@" | $PAGER }
+
 #### PostgreSQL settings
 ####
 #### (for additional PostgreSQL settings, see the following files):
@@ -1283,7 +1333,7 @@ function air() {
 
 #### Aranet4 air quality monitoring settings
 function co2 () {
-    ~/.virtualenvs--python-3/claranet4/bin/claranet4 read "$MY_ARANET4" 2> /dev/null | jq ".co2"
+    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read "$MY_ARANET4" 2> /dev/null | jq ".co2"
 }
 
 function co2-verbose() {
@@ -1306,21 +1356,30 @@ set +a
 python() { python3 "$@" ;}
 pip() { pip3 "$@" ;}
 
-function ve() {
-    VENV_BASE=~/.virtualenvs--python-3
-    mkdir -p $VENV_BASE
-    
-    SUBDIR="$1"
-    shift
-    if [[ ! $SUBDIR ]]; then
-        echo "Missing argument. Usage: ve [OPTIONS] SUBDIR_NAME"
+function va() {
+    local VENV_NAME
+    if [[ $# -ne 1 ]]; then
+        echo "va: error: wrong number of arguments. Usage: va VIRTUALENV_TO_ACTIVATE"
     else
-        NEW_VENV_PATH="$VENV_BASE/$SUBDIR"
-        python3 -m venv "$NEW_VENV_PATH" \
-            && source "$NEW_VENV_PATH/bin/activate"
+        VENV_NAME="$1"
+        source "$MY_VIRTUALENV_DIR/$VENV_NAME/bin/activate"
+        pip install --upgrade pip
     fi
 }
-function venv() { ve "$@" ;}
+
+function mkvirtualenv() {
+    mkdir -p "$MY_VIRTUALENV_DIR"
+    
+    NEW_VIRTUALENV_NAME="$1"
+    shift
+    if [[ ! $NEW_VIRTUALENV_NAME ]]; then
+        echo "Missing argument. Usage: mkvirtualenv [OPTIONS] NEW_VIRTUALENV_NAME"
+    else
+        NEW_VIRTUALENV_PATH="$MY_VIRTUALENV_DIR/$NEW_VIRTUALENV_NAME"
+        python3 -m venv "$NEW_VIRTUALENV_PATH" \
+            && va "$NEW_VIRTUALENV_NAME"
+    fi
+}
 
 #### Tor settings
 
@@ -1601,7 +1660,7 @@ function dfr() {
     df -h | grep ^/
 }
 
-# ff [PROFILE_NAME] - run Firefox with a profile. No args? List/create profiles.
+# ff [PROFILE_NAME] - run Firefox with a profile. No args? Open the dialog box to list/create profiles.
 function ff() {
     FIREFOX_EXECUTABLE='/Applications/Firefox.app/Contents/MacOS/firefox-bin'
     if [[ $1 ]]; then
@@ -1615,8 +1674,6 @@ function ff() {
 }
 
 function ho() { grep "Host .*${1}" ~/.ssh/*conf* ;}
-
-function jl() { jless "$@" ;}
 
 function js() {
     FILE="$1"
@@ -1686,33 +1743,43 @@ function _tmux_is_new() {
 # ta $SESSION_NAME ("Tmux Attach") - attach to named session, creating if needed
 function ta() {
     local SESSION_NAME TMUX_CONF
-    SESSION_NAME="$1"
-
-    if _tmux_is_new; then
-        local TMUX_CONF=~/.tmux.new-versions.conf
+    
+    if [[ $# -ne 1 ]]; then
+        echo "ta: error: wrong number of arguments. Usage: ta SESSION_NAME"
     else
-        local TMUX_CONF=~/.tmux.old-versions.conf
-    fi
+        SESSION_NAME="$1"
 
-    if (! tmux has-session -t "$SESSION_NAME" 2> /dev/null); then
-	tn "$SESSION_NAME"
-    else
-        tmux -f "$TMUX_CONF" -2 attach-session -t "$SESSION_NAME"
+        if _tmux_is_new; then
+            local TMUX_CONF=~/.tmux.new-versions.conf
+        else
+            local TMUX_CONF=~/.tmux.old-versions.conf
+        fi
+
+        if (! tmux has-session -t "$SESSION_NAME" 2> /dev/null); then
+	    tn "$SESSION_NAME"
+        else
+            tmux -f "$TMUX_CONF" -2 attach-session -t "$SESSION_NAME"
+        fi
     fi
 }
 
 # tn ("Tmux New") - create a new tmux session
 function tn() {
     local SESSION_NAME TMUX_CONF
-    SESSION_NAME="$1"
-
-    if _tmux_is_new; then
-        TMUX_CONF=~/.tmux.new-versions.conf
+    
+    if [[ $# -ne 1 ]]; then
+        echo "tn: error: wrong number of arguments. Usage: tn SESSION_NAME"
     else
-        TMUX_CONF=~/.tmux.old-versions.conf
-    fi
+        SESSION_NAME="$1"
 
-    tmux -f "$TMUX_CONF" new-session -s "$SESSION_NAME"
+        if _tmux_is_new; then
+            TMUX_CONF=~/.tmux.new-versions.conf
+        else
+            TMUX_CONF=~/.tmux.old-versions.conf
+        fi
+
+        tmux -f "$TMUX_CONF" new-session -s "$SESSION_NAME"
+    fi
 }
 
 # tl ("Tmux List") - list running tmux sessions.
@@ -1868,7 +1935,7 @@ function google() {
         local INPUT_QUERY MASSAGED_QUERY
         INPUT_QUERY="$1"
         URLENCODED_QUERY=$(urlencode "$INPUT_QUERY")
-        open -u "${BASE_URL}${URL_ENCODED_QUERY}"
+        open -u "${BASE_URL}${URLENCODED_QUERY}"
     fi
 }
 
@@ -1993,6 +2060,10 @@ function jenkins() {
         if [[ -n "$JENKINS_SMS_ME" ]]; then
             ~/...sms-me "$MY_OUTPUT"
         fi
+        
+        if [[ "$BUILD_SUMMARY" =~ SUCCESS ]]; then
+            head -1 "$BUILD_SUMMARY" | pbcopy
+        fi
     fi
 }
 
@@ -2001,6 +2072,7 @@ function jenkins-log() {
     LATEST_LOGFILE="$(ls -t /tmp/jenkins-output.* | head -1)"
     command bat --color=always "$LATEST_LOGFILE" | $PAGER
 }
+function jl() { jenkins-log "$@" ;}
 
 function j() { jenkins "$@" ;}    
 
@@ -2168,3 +2240,4 @@ GOPATH="$HOME/go"
 set +a
 
 source-if-exists ~/.site.bash.d/postamble.bash
+
