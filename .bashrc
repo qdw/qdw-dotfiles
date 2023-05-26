@@ -1232,9 +1232,9 @@ function pd_encode() {
     fi
 }
 
-#### Data risotto kitchen tools
+#### Data risotto spatulae
 
-function csview() { command csview "$@" | $PAGER }
+function csview() { command csview "$@" | $PAGER ;}
 
 #### PostgreSQL settings
 ####
