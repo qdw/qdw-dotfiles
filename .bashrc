@@ -633,6 +633,8 @@ function mac-disable-font-smoothing() {
     defaults write CGFontRenderingFontSmoothingDisabled -INT 1
 }
 
+function cdd() { cd ~/d ;}
+
 function mac-do-not-switch-to--desktop-when-switching-to-app() { 
     sudo defaults write com.apple.dock workspaces-auto-swoosh -bool NO
     sudo killall Dock
@@ -790,13 +792,6 @@ function get-main-branch-name() {
 }
 
 
-function pull_main_branch() {
-    local BRANCH_NAME="$(get-main-branch-name)"
-    git co "$BRANCH_NAME" \
-        && command git pull --ff-only
-}
-
-
 # gb (Git Branch) - create a new branch based on the main one, and check it out
 function gb() {
     local NEW_BRANCH_NAME MAIN
@@ -816,14 +811,6 @@ function gb() {
     fi
 }
 
-function gbb() {
-    git branch "$@"
-}
-
-function gbs() {
-    git branch
-}
-
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
 function gu() {
     local ORIG_DIR
@@ -834,6 +821,27 @@ function gu() {
 }
 
 function gurl() { gu "$@" ;}
+
+## GitHub-specific Git settings
+
+# gist - create a gist
+function gist() {
+    local  REALPATH   DESCRIPTION
+
+    if [[ $# -lt 1 ]] || [[ $# -gt 2 ]]; then
+        echo "gist: error: wrong number of arguments. Usage: gist SOURCE_FILENAME"
+    else
+        REALPATH="$(realpath "$1")"
+        
+        if [[ $# -eq 2 ]]; then
+            DESCRIPTION="$2"
+        else
+            DESCRIPTION="$REALPATH"
+        fi
+        
+        gh gist create --desc "$DESCRIPTION" "$REALPATH"
+    fi
+}
 
 # gr (Git Repo) - run this in any dir inside a Git working copy to show the repo name
 function gr() {
@@ -1005,8 +1013,6 @@ function repo() {
 #
 # PR (Pull Request) - manipulate GitHub pull requests
 function pr() {
-    set -euo pipefail
-
     add_it() {
         ORIG_DIR=$(pwd)
 
@@ -1028,19 +1034,19 @@ function pr() {
     push_it() {
         # Push to a remote branch (creating if necessary)
         local BRANCH
-        BRANCH=$(git branch --show-current)
-        git push --set-upstream origin "$BRANCH" --quiet
+        BRANCH="$(gb)"
+        git push --set-upstream origin "$BRANCH" # --quiet
     }
 
     create_pr() {
-        add_it
+        # add_it
         commit_it
 
-        local GIT_FETCH_OUTPUT=$(git fetch)
-        if [[ "$GIT_FETCH_OUTPUT" ]]; then
+        local GIT_FETCH_STDOUTERR=$(git fetch 2>&1)
+        if [[ "$GIT_FETCH_STDOUTERR" ]]; then
             # If there's stuff to merge, cowardly bail
             # and make the user merge it manually
-            echo "$GIT_FETCH_OUTPUT"
+            echo "$GIT_FETCH_STDOUTERR"
         else
             push_it
             
@@ -1077,7 +1083,6 @@ function pr() {
     # else
     #     echo "Invalid subcommand '$1'. Try 'pr list' or 'pr create', or just 'gh pr --help'"
     # fi
-    set +euo pipefail
 }
 
 function prs() {
@@ -1824,7 +1829,7 @@ function xb() { killall --user "$USER" xbindkeys && xbindkeys ;}
 # Make it so Ctrl-S and Ctrl-Q aren't interpreted as software flow control
 # characters, messing up your terminal (see http://catern.com/posts/terminal_quirks.html).
 # This also frees up Ctrl-Q for use as the tmux prefix key.
-if (tty > /dev/null 2>&1); then # don't run when I do 'ssh MY_HOST MY_COMMAND'
+if (shopt -q login_shell   &&  tty > /dev/null 2>&1); then
     stty -ixon -ixoff > /dev/null 2>&1
 fi
 
@@ -2009,13 +2014,14 @@ or set the environment variable JENKINS_BASE_URL"
         echo "first log in at $JENKINS_BASE_URL" > /dev/stderr
     elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "SUCCESS" ]]; then
         echo "$PENULTIMATE_LINE_LAST_WORD"
-        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq | tee >(pbcopy) > /dev/stderr
+        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq
     elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "FAILURE" ]]; then
         command cat "$LOGFILE" > /dev/stderr
         echo "$PENULTIMATE_LINE_LAST_WORD"
     else
         command cat "$LOGFILE" > /dev/stderr
-        echo "unrecognized"
+        echo "^" > /dev/stderr
+        echo "[unexpected Jenkins log outcome]"
     fi
 }
 
@@ -2058,14 +2064,15 @@ function jenkins() {
         BUILD_SUMMARY=$(jenkins-fetch-and-summarize-console-output "$REPO" "$BRANCH")
         MY_OUTPUT="jenkins: $BUILD_SUMMARY (repo $REPO, branch $BRANCH)"
       
-        echo "$MY_OUTPUT" | command tee >(pbcopy)
+        echo "$MY_OUTPUT"
       
         if [[ -n "$JENKINS_SMS_ME" ]]; then
             ~/...sms-me "$MY_OUTPUT"
         fi
         
         if [[ "$BUILD_SUMMARY" =~ SUCCESS ]]; then
-            head -1 "$BUILD_SUMMARY" | pbcopy
+            echo "$BUILD_SUMMARY" | head -1 | tee >(pbcopy)
+            echo "Docker image URL copied to clipboard"
         fi
     fi
 }
