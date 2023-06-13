@@ -800,27 +800,26 @@ function gb() {
         git branch --show-current
     elif [[ $# -eq 1 ]]; then
         NEW_BRANCH_NAME="$1"
-        MAIN=$(get-main-branch-name)
-        pull_main_branch
-        [[ $(git branch --show-current) = "$MAIN" ]] \
+        MAIN=$(get-main-branch-name) \
+            && git co "$MAIN" \
+            && git pull --ff-only \
             && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
-                   | command grep -v -E 'remote:' \
+                | command grep -v -E 'remote:' \
             && git push --set-upstream origin # --quiet
     else
         echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
     fi
 }
 
+
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
-function gu() {
+function gurl() {
     local ORIG_DIR
     ORIG_DIR=$(pwd)
     gcd \
         && command grep url .git/config | sed -e 's/^[ \t]*url[ ][=][ ]//'
     cd "$ORIG_DIR"
 }
-
-function gurl() { gu "$@" ;}
 
 ## GitHub-specific Git settings
 
