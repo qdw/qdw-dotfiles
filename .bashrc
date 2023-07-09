@@ -2050,28 +2050,50 @@ function jenkins-branch() {
     fi
 }
 
-function jenkins() {
-    local REPO  BRANCH  BUILD_SUMMARY  MY_OUTPUT
+function j() {
+    echo "Don't use this function; it's broken."
+    echo "Instead, inspect the build log via the GitHub web page for your PR."
+    return
 
-    REPO=$(jenkins-repo)
-    BRANCH=$(jenkins-branch)
-    if [[ -z "$REPO" ]]; then
+    local REPO  BRANCH  JENKINS_OUTPUT  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
+    
+    REPO="$(jenkins-repo)"
+    BRANCH="$(jenkins-branch)"
+    
+    if [[ -x "$JENKINS_BASE_URL" ]]; then
+        echo 'jenkins: error: first export $JENKINS_BASE_URL'
+    elif [[ -z "$REPO" ]]; then
         echo 'jenkins: error: first call jenkins-repo $REPO_NAME'
     elif [[ -z "$BRANCH" ]]; then
         echo 'jenkins: error: first call jenkins-branch $BRANCH_NAME'
     else
-        BUILD_SUMMARY=$(jenkins-fetch-and-summarize-console-output "$REPO" "$BRANCH")
-        MY_OUTPUT="jenkins: $BUILD_SUMMARY (repo $REPO, branch $BRANCH)"
-      
-        echo "$MY_OUTPUT"
-      
-        if [[ -n "$JENKINS_SMS_ME" ]]; then
-            ~/...sms-me "$MY_OUTPUT"
-        fi
+        JENKINS_OUTPUT_URL="$JENKINS_BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
+        jenkins-fetch-output "$JENKINS_OUTPUT_URL"
+        LOGFILE=$(ls -t /tmp/jenkins-output* | head -1)
         
-        if [[ "$BUILD_SUMMARY" =~ SUCCESS ]]; then
-            echo "$BUILD_SUMMARY" | head -1 | tee >(pbcopy)
-            echo "Docker image URL copied to clipboard"
+        if command grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
+            SHORT_MESSAGE="Successfully built repo '$REPO', branch '$BRANCH'"
+            DOCKER_IMAGE_URL="$(command grep --color=never --only-matching 'harbor.*:git-.*$' "$LOGFILE" | command uniq)"
+            echo "$SHORT_MESSAGE"
+            echo "Docker image URL copied to clipboard:"            
+            echo "$DOCKER_IMAGE_URL" | tee >(pbcopy)
+        elif command grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
+            SHORT_MESSAGE="Jenkins login needed"
+            echo "First log in at $JENKINS_BASE_URL"; open -u "$JENKINS_BASE_URL"
+        elif command grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
+            SHORT_MESSAGE="Failed to build repo '$REPO', branch '$BRANCH'"
+            cat "$LOGFILE"
+            echo
+            echo "$SHORT_MESSAGE"
+        else
+            SHORT_MESSAGE="Unrecognized Jenkins output for repo '$REPO', branch '$BRANCH'"
+            cat "$LOGFILE"
+            echo
+            echo "^ $SHORT_MESSAGE"
+        fi
+            
+        if [[ -n "$JENKINS_SMS_ME" ]]; then
+            ~/...sms-me "$SHORT_MESSAGE"
         fi
     fi
 }
