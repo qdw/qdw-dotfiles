@@ -826,13 +826,13 @@ function gurl() { gu "$@" ;}
 
 # gist - create a gist
 function gist() {
-    local  REALPATH   DESCRIPTION
-
-    if [[ $# -lt 1 ]] || [[ $# -gt 2 ]]; then
+    if [[ $# -eq 0 ]]; then
+        open "https://gist.github.com/$GITHUB_USERNAME"
+    elif [[ $# -gt 2 ]]; then
         echo "gist: error: wrong number of arguments. Usage: gist SOURCE_FILENAME"
     else
+        local REALPATH DESCRIPTION
         REALPATH="$(realpath "$1")"
-        
         if [[ $# -eq 2 ]]; then
             DESCRIPTION="$2"
         else
