@@ -168,7 +168,7 @@ else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
     export PAGER="less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
-    if command -v jless >/dev/null; then
+    if command -v jless > /dev/null; then
         export AWS_PAGER="jless"
     else
         export AWS_PAGER="$PAGER"
@@ -811,6 +811,14 @@ function gb() {
     fi
 }
 
+# gbs (Git BrancheS) - list (local) git branches
+function gbs() { git branch ;}
+
+# gco (Git CheckOut) - what it says on the tin
+function gco { git checkout "$@" ;}
+
+# gm (Git Main) - check out the main branch (depends on an alias in my ~/.gitconfig)
+function gm() { git main "$@" ;}
 
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
 function gurl() {
@@ -1024,9 +1032,9 @@ function pr() {
 
     commit_it() {
         if [[ -n "$COMMIT_MESSAGE" ]]; then
-            git commit -m "$COMMIT_MESSSAGE" > /dev/null
+            git commit --quiet -m "$COMMIT_MESSSAGE" 2>&1 | grep -v 'nothing to commit'
         else
-            git commit
+            git commit --quiet | grep -v 'nothing to commit'
         fi
     }
     
@@ -1034,11 +1042,11 @@ function pr() {
         # Push to a remote branch (creating if necessary)
         local BRANCH
         BRANCH="$(gb)"
-        git push --set-upstream origin "$BRANCH" # --quiet
+        git push --set-upstream origin "$BRANCH" --quiet
     }
 
     create_pr() {
-        # add_it
+        add_it
         commit_it
 
         local GIT_FETCH_STDOUTERR=$(git fetch 2>&1)
@@ -1074,7 +1082,6 @@ function pr() {
         open "$URL" #FIXME: unbreak this. Why am I getting only one slash after "http:"?
     else
         gh pr view --web "$1"
-        
     fi
     # elif [[ "$1" =~ '^[0123456789]' ]]; then
     #     # If they pass in a PR number, open the GitHub web page for that PR
@@ -1501,7 +1508,15 @@ function p() {
 }
 
 function pe() {
-    p "emacs.*-daemon"
+    brew services | grep emacs-plus
+}
+
+function ke() {
+    brew services stop emacs-plus
+}
+
+function kes() {
+    brew services stop emacs-plus && brew services start emacs-plus
 }
 
 # function ke() {
@@ -1959,74 +1974,19 @@ export NODE_MANPATH="/opt/node/share/man:/opt/node/lib/node_modules/npm/man/"
 
 #### Jenkins settings
 
-function jenkins-fetch-console-output() {
+function jenkins-fetch-output() {
     local URL
     if [[ $# -eq 1 ]]; then
         URL="$1"
         osascript ~/bin/jenkins-fetch-console-output.osascript "$URL"
     else
-        echo "jenkins-fetch-console-output: error: missing argument. Usage: jenkins-fetch-console-output URL" > /dev/stderr
-    fi
-}
-
-function jenkins-fetch-and-summarize-console-output() {
-    local  REPO  BRANCH  BASE_URL
-    local  CONSOLE_URL  LOGFILE  RESULT  LAST_LINE  PENULTIMATE_LINE  LOGIN_NEEDED_REGEX
-    
-    LOGIN_NEEDED_REGEX="Log in with OpenShift"
-
-    if [[ $# -lt 2 ]] || [[ $# -gt 3 ]]; then
-        echo "error: jenkins-summarize-console-output: wrong number of arguments. Usage: jenkins-summarize-console-output REPO_NAME BRANCH_NAME [JENKINS_BASE_URL]"
-        return
-    else
-        REPO="$1"
-        BRANCH="$2"
-    fi
-    
-    if [[ $# -eq 3 ]]; then
-        BASE_URL="$3"
-    elif [[ -n "$JENKINS_BASE_URL" ]]; then
-        BASE_URL="$JENKINS_BASE_URL"
-    else
-        echo "error: jenkins-summarize-console-output: you must either
-pass the Jenkins base URL as the third argument,
-or set the environment variable JENKINS_BASE_URL"
-        return
-    fi
-    
-    
-    CONSOLE_URL="$BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
-    LOGFILE=$(command mktemp "/tmp/jenkins-output.XXXXX")
-    # echo "[DEBUG]: LOGFILE is '$LOGFILE'"
-    # echo "[DEBUG]: CONSOLE_URL is '$CONSOLE_URL'"
-    jenkins-fetch-console-output \
-        "$CONSOLE_URL" \
-        > "$LOGFILE"
-
-    LAST_LINE="$(command tail -1 "$LOGFILE")"
-    PENULTIMATE_LINE_LAST_WORD="$(command tail -2 "$LOGFILE" | head -1 | command awk '{print $NF}')"
-    # echo "[DEBUG] PENULTIMATE_LINE_LAST_WORD is '$PENULTIMATE_LINE_LAST_WORD'"
-    # echo "[DEBUG] LAST_LINE is '$LAST_LINE'"
-    
-    if [[ "$LAST_LINE" =~ $LOGIN_NEEDED_REGEX ]]; then
-        echo "not logged in to Jenkins"
-        echo "first log in at $JENKINS_BASE_URL" > /dev/stderr
-    elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "SUCCESS" ]]; then
-        echo "$PENULTIMATE_LINE_LAST_WORD"
-        command grep --only-matching "harbor.*:git-.*$" "$LOGFILE" | command uniq
-    elif [[ "$PENULTIMATE_LINE_LAST_WORD" = "FAILURE" ]]; then
-        command cat "$LOGFILE" > /dev/stderr
-        echo "$PENULTIMATE_LINE_LAST_WORD"
-    else
-        command cat "$LOGFILE" > /dev/stderr
-        echo "^" > /dev/stderr
-        echo "[unexpected Jenkins log outcome]"
+        echo "jenkins-fetch-output: error: missing argument. Usage: jenkins-fetch-console-output URL" > /dev/stderr
     fi
 }
 
 function jenkins-repo() {
     local REPOFILE
-    REPOFILE="$HOME/tmp/jenkins_repo"
+    REPOFILE="/tmp/jenkins-repo"
 
     if [[ $# -eq 0 ]]; then
         cat "$REPOFILE"
@@ -2039,7 +1999,7 @@ function jenkins-repo() {
 
 function jenkins-branch() {
     local BRANCHFILE
-    BRANCHFILE="$HOME/tmp/jenkins_branch"
+    BRANCHFILE="/tmp/jenkins-branch"
 
     if [[ $# -eq 0 ]]; then
         cat "$BRANCHFILE"
@@ -2104,8 +2064,6 @@ function jenkins-log() {
     command bat --color=always "$LATEST_LOGFILE" | $PAGER
 }
 function jl() { jenkins-log "$@" ;}
-
-function j() { jenkins "$@" ;}    
 
 #### JIRA settings, regrettably
 
