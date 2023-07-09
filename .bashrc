@@ -495,11 +495,12 @@ function leaf() { brew-next-leaf "$@" ;}
 function bi() { brew install "$@" ;}
 function bl() {
     if [[ $# -eq 0 ]]; then
-        brew list
+        brew list -1 "$@"
     elif [[ $# -eq 1 ]]; then
         local REGEX
         REGEX="$1"
-        brew list | grep "$REGEX"
+        shift
+        brew list -1 "$@" | grep "$REGEX"
     else
         echo "bl: error: too many arguments. Usage: bl [REGEX]"
     fi
