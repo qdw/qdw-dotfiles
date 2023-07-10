@@ -41,6 +41,8 @@
 
       
       (sea-blue          "#1077a3")
+      (light-cyan        "#008787")
+      (cyan              "#00cdcd")
       (sea-green-cyan    "#2f4f4f")
       (sea-green-cyan+1  "#008080")
       (victory-blue      "#87afd7")
@@ -164,7 +166,7 @@
      ((t ((:foreground ,brick-red)))))
 
    `(font-lock-builtin-face
-     ((t (:foreground ,phosphor-amber))))
+     ((t ((:foreground ,phosphor-amber)))))
 
    ;; `(font-lock-variable-name-face
    ;;   ((t (:foreground ,victory-blue))))
@@ -449,13 +451,13 @@
 
     ;; outline
     `(outline-1
-      ((t (:foreground ,relaxed-white))))
+      ((t (:foreground ,phosphor-amber))))
 
     `(outline-2
-      ((t (:foreground ,deep-gold))))
+      ((t (:foreground ,cyan))))
 
     `(outline-3
-      ((t (:foreground ,victory-blue))))
+      ((t (:foreground ,low-key-magenta))))
 
     `(outline-4
       ((t (:foreground ,low-key-magenta))))
@@ -481,9 +483,6 @@
 
     `(org-level-3
       ((t (:inherit outline-3))))
-
-    `(org-level-3
-      ((t (:inherit org-level-2))))
     
     `(org-level-4
       ((t (:inherit outline-4))))
