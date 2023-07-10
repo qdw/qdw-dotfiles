@@ -13,4 +13,4 @@
 -- uses instead of libreadline, so stick to a monochrome prompt.
 \set PROMPT1 '%n@%m:%> [db=%/]%#  '
 \x auto
-\pset null 🐙
+-- \pset null 🐙
