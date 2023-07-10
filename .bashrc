@@ -923,14 +923,16 @@ function gdo() { git diff origin HEAD ;}
 function gl() {
     local N_COMMITS
 
-    if [[ "$1" ]]; then
+    if [[ $# -eq 0 ]]; then
+        git log -n 3
+    elif [[ $# -eq 1 ]]; then
         N_COMMITS="$1"
         shift
+    elif [[ $# -eq 2 ]] && [[ $1 = "-n" ]]; then
+        N_COMMITS="$2"
     else
-        N_COMMITS="2"
+        git log "$@"
     fi
-    
-    git log -n "$N_COMMITS" "$@"
 }
 function gn()  { git diff --name-only "$@" ;}
 function gs()  { git status "$@" ;}
@@ -946,7 +948,7 @@ function gi() {
 
 ## GitHub-specific settings
 
-# gcl (Git Clone) - quickly clone a repo belonging to my organization
+# gcl (Git CLone) - quickly clone a repo belonging to my organization
 function gcl() {
     REPO="$1"
     cd ~/src \
