@@ -2,6 +2,10 @@
 
 ;;;;;;;; Experimental area
 
+(defun prefix (string)
+  (interactive "MPrefix: ")
+  (query-replace-regexp "^" string))
+
 ;; org-mode: let me specify colors for text;
 ;; these colors show up both when editing
 ;; and in the export.
@@ -70,7 +74,23 @@
 ;;             (error "my-cd failed somehow")))))
 ;; (my-cd "/Applications")
 
-;;;; Settings for opening files in external applications
+;;;; dired settings
+
+(defun system-move-file-to-trash (path)
+  "Moves file at PATH to the macOS Trash according to `move-file-to-trash' convention.
+
+Relies on the command-line utility 'trash' to be installed.
+Get it from:  <http://hasseg.org/trash/>"
+  (shell-command (concat "trash -vF \"" path "\""
+                         "| sed -e 's/^/Trashed: /'")
+                 nil ;; Name of output buffer
+                 "*Trash Error Buffer*"))
+                 
+;; (defun trash (path)
+;;   (interactive "f")
+;;   (system-move-file-to-trash path))
+
+;; Settings (incl. dired settings) to open files in external apps
 
 (defun xah-open-in-external-app (&optional @fname)
   "Open the current file or dired marked files in external app.
@@ -686,13 +706,13 @@ This command does the reverse of `fill-region'."
 ;; (global-origami-mode)
 
 ;;;; Bash-(and-other)-shell-script-editing settings
+(require 'sh-script)
 
-;; Don't auto-insert '<< EOF'-style heredocs when I type <<
-;; I have my own preferred way of writing heredocs.
+;; Don't auto-insert '<< EOF'-style heredocs when I type '<<',
+;; since I have my own preferred way of writing heredocs.
 (add-hook 'sh-mode-hook
           (lambda ()
             (setq sh-electric-here-document-mode nil)))
-
 
 ;;;; C settings
 (add-hook 'c-mode-hook
@@ -718,6 +738,7 @@ This command does the reverse of `fill-region'."
 ;;;;;;;; JavaScript, JSON, and TypeScript settings
 
 ;;;; JSON settings
+(require 'json)
 (setq-default json-encoding-default-indentation "    ")
 
 ;;;; TypeScript settings
@@ -770,6 +791,7 @@ This command does the reverse of `fill-region'."
  '(ns-alternate-modifier 'none)
  '(ns-right-alternate-modifier 'meta)
  '(org-agenda-files '("/Users/quinn.weaver/main.org"))
+ '(org-babel-load-languages '((shell . t) (emacs-lisp . t)))
  '(org-emphasis-alist
    '(("*" bold)
      ("/" italic)
@@ -779,7 +801,7 @@ This command does the reverse of `fill-region'."
      ("~"
       (:strike-through t))))
  '(package-selected-packages
-   '(projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 (put 'narrow-to-region 'disabled nil)
 
@@ -859,3 +881,17 @@ This command does the reverse of `fill-region'."
 ;; (may override any of the settings above)
 (load (expand-file-name "~/.emacs.d/site-lisp.el") 't)
 
+;;;; YAML settings
+
+;; By default, yaml-mode doesn't color keys differently from scalar values;
+;; they're both just variable-name-face (plain white text on black background,
+;; in my theme).
+;;
+;; But I like keys to be highlighted for easy reading.
+;;
+;; Implement this by setting variable-name-face to use a special color,
+;; but only when I'm in yaml-mode.
+  
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            (face-spec-set 'font-lock-variable-name-face '((t (:foreground "#af5f00"))))))
