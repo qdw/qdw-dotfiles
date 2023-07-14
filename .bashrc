@@ -167,7 +167,7 @@ if [[ "$INSIDE_EMACS" ]]; then
 else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
-    export PAGER="less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+    export PAGER="command less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
     if command -v jless > /dev/null; then
         export AWS_PAGER="jless"
     else
@@ -175,12 +175,15 @@ else
     fi
 fi
 
+function less() { $PAGER "$@" ;}
+
 set -a
 ACK_PAGER="$PAGER"
 BAT_PAGER="less --RAW-CONTROL-CHARS --no-init --mouse"
 GIT_PAGER="$PAGER"
 MANPAGER="$PAGER"
 set +a
+
 
 #### Linker settings
 
