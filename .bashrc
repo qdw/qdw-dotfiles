@@ -1143,7 +1143,7 @@ function count() {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur() {
-    count "$@" | awk '{print $2}'
+    command grep -Ril $GREP_EXCLUDE_DIRS "$@"
 }
 
 #### fd settings (fd is a faster and better replacement for find(1)
