@@ -45,7 +45,11 @@
       (cyan              "#00cdcd")
       (sea-green-cyan    "#2f4f4f")
       (sea-green-cyan+1  "#008080")
-      (victory-blue      "#87afd7")
+
+      ;; (victory-blue      "#87afd7")
+      ;; (victory-blue      "#00afd7") ;; dolphin blue
+      (victory-blue      "#005fd7") ;; saturated dark blue
+      
       (full-green        "#00ff00")
       (undergrowth-green "#87af5f")
       (dark-green "#469439")
