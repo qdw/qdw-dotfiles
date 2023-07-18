@@ -637,7 +637,18 @@ function mac-disable-font-smoothing() {
     defaults write CGFontRenderingFontSmoothingDisabled -INT 1
 }
 
-function cdd() { cd ~/d ;}
+function cdd() {
+    local USAGE="Usage: cdd PATH"
+
+    if [[ $# -eq 0 ]]; then
+        echo "cdd: error: missing argument. $USAGE"
+    elif
+        [[ $# -gt 1 ]]; then
+        echo "cdd: error: too many arguments. $USAGE"
+    else
+        cd "$(dirname "$1")"
+    fi
+}
 
 function mac-do-not-switch-to--desktop-when-switching-to-app() { 
     sudo defaults write com.apple.dock workspaces-auto-swoosh -bool NO
@@ -815,6 +826,13 @@ function gb() {
     fi
 }
 
+# bc (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
+# command to create and switch to a branch.
+# Shadows the crappy Unix built-in calculator bc(1).
+function bc() {
+    gb "$@"
+}
+
 # gbs (Git BrancheS) - list (local) git branches
 function gbs() { git branch ;}
 
@@ -923,20 +941,21 @@ function gac() { git commit -a "$@" ;}
 function gcm() { git commit -m "$@" ;}
 function gd()  { git diff "$@" ;}
 function gdo() { git diff origin HEAD ;}
+
 function gl() {
     local N_COMMITS
 
     if [[ $# -eq 0 ]]; then
-        git log -n 3
+        N_COMMITS=3
     elif [[ $# -eq 1 ]]; then
         N_COMMITS="$1"
-        shift
     elif [[ $# -eq 2 ]] && [[ $1 = "-n" ]]; then
         N_COMMITS="$2"
     else
         git log "$@"
     fi
 }
+
 function gn()  { git diff --name-only "$@" ;}
 function gs()  { git status "$@" ;}
 
@@ -1143,7 +1162,7 @@ function count() {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur() {
-    command grep -Ril $GREP_EXCLUDE_DIRS "$@"
+    grep -Ril $GREP_EXCLUDE_DIRS "$@"
 }
 
 #### fd settings (fd is a faster and better replacement for find(1)
