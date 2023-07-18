@@ -368,7 +368,8 @@ This command does the reverse of `fill-region'."
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-;; (package-refresh-contents)(package-install-selected-packages)
+;; (package-refresh-contents) (package-install-selected-packages)
+
 
 ;;;; Basic comfort
 
@@ -868,12 +869,6 @@ This command does the reverse of `fill-region'."
  '(org-headline-done ((t (:foreground "color-22" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))
 
-;; Prevent all uses of bold typefaces
-(mapc
- (lambda (face)
-   (set-face-attribute face nil :weight 'normal))
-     
- (face-list))
 
 (put 'upcase-region 'disabled nil)
 
@@ -895,3 +890,10 @@ This command does the reverse of `fill-region'."
 (add-hook 'yaml-mode-hook
           (lambda ()
             (face-spec-set 'font-lock-variable-name-face '((t (:foreground "#af5f00"))))))
+            
+
+;; Prevent all uses of bold typefaces
+(mapc
+ (lambda (face)
+   (set-face-attribute face nil :weight 'normal))
+ (face-list))
