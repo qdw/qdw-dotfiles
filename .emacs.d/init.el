@@ -1,6 +1,23 @@
 (load (expand-file-name "~/.emacs.d/secrets.el") 't)
 
-;;;;;;;; Experimental area
+(require 'ansi-color)
+(require 'blacken)
+(require 'dockerfile-mode)
+(require 'json)
+(require 'magit)
+(require 'menu-bar)   
+(require 'org)
+(require 'package)
+(require 'scroll-bar)
+(require 'sh-script)
+(require 'tool-bar)   
+
+
+(require 'ivy)
+(require 'projectile)
+
+
+;;;;;;;; Experimental area {{
 
 (defun prefix (string)
   (interactive "MPrefix: ")
@@ -50,7 +67,9 @@
 ;;      ;;              (goto-char ,orig-point)
 ;;      ;;              (insert output-text))))))))))
 
+
 ;; org-mode: support for exporting org_mode -> JIRA markdown
+
 
 ;; In an Org buffer, hit C-c C-e j j to bring up *Org Export Dispatcher*
 ;; and export it as a JIRA buffer. You can then use
@@ -61,6 +80,7 @@
 ;; Alternatively, you can export to the kill ring automatically for
 ;; interactive exports by setting this in your .emacs.el file:
 (setq org-export-copy-to-kill-ring 'if-interactive)
+
 
 ;; (defun my-cd (dir)
 ;;   (if (not dir)
@@ -73,6 +93,11 @@
 ;;               (shell-process-cd dir)
 ;;             (error "my-cd failed somehow")))))
 ;; (my-cd "/Applications")
+
+
+
+;; }} end experimental settings
+
 
 ;;;; dired settings
 
@@ -267,7 +292,6 @@ Test cases
 
 ;; Interpret ANSI escape codes in this buffer,
 ;; coloring the buffer text accordingly.
-(require 'ansi-color)
 (defun display-ansi-colors ()
   (interactive)
   (ansi-color-apply-on-region (point-min) (point-max)))
@@ -364,7 +388,6 @@ This command does the reverse of `fill-region'."
 
 ;;;; Settings for the Emacs package system
   
-(require 'package)
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -434,9 +457,9 @@ This command does the reverse of `fill-region'."
           (run-with-idle-timer 0.1 nil
                                (lambda (fg) (set-face-foreground 'mode-line fg))
                                orig-fg))))
-(require 'tool-bar)   (tool-bar-mode -1)   ;; Turn off toolbar.
-(require 'menu-bar)   (menu-bar-mode -1)   ;; Turn off menubar.
-(require 'scroll-bar) (scroll-bar-mode -1) ;; Turn off scrollbar.
+(tool-bar-mode -1)   ;; Turn off toolbar.
+(menu-bar-mode -1)   ;; Turn off menubar.
+(scroll-bar-mode -1) ;; Turn off scrollbar.
 (blink-cursor-mode 0) ;; Use a solid cursor (blinking is too distracting).
 
 ;;;; Settings for ecb, an emacs sidebar showing directory trees, compilation,
@@ -465,8 +488,6 @@ This command does the reverse of `fill-region'."
 ;;                 (open-in-vscode))))
 
 ;;;; The insidious cult of org-mode
-
-(require 'org)
 
 (defun org-archive-read-only-hook ()
   (when (string-match "[.]org_archive" buffer-file-name)
@@ -504,9 +525,6 @@ This command does the reverse of `fill-region'."
 
 ;;;; Projectile
 
-
-(require 'ivy)
-(require 'projectile)
 (grep-apply-setting 'grep-command "ggrep -E --with-filename --line-number --regexp ")
 (projectile-mode +1)
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
@@ -559,13 +577,6 @@ This command does the reverse of `fill-region'."
 (global-unset-key (kbd "C-c C-f"))
 (global-set-key (kbd "C-c C-f") 'multi-occur-in-matching-buffers)
 (global-set-key (kbd "M-o") 'other-window)
-
-;; In Magit, C-x m shows the complete list of available commands,
-;; but C-x m is already bound globally, by default, to
-;; the action of sending mail.
-;;
-;; But I don't use Emacs for mail, so just free up that binding.
-(global-unset-key (kbd "C-x m"))
 
 ;;;; TRAMP: edit remote files as if they were local.
 
@@ -633,9 +644,6 @@ This command does the reverse of `fill-region'."
   (interactive)
   (auto-revert-tail-mode))
   
-;;;; Docker settings
-(require 'dockerfile-mode)
-
 ;;;; diff, merge, and git settings
 
 (defun qdw-open-current-line-in-github-web-ui ()
@@ -648,9 +656,6 @@ This command does the reverse of `fill-region'."
     (async-shell-command (concat "gh browse " filename ":" line)
                          "emacs-gh-stdout"
                          "emacs-gh-stderr")))
-
-(require 'magit)
-
 
 
 ;; If I have a Homebrewed git installed, use that instead of /usr/bin/git
@@ -682,7 +687,6 @@ This command does the reverse of `fill-region'."
 
 (global-set-key "\r" 'my-enter)
 
-(require 'blacken)
 ;; (setq-default blacken-skip-string-normalization 't)
 (add-hook 'python-mode-hook
           (lambda ()
@@ -707,7 +711,6 @@ This command does the reverse of `fill-region'."
 ;; (global-origami-mode)
 
 ;;;; Bash-(and-other)-shell-script-editing settings
-(require 'sh-script)
 
 ;; Don't auto-insert '<< EOF'-style heredocs when I type '<<',
 ;; since I have my own preferred way of writing heredocs.
@@ -733,36 +736,37 @@ This command does the reverse of `fill-region'."
 ;; in the minibuffer),
 ;; add the opening parenthesis for me.
 (add-hook 'eval-expression-minibuffer-setup-hook
-	  (lambda ()
+	  (lambda () ;; confirmation number 492 474 2781
 	    (insert "(")))
 
-;;;;;;;; JavaScript, JSON, and TypeScript settings
-
 ;;;; JSON settings
-(require 'json)
+
 (setq-default json-encoding-default-indentation "    ")
 
-;;;; TypeScript settings
+;;;; Magit settings
+
+(setq-default magit-section-initial-visibility-alist
+              '((stashes . show)))
+(add-hook 'magit-status-sections-hook 'magit-insert-local-branches)
+
+;;;; Typescriptx settings
 
 ;; eslint (JavaScript/TypeScript linter) settings
 (defun seteslintrc ()
-  "return the location of nearest eslintrc"
+  "Returns the location of nearest eslintrc"
   (interactive)
     (setq flycheck-eslintrc (locate-dominating-file "~/" ".eslintrc.json")))
 
 (defun configure-typescript ()
   (interactive)
-  (eldoc-mode +1)
-  (seteslintrc)
-  
-  (flycheck-mode +1)
-  (setq flycheck-check-syntax-automatically '(save mode-enabled))
-
   (company-mode +1)
+  (eldoc-mode +1)
+  (flycheck-mode +1)
 
-  (setq
-   typescript-auto-indent-flag nil
-   company-tooltip-align-annotations t))
+  (seteslintrc)
+  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+        typescript-auto-indent-flag nil
+        company-tooltip-align-annotations t))
   
   ;;; Seems like tide works for node only, not for deno,
   ;;; so disable it.
@@ -773,6 +777,8 @@ This command does the reverse of `fill-region'."
   ;;; (add-hook 'before-save-hook 'tide-format-before-save))
 
 (add-hook 'typescript-mode-hook 'configure-typescript)
+
+;;;; customize'd settings
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
