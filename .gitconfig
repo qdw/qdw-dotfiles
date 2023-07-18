@@ -56,7 +56,7 @@
 	coml = "!function _nol() { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
 	report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
-	stat = status
+	s = status
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit
 
 [init]
