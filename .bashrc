@@ -20,6 +20,7 @@ MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
 #### Meta-settings
 function cdq() { cd ~/src/1/qdw-dotfiles; }
+function cd1() { cdq "$@" ;}
 
 #### Homebrew basic settings
 
