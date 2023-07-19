@@ -15,6 +15,16 @@
 #     echo
 # }
 
+# Turn off the many prompt-related commands that
+# automatically run every time I enter a command,
+# then turn on tracing. This makes the trace
+# much more uncluttered.
+function setx() {
+    unset PROMPT_COMMAND
+    export PS1="\u@\h:\w\\$ "
+    set -x
+}
+
 MY_OS=$(uname -s)
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
@@ -950,11 +960,13 @@ function gl() {
         N_COMMITS=3
     elif [[ $# -eq 1 ]]; then
         N_COMMITS="$1"
+        shift 1
     elif [[ $# -eq 2 ]] && [[ $1 = "-n" ]]; then
         N_COMMITS="$2"
-    else
-        git log "$@"
+        shift 2
     fi
+
+    git log -n "$N_COMMITS" "$@"
 }
 
 function gn()  { git diff --name-only "$@" ;}
