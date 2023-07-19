@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-GIT_WORKING_COPY=$(dirname $0)
+GIT_WORKING_COPY="$(dirname "$0")"
 
 # Install only some dotfiles by default - not all.
-FILES_TO_INSTALL='
+FILES_TO_INSTALL="
 .bashrc
 .bashrc.d
 .git-prompt-colors.sh
@@ -16,7 +16,7 @@ FILES_TO_INSTALL='
 .screenrc
 .tmux.new-versions.conf
 .tmux.old-versions.conf
-.vimrc'
+.vimrc"
 
 for DOTFILE in $FILES_TO_INSTALL; do
     ln -si "$GIT_WORKING_COPY/$DOTFILE" ~
