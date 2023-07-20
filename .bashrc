@@ -73,7 +73,6 @@ function grbash() {
 source-if-exists ~/.bashrc.d/daemons.bash
 source-if-exists ~/.site.bash.d/preamble.bash 
 source-if-exists ~/.secrets.bash
-source-if-exists ~/.bashrc.d/third-party.bash
 
 ## Bash completion settings
 ## Dependencies:
@@ -1885,16 +1884,7 @@ if (shopt -q login_shell   &&  tty > /dev/null 2>&1); then
     stty -ixon -ixoff > /dev/null 2>&1
 fi
 
-#### Source some third-party and site-specific bash code {
-
-## Perlbrew (this must come after the part in this file where PATH is set):
-##
-# Disabling this, as it takes too long to load (~ 100 ms),
-# and I seldom write Perl code. Just source it manually when needed.
-# PBRC=~/perl5/perlbrew/etc/bashrc
-# if test -e "$PBRC"; then
-#     source "$PBRC"
-# fi
+#### Perlbrew settings (this must come after the part in this file where PATH is set):
 
 function activate-perlbrew() { source ~/perl5/perlbrew/etc/bashrc ;}
 function perlbrew-activate() { activate-perlbrew ;}
@@ -1908,28 +1898,12 @@ function tips() { psql-tips "$@" ;}
 function mutt() { neomutt "$@" ;}
 function zo() { open https://mail.zophar.net/music/nintendo-nes-nsf ;}
 
-
-#### paths (global)
-set -a
-
-## executable PATH
-PATH="$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/sublime-text:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
-
-## C settings/dynamic library path settings
-CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
-LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
-PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
-export SDKROOT="`xcrun --show-sdk-path`"
+#### Game development settings
 
 function sd2lcompile() {
     gcc -o "$@"  `sdl2-config --cflags --libs`
 }
 function sdd() { sdl2compile "$@" ;}
-    
-## golang path
-GOPATH="$HOME/go"
-
-set +a
 
 #### Web settings
 
@@ -2238,33 +2212,41 @@ function yaml2json() {
 
 #### path settings (global)
 
-set -a
+if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
+    set -a
+    PATHS_SET_TIMESTAMP="$(date)"
 
-## executable PATH
-qPATH="/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+    ## executable PATH
+    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+    
+    ## C settings/dynamic library path settings
+    CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
+    LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
+    PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+    export SDKROOT="`xcrun --show-sdk-path`"
+    
+    # If some of those variables that I interpolated in my PATH are undefined,
+    # then I will wind up with '::' in my PATH. That's equivalent to having
+    # '.' (the current working directory) in one's path, which is a security
+    # risk, because there's a silly trick that hackers can use where they
+    # put a malicious binary named ls or grep or something inside a directory
+    # and a privileged user cd's there and accidentally runs it.
+    # So remove any instances of two (or more) consecutive colons.
+    # Same goes for a single trailing colon.
+    PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
-## man page path
-MANPATH="$NODE_MANPATH:$MANPATH"
+    ## man page path
+    MANPATH="$NODE_MANPATH:$MANPATH"
 
-# If some of those variables that I interpolated in my PATH are undefined,
-# then I will wind up with '::' in my PATH. That's equivalent to having
-# '.' (the current working directory) in one's path, which is a security
-# risk, because there's a silly trick that hackers can use where they
-# put a malicious binary named ls or grep or something inside a directory
-# and a privileged user cd's there and accidentally runs it.
-# So remove any instances of two (or more) consecutive colons.
-# Same goes for a single trailing colon.
-PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
+    ## dynamic library path settings
+    LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
+    CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
+    PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
 
-## dynamic library path settings
-LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
-CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
-PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
-
-## golang path
-GOPATH="$HOME/go"
-
-set +a
+    ## golang path
+    GOPATH="$HOME/go"
+    
+    set +a
+fi
 
 source-if-exists ~/.site.bash.d/postamble.bash
-
