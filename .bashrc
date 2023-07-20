@@ -2190,7 +2190,7 @@ function jql() {
     fi
 }
 
-function jepic() {
+function epics() {
     jql '(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic'
 }
 
