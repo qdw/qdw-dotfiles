@@ -34,21 +34,25 @@ function cd1() { cdq "$@" ;}
 
 #### Homebrew basic settings
 
-for HDIR in "/opt/homebrew" "/usr/local"; do
-    if [[ -x "$HDIR/bin/brew" ]]; then
-        set -a
-        HOMEBREW_ROOT="$HDIR"
-        HOMEBREW_MANPATH="$HDIR/share/man"
-        MANPATH="$HOMEBREW_MANPATH:$MANPATH"
-	HOMEBREW_BIN="$HDIR/bin"
-        HOMEBREW_SBIN="$HDIR/sbin"
-	PATH="$HOMEBREW_BIN:$HOMEBREW_SBIN:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
-        PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
-	set +a
-	
-        break
-    fi
-done
+if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
+    for HDIR in "/opt/homebrew" "/usr/local"; do
+        if [[ -x "$HDIR/bin/brew" ]]; then
+            set -a
+            
+            HOMEBREW_ROOT="$HDIR"
+            HOMEBREW_MANPATH="$HDIR/share/man"
+            MANPATH="$HOMEBREW_MANPATH:$MANPATH"
+
+            HOMEBREW_BIN="$HDIR/bin"
+            HOMEBREW_SBIN="$HDIR/sbin"
+	    PATH="$HOMEBREW_BIN:$HOMEBREW_SBIN:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
+            PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
+	    
+            set +a
+            break
+        fi
+    done
+fi
 
 #### Bash settings
 
