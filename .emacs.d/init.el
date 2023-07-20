@@ -17,86 +17,8 @@
 (require 'projectile)
 
 
-;;;;;;;; Experimental area {{
-
-(defun prefix (string)
-  (interactive "MPrefix: ")
-  (query-replace-regexp "^" string))
-
-;; org-mode: let me specify colors for text;
-;; these colors show up both when editing
-;; and in the export.
-;; (add-to-list 'load-path
-;;              (expand-file-name "~/.emacs.d/3"))
-;; (load "org-colored-text" nil 't)
-
-(defun ai (prompt)
-  "Send a prompt to OpenAI *using my shell script*, and print its response in a separate buffer"
-  (interactive "MGPT prompt: ")
-
-  (let ((output-buffer "ai"))
-    (split-window-below)
-    (other-window 1)
-    (switch-to-buffer output-buffer 't)
-    (other-window -1)
-  
-    (start-process "ai"
-                   output-buffer
-                   "/Users/quinn.weaver/bin/ai"
-                   prompt)))
-
-;; (defun bing (prompt)
-;;   "Send a prompt to Bing Chat and return its response"
-;;   (interactive "MBing prompt: ")
-;;   (let ((output-buffer (get-buffer-create "*bing*"))
-;;         (orig-point (point)))
-;;     ;; (print (concat "bing" "'" (shell-quote-argument prompt) "'"))))
-    
-;;     ;; (set-process-sentinel
-;;      (start-process "async-shell"
-;;                     output-buffer
-;;                     shell-file-name
-;;                     shell-command-switch
-;;                     "bing" "'" (shell-quote-argument prompt) "'")))
-;;      ;; `(lambda (process signal)
-;;      ;;    (when (= 0 (process-exit-status process))
-;;      ;;      (with-current-buffer ,output-buffer
-;;      ;;        (let ((output-text (buffer-string)))
-;;      ;;          (with-current-buffer ,(current-buffer)
-;;      ;;            (save-excursion
-;;      ;;              (goto-char ,orig-point)
-;;      ;;              (insert output-text))))))))))
 
 
-;; org-mode: support for exporting org_mode -> JIRA markdown
-
-
-;; In an Org buffer, hit C-c C-e j j to bring up *Org Export Dispatcher*
-;; and export it as a JIRA buffer. You can then use
-;; C-x h to mark the whole buffer, then
-;; M-w to save it to the kill ring (and global pasteboard)
-;; for pasting into JIRA issues.
-;;
-;; Alternatively, you can export to the kill ring automatically for
-;; interactive exports by setting this in your .emacs.el file:
-(setq org-export-copy-to-kill-ring 'if-interactive)
-
-
-;; (defun my-cd (dir)
-;;   (if (not dir)
-;;       (error "No dir argument specified")
-;;       (let ((shell-buffer (get-buffer "*shell*"))
-;;             (shell-process (get-process "shell")))
-;;         (if (and shell-buffer shell-process)
-;;             (with-current-buffer shell-buffer
-;;               (comint-send-input (concat "cd " dir)))
-;;               (shell-process-cd dir)
-;;             (error "my-cd failed somehow")))))
-;; (my-cd "/Applications")
-
-
-
-;; }} end experimental settings
 
 
 ;;;; dired settings
@@ -487,7 +409,7 @@ This command does the reverse of `fill-region'."
 ;;                 (open-in-gvim)
 ;;                 (open-in-vscode))))
 
-;;;; The insidious cult of org-mode
+;;;; org-mode settings (a.k.a. org settings)
 
 (defun org-archive-read-only-hook ()
   (when (string-match "[.]org_archive" buffer-file-name)
@@ -747,7 +669,6 @@ This command does the reverse of `fill-region'."
 
 (setq-default magit-section-initial-visibility-alist
               '((stashes . show)))
-(add-hook 'magit-status-sections-hook 'magit-insert-local-branches)
 
 ;;;; Typescriptx settings
 
@@ -766,7 +687,7 @@ This command does the reverse of `fill-region'."
   (seteslintrc)
   (setq flycheck-check-syntax-automatically '(save mode-enabled))
         typescript-auto-indent-flag nil
-        company-tooltip-align-annotations t))
+        company-tooltip-align-annotations t)
   
   ;;; Seems like tide works for node only, not for deno,
   ;;; so disable it.
@@ -878,10 +799,6 @@ This command does the reverse of `fill-region'."
 
 (put 'upcase-region 'disabled nil)
 
-;; Load Emacs settings specific to this organization
-;; (may override any of the settings above)
-(load (expand-file-name "~/.emacs.d/site-lisp.el") 't)
-
 ;;;; YAML settings
 
 ;; By default, yaml-mode doesn't color keys differently from scalar values;
@@ -903,3 +820,81 @@ This command does the reverse of `fill-region'."
  (lambda (face)
    (set-face-attribute face nil :weight 'normal))
  (face-list))
+
+;;;;;;;; Experimental area {{
+
+;; OK
+(defun prefix (string)
+  (interactive "MPrefix: ")
+  (query-replace-regexp "^" string))
+
+;; Needs work
+;;
+;; org-mode: let me specify colors for text;
+;; these colors show up both when editing
+;; and in the export.
+;; (add-to-list 'load-path
+;;              (expand-file-name "~/.emacs.d/3"))
+;; (load "org-colored-text" nil 't)
+
+;; Needs work
+(defun gpt (prompt)
+  "Send a prompt to OpenAI *using my shell script*, and print its response in a separate buffer"
+  (interactive "MGPT prompt: ")
+
+  (let ((output-buffer "*GPT output*"))
+    (split-window-below)
+    (other-window 1)
+    (switch-to-buffer output-buffer 't)
+    (other-window -1)
+  
+    (start-process "GPT"
+                   output-buffer
+                   "/Users/quinn.weaver/bin/ai"
+                   prompt)))
+
+;; Needs work
+;; (defun bing (prompt)
+;;   "Send a prompt to Bing Chat and return its response"
+;;   (interactive "MBing prompt: ")
+;;   (let ((output-buffer (get-buffer-create "*bing*"))
+;;         (orig-point (point)))
+;;     ;; (print (concat "bing" "'" (shell-quote-argument prompt) "'"))))
+    
+;;     ;; (set-process-sentinel
+;;      (start-process "async-shell"
+;;                     output-buffer
+;;                     shell-file-name
+;;                     shell-command-switch
+;;                     "bing" "'" (shell-quote-argument prompt) "'")))
+;;      ;; `(lambda (process signal)
+;;      ;;    (when (= 0 (process-exit-status process))
+;;      ;;      (with-current-buffer ,output-buffer
+;;      ;;        (let ((output-text (buffer-string)))
+;;      ;;          (with-current-buffer ,(current-buffer)
+;;      ;;            (save-excursion
+;;      ;;              (goto-char ,orig-point)
+;;      ;;              (insert output-text))))))))))
+
+
+;; Needs work
+
+;; (defun my-cd (dir)
+;;   "tell a running shell-mode session to cd to `dir'"
+;;   (if (not dir)
+;;       (error "No dir argument specified")
+;;       (let ((shell-buffer (get-buffer "*shell*"))
+;;             (shell-process (get-process "shell")))
+;;         (if (and shell-buffer shell-process)
+;;             (with-current-buffer shell-buffer
+;;               (comint-send-input (concat "cd " dir)))
+;;               (shell-process-cd dir)
+;;             (error "my-cd failed somehow")))))
+;; (my-cd "/Applications")
+
+
+;; }} end experimental settings
+
+;; Load Emacs settings specific to this organization
+;; (may override any of the settings above)
+(load (expand-file-name "~/.emacs.d/site-lisp.el") 't)
