@@ -479,6 +479,15 @@
       ((t (:foreground ,undergrowth-green))))
 
     ;; org-mode
+    `(org-document-title
+      ((t (:inherit org-document-info-keyword))))
+
+    `(org-document-info
+      ((t (:inherit org-document-info-keyword))))
+
+    `(org-meta-line
+      ((t (:inherit org-document-info-keyword))))
+
     `(org-level-1
       ((t (:inherit outline-1))))
 
