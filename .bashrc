@@ -727,10 +727,8 @@ function path() {
 
     if [[ ! -e "$ABS_PATH" ]]; then
         echo "Error: file '$ABS_PATH' does not exist"
-    elif [[ "$ABS_PATH" =~ [:space] ]] || [[ "$ABS_PATH" =~ [:punct:] ]]; then
-        echo "'$ABS_PATH'"
     else
-        echo "$ABS_PATH"
+        echo "$ABS_PATH" | tee >(pbcopy)
     fi
 }
 
