@@ -8,7 +8,7 @@ site.bash
 .site.bash
 
 # Compiled objects
-.pyc .elc .o
+.pyc .elc .o __pycache__
 
 # Emacs droppings
 \#*
