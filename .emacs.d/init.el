@@ -668,7 +668,8 @@ This command does the reverse of `fill-region'."
 ;;;; Magit settings
 
 ;; In the default view, show stashes and local branches.
-;; Move the sections around slightly to suit my preferences.
+;; Also, move the sections around a bit to suit my preferences.
+
 (setq-default magit-section-initial-visibility-alist
               '((stashes . show)))
               
@@ -691,7 +692,7 @@ This command does the reverse of `fill-region'."
                 magit-insert-unpulled-from-pushremote
                 magit-insert-unpulled-from-upstream))
 
-;;;; Typescriptx settings
+;;;; TypeScript settings
 
 ;; eslint (JavaScript/TypeScript linter) settings
 (defun seteslintrc ()
@@ -704,6 +705,7 @@ This command does the reverse of `fill-region'."
   (company-mode +1)
   (eldoc-mode +1)
   (flycheck-mode +1)
+  (column-number-mode +1)
 
   (seteslintrc)
   (setq flycheck-check-syntax-automatically '(save mode-enabled))
@@ -813,6 +815,7 @@ This command does the reverse of `fill-region'."
  '(ansi-color-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil :weight normal))))
  '(ansi-color-yellow ((t (:background "HotPink" :foreground "#f5b5ff" :underline nil :weight normal))))
  '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
+ '(magit-section-highlight ((t (:extend t :background "#262626" :weight normal))))
  '(org-done ((t (:foreground "color-22" :weight normal))))
  '(org-headline-done ((t (:foreground "color-22" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))
