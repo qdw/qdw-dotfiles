@@ -1572,6 +1572,8 @@ function ke() {
 function se() {
     if [[ "$MY_OS" = "Darwin" ]]; then
         brew services start emacs-plus
+        # Give it time to load my ~/.emacs.d/init.el
+        sleep 2
     else
         emacs --bg-daemon
     fi
