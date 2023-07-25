@@ -1350,7 +1350,9 @@ function ser() {
     fi
 }
 
-#### PurpleAir air quality monitor settings
+#### IRL settings
+
+## PurpleAir air quality monitor settings
 
 function air() {
     set -uo pipefail
@@ -1384,6 +1386,11 @@ function air() {
     fi
     
     set +uo pipefail
+}
+
+## Coffee-bean-ordering settings
+function coffee() {
+    open -a Firefox "https://store.awakencafe.com/s/customer-accounts"
 }
 
 #### Aranet4 air quality monitoring settings
