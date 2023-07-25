@@ -2,6 +2,7 @@
 
 (require 'ansi-color)
 (require 'blacken)
+(require 'dirtrack)
 (require 'dockerfile-mode)
 (require 'json)
 (require 'magit)
@@ -15,10 +16,6 @@
 
 (require 'ivy)
 (require 'projectile)
-
-
-
-
 
 
 ;;;; dired settings
@@ -411,6 +408,45 @@ This command does the reverse of `fill-region'."
 
 ;;;; org-mode settings (a.k.a. org settings)
 
+;; Hide the PROPERTIES section if folded;
+;; pasted from https://stackoverflow.com/a/17492723
+
+(defun org-cycle-hide-drawers (state)
+  "Re-hide all drawers after a visibility state change."
+  (when (and (derived-mode-p 'org-mode)
+             (not (memq state '(overview folded contents))))
+    (save-excursion
+      (let* ((globalp (memq state '(contents all)))
+             (beg (if globalp
+                    (point-min)
+                    (point)))
+             (end (if globalp
+                    (point-max)
+                    (if (eq state 'children)
+                      (save-excursion
+                        (outline-next-heading)
+                        (point))
+                      (org-end-of-subtree t)))))
+        (goto-char beg)
+        (while (re-search-forward org-drawer-regexp end t)
+          (save-excursion
+            (beginning-of-line 1)
+            (when (looking-at org-drawer-regexp)
+              (let* ((start (1- (match-beginning 0)))
+                     (limit
+                       (save-excursion
+                         (outline-next-heading)
+                           (point)))
+                     (msg (format
+                            (concat
+                              "org-cycle-hide-drawers:  "
+                              "`:END:`"
+                              " line missing at position %s")
+                            (1+ start))))
+                (if (re-search-forward "^[ \t]*:END:" limit t)
+                  (outline-flag-region start (point-at-eol) t)
+                  (user-error msg))))))))))
+
 (defun org-archive-read-only-hook ()
   (when (string-match "[.]org_archive" buffer-file-name)
         (read-only-mode)))
@@ -668,7 +704,8 @@ This command does the reverse of `fill-region'."
 ;;;; Magit settings
 
 ;; In the default view, show stashes and local branches.
-;; Move the sections around slightly to suit my preferences.
+;; Also, move the sections around a bit to suit my preferences.
+
 (setq-default magit-section-initial-visibility-alist
               '((stashes . show)))
               
@@ -691,7 +728,7 @@ This command does the reverse of `fill-region'."
                 magit-insert-unpulled-from-pushremote
                 magit-insert-unpulled-from-upstream))
 
-;;;; Typescriptx settings
+;;;; TypeScript settings
 
 ;; eslint (JavaScript/TypeScript linter) settings
 (defun seteslintrc ()
@@ -704,6 +741,7 @@ This command does the reverse of `fill-region'."
   (company-mode +1)
   (eldoc-mode +1)
   (flycheck-mode +1)
+  (column-number-mode +1)
 
   (seteslintrc)
   (setq flycheck-check-syntax-automatically '(save mode-enabled))
@@ -813,6 +851,7 @@ This command does the reverse of `fill-region'."
  '(ansi-color-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil :weight normal))))
  '(ansi-color-yellow ((t (:background "HotPink" :foreground "#f5b5ff" :underline nil :weight normal))))
  '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
+ '(magit-section-highlight ((t (:extend t :background "#262626" :weight normal))))
  '(org-done ((t (:foreground "color-22" :weight normal))))
  '(org-headline-done ((t (:foreground "color-22" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))
@@ -843,6 +882,22 @@ This command does the reverse of `fill-region'."
  (face-list))
 
 ;;;;;;;; Experimental area {{
+
+;; N.G.
+;;
+;; (defun my-cd (dir)
+;;   "tell a running shell-mode session to cd to `dir'"
+;;   (if (not dir)
+;;       (error "No dir argument specified")
+;;       (let ((shell-buffer (get-buffer "*shell*"))
+;;             (shell-process (get-process "shell")))
+;;         (if (and shell-buffer shell-process)
+;;             (with-current-buffer shell-buffer
+;;               (comint-send-input (concat "cd " dir)))
+;;               (shell-process-cd dir)
+;;             (error "my-cd failed somehow")))))
+;; (my-cd "/Applications")
+
 
 ;; OK
 (defun prefix (string)
@@ -898,21 +953,51 @@ This command does the reverse of `fill-region'."
 ;;      ;;              (insert output-text))))))))))
 
 
-;; Needs work
+;;;; Needs work
+;;;;
+;;;;
+;; (add-hook
+;;  'shell-mode-hook
+;;  (lambda ()
+;;    (shell-dirtrack-mode -1)
+;;    (letrec
+;;        (( sgs "\\(?:" )  ;; regexp code to start a "shy" (non-capturing) group
+;;         ( cgs "\\("   )  ;; regexp code to start a capturing group
+;;         ( ge "\\)"    )  ;; regexp code to end any group (shy or capturing)
+        
+;;         ( path-start-regexp
+;;           (concat
+;;            sgs "[^ ]*[ ]" ge "?"  ;; Optional: a single string terminated by space
+;;            sgs ansi-color-control-seq-regexp ge ;; A single ANSI SGR color code for the path
+;;            cgs ".*" ge "[$]" ;; The path itself, terminated by a literal dollar sign
+;;            ;; ^ (use cgs to assign to regexp group 1)
+;;            ) ))
+   
+;;      ;; Begin diagnostics
+;;      (dirtrack-debug-mode +1)
+;;      (setq-default dirtrack-debug-mode 1)
 
-;; (defun my-cd (dir)
-;;   "tell a running shell-mode session to cd to `dir'"
-;;   (if (not dir)
-;;       (error "No dir argument specified")
-;;       (let ((shell-buffer (get-buffer "*shell*"))
-;;             (shell-process (get-process "shell")))
-;;         (if (and shell-buffer shell-process)
-;;             (with-current-buffer shell-buffer
-;;               (comint-send-input (concat "cd " dir)))
-;;               (shell-process-cd dir)
-;;             (error "my-cd failed somehow")))))
-;; (my-cd "/Applications")
+;;      (add-hook 'comint-preoutput-filter-functions
+;;                (lambda (input)
+;;                  (message (concat "input:  " input))
+;;                  input)
+;;                nil
+;;                't)
+;;      (add-hook 'comint-preoutput-filter-functions
+;;                (lambda (input)
+;;                  (let
+;;                      ((output (dirtrack input))
+;;                       (strmout (string-match path-start-regexp input))
+;;                       (message (concat "dirtrack output: " output))
+;;                       (message (concat "(string-match " path-start-regexp " " input ") returned "strmout))
+;;                    output)))
+;;                nil
+;;                't)
+;;      ;; End diagnostics   
 
+;;      (setq dirtrack-list (list path-start-regexp 1))))
+;;  nil
+;;  't)
 
 ;; }} end experimental settings
 

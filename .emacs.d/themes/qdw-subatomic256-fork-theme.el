@@ -35,21 +35,15 @@
       (mystic-blue       "#5f5f87")
       (phosphor-amber    "#af5f00")
       (comment-amber phosphor-amber)
-      
-      ;; (blueish-purple    "#4942db")
       (blueish-purple    "#9164ff")
-
-      
       (sea-blue          "#1077a3")
       (light-cyan        "#008787")
       (cyan              "#00cdcd")
       (sea-green-cyan    "#2f4f4f")
       (sea-green-cyan+1  "#008080")
-
-      ;; (victory-blue      "#87afd7")
-      ;; (victory-blue      "#00afd7") ;; dolphin blue
-      (victory-blue      "#005fd7") ;; saturated dark blue
-      
+      (victory-blue      "#87afd7")
+      (defeat-blue       "#005fd7") ;; saturated dark blue
+      (blue-as-in-outline-mode-default-foreground "#005fd7")
       (full-green        "#00ff00")
       (undergrowth-green "#87af5f")
       (dark-green "#469439")
@@ -159,7 +153,7 @@
 
    `(font-lock-keyword-face
      ;; ((t (:foreground ,deep-gold :weight bold))))
-     ((t (:foreground ,victory-blue))))
+     ((t (:foreground ,phosphor-amber))))
 
    `(font-lock-function-name-face
      ;; ((t (:foreground ,victory-blue))))
@@ -172,18 +166,15 @@
    `(font-lock-builtin-face
      ((t ((:foreground ,phosphor-amber)))))
 
-   ;; `(font-lock-variable-name-face
-   ;;   ((t (:foreground ,victory-blue))))
    `(font-lock-variable-name-face
-     ((t (:foreground ,relaxed-white))))
-
+     ((t (:foreground ,blueish-purple))))
 
    `(font-lock-constant-face
      ((t (:foreground ,relaxed-white, :weight bold :italic t))))
 
    `(font-lock-type-face
      ;; ((t (:foreground ,victory-blue :weight bold))))
-     ((t (:foreground ,victory-blue :weight bold))))
+     ((t (:foreground ,defeat-blue :weight bold))))
 
    `(font-lock-negation-char-face
      ((t (:foreground ,brick-red :weight bold))))
@@ -367,8 +358,15 @@
    `(diff-refine-added
      ((t (:background ,victory-blue :weight bold))))
      
-     
+   ;; git
+   
+   `(git-commit-summary
+     ((t (:foreground ,relaxed-white))))
+
    ;; magit
+   
+   `(magit-diff-context-highlight
+      ((t (:background ,full-black))))
 
    `(magit-branch
      ((t (:foreground ,jungle-green :weight bold))))
@@ -470,7 +468,7 @@
       ((t (:foreground ,blueish-purple))))
 
     `(outline-6
-      ((t (:foreground ,victory-blue))))
+      ((t (:foreground ,defeat-blue))))
 
     `(outline-7
       ((t (:foreground ,axiomatic-purple))))
