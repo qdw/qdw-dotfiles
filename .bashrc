@@ -510,19 +510,6 @@ function leaf() { brew-next-leaf "$@" ;}
 
 
 function bi() { brew install "$@" ;}
-function bl() {
-    if [[ $# -eq 0 ]]; then
-        brew list -1 "$@"
-    elif [[ $# -eq 1 ]]; then
-        local REGEX
-        REGEX="$1"
-        shift
-        brew list -1 "$@" | grep "$REGEX"
-    else
-        echo "bl: error: too many arguments. Usage: bl [REGEX]"
-    fi
-}
-
 function be() { brew edit "$@" ;}
 # function bo() { brew doctor; brew update && brew outdated ;}
 function bo() { brew update; brew outdated ;}
