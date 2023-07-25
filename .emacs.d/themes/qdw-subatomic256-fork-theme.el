@@ -43,6 +43,7 @@
       (sea-green-cyan+1  "#008080")
       (victory-blue      "#87afd7")
       (defeat-blue       "#005fd7") ;; saturated dark blue
+      (blue-as-in-outline-mode-default-foreground "#005fd7")
       (full-green        "#00ff00")
       (undergrowth-green "#87af5f")
       (dark-green "#469439")
