@@ -215,7 +215,7 @@ function ldd-app() {
 }
 
 function ldd() {
-    if [[ $MY_OS = "Darwin" ]]; then
+    if [[ "$MY_OS" = "Darwin" ]]; then
         if [[ "$1" =~ ^[[:upper:]] ]] || [[ "$1" =~ [.]app$ ]]; then
             ldd-app "$@" | $PAGER
         else
@@ -299,7 +299,7 @@ function the_emacs_daemon_is_running() {
         command ps auxwww | command grep "$USER" | command grep -v grep | command grep -E -- "emacs.*--(daemon|bg-daemon|fg-daemon)"
         OUTPUT=$?
     else
-        OUTPUT="error: edit your ~/.bashrc and add support for OS "$MY_OS" to function the_emacs_daemon_is_running()"
+        OUTPUT="error: edit your ~/.bashrc and add support for OS '$MY_OS' to function the_emacs_daemon_is_running()"
     fi
 
     echo "$OUTPUT"
@@ -311,7 +311,7 @@ function print_instructions_for_starting_the_emacs_daemon() {
     elif [[ "$MY_OS" =~ Linux ]]; then
         echo "command emacs --bg-daemon"
     else
-        echo "[error: edit your ~/.bashrc and add support for OS $MY_OS to function print_instructions_for_starting_the_emacs_daemon"
+        echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print_instructions_for_starting_the_emacs_daemon"
     fi
 }
 
@@ -1546,21 +1546,41 @@ function p() {
     fi
 }
 
+#### Process-related settings
+
+# pe (Ps Emacs-daemon): show whether the Emacs daemon is running.
 function pe() {
-    brew services | grep emacs-plus
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        brew services | grep emacs-plus
+    else
+        ps auxwww | grep 'emacs.*daemon'
+    fi
 }
 
+# ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
-    brew services stop emacs-plus
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        brew services stop emacs-plus
+    else
+        local EMACS_DAEMON_PID
+        EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
+        kill "$EMACS_DAEMON_PID"
+    fi
 }
 
-function kes() {
-    brew services stop emacs-plus && brew services start emacs-plus
+# se (Start Emacs-daemon): start the Emacs daemon.
+function se() {
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        brew services start emacs-plus
+    else
+        emacs --bg-daemon
+    fi
 }
 
-# function ke() {
-#     kill  "$(p emacs | tail -1 | awk '{print $2}')"
-# }
+# re (Restart Emacs-daemon): stop it, then start it.
+function re() {
+    ke && se
+}
 
 # pbc ('(p)aste(b)oard (c)opy') - macOS only: copy file to the system clipboard
 function pbc() { 
