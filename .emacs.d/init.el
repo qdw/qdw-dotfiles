@@ -2,6 +2,7 @@
 
 (require 'ansi-color)
 (require 'blacken)
+(require 'dirtrack)
 (require 'dockerfile-mode)
 (require 'json)
 (require 'magit)
@@ -15,10 +16,6 @@
 
 (require 'ivy)
 (require 'projectile)
-
-
-
-
 
 
 ;;;; dired settings
@@ -847,6 +844,22 @@ This command does the reverse of `fill-region'."
 
 ;;;;;;;; Experimental area {{
 
+;; N.G.
+;;
+;; (defun my-cd (dir)
+;;   "tell a running shell-mode session to cd to `dir'"
+;;   (if (not dir)
+;;       (error "No dir argument specified")
+;;       (let ((shell-buffer (get-buffer "*shell*"))
+;;             (shell-process (get-process "shell")))
+;;         (if (and shell-buffer shell-process)
+;;             (with-current-buffer shell-buffer
+;;               (comint-send-input (concat "cd " dir)))
+;;               (shell-process-cd dir)
+;;             (error "my-cd failed somehow")))))
+;; (my-cd "/Applications")
+
+
 ;; OK
 (defun prefix (string)
   (interactive "MPrefix: ")
@@ -901,21 +914,51 @@ This command does the reverse of `fill-region'."
 ;;      ;;              (insert output-text))))))))))
 
 
-;; Needs work
+;;;; Needs work
+;;;;
+;;;;
+;; (add-hook
+;;  'shell-mode-hook
+;;  (lambda ()
+;;    (shell-dirtrack-mode -1)
+;;    (letrec
+;;        (( sgs "\\(?:" )  ;; regexp code to start a "shy" (non-capturing) group
+;;         ( cgs "\\("   )  ;; regexp code to start a capturing group
+;;         ( ge "\\)"    )  ;; regexp code to end any group (shy or capturing)
+        
+;;         ( path-start-regexp
+;;           (concat
+;;            sgs "[^ ]*[ ]" ge "?"  ;; Optional: a single string terminated by space
+;;            sgs ansi-color-control-seq-regexp ge ;; A single ANSI SGR color code for the path
+;;            cgs ".*" ge "[$]" ;; The path itself, terminated by a literal dollar sign
+;;            ;; ^ (use cgs to assign to regexp group 1)
+;;            ) ))
+   
+;;      ;; Begin diagnostics
+;;      (dirtrack-debug-mode +1)
+;;      (setq-default dirtrack-debug-mode 1)
 
-;; (defun my-cd (dir)
-;;   "tell a running shell-mode session to cd to `dir'"
-;;   (if (not dir)
-;;       (error "No dir argument specified")
-;;       (let ((shell-buffer (get-buffer "*shell*"))
-;;             (shell-process (get-process "shell")))
-;;         (if (and shell-buffer shell-process)
-;;             (with-current-buffer shell-buffer
-;;               (comint-send-input (concat "cd " dir)))
-;;               (shell-process-cd dir)
-;;             (error "my-cd failed somehow")))))
-;; (my-cd "/Applications")
+;;      (add-hook 'comint-preoutput-filter-functions
+;;                (lambda (input)
+;;                  (message (concat "input:  " input))
+;;                  input)
+;;                nil
+;;                't)
+;;      (add-hook 'comint-preoutput-filter-functions
+;;                (lambda (input)
+;;                  (let
+;;                      ((output (dirtrack input))
+;;                       (strmout (string-match path-start-regexp input))
+;;                       (message (concat "dirtrack output: " output))
+;;                       (message (concat "(string-match " path-start-regexp " " input ") returned "strmout))
+;;                    output)))
+;;                nil
+;;                't)
+;;      ;; End diagnostics   
 
+;;      (setq dirtrack-list (list path-start-regexp 1))))
+;;  nil
+;;  't)
 
 ;; }} end experimental settings
 
