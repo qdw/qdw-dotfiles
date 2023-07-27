@@ -1778,7 +1778,7 @@ function rmds() {
 }
 
 # Invoke strings(1) safely, because http://www.jwz.org/blog/2014/10/we-live-in-a-magical-future-where-strings-is-exploitable/
-function strings() { command strings -a "$@" ;}
+function strings() { command strings -a "$@"  | $PAGER ;}
 
 # para: print any paragraph contaning the desired string. A paragraph is defined as a collection of lines followed by an all-blank line (i.e., a newline).
 function para() {
