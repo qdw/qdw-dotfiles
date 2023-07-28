@@ -765,6 +765,8 @@ This command does the reverse of `fill-region'."
  '(ecb-tip-of-the-day nil)
  '(elpher-default-url-type "gemini")
  '(markdown-italic-underscore t)
+ '(mode-line-position-column-format '(" %C"))
+ '(mode-line-position-column-line-format '(" (%l,%C)"))
  '(neo-cwd-line-style 'text)
  '(neo-theme 'classic)
  '(ns-alternate-modifier 'none)
