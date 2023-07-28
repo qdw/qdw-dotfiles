@@ -993,6 +993,14 @@ This command does the reverse of `fill-region'."
 ;;  nil
 ;;  't)
 
+
+
+;; (defmacro org-set-visibility ()
+;;   (interactive)
+;;   (org-set-property "VISIBILITY"))
+
+
+
 ;; }} end experimental settings
 
 ;; Load Emacs settings specific to this organization
