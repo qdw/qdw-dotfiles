@@ -107,9 +107,8 @@ Test cases
     ))
 
 
-(defun open-in-emacs-gui ()
-  (interactive)
-  (xah-open-file-in-external-program "emacs -c"))
+;;;; Alternative-editor settings
+;;;; FIXME: abstract this repetitive code
 
 ;; FIXME: abstract this repetitive code
 (defun open-in-sublime-text ()
@@ -132,7 +131,7 @@ Test cases
       "open -g -a MacVim.app '%S +1'"
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
-      
+
 (global-set-key (kbd "C-c s") 'open-in-sublime-text)
 
 (defun open-in-vscode ()
@@ -650,13 +649,6 @@ This command does the reverse of `fill-region'."
           (lambda ()
             (local-set-key "\r" 'electric-newline-and-maybe-indent)
             (blacken-mode)))
-
-;; emerge, a built-in emacs UI for merging two files that differ
-;; (like Sublime Merge, but not sublime)
-
-;; (add-hook 'ediff-load-hook
-;;              (lambda ()
-;;                (setq ediff-diff-program "/usr/local/bin/diff")))
 
 ;;;; Code-folding settings
 
