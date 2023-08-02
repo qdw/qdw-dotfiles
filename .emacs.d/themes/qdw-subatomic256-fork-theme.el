@@ -171,7 +171,8 @@
      ((t (:foreground ,blueish-purple))))
 
    `(font-lock-constant-face
-     ((t (:foreground ,relaxed-white, :weight bold :italic t))))
+     ;; ((t (:foreground ,relaxed-white, :weight bold :italic t))))
+     ((t (:foreground ,blueish-purple, :weight bold :italic t))))
 
    `(font-lock-type-face
      ;; ((t (:foreground ,victory-blue :weight bold))))
