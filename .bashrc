@@ -1161,9 +1161,8 @@ export GREP_COLORS="fn=01;36"
 GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir .github --exclude-dir node_modules --exclude .gitignore --exclude .npmignore"
 function grep() { $MY_GREP -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
 function fgrep() { $MY_FGREP -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
-function g() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER ;}
-function gg() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@";}
-function gbr() { $MY_GREP -Ri -I --color=always $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+function g() { $MY_GREP -R -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER ;}
+function gbr() { $MY_GREP -R -I --color=always $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
 
 function gfd() {
     local REGEX USAGE
@@ -1181,12 +1180,12 @@ function gfd() {
 
 # count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
 function count() { 
-    command grep -Ric $GREP_EXCLUDE_DIRS "$@" | command grep -v ':0$' | sed -e 's/\(.*\):\(.*\)/\2 \1/' | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
+    command grep -Rc $GREP_EXCLUDE_DIRS "$@" | command grep -v ':0$' | sed -e 's/\(.*\):\(.*\)/\2 \1/' | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
 }
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur() {
-    grep -Ril $GREP_EXCLUDE_DIRS "$@"
+    grep -Rl $GREP_EXCLUDE_DIRS "$@"
 }
 
 #### fd settings (fd is a faster and better replacement for find(1)
