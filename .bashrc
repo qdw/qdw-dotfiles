@@ -1,13 +1,19 @@
+#### Bash debugging settings
+
+## Uncomment this line to run shellcheck, a mediocre and pedantic static analysis tool,
+## on my Bash config files.
+
 # shellcheck shell=bash
 
 ## Uncomment the following lines if you want to time each command in this file.
-#     export TIMEFORMAT='    real %3R'; export PS4=''
-#     set -xT
 ## You will also need to add 'time ' before every command in this file,
-## because Bash doesn't have a good builtin time-tracing function. :(
-#
+## because Bash doesn't have a good builtin time-tracing function.
+
+# export TIMEFORMAT='    real %3R'; export PS4=''
+# set -xT
+
 ## Also useful for timing:
-#
+
 # TIMEFORMAT='%3R'
 # function time_source() {
 #     echo -n "$1:  "
@@ -15,15 +21,17 @@
 #     echo
 # }
 
-# Turn off the many prompt-related commands that
-# automatically run every time I enter a command,
-# then turn on tracing. This makes the trace
-# much more uncluttered.
+## setx - run this function interactively to turn off the many
+## prompt-related commands that automatically run every time I enter a
+## command, then turn on tracing. This makes the trace much more
+## uncluttered.
 function setx() {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
     set -x
 }
+
+#### Basic settings
 
 MY_OS=$(uname -s)
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
@@ -289,6 +297,18 @@ function secret() { get-secret "$@" ;}
 
 ## Emacs settings
 
+export EMACS_PLUS_VERSION="emacs-plus@28"
+
+function brew-install-emacs-plus() {
+    brew install \
+         --formula \
+         --build-from-source \
+         "$EMACS_PLUS_VERSION" \
+         --with-modern-doom3-icon \
+         --with-imagemagick \
+         --with-mailutils
+}
+
 function the_emacs_daemon_is_running() {
     local OUTPUT
 
@@ -307,7 +327,7 @@ function the_emacs_daemon_is_running() {
 
 function print_instructions_for_starting_the_emacs_daemon() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        echo "brew services start emacs-plus"
+        echo "brew services start "$EMACS_PLUS_VERSION""
     elif [[ "$MY_OS" =~ Linux ]]; then
         echo "command emacs --bg-daemon"
     else
@@ -343,7 +363,7 @@ function emacs() {
 
 export VISUAL="emacs"
 export EDITOR="$VISUAL"
-export GIT_EDITOR=~/bin/emacsclient-or-emacs.bash
+export GIT_EDITOR="emacsclient"
 export PSQL_EDITOR="emacs -nw"
 
 #### Permission settings
@@ -1545,7 +1565,7 @@ function p() {
 # pe (Ps Emacs-daemon): show whether the Emacs daemon is running.
 function pe() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services | grep emacs-plus
+        brew services | grep "$EMACS_PLUS_VERSION"
     else
         ps auxwww | grep 'emacs.*daemon'
     fi
@@ -1554,7 +1574,7 @@ function pe() {
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services stop emacs-plus
+        brew services stop "$EMACS_PLUS_VERSION"
     else
         local EMACS_DAEMON_PID
         EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
@@ -1565,7 +1585,7 @@ function ke() {
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services start emacs-plus
+        brew services start "$EMACS_PLUS_VERSION"
         # Give it time to load my ~/.emacs.d/init.el
         sleep 2
     else
@@ -2095,7 +2115,7 @@ function jenkins-log() {
 }
 function jl() { jenkins-log "$@" ;}
 
-#### JIRA settings, regrettably
+#### Jira settings, regrettably
 
 ## For these to work, JIRA_BASE_URL must be set
 
