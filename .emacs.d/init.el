@@ -9,11 +9,12 @@
 (require 'menu-bar)   
 (require 'org)
 (require 'package)
+(require 'ruby-mode)
 (require 'scroll-bar)
 (require 'sh-script)
 (require 'tool-bar)   
 
-
+;; Experimental
 (require 'ivy)
 (require 'projectile)
 
@@ -119,7 +120,7 @@ Test cases
       "subl --background %S:%d"
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
-      
+
 (defalias 'sublime 'open-in-sublime-text)
 
 (defun open-in-gvim ()
@@ -281,6 +282,10 @@ This command does the reverse of `fill-region'."
   
 
 ;;;; Shell settings
+
+(when
+  (getenv "HOMEBREW_BIN")
+  (setq explicit-shell-file-name (concat (getenv "HOMEBREW_BIN") "/bash")))    
 
 ;; When running a quick shell command via 'M-!', make it source my
 ;; ~/.bashrc
@@ -650,15 +655,16 @@ This command does the reverse of `fill-region'."
             (local-set-key "\r" 'electric-newline-and-maybe-indent)
             (blacken-mode)))
 
-;;;; Code-folding settings
+;;;; Generic coding settings (not language-specific)
 
-;; (require 'origami)
-;; (add-hook 'origami-mode-hook
-;;           (lambda ()
-;;             (define-key origami-mode-map
-;;                         (kbd "C-c C-f")
-;;                         'origami-toggle-node)))
-;; (global-origami-mode)
+;;; Code-folding
+(require 'origami)
+(add-hook 'origami-mode-hook
+          (lambda ()
+            (define-key origami-mode-map
+                        (kbd "C-c C-f")
+                        'origami-toggle-node)))
+(global-origami-mode)
 
 ;;;; Bash-(and-other)-shell-script-editing settings
 
@@ -782,7 +788,7 @@ This command does the reverse of `fill-region'."
      ("~"
       (:strike-through t))))
  '(package-selected-packages
-   '(xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 (put 'narrow-to-region 'disabled nil)
 
