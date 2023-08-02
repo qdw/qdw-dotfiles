@@ -21,8 +21,7 @@
 	newMovedAlternative = cyan
 
 [color "blame"]
-       repeatedLines = "black"
-       highlightRecent = "black,6 months ago,cyan,3 months ago,blue,6 weeks ago,red"
+	highlightRecent = "22,6.months.ago,28,3.months.ago,34,6.weeks.ago,40,3.weeks.ago,47,10.days.ago,120"
 
 [core]
 	excludesfile = ~/.gitignore
