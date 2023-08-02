@@ -531,8 +531,9 @@ function leaf() { brew-next-leaf "$@" ;}
 
 function bi() { brew install "$@" ;}
 function be() { brew edit "$@" ;}
-# function bo() { brew doctor; brew update && brew outdated ;}
+function bl() { brew list -1 "$@" ;}
 function bo() { brew update; brew outdated ;}
+# function bo() { brew doctor; brew update && brew outdated ;}
 function bs() { brew search "$@" ;}
 function bser() { brew services "$@" ;}
 function bu() { brew update && brew upgrade --formula && brew outdated ;}
