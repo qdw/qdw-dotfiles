@@ -64,8 +64,8 @@ fi
 
 #### Bash settings
 
-function source-if-exists() {
-    if [[ -f "$1" ]]; then
+function source_if_exists() {
+    if [[ $# -eq 1 ]]; then
         source "$1"
     fi
 }
@@ -82,9 +82,9 @@ function grbash() {
 ## Bash settings that shouldn't be checked into git
 ## (either because they contain secrets, or because of license issues)
 
-source-if-exists ~/.bashrc.d/daemons.bash
-source-if-exists ~/.site.bash.d/preamble.bash 
-source-if-exists ~/.secrets.bash
+source_if_exists ~/.bashrc.d/daemons.bash
+source_if_exists ~/.site.bash.d/preamble.bash
+source_if_exists ~/.secrets.bash
 
 ## Bash completion settings
 ## Dependencies:
@@ -787,6 +787,8 @@ set +a
 #### Git setttings
 
 ## General Git settings (not specific to GitHub)
+
+export GIT_SHELL_PATH="$HOMEBREW_BIN/bash"
 
 # gcd ("Git CD") - cd to a directory, relative to the root dir of this repo.
 function gcd() {
@@ -2287,4 +2289,4 @@ if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
     set +a
 fi
 
-source-if-exists ~/.site.bash.d/postamble.bash
+source_if_exists ~/.site.bash.d/postamble.bash
