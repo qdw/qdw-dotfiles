@@ -1936,7 +1936,6 @@ function perlbrew-activate() { activate-perlbrew ;}
 function psql-tips() { links ~/src/psql-tips/html/psql_tips_all.html ;}
 function tips() { psql-tips "$@" ;}
 function mutt() { neomutt "$@" ;}
-function zo() { open https://mail.zophar.net/music/nintendo-nes-nsf ;}
 
 #### Game development settings
 
@@ -2212,6 +2211,21 @@ function jmine() {
     jql '(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved order by updated DESC'
 }
 
+#### Music-related settings
+
+# zo (Zophar) - search for Nintendo Entertainment System music
+function zo() {
+    open https://mail.zophar.net/music/nintendo-nes-nsf
+}
+
+# [DOESN'T WORK YET] mus (Music) - open an Apple Music URL in Music.app
+function mus() {
+    if [[ $# -ne 1 ]]; then
+        echo "mus: error: missing argument. Usage: mus URL"
+    else
+        osascript ~/bin/open-url-in-the-apple-music-app.scpt "$URL"
+    fi
+}
 
 #### YAML and JSON settings
 
