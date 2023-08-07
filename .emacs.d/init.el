@@ -653,7 +653,10 @@ This command does the reverse of `fill-region'."
 (add-hook 'python-mode-hook
           (lambda ()
             (local-set-key "\r" 'electric-newline-and-maybe-indent)
-            (blacken-mode)))
+            ;; Run the Blacken real-time Python code auto-formatter,
+            ;; except on third-party code.
+            (unless (string-match (expand-file-name "~/src-3") buffer-file-name)
+                    (blacken-mode))))
 
 ;;;; Generic coding settings (not language-specific)
 
