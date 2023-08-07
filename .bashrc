@@ -64,8 +64,8 @@ fi
 
 #### Bash settings
 
-function source_if_exists() {
-    if [[ $# -eq 1 ]]; then
+function source-if-exists() {
+    if [[ $# -eq 1 ]] && [[ -f "$1" ]]; then
         source "$1"
     fi
 }
@@ -82,9 +82,9 @@ function grbash() {
 ## Bash settings that shouldn't be checked into git
 ## (either because they contain secrets, or because of license issues)
 
-source_if_exists ~/.bashrc.d/daemons.bash
-source_if_exists ~/.site.bash.d/preamble.bash
-source_if_exists ~/.secrets.bash
+source-if-exists ~/.bashrc.d/daemons.bash
+source-if-exists ~/.site.bash.d/preamble.bash
+source-if-exists ~/.secrets.bash
 
 ## Bash completion settings
 ## Dependencies:
@@ -2303,4 +2303,4 @@ if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
     set +a
 fi
 
-source_if_exists ~/.site.bash.d/postamble.bash
+source-if-exists ~/.site.bash.d/postamble.bash
