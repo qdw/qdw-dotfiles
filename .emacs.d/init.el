@@ -791,7 +791,7 @@ This command does the reverse of `fill-region'."
      ("~"
       (:strike-through t))))
  '(package-selected-packages
-   '(git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 (put 'narrow-to-region 'disabled nil)
 
@@ -1008,6 +1008,15 @@ This command does the reverse of `fill-region'."
 ;;   (interactive)
 ;;   (org-set-property "VISIBILITY"))
 
+;; Jenkins API integration - disabled until I can figure out what auth method to use
+;; For documentation on butler.el, see https://github.com/AshtonKem/Butler
+;;
+;; (add-to-list 'butler-server-list
+;;              '(jenkins (getenv "JENKINS_HOSTNAME")
+;;                        (getenv "JENKINS_ROOT_URL")
+;;                       
+;;                        FIXME: since my organization uses Okta with 2FA, I probably need to use a diffferent authentication mechanism - maybe I can make a bearer token?
+;;                        (auth-file . "~/.jenkins.authinfo.gpg")))
 
 
 ;; }} end experimental settings
