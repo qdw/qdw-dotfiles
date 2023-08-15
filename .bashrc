@@ -2175,12 +2175,28 @@ function jc() {
 }
 
 function jira-open-existing-ticket() {
-    TICKET_NUMBER="$1"
-
-    if [[ -z "$JIRA_BASE_URL" ]]; then
-        echo "Error: you must set the JIRA_BASE_URL environment variable"
+    local TICKET_NUMBER
+    
+    if [[ $# -ne 1 ]]; then
+        echo "jira-open-existing-ticket: error: wrong number of arguments. Usage: jira-open-existing-ticket TICKET_NUMBER"
+    elif [[ -z "$JIRA_BASE_URL" ]]; then
+        echo "jira-open-existing-ticket: error: you must set the JIRA_BASE_URL environment variable"
     else
-        open "${JIRA_BASE_URL}browse/${TICKET_NUMBER}"
+        TICKET_NUMBER="$1"
+
+        if [[ "$TICKET_NUMBER" =~ [[:digit:]]+ ]]; then
+            echo "Match"
+            if [[ -z "$JIRA_DEFAULT_PROJECT" ]]; then
+                echo "jira-open-existing-ticket: error: numeric ticket ID given but JIRA_DEFAULT_PROCESS not set"
+                return
+            else
+                TICKET_NUMBER="${JIRA_DEFAULT_PROJECT}-${TICKET_NUMBER}"
+            fi
+        else
+            echo "No match"
+        fi
+
+        open -u "${JIRA_BASE_URL}/browse/${TICKET_NUMBER}"
     fi
 }
 
@@ -2197,7 +2213,8 @@ function jira() {
         jira-browse-site
     elif [[ $# -eq 1 ]]; then
         jira-open-existing-ticket "$@"
-    elif [[ $# -eq 2 ]]; then
+    elif [[ $# -eq 2 ]] && [[ $1 -eq "create" ]]; then
+        shift
         jira-create-ticket "$@"
     else
         echo "j: invalid number of arguments '$#'. Doing nothing"
