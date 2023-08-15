@@ -206,6 +206,23 @@ GIT_PAGER="$PAGER"
 MANPAGER="$PAGER"
 set +a
 
+#### Markdown settings
+
+# export GLAMOUR_STYLE="Dark"
+readme() {
+    gh repo view
+}
+
+# bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub)
+function bbat() {
+    local TMPFILE
+    
+    TMPFILE=$(gmktemp --suffix .html /tmp/bbat.XXXXXX) \
+        && pandoc --from markdown --to html --reference-links "$@" > "$TMPFILE" \
+        && elinks "$TMPFILE"
+}
+
+#### #FIXME settings: rewrite 'function bbat() {...}' to use 'gh' and GLAMOUR_STYLE, which should make the output look nicer
 
 #### Linker settings
 
