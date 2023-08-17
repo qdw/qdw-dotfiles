@@ -12,7 +12,10 @@
 (require 'ruby-mode)
 (require 'scroll-bar)
 (require 'sh-script)
-(require 'tool-bar)   
+(require 'tool-bar)
+
+(add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes"))
+(load-theme 'qdw-subatomic256-fork 't)
 
 ;; Experimental
 (require 'ivy)
@@ -151,31 +154,9 @@ Test cases
 ;; (if (getenv "TMUX")
     
 
-;;;;;;;;
-
-;;;;;;;; Appearance
+;;;; Alternative color theme settings
         
-;;;; Color theme settings
-
-;; Override the default ANSI colors
-;;
-;; Motivation: I don't like the default ANSI colors; they're fugly.
-;; Plus I just dislike yellow and red in general, and would rather see
-;; orange and pink respectively. When I'm running Emacs inside
-;; Terminal.app or iTerm2, I just use those apps' respective settings
-;; to change how ANSI color codes are displayed. --but, when I'm
-;; running graphical Emacs, I need to change colors explicitly in
-;; Emacs lisp, as follows: (custom-set-face 'ansi- ...
-
-;; Enable color themes.
-(add-to-list 'custom-theme-load-path
-             (expand-file-name "~/.emacs.d/themes"))
-
-;; Dark themes
-
-;; My local fork of subatomic256, a high-contrast white-on-black
-;; 256-color theme w/ bright font-lock
-(load-theme 'qdw-subatomic256-fork 't)
+;;; Dark themes
 
 ;;T  Selenized: medium-contrast white-on-green 256-color w/ bright font-lock
 ;; (oad-theme 'solarized-selenized-dark 't)
@@ -195,7 +176,7 @@ Test cases
 ;;   This is is my very slightly tweaked version of the third-party theme
 ;; (oad-theme 'quinnokai 't)
 
-;; Light themes
+;;; Light themes
 
 ;; (add-to-list 'load-path
 ;;              (expand-file-name "~/.emacs.d/themes"))

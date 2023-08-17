@@ -42,7 +42,7 @@
       (sea-green-cyan    "#2f4f4f")
       (sea-green-cyan+1  "#008080")
       (victory-blue      "#87afd7")
-      (defeat-blue       "#005fd7") ;; saturated dark blue
+      (defeat-blue       "color-26") ;; saturated dark blue
       (blue-as-in-outline-mode-default-foreground "#005fd7")
       (full-green        "#00ff00")
       (undergrowth-green "#87af5f")
@@ -168,15 +168,14 @@
      ((t ((:foreground ,phosphor-amber)))))
 
    `(font-lock-variable-name-face
-     ((t (:foreground ,blueish-purple))))
+     ((t (:foreground ,victory-blue :weight bold))))
 
    `(font-lock-constant-face
      ;; ((t (:foreground ,relaxed-white, :weight bold :italic t))))
      ((t (:foreground ,blueish-purple, :weight bold :italic t))))
 
    `(font-lock-type-face
-     ;; ((t (:foreground ,victory-blue :weight bold))))
-     ((t (:foreground ,defeat-blue :weight bold))))
+     ((t (:foreground ,blueish-purple))))
 
    `(font-lock-negation-char-face
      ((t (:foreground ,brick-red :weight bold))))
@@ -314,7 +313,7 @@
    ;; diff
 
    `(diff-file-header
-     ((t (:background ,midnight-1 :foreground ,victory-blue))))
+     ((t (:background ,pink-though :foreground ,victory-blue))))
 
    `(diff-header
      ((t (:inherit default :foreground ,mystic-blue))))
@@ -329,7 +328,7 @@
     ((t (:foreground ,full-red :weight bold))))
 
    `(diff-removed
-     ((t (:foreground ,phosphor-amber))))
+     ((t (:foreground ,"DarkOrange1"))))
 
    `(diff-indicator-added
      ((t (:foreground ,full-green :weight bold))))
@@ -367,8 +366,14 @@
 
    ;; magit
    
+   `(magit-diff-hunk-heading-highlight
+     ((t (:background ,"color-250"))))
+   
+   `(magit-diff-context
+     ((t (:foreground ,relaxed-white))))
+   
    `(magit-diff-context-highlight
-      ((t (:background ,full-black))))
+     ((t (:foreground ,relaxed-white))))
 
    `(magit-branch
      ((t (:foreground ,jungle-green :weight bold))))
