@@ -34,3 +34,11 @@ tramp
 history
 auto-save-list
 desktop
+
+.husky**
+hooks**
+cuts--*
+example-*
+initialize-repo.sh
+package-lock.json
+package.json
