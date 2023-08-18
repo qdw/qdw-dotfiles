@@ -14,13 +14,15 @@
 (require 'sh-script)
 (require 'tool-bar)
 
-(add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes"))
-(load-theme 'qdw-subatomic256-fork 't)
-
 ;; Experimental
 (require 'ivy)
 (require 'projectile)
 
+;;;; Color settings
+
+(add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes"))
+(load-theme 'qdw-subatomic256-fork 't)
+(defalias 'colors 'list-colors-display)
 
 ;;;; dired settings
 
@@ -295,7 +297,8 @@ This command does the reverse of `fill-region'."
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
-;; (package-refresh-contents) (package-install-selected-packages)
+;; (package-refresh-contents)
+;; (package-install-selected-packages)
 
 
 ;;;; Basic comfort
@@ -516,8 +519,7 @@ This command does the reverse of `fill-region'."
 (global-set-key (kbd "C-c u") 'uncomment-region)
 (global-set-key (kbd "M-5")  'query-replace-regexp)
 (global-set-key (kbd "C-c C-l") 'display-line-numbers-mode)
-
-(global-unset-key (kbd "C-c C-f"))
+(global-set-key (kbd "C-h 1") 'describe-face)
 (global-set-key (kbd "C-c C-f") 'multi-occur-in-matching-buffers)
 (global-set-key (kbd "M-o") 'other-window)
 
@@ -776,64 +778,12 @@ This command does the reverse of `fill-region'."
  '(sh-indent-statement-after-and nil))
 (put 'narrow-to-region 'disabled nil)
 
-;; color defs copied from ~/.emacs.d/themes/qdw-subatomic256-fork-theme.el
-(letrec (
-         (phosphor-amber   "#af5f00")
-         (axiomatic-purple "#af5faf")
-         (dim-gray         "#a9a9a9")
-         )
-
-  (custom-set-faces
-   ;; custom-set-faces was added by Custom.
-   ;; If you edit it by hand, you could mess it up, so be careful.
-   ;; Your init file should contain only one such instance.
-   ;; If there is more than one, they won't work right.
-
-   ;; '(ansi-color-blue ((t (:background "blue2" :foreground "MediumPurple2" :underline nil :weight normal))))
-   '(ansi-color-blue ((t (:background "blue2" :foreground "#9164ff" :underline nil :weight normal))))
-   ;; '(ansi-color-blue ((t (:background "blue2" :foreground "#af5faf"  :underline nil :weight normal))))
-
-   
-   '(ansi-color-bright-black ((t (:background "gray30" :foreground "maroon2" :underline nil :weight normal))))
-
-   
-   '(ansi-color-cyan ((t (:background "cyan3" :foreground "turquoise4" :underline nil :weight normal))))
-
-   
-   ;; '(ansi-color-green ((t (:background "chartreuse3" :foreground "OliveDrab3" :underline nil :weight normal))))
-   '(ansi-color-green ((t (:background "chartreuse3" :foreground "#87af5f" :underline nil :weight normal))))
-
-
-   '(ansi-color-magenta ((t (:background "magenta3" :foreground "magenta3" :underline nil :weight normal))))
-
-   
-   ;; '(ansi-color-red ((t (:background "DarkOrange3" :foreground "orange2" :underline nil :weight normal))))
-   ;; '(ansi-color-red ((t (:background "DarkOrange3" :foreground "#af5f00" :underline nil :weight normal))))
-   '(ansi-color-red ((t (:background "#af5f00" :foreground "#af5f00" :underline nil :weight normal))))
-   
-   ;; '(ansi-color-white ((t (:background "gray90" :foreground "gray50" :underline nil :weight normal))))
-   '(ansi-color-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil :weight normal))))
-   '(ansi-color-bright-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil :weight normal))))
-
-   
-   ;; '(ansi-color-yellow ((t (:background "HotPink" :foreground "HotPink" :underline nil :weight normal)))))
-   '(ansi-color-yellow ((t (:background "HotPink" :foreground "#f5b5ff" :underline nil :weight normal))))))
-
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-blue ((t (:background "blue2" :foreground "#9164ff" :underline nil :weight normal))))
- '(ansi-color-bright-black ((t (:background "gray30" :foreground "maroon2" :underline nil :weight normal))))
- '(ansi-color-bright-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil :weight normal))))
- '(ansi-color-cyan ((t (:background "cyan3" :foreground "turquoise4" :underline nil :weight normal))))
- '(ansi-color-green ((t (:background "chartreuse3" :foreground "#87af5f" :underline nil :weight normal))))
- '(ansi-color-magenta ((t (:background "magenta3" :foreground "magenta3" :underline nil :weight normal))))
- '(ansi-color-red ((t (:background "#af5f00" :foreground "#af5f00" :underline nil :weight normal))))
- '(ansi-color-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil :weight normal))))
- '(ansi-color-yellow ((t (:background "HotPink" :foreground "#f5b5ff" :underline nil :weight normal))))
  '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
  '(magit-section-highlight ((t (:extend t :background "#262626" :weight normal))))
  '(org-done ((t (:foreground "color-22" :weight normal))))

@@ -27,56 +27,60 @@
 (deftheme qdw-subatomic256-fork
   "qdw-subatomic256-fork emacs theme")
 
-(letrec (
-      (midnight          "#1c1c1c")
-      (midnight-1        "#262626")
-      (midnight-2        "#a8a8a8")
-      (midnight-3        "#5f5f87")
-      (mystic-blue       "#5f5f87")
-      (phosphor-amber    "#af5f00")
-      (comment-amber phosphor-amber)
-      (blueish-purple    "#9164ff")
-      (sea-blue          "#1077a3")
-      (light-cyan        "#008787")
-      (cyan              "#00cdcd")
-      (sea-green-cyan    "#2f4f4f")
-      (sea-green-cyan+1  "#008080")
-      (victory-blue      "#87afd7")
-      (defeat-blue       "color-26") ;; saturated dark blue
-      (blue-as-in-outline-mode-default-foreground "#005fd7")
-      (full-green        "#00ff00")
-      (undergrowth-green "#87af5f")
-      (dark-green "#469439")
-      ;; (jungle-green      "#afd75f")
-      ;; (jungle-green      undergrowth-green)
-      (jungle-green      "color-29")
-      ;; (deep-gold         "#ffaf00")
-      (deep-gold phosphor-amber)
-      (axiomatic-purple  "#af5faf")
-      (comment-purple axiomatic-purple) 
-      (brick-red         "#d7875f")
-      (piggy-pink        "#ffd7d7")
-      ;; (dim-gray          "#a9a9a9")
-      (dim-gray          "#91908f")
-      (color-236         "#303030")
-      (darker-gray       color-236)
-      ;; (relaxed-white     "#d7d7d7")
-      ;; (relaxed-white     "#a3a49a")
-      ;; (relaxed-white     "#7a7979")
-      ;; (relaxed-white     "#707272")
-      (relaxed-white     dim-gray)
-      (cold-mud          "#d7afaf")
-      ;; (full-white        "#ffffff")
-      (full-white        dim-gray)
-      (full-black        "#000000")
-      (full-red          "#ff0000")
-      (full-blue         "#0000ff")
-      (full-yellow       "#ffff00")
-      (full-magenta      "#ff00ff")
-      (low-key-magenta   "#ae2ade")
-      (bright-magenta    "#ff00ff")
-      (pink-though       "#f5b5ff"))
-  (custom-theme-set-faces
+(setq-default
+      midnight          "#1c1c1c"
+      midnight-1        "#262626"
+      midnight-2        "#a8a8a8"
+      midnight-3        "#5f5f87"
+      mystic-blue       "#5f5f87"
+      phosphor-amber    "#af5f00"
+      comment-amber phosphor-amber
+      blueish-purple    "#9164ff"
+      sea-blue          "#1077a3"
+      light-cyan        "#008787"
+      cyan              "#00cdcd"
+      sea-green-cyan    "#2f4f4f"
+      sea-green-cyan+1  "#008080"
+      victory-blue      "#87afd7"
+      defeat-blue       "color-26"
+      blue-as-in-outline-mode-default-foreground "#005fd7"
+      full-green        "#00ff00"
+      undergrowth-green "#87af5f"
+      forest-green      "ForestGreen"
+      dark-green "#469439"
+      ;; jungle-green      "#afd75f"
+      ;; jungle-green      undergrowth-green
+      jungle-green      "color-29"
+      ;; deep-gold         "#ffaf00"
+      deep-gold phosphor-amber
+      axiomatic-purple  "#af5faf"
+      comment-purple axiomatic-purple
+      brick-red         "#d7875f"
+      piggy-pink        "#ffd7d7"
+      ;; dim-gray          "#a9a9a9"
+      dim-gray          "#91908f"
+      color-236         "#303030"
+      darker-gray       color-236
+      ;; relaxed-white     "#d7d7d7"
+      ;; relaxed-white     "#a3a49a"
+      ;; relaxed-white     "#7a7979"
+      ;; relaxed-white     "#707272"
+      relaxed-white     dim-gray
+      cold-mud          "#d7afaf"
+      ;; full-white        "#ffffff"
+      full-white        dim-gray
+      full-black        "#000000"
+      full-red          "#ff0000"
+      full-blue         "#0000ff"
+      full-yellow       "#ffff00"
+      full-magenta      "#ff00ff"
+      low-key-magenta   "#ae2ade"
+      bright-magenta    "#ff00ff"
+      pink-though       "#f5b5ff"
+      )
+
+      
+(custom-theme-set-faces
    'qdw-subatomic256-fork
 
    ;; default stuff
@@ -94,16 +98,16 @@
      ((t (:background ,mystic-blue :foreground ,full-white))))
 
    `(show-paren-match-face
-     ((t (:foreground ,full-green :bold t))))
+     ((t (:foreground ,full-green :bold nil))))
 
    `(show-paren-mismatch-face
-     ((t (:foreground ,full-red :bold t))))
+     ((t (:foreground ,full-red :bold nil))))
 
    `(isearch
-     ((t (:background ,midnight-2 :foreground ,full-green :bold t))))
+     ((t (:background ,midnight-2 :foreground ,full-green :bold nil))))
 
    `(lazy-highlight
-     ((t (:background ,midnight-2 :foreground ,deep-gold :bold t))))
+     ((t (:background ,midnight-2 :foreground ,deep-gold :bold nil))))
 
    `(query-replace
      ((t (:inherit lazy-highlight))))
@@ -118,12 +122,12 @@
      ((t (:foreground ,dim-gray :background ,darker-gray ))))
    
    `(minibuffer-prompt
-     ;; ((t (:foreground ,axiomatic-purple :weight bold))))
-     ((t (:foreground ,blueish-purple :weight bold))))
+     ;; ((t (:foreground ,axiomatic-purple))))
+     ((t (:foreground ,blueish-purple))))
 
      
    `(header-line
-     ((t (:background ,midnight-2 :foreground ,relaxed-white :foreground ,full-white :weight bold))))
+     ((t (:background ,midnight-2 :foreground ,relaxed-white :foreground ,full-white))))
 
    `(hl-line
      ((t (:background ,midnight-1))))
@@ -144,16 +148,29 @@
    ;;   ((t (:background ,midnight-2 :foreground ,relaxed-white))))
 
    `(escape-glyph
-     ((t (:foreground ,cold-mud :weight bold))))
+     ((t (:foreground ,cold-mud))))
 
    `(link
-     ;; ((t (:foreground ,victory-blue :weight bold :underline t))))
-     ((t (:foreground ,blueish-purple :weight bold :underline t))))
+     ;; ((t (:foreground ,victory-blue :underline t))))
+     ((t (:foreground ,blueish-purple :underline t))))
+     
+   ;; ANSI colors (used in shell-mode)
+
+   `(ansi-color-blue ((t (:background "blue2" :foreground "#9164ff" :underline nil))))
+   `(ansi-color-bright-black ((t (:background "gray30" :foreground "maroon2" :underline nil))))
+   `(ansi-color-bright-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil))))
+   `(ansi-color-cyan ((t (:background "cyan3" :foreground "turquoise4" :underline nil))))
+   `(ansi-color-green ((t (:background ,jungle-green :foreground ,jungle-green :underline nil))))
+   `(ansi-color-magenta ((t (:background "magenta3" :foreground "magenta3" :underline nil))))
+   `(ansi-color-red ((t (:background "#af5f00" :foreground "#af5f00" :underline nil))))
+   `(ansi-color-white ((t (:background "gray90" :foreground "#a9a9a9" :underline nil))))
+   `(ansi-color-yellow ((t (:background "HotPink" :foreground "#f5b5ff" :underline nil))))
+
 
    ;; font lock
 
    `(font-lock-keyword-face
-     ;; ((t (:foreground ,deep-gold :weight bold))))
+     ;; ((t (:foreground ,deep-gold))))
      ((t (:foreground ,phosphor-amber))))
 
    `(font-lock-function-name-face
@@ -168,17 +185,17 @@
      ((t ((:foreground ,phosphor-amber)))))
 
    `(font-lock-variable-name-face
-     ((t (:foreground ,victory-blue :weight bold))))
+     ((t (:foreground ,victory-blue))))
 
    `(font-lock-constant-face
-     ;; ((t (:foreground ,relaxed-white, :weight bold :italic t))))
-     ((t (:foreground ,blueish-purple, :weight bold :italic t))))
+     ;; ((t (:foreground ,relaxed-white, :italic t))))
+     ((t (:foreground ,blueish-purple, :italic t))))
 
    `(font-lock-type-face
      ((t (:foreground ,blueish-purple))))
 
    `(font-lock-negation-char-face
-     ((t (:foreground ,brick-red :weight bold))))
+     ((t (:foreground ,brick-red))))
 
    `(font-lock-preprocessor-face
      ((t (:foreground ,cold-mud))))
@@ -212,7 +229,7 @@
      ((t (:foreground ,jungle-green))))
 
    `(eshell-ls-directory
-     ((t (:foreground ,victory-blue :bold t))))
+     ((t (:foreground ,victory-blue :bold nil))))
 
    `(eshell-ls-archive
      ((t (:foreground ,deep-gold))))
@@ -233,10 +250,10 @@
      ((t (:inherit minibuffer-prompt))))
 
    `(eshell-ls-backup
-     ((t (:foreground ,brick-red :slant italic))))
+     ((t (:foreground ,brick-red))))
 
    `(eshell-ls-product
-     ((t (:inherit default :weight bold))))
+     ((t (:inherit default))))
 
    `(eshell-ls-readonly
      ((t (:inherit font-lock-comment))))
@@ -247,7 +264,7 @@
    ;; calendar
 
    `(calendar-today-face
-     ((t (:foreground ,jungle-green :bold t))))
+     ((t (:foreground ,jungle-green :bold nil))))
 
    `(holiday-face
      ((t (:foreground ,brick-red))))
@@ -270,19 +287,19 @@
      ((t (:inherit font-lock-warning-face))))
 
    `(erc-highlight-face
-     ((t (:weight bold))))
+     ((t (:weight normal))))
 
    `(erc-direct-msg-face
      ((t (:foreground ,jungle-green))))
 
    `(erc-nick-msg-face
-     ((t (:foreground ,victory-blue :weight bold))))
+     ((t (:foreground ,victory-blue))))
 
    `(erc-fool-face
      ((t (:inherit font-lock-comment-face))))
 
    `(erc-input-face
-     ((t (:inherit default :weight bold))))
+     ((t (:inherit default))))
 
    `(erc-error-face
      ((t (:inherit font-lock-warning-face))))
@@ -319,19 +336,19 @@
      ((t (:inherit default :foreground ,mystic-blue))))
 
    `(diff-indicator-changed
-     ((t (:foreground ,full-yellow :weight bold))))
+     ((t (:foreground ,full-yellow))))
 
    `(diff-changed
      ((t (:foreground ,deep-gold))))
 
    `(diff-indicator-removed
-    ((t (:foreground ,full-red :weight bold))))
+    ((t (:foreground ,full-red))))
 
    `(diff-removed
      ((t (:foreground ,"DarkOrange1"))))
 
    `(diff-indicator-added
-     ((t (:foreground ,full-green :weight bold))))
+     ((t (:foreground ,full-green))))
 
    ;; `(diff-added
    ;;   ((t (:foreground ,jungle-green))))
@@ -343,21 +360,21 @@
      ((t (:foreground ,relaxed-white))))
 
    ;; `(diff-refine-change
-   ;;   ((t (:background ,full-yellow :foreground ,blueish-purple :weight bold))))
+   ;;   ((t (:background ,full-yellow :foreground ,blueish-purple))))
 
    `(diff-refine-change
-     ((t (:background ,piggy-pink :weight bold))))
+     ((t (:background ,piggy-pink))))
    
    ;; `(diff-refine-removed
-   ;;   ((t (:background ,full-red :foreground: ,relaxed-white :weight bold)))
+   ;;   ((t (:background ,full-red :foreground: ,relaxed-white)))
    
    `(diff-refine-removed
      ((t (:background ,piggy-pink))))
 
    ;; `(diff-refine-added
-   ;;   ((t (:background ,full-green :foreground ,blueish-purple :weight bold))))
+   ;;   ((t (:background ,full-green :foreground ,blueish-purple))))
    `(diff-refine-added
-     ((t (:background ,victory-blue :weight bold))))
+     ((t (:background ,victory-blue))))
      
    ;; git
    
@@ -376,7 +393,7 @@
      ((t (:foreground ,relaxed-white))))
 
    `(magit-branch
-     ((t (:foreground ,jungle-green :weight bold))))
+     ((t (:foreground ,jungle-green))))
 
    `(magit-diff-add
      ((t (:inherit diff-added))))
@@ -412,7 +429,7 @@
      ((t (:foreground ,jungle-green))))
 
    `(magit-log-head-label-default
-     ((t (:foreground ,axiomatic-purple :weight bold))))
+     ((t (:foreground ,axiomatic-purple))))
 
    `(magit-log-head-label-local
      ((t (:inherit magit-log-head-label-default :foreground ,jungle-green))))
@@ -453,7 +470,7 @@
       ((t (:inherit link))))
 
     `(twittering-timeline-header-face
-      ((t (:foreground ,cold-mud :weight bold))))
+      ((t (:foreground ,cold-mud))))
 
     `(twittering-timeline-footer-face
       ((t (:inherit twittering-timeline-header-face))))
@@ -524,35 +541,35 @@
       ((t (:inherit link))))
 
     `(org-checkbox
-      ;; ((t (:background ,midnight-1 :foreground ,full-white :weight bold
+      ;; ((t (:background ,midnight-1 :foreground ,full-white
       ;;   	       :box (:line-width 1 :style released-button)))))
 
       ((t (:background ,midnight-1 :foreground ,full-white
     		       :box (:line-width 1 :style released-button)))))
 
     `(org-done
-      ((t (:foreground ,jungle-green :weight bold))))
+      ((t (:foreground ,jungle-green))))
       ;; ((t (:foreground ,jungle-green))))
 
     ;; `(org-todo
-    ;;   ((t (:foreground ,bright-magenta :weight bold))))
+    ;;   ((t (:foreground ,bright-magenta))))
     `(org-todo
-      ((t (:foreground ,pink-though :weight bold))))
+      ((t (:foreground ,pink-though))))
 
     `(org-table
       ((t (:foreground ,cold-mud))))
 
     `(org-date
-      ((t (:foreground ,deep-gold :weight bold))))
+      ((t (:foreground ,deep-gold))))
 
     `(org-document-info-keyword
       ((t (:foreground ,mystic-blue))))
 
     `(org-document-info
-      ((t (:foreground ,cold-mud :weight bold :slant italic))))
+      ((t (:foreground ,cold-mud))))
 
     ;; `(org-block-begin-line
-    ;;  ((t (:background ,midnight-2 :foreground ,mystic-blue :weight bold))))
+    ;;  ((t (:background ,midnight-2 :foreground ,mystic-blue))))
     `(org-block-begin-line
      ((t (:background ,midnight-2 :foreground ,mystic-blue bold))))
 
@@ -563,7 +580,7 @@
       ((t (:inherit org-block-begin-line))))
 
     ;; `(org-agenda-date-today
-    ;;   ((t (:foreground ,jungle-green :background ,midnight-2 :weight bold))))
+    ;;   ((t (:foreground ,jungle-green :background ,midnight-2))))
     `(org-agenda-date-today
       ((t (:foreground ,jungle-green :background ,midnight-2))))
 
@@ -594,13 +611,13 @@
     ;; dired+
 
     `(diredp-compressed-file-suffix
-      ((t (:foreground ,deep-gold :weight bold))))
+      ((t (:foreground ,deep-gold))))
 
     `(diredp-date-time
       ((t (:foreground ,mystic-blue))))
 
     `(diredp-deletion
-      ((t (:foreground ,brick-red :weight bold :slant italic))))
+      ((t (:foreground ,brick-red))))
 
     `(diredp-deletion-file-name
       ((t (:foreground ,brick-red :underline t))))
@@ -624,16 +641,16 @@
       ((t (:foreground ,deep-gold))))
 
     `(diredp-dir-priv
-      ((t (:foreground ,victory-blue :weight bold))))
+      ((t (:foreground ,victory-blue))))
 
     `(diredp-link-priv
       ((t (:foreground ,deep-gold))))
 
     `(diredp-other-priv
-      ((t (:foreground ,deep-gold :weight bold))))
+      ((t (:foreground ,deep-gold))))
 
     `(diredp-rare-priv
-      ((t (:foreground ,brick-red :weight bold))))
+      ((t (:foreground ,brick-red))))
 
     `(diredp-no-priv
       ((t (:foreground ,mystic-blue))))
@@ -648,10 +665,10 @@
       ((t (:foreground ,victory-blue))))
 
     `(diredp-executable-tag
-      ((t (:foreground ,jungle-green :weight bold))))
+      ((t (:foreground ,jungle-green))))
 
     `(diredp-flag-mark
-      ((t (:foreground ,brick-red :weight bold))))
+      ((t (:foreground ,brick-red))))
 
     `(diredp-flag-mark-line
       ((t (:background ,midnight-2))))
@@ -665,7 +682,7 @@
     `(diredp-ignored-file-name
       ((t (:foreground ,midnight-3))))
 
-   ))
+   )
 
 ;;;###autoload
 (when load-file-name
