@@ -21,10 +21,11 @@
 #     echo
 # }
 
-## setx - run this function interactively to turn off the many
-## prompt-related commands that automatically run every time I enter a
-## command, then turn on tracing. This makes the trace much more
-## uncluttered.
+# setx - run this function interactively to turn off the many
+# prompt-related commands that automatically run every time I enter a
+# command, then turn on tracing. This makes the trace much more
+# uncluttered.
+
 function setx() {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
@@ -33,12 +34,12 @@ function setx() {
 
 #### Basic settings
 
-MY_OS=$(uname -s)
+MY_OS="$(uname -s)"
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
-#### Meta-settings
-function cdq() { cd ~/src/1/qdw-dotfiles; }
-function cd1() { cdq "$@" ;}
+#### Settings related to editing this file itself
+
+function cd1() { cd ~/src/1/qdw-dotfiles ;}
 
 #### Homebrew basic settings
 
@@ -168,7 +169,8 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     }
     
     GIT_COMPLETION_ACTIVATED=""
-    export PROMPT_COMMAND=('if [[ ! "$GIT_COMPLETION_ACTIVATED" ]] && [[ -d "$PWD/.git" ]]; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
+    # export PROMPT_COMMAND=('if [[ -d "$PWD/.git" && ("$INSIDE_EMACS" || !"$GIT_COMPLETION_ACTIVATED") ]] ; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
+    # export PROMPT_COMMAND=('if [[ ! "$GIT_COMPLETION_ACTIVATED" ]] && [[ -d "$PWD/.git" ]]; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
 fi
 
 #### Scheme Shell settings (keywords: Lisp, scsh)
@@ -977,6 +979,7 @@ function readme() {
 
 function ga()  { git add "$@" ;}
 function gac() { git commit -a "$@" ;}
+function gas() { git stash "$@" ;}
 function gcm() { git commit -m "$@" ;}
 function gd()  { git diff "$@" ;}
 function gdo() { git diff origin HEAD ;}
@@ -1086,35 +1089,14 @@ function repo() {
 #
 # PR (Pull Request) - manipulate GitHub pull requests
 function pr() {
-    add_it() {
-        ORIG_DIR=$(pwd)
-
-        # Go to the top-level directory of the enclosing Git working copy
-        gcd
-        git add . > /dev/null
-
-        cd "$ORIG_DIR"
-    }
-
-    commit_it() {
-        if [[ -n "$COMMIT_MESSAGE" ]]; then
-            git commit --quiet -m "$COMMIT_MESSSAGE" 2>&1 | grep -v 'nothing to commit'
-        else
-            git commit --quiet | grep -v 'nothing to commit'
-        fi
-    }
-    
     push_it() {
         # Push to a remote branch (creating if necessary)
         local BRANCH
-        BRANCH="$(gb)"
+        BRANCH="$(git branch --show-current)"
         git push --set-upstream origin "$BRANCH" --quiet
     }
 
     create_pr() {
-        add_it
-        commit_it
-
         local GIT_FETCH_STDOUTERR=$(git fetch 2>&1)
         if [[ "$GIT_FETCH_STDOUTERR" ]]; then
             # If there's stuff to merge, cowardly bail
@@ -1124,7 +1106,7 @@ function pr() {
             push_it
             
             local URL=""
-            if [[ -n $PR_TITLE ]]; then
+            if [[ -n "$PR_TITLE" ]]; then
                 URL=$(gh pr create --title "$PR_TITLE" | tail -1)
             else
                 URL=$(gh pr create --fill | tail -1)
@@ -1133,32 +1115,25 @@ function pr() {
             open "$URL"
         fi
     }
-
-    if [[ "$1" = "l" || "$1" = "list" ]]; then
-        gh pr list --author "@me"
-    elif [[ -z "$1" || "$1" = "c" || "$1" = "cr" || "$1" = "create" ]]; then
-        # Pass in COMMIT_MESSAGE via dynamic scoping(!)
-        
-        local COMMIT_MESSAGE PR_TITLE URL
-        
-        COMMIT_MESSAGE="$2"
-        PR_TITLE="$3"
-        URL=$(create_pr)
     
-        open "$URL" #FIXME: unbreak this. Why am I getting only one slash after "http:"?
-    else
-        gh pr view --web "$1"
-    fi
-    # elif [[ "$1" =~ '^[0123456789]' ]]; then
-    #     # If they pass in a PR number, open the GitHub web page for that PR
-    #     gh pr view --web "$1"
-    # else
-    #     echo "Invalid subcommand '$1'. Try 'pr list' or 'pr create', or just 'gh pr --help'"
-    # fi
+    main() {
+        local PR_NUMBER_REGEX='^[[:digit:]]+$'
+        
+        if [[ "$1" = "--list" ]]; then
+            gh pr list --author "@me"
+        elif [[ "$1" =~ $PR_NUMBER_REGEX ]]; then
+            gh pr view --web "$1"
+        else
+            URL="$(create_pr "$@")"
+            open "$URL"
+        fi
+    }
+
+    main "$@"
 }
 
 function prs() {
-    pr list
+    pr --list
 }
 
 # pru ("Pull Request URL") - print the URL of the latest pull request on this branch.
@@ -1209,21 +1184,17 @@ function occur() {
 
 function fdd() {
     command fd \
+        --exclude .git \
+        --exclude .github \
         --follow \
         --full-path \
         --hidden \
-        --follow \
-        --exclude .git \
-        --exclude .github \
+        --no-ignore-vcs \
         "$@"
 }
 
 function fd() {
-    if [[ "$INSIDE_EMACS" ]]; then
-        fdd --color=auto "$@"
-    else
-        fdd --color=always "$@" | $PAGER
-    fi
+    fdd --color=always "$@" | $PAGER
 }
 
 function fdgrep() {
@@ -1413,11 +1384,13 @@ function air() {
 }
 
 ## Coffee-bean-ordering settings
+
 function coffee() {
     open -a Firefox "https://store.awakencafe.com/s/customer-accounts"
 }
 
 #### Aranet4 air quality monitoring settings
+
 function co2 () {
     "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read "$MY_ARANET4" 2> /dev/null | jq ".co2"
 }
@@ -1426,14 +1399,10 @@ function co2-verbose() {
     echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
 }
 
-# function air_ansi() {
-#     MESSAGE=$(air) eh, needs refactoring
-#     NUMBER=
-# }
-
 #### Python settings
 
 # Homebrew stable Python version
+
 set -a
 PYTHON_INTERPRETER_PATH="/usr/local/bin"
 PYTHON_PIPX_PATH=~/.local/bin
