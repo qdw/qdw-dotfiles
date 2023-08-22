@@ -1,12 +1,3 @@
-.DS_Store
-gitignore.d
-.idea
-jenkins_output.*
-project.org
-.projectile
-site.bash
-.site.bash
-
 # Compiled objects
 .pyc .elc .o __pycache__
 
@@ -34,11 +25,21 @@ tramp
 history
 auto-save-list
 desktop
+.projectile
 
-.husky**
+# Git: hooks and meta-stuff
+.husky/**
 hooks**
+initialize-repo.sh
+
+# Other editor/IDE/operating system droppings
+.DS_Store
+.idea
+*.sw?
+
+# Cruft-filenames idiosyncratic to me
 cuts--*
 example-*
-initialize-repo.sh
-package-lock.json
-package.json
+gitignore.d
+project.org
+jenkins_output.*
