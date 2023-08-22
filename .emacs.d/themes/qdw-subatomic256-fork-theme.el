@@ -48,6 +48,7 @@
       undergrowth-green "#87af5f"
       forest-green      "ForestGreen"
       dark-green "#469439"
+      barely-legible-green "color-22"
       ;; jungle-green      "#afd75f"
       ;; jungle-green      undergrowth-green
       jungle-green      "color-29"
@@ -548,8 +549,9 @@
     		       :box (:line-width 1 :style released-button)))))
 
     `(org-done
-      ((t (:foreground ,jungle-green))))
-      ;; ((t (:foreground ,jungle-green))))
+      ((t (:foreground ,barely-legible-green))))
+    `(org-headline-done
+      ((t (:foreground ,barely-legible-green))))
 
     ;; `(org-todo
     ;;   ((t (:foreground ,bright-magenta))))
