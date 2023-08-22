@@ -619,10 +619,10 @@ This command does the reverse of `fill-region'."
 ;; Automatically make file executable if it starts with a shebang (#!).
 (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
 
-;; dumb-jump, a way to jump from function invocations to
-;; the actual definitions of those functions that doesn't
-;; require any configuration
-(add-hook 'xref-backend-functions 'dumb-jump-xref-activate)
+;; Globally enable dumb-jump, an it-just-works way to jump from function invocations
+;; to the actual definitions of those functions, supporting many languages.
+(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+
 (defun my-enter ()
   "Inserts a newline character then indents the new line just
    like the previous line"
@@ -672,6 +672,8 @@ This command does the reverse of `fill-region'."
 
 ;;;; Lisp settings FIXME: use slime.el instead
 (setq lisp-indent-function 'common-lisp-indent-function)
+(add-hook 'lisp-mode-hook (lambda ()
+                            (eldoc-mode +1)))
 
 ;; When I run C-( or M-:
 ;; (which lets me write and eval a quick Lisp expression
@@ -714,6 +716,8 @@ This command does the reverse of `fill-region'."
 
 ;;;; TypeScript settings
 
+(setq-default tide-node-executable (expand-file-name "~/.asdf/shims/node"))
+
 ;; eslint (JavaScript/TypeScript linter) settings
 (defun seteslintrc ()
   "Returns the location of nearest eslintrc"
@@ -728,17 +732,13 @@ This command does the reverse of `fill-region'."
   (column-number-mode +1)
 
   (seteslintrc)
-  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+  (setq flycheck-check-syntax-automatically '(save mode-enabled)
         typescript-auto-indent-flag nil
         company-tooltip-align-annotations t)
   
-  ;;; Seems like tide works for node only, not for deno,
-  ;;; so disable it.
-  ;; (tide-setup)
-  ;; (tide-hl-identifier-mode +1)
-  ;;; Formats the buffer before saving.
-  ;;; Extra-disabled because that's too aggro for me.
-  ;;; (add-hook 'before-save-hook 'tide-format-before-save))
+  ;;; Seems like tide works for node only, not for deno :(
+  (tide-setup)
+  (tide-hl-identifier-mode +1))
 
 (add-hook 'typescript-mode-hook 'configure-typescript)
 
@@ -755,7 +755,9 @@ This command does the reverse of `fill-region'."
  '(ecb-layout-name "left13")
  '(ecb-options-version "2.50")
  '(ecb-tip-of-the-day nil)
+ '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
+ '(explicit-bash-args '("--noediting" "-i" "-l"))
  '(markdown-italic-underscore t)
  '(mode-line-position-column-format '(" %C"))
  '(mode-line-position-column-line-format '(" (%l,%C)"))
@@ -779,15 +781,13 @@ This command does the reverse of `fill-region'."
 (put 'narrow-to-region 'disabled nil)
 
 
+;; FIXME: move these to my theme?
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
- '(magit-section-highlight ((t (:extend t :background "#262626" :weight normal))))
- '(org-done ((t (:foreground "color-22" :weight normal))))
- '(org-headline-done ((t (:foreground "color-22" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))
 
 
