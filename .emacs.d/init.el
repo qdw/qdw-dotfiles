@@ -396,9 +396,12 @@ This command does the reverse of `fill-region'."
 
 ;;;; org-mode settings (a.k.a. org settings)
 
-;; Hide the PROPERTIES section if folded;
-;; pasted from https://stackoverflow.com/a/17492723
+(defun org-fold ()
+  (interactive)
+  (org-set-property "VISIBILITY" "folded"))
 
+;; Hide the PROPERTIES section if its visibility is set to folded;
+;; pasted from https://stackoverflow.com/a/17492723
 (defun org-cycle-hide-drawers (state)
   "Re-hide all drawers after a visibility state change."
   (when (and (derived-mode-p 'org-mode)
@@ -932,12 +935,6 @@ This command does the reverse of `fill-region'."
 ;;      (setq dirtrack-list (list path-start-regexp 1))))
 ;;  nil
 ;;  't)
-
-
-
-;; (defmacro org-set-visibility ()
-;;   (interactive)
-;;   (org-set-property "VISIBILITY"))
 
 ;; Jenkins API integration - disabled until I can figure out what auth method to use
 ;; For documentation on butler.el, see https://github.com/AshtonKem/Butler
