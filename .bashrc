@@ -169,7 +169,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     }
     
     GIT_COMPLETION_ACTIVATED=""
-    # export PROMPT_COMMAND=('if [[ -d "$PWD/.git" && ("$INSIDE_EMACS" || !"$GIT_COMPLETION_ACTIVATED") ]] ; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
+    export PROMPT_COMMAND=('if [[ -d "$PWD/.git" && ("$INSIDE_EMACS" || !"$GIT_COMPLETION_ACTIVATED") ]] ; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
     # export PROMPT_COMMAND=('if [[ ! "$GIT_COMPLETION_ACTIVATED" ]] && [[ -d "$PWD/.git" ]]; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
 fi
 
@@ -1006,10 +1006,14 @@ function gs()  { git status "$@" ;}
 
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi() {
-    git init \
-        && git add . \
-        && git commit -a -m 'Initial commit' \
-        && git branch -m master main 2>/dev/null
+    if git-rev-parse --is-inside-work-tree; then
+        echo "gi: error: $(pwd) is already under git control"
+    else
+        git init \
+            && git add . \
+            && git commit -a -m 'Initial commit' \
+            && git branch -m master main 2>/dev/null
+    fi
 }
 
 ## GitHub-specific settings
@@ -1120,7 +1124,8 @@ function pr() {
         local PR_NUMBER_REGEX='^[[:digit:]]+$'
         
         if [[ "$1" = "--list" ]]; then
-            gh pr list --author "@me"
+            shift
+            gh pr list "$@"
         elif [[ "$1" =~ $PR_NUMBER_REGEX ]]; then
             gh pr view --web "$1"
         else
