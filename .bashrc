@@ -2156,18 +2156,18 @@ function jira-open-existing-ticket() {
     elif [[ -z "$JIRA_BASE_URL" ]]; then
         echo "jira-open-existing-ticket: error: you must set the JIRA_BASE_URL environment variable"
     else
+    
         TICKET_NUMBER="$1"
-
-        if [[ "$TICKET_NUMBER" =~ [[:digit:]]+ ]]; then
-            echo "Match"
+        
+        # If the user passed a bare number, then prepend
+        # the default project (e.g., "DATAPLAT-")
+        if [[ "$TICKET_NUMBER" =~ ^[[:digit:]]+ ]]; then
             if [[ -z "$JIRA_DEFAULT_PROJECT" ]]; then
                 echo "jira-open-existing-ticket: error: numeric ticket ID given but JIRA_DEFAULT_PROCESS not set"
                 return
             else
                 TICKET_NUMBER="${JIRA_DEFAULT_PROJECT}-${TICKET_NUMBER}"
             fi
-        else
-            echo "No match"
         fi
 
         open -u "${JIRA_BASE_URL}/browse/${TICKET_NUMBER}"
