@@ -1617,7 +1617,11 @@ function _pq() {
 #### vim settings
 
 # vl ("Vim Less") - use vim as a colorizing pager
-function vl() { $VIMRUNTIME/macros/less.sh "$@" ;}
+# function vl() { $VIMRUNTIME/macros/less.sh "$@" ;}
+
+function vim() {
+    nvim "$@"
+}
 
 #### Set operations
 
