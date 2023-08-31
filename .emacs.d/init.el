@@ -421,9 +421,10 @@ This command does the reverse of `fill-region'."
 (defun org-insert-pr-link (repo pr-number)
   (interactive "MRepo: \nnPR number: ")
   (org-insert-link nil
-                   (format "https://github.com/%s/%s/
-                   (concat "https://github.com/" github-organization "/" repo "/pull/" pr-number)
-                   (concat repo "-" pr-number)))
+                   (format "https://github.com/%s/%s/pull/%s"
+                           getenv("GITHUB_ORG")
+                           repo
+                            pr-number)))
 
 (setq-default org-catch-invisible-edits "show")
 
