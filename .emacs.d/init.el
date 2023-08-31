@@ -396,12 +396,80 @@ This command does the reverse of `fill-region'."
 
 ;;;; org-mode settings (a.k.a. org settings)
 
+(add-to-list 'org-file-apps
+             (cons "png" "open %s"))
+             
 (defun org-fold ()
   (interactive)
   (org-set-property "VISIBILITY" "folded"))
 
-;; Hide the PROPERTIES section if its visibility is set to folded;
+(defun org-insert-slack-link (channel-name)
+  (interactive "MSlack channel (without the '#'): ")
+  (org-insert-link nil
+                   (concat "https://" slack-team "slack.com/channels/" channel-name)
+                   (concat "#" channel-name)))
+                   
+(add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c s") 'org-insert-slack-link)))
+
+
+(defun org-insert-jira-link (ticket-name)
+  (interactive "MTicket name (e.g. DATAPLAT-000): ")
+  (org-insert-link nil
+                   (concat jiralib-url "/browse/" + ticket-name)
+                   ticket-name))
+                   
+(add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c j") 'org-insert-jira-link)))
+
+(defun org-insert-pr-link (repo pr-number)
+  (interactive "MRepo: \nnPR number: ")
+  (org-insert-link nil
+                   (format "https://github.com/%s/%s/
+                   (concat "https://github.com/" github-organization "/" repo "/pull/" pr-number)
+                   (concat repo "-" pr-number)))
+
+(setq-default org-catch-invisible-edits "show")
+
+(setq-default
+  org-todo-keywords
+  '((sequence
+     "TODO(t)"
+     "QUESTION(q)"
+     "NEXT_ACTION(n)"
+     "AWAITING_RESPONSE(a)"
+     "IN_PROGRESS(i)"
+     "GET_HELP(h)"
+     
+     "|"
+  
+     "DONE(d)"
+     "POSTPONED(p)"
+     "WONTFIX(w)"
+     "JIRAFIED"
+     "INFO"
+     ))
+
+  ;; Always use colors compatible with TERM=xterm-256colors,
+  ;; and always specify them as hex.
+  ;; 
+  ;; You can browse colors and copy their hex values here:
+  ;; https://www.ditig.com/256-colors-cheat-sheet
+
+  ;; FIXME: assign hex codes to color names,
+  ;; either here using (let ...
+  ;; or in the subatomic-256.el theme file.
+  org-todo-keyword-faces
+  '(("GET_HELP" . "#ff00af")
+    ("NEXT_ACTION" . "#ff00af")
+    ("AWAITING_RESPONSE" . "#ffff00")
+    ("QUESTION" . "#ffff00")
+    ("POSTPONED" . "#ffff00")
+    ("INFO" . "#ffff00")
+    )
+  )
+  
+;; Hide the PROPERTIES section if folded;
 ;; pasted from https://stackoverflow.com/a/17492723
+
 (defun org-cycle-hide-drawers (state)
   "Re-hide all drawers after a visibility state change."
   (when (and (derived-mode-p 'org-mode)
@@ -474,7 +542,7 @@ This command does the reverse of `fill-region'."
 
 ;;;; Projectile
 
-(grep-apply-setting 'grep-command "ggrep -E --with-filename --line-number --regexp ")
+;; (grep-apply-setting 'grep-command "ggrep -E --with-filename --line-number --regexp ")
 (projectile-mode +1)
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
@@ -779,7 +847,7 @@ This command does the reverse of `fill-region'."
      ("~"
       (:strike-through t))))
  '(package-selected-packages
-   '(butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 (put 'narrow-to-region 'disabled nil)
 
