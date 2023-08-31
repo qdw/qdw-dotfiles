@@ -138,8 +138,6 @@ Test cases
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
-(global-set-key (kbd "C-c s") 'open-in-sublime-text)
-
 (defun open-in-vscode ()
   (interactive)
   (save-window-excursion
@@ -904,7 +902,6 @@ This command does the reverse of `fill-region'."
 ;; (my-cd "/Applications")
 
 
-;; OK
 (defun prefix (string)
   (interactive "MPrefix: ")
   (query-replace-regexp "^" string))
