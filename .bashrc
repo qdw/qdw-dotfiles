@@ -2208,11 +2208,17 @@ function jql() {
 
     if [[ -z "$JIRA_BASE_URL" ]]; then
         echo "Error: you must set the JIRA_BASE_URL environment variable"
-    elif [[ $# -ne 1 ]]; then
+    elif [[ $# -lt 1 ]]; then
         echo "jql: error: wrong number of arguments. Usage: jql QUERY_STRING"
     else
         JQL_BASE_URL="${JIRA_BASE_URL}/issues/?jql="
+
         QUERY="$1"
+        shift
+        if [[ $# -gt 0 ]]; then
+            URL="$URL AND $@"
+        fi
+                
         URLENCODED_QUERY=$(urlencode "$QUERY") || return
         FULL_URL="${JQL_BASE_URL}${URLENCODED_QUERY}"
         open "$FULL_URL"
@@ -2220,11 +2226,11 @@ function jql() {
 }
 
 function epics() {
-    jql '(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic'
+    jql "(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic"
 }
 
 function jmine() {
-    jql '(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved order by updated DESC'
+    jql "(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved order by updated DESC"
 }
 
 #### Music-related settings
