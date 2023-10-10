@@ -39,18 +39,24 @@ MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
 #### Settings related to editing this file itself
 
-function cd1() { cd ~/src/1/qdw-dotfiles ;}
+function cq() { cd ~/src/1/qdw-dotfiles ;}
 
-#### Homebrew basic settings
+#### Homebrew settings
 
-if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
+if [[ ! "$PATHS_SET_AT" ]]; then
     for HDIR in "/opt/homebrew" "/usr/local"; do
         if [[ -x "$HDIR/bin/brew" ]]; then
             set -a
             
             HOMEBREW_ROOT="$HDIR"
+
+            # man pages for software installed using brew
             HOMEBREW_MANPATH="$HDIR/share/man"
-            MANPATH="$HOMEBREW_MANPATH:$MANPATH"
+            
+            # the man page for brew(1) itself
+            HOMEBREW_MANPATH="$HDIR/manpages"
+            
+            MANPATH_IN_PROGRESS="$HOMEBREW_MANPATH:$MANPATH"
 
             HOMEBREW_BIN="$HDIR/bin"
             HOMEBREW_SBIN="$HDIR/sbin"
@@ -62,6 +68,60 @@ if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
         fi
     done
 fi
+
+if [[ "$MY_OS" = "Darwin" ]] && [[ -f "$HOMEBREW_BIN/trash" ]]; then
+    function rm() {
+        trash "$@"
+    }
+fi
+
+## If on macOS, use the Homebrew versions of basic command-line utilities
+## instead of the bundled macOS versions, as the Homebrewed versions
+## are more frequently updated.
+##
+## In some cases, this means using the GNU version of a command
+## rather than the bundled BSD version.
+
+# Disabled for now
+# Use a function rather than adding $HOMEBREW_BIN to my path;
+# that way I can easily get the bundled macOS version of the function
+# by doing "command tail" (or whatever)
+# for MY_FORMULA in \
+    # curl \
+    # lsof \
+    # man \
+    # ssh \
+    # ssh-add \
+    # ssh-add-all \
+    # ssh-agent \
+    # ssh-copy-id \
+    # ssh-keygen \
+    # ssh-keyscan; do
+#     if [[ -e "$HOMEBREW_BIN/MY_FORMULA" ]]; then
+#         eval "function $MY_FORMULA() { $HOMEBREW_BIN/$MY_FORMULA \"\$@\" ;}"
+#     fi
+# done
+
+# for GNU_FORMULA in cut dircolors find grep roff sed sort stat tac tail; do
+#     if [[ -e "$HOMEBREW_BIN/g${GNU_FORMULA}" ]]; then
+#         eval "function $GNU_FORMULA() { $HOMEBREW_BIN/g${GNU_FORMULA} \"\$@\" ;}"
+#     fi
+# done
+    
+
+if test -e "$HOMEBREW_BIN/curl";  then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gcut";  then function cut() { gcut "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gdircolors"; then function dircolors() { gdircolors "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gfind"; then function find() { gfind "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/ggrep"; then export MY_GREP="ggrep -E"; else export MY_GREP=egrep; fi
+if test -e "$HOMEBREW_BIN/gsed";  then function sed() { gsed "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gsort"; then function sort() { gsort "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gstat"; then function stat() { gstat "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gtac";  then function tac() { gtac "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/gtail"; then function tail() { gtail "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/groff"; then function roff() { groff "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/lsof";  then function lsof() { "$HOMEBREW_BIN/lsof" "$@" ;}; fi
+if test -e "$HOMEBREW_BIN/man";   then function man() { "$HOMEBREW_BIN/man" "$@" ;}; fi
 
 #### Bash settings
 
@@ -169,8 +229,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     }
     
     GIT_COMPLETION_ACTIVATED=""
-    export PROMPT_COMMAND=('if [[ -d "$PWD/.git" && ("$INSIDE_EMACS" || !"$GIT_COMPLETION_ACTIVATED") ]] ; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
-    # export PROMPT_COMMAND=('if [[ ! "$GIT_COMPLETION_ACTIVATED" ]] && [[ -d "$PWD/.git" ]]; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
+    export PROMPT_COMMAND=('if [[ -d "$PWD/.git" && ("$INSIDE_EMACS" || -z "$GIT_COMPLETION_ACTIVATED") ]] ; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
 fi
 
 #### Scheme Shell settings (keywords: Lisp, scsh)
@@ -188,10 +247,13 @@ if [[ "$INSIDE_EMACS" ]]; then
     export PAGER="cat"
     export AWS_PAGER="$PAGER"
     export PSQL_PAGER="$PAGER"
+    fd() { fdd "$@" ;}
 else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
     export PAGER="command less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+    export PSQL_PAGER="less --no-init"
+
     if command -v jless > /dev/null; then
         export AWS_PAGER="jless"
     else
@@ -263,10 +325,6 @@ function ldd() {
 # LESS_TERMCAP_us=$'\e[0;9;25m'
 # set +a
 
-# Page differently in psql, where I don't want control characters interpreted
-# as ANSI terminal colors, and I don't want to --quit-if-one-screen
-export PSQL_PAGER="less --no-init"
-
 #### AWS settings
 
 function rds() {
@@ -300,6 +358,7 @@ function rds_ls() {
             | grep '^[^.]*'
     fi
 }
+
 function list-rds-instances() { rds_ls "$@" ;}
 
 function list-secrets() { aws secretsmanager list-secrets ;}
@@ -617,47 +676,6 @@ else
     export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
 fi
 
-# Use a function rather than adding $HOMEBREW_BIN to my path;
-# that way I can easily get the bundled macOS version of the function
-# by doing "command tail" (or whatever)
-# for MY_FORMULA in \
-    # curl \
-    # lsof \
-    # man \
-    # ssh \
-    # ssh-add \
-    # ssh-add-all \
-    # ssh-agent \
-    # ssh-copy-id \
-    # ssh-keygen \
-    # ssh-keyscan; do
-#     if [[ -e "$HOMEBREW_BIN/MY_FORMULA" ]]; then
-#         eval "function $MY_FORMULA() { $HOMEBREW_BIN/$MY_FORMULA \"\$@\" ;}"
-#     fi
-# done
-
-# for GNU_FORMULA in cut dircolors find grep roff sed sort stat tac tail; do
-#     if [[ -e "$HOMEBREW_BIN/g${GNU_FORMULA}" ]]; then
-#         eval "function $GNU_FORMULA() { $HOMEBREW_BIN/g${GNU_FORMULA} \"\$@\" ;}"
-#     fi
-# done
-    
-    
-if test -e "$HOMEBREW_BIN/curl"; then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gcut"; then function cut() { gcut "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gfind"; then function find() { gfind "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/ggrep"; then export MY_GREP="ggrep -E"; else export MY_GREP=egrep; fi
-if test -e "$HOMEBREW_BIN/gfgrep"; then export MY_FGREP=gfgrep; else export MY_FGREP=fgrep; fi
-if test -e "$HOMEBREW_BIN/man"; then export MY_FGREP=man; else export MY_FGREP=fgrep; fi    
-if test -e "$HOMEBREW_BIN/gsed"; then function sed() { gsed "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gsort"; then function sort() { gsort "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gstat"; then function stat() { gstat "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gtac"; then function tac() { gtac "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gtail"; then function tail() { gtail "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gdircolors"; then function dircolors() { gdircolors "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/groff"; then function roff() { groff "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/lsof"; then function lsof() { "$HOMEBREW_BIN/lsof" "$@" ;}; fi
-
 #### Other macOS-specific settings
 
 function mac-globalize-fonts {
@@ -826,6 +844,33 @@ function gcd() {
     cd "$(git rev-parse --show-toplevel)/$DESIRED_RELATIVE_DIR"
 }
 
+# function git-delete-this-branch() {
+#     OLD_BRANCH=$(git branch --show-current)
+#     # delete_it() {
+#     #     git branch -d "$OLD_BRANCH"
+#     # }
+    
+#     if [[ "$OLD_BRANCH" = "main" ]] || [[ "$OLD_BRANCH" = "master" ]]; then
+#         echo "Can't delete ${OLD_BRANCH}!"
+#     else
+#         git main
+#         git ff
+#         if [[ "$1" = "-y" ]] || [[ "$1" = "--yes"]]; then
+#             delete_it
+#         else
+#             echo "Delete ${OLD_BRANCH}? (y/N)"
+#             read REALLY_DELETE
+#             if [[ $REALLY_DELETE = 'y' ]] || [[ $REALLY_DELETE = 'Y' ]]; then
+#                 delete_it
+#             fi
+#         fi
+#     fi
+# }
+
+# gr (git repo) - print repo name (if your cwd is in a git working copy)
+function gr() {
+    basename $(git rev-parse --show-toplevel)
+}
 
 function git-backup {
     local REPO_NAME ORIG_DIR EXIT_STATUS
@@ -861,8 +906,8 @@ function gb() {
     elif [[ $# -eq 1 ]]; then
         NEW_BRANCH_NAME="$1"
         MAIN=$(get-main-branch-name) \
-            && git co "$MAIN" \
-            && git pull --ff-only \
+            && git co --quiet "$MAIN" \
+            && git pull --ff-only --quiet \
             && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
                 | command grep -v -E 'remote:' \
             && git push --set-upstream origin # --quiet
@@ -871,14 +916,32 @@ function gb() {
     fi
 }
 
-# bc (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
+# Generate a 
+function gbb() {
+    echo "First create a JIRA ticket and copy its shortname (e.g., 'MYPROJ-1')"
+    jira-create-ticket
+
+    echo "Now paste in the shortname:"
+    read SHORTNAME
+    
+    echo "Now paste in a brief description in English"
+    read DESCRIPTION
+    DESC="$(branchify "$DESCRIPTION")"
+    
+    NEW_BRANCH_NAME="$MY_GITHUB_USERNAME/$SHORTNAME/$DESC"
+    
+    echo "New branch is '$NEW_BRANCH_NAME'"    
+    # gb "$NEW_BRANCH_NAME"
+}   
+
+# gb (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
 # command to create and switch to a branch.
 # Shadows the crappy Unix built-in calculator bc(1).
 function bc() {
     gb "$@"
 }
 
-# gbs (Git BrancheS) - list (local) git branches
+# gbs (Git Branches) - list (local) git branches
 function gbs() { git branch ;}
 
 # gco (Git CheckOut) - what it says on the tin
@@ -894,6 +957,16 @@ function gurl() {
     gcd \
         && command grep url .git/config | sed -e 's/^[ \t]*url[ ][=][ ]//'
     cd "$ORIG_DIR"
+}
+
+# branchify - munge a branch description into a branch name
+# (by translating spaces to dashes and uppercase to lowercase)
+function branchify() {
+    if [[ $# -ne 1 ]]; then
+        echo "branchify: error: wrong number of arguments. Usage: branchify DESCRIPTIVE_STRING"
+    else
+        echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' ' '-'
+    fi
 }
 
 ## GitHub-specific Git settings
@@ -916,20 +989,6 @@ function gist() {
         gh gist create --desc "$DESCRIPTION" "$REALPATH"
     fi
 }
-
-# gr (Git Repo) - run this in any dir inside a Git working copy to show the repo name
-function gr() {
-    local REPO_URL RETVAL
-
-    REPO_URL="$(gu)"
-    if [[ "$REPO_URL" =~ ^git[@]github.com[:]$GITHUB_ORG[/](.*) ]]; then
-        RETVAL=${BASH_REMATCH[1]}
-        echo "$RETVAL"
-    else
-        echo "gr: error: couldn't parse URL '$REPO_URL'" 2> /dev/null
-    fi
-}
-# function git-repo() { gr "$@" ;}
 
 # gtr (Git Team and Repo) - run this in any dir inside a working copy of a GitHub repo to show the team name plus repo name in GitHub notation, e.g., myorg/myrepo
 function gtr() {
@@ -981,11 +1040,7 @@ function readme() {
     gh repo view
 }
 
-function ga()  { git add "$@" ;}
-function gac() { git commit -a "$@" ;}
-function gas() { git stash "$@" ;}
 function gcm() { git commit -m "$@" ;}
-function gd()  { git diff "$@" ;}
 function gdo() { git diff origin HEAD ;}
 
 function gl() {
@@ -1115,12 +1170,12 @@ function pr() {
             
             local URL=""
             if [[ -n "$PR_TITLE" ]]; then
-                URL=$(gh pr create --title "$PR_TITLE" | tail -1)
+                # URL=$(gh pr create --title "$PR_TITLE" 2>&1 | tail -1)
+                gh pr create --title "$PR_TITLE"
             else
-                URL=$(gh pr create --fill | tail -1)
+                # URL=$(gh pr create --fill 2>&1 | tail -1)
+                gh pr create --fill
             fi
-            
-            open "$URL"
         fi
     }
     
@@ -1134,7 +1189,7 @@ function pr() {
             gh pr view --web "$1"
         else
             URL="$(create_pr "$@")"
-            open "$URL"
+            # open "$URL"
         fi
     }
 
@@ -1444,6 +1499,8 @@ function mkvirtualenv() {
             && va "$NEW_VIRTUALENV_NAME"
     fi
 }
+
+function ve() { set -x; mkvirtualenv "$@"; set +x ;}
 
 #### Tor settings
 
@@ -2021,17 +2078,83 @@ export JPATH="/usr/local/opt/openjdk/bin"
 
 export NODE_PATH="/opt/node/bin"
 export NODE_MANPATH="/opt/node/share/man:/opt/node/lib/node_modules/npm/man/"
+MANPATH_IN_PROGRESS="$NODE_MANPATH:$MANPATH_IN_PROGRESS"
 
 #### Jenkins settings
 
-function jenkins-fetch-output() {
-    local URL
-    if [[ $# -eq 1 ]]; then
-        URL="$1"
-        osascript ~/bin/jenkins-fetch-console-output.osascript "$URL"
+function j() {
+    local  REPO  BRANCH  JENKINS_OUTPUT_FILENAME  JENKINS_OUTPUT_URL  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
+    
+    if [[ "$1" = "--no-sms" ]] || [[ "$JENKINS_NO_SMS" ]]; then
+        sms() {
+            : # no-op
+        }
     else
-        echo "jenkins-fetch-output: error: missing argument. Usage: jenkins-fetch-console-output URL" > /dev/stderr
+        sms() {
+            ~/...sms-me "$@"
+        }
     fi
+            
+
+    REPO="$(jenkins-repo)"
+    BRANCH="$(jenkins-branch)"
+    
+    if [[ -z "$JENKINS_BASE_URL" ]]; then
+        echo 'jenkins: error: first export JENKINS_BASE_URL=[your URL]'
+    elif [[ -z "$REPO" ]]; then
+        echo 'jenkins: error: first call jenkins-repo $REPO_NAME'
+    elif [[ -z "$BRANCH" ]]; then
+        echo 'jenkins: error: first call jenkins-branch $BRANCH_NAME'
+    else
+        JENKINS_OUTPUT_URL="$JENKINS_BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
+        
+        JENKINS_OUTPUT_FILENAME="$(mktemp "$HOME/tmp/jenkins-log--$REPO--$BRANCH.XXXXXX")"
+        osascript ~/bin/jenkins-fetch-console-output.osascript "$JENKINS_OUTPUT_URL" \
+            | tee "$JENKINS_OUTPUT_FILENAME" \
+            | tee >(command grep -m 1 -o "docker://.*" | sed 's/docker:[/][/]//' | tee pbcopy) \
+            2>&1
+
+        sms "Jenkins finished the build"
+                
+        # # This logfile-parsing code is brittle, so disable it for now
+        # if command grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
+        #     SHORT_MESSAGE="Successfully built repo '$REPO', branch '$BRANCH'"
+        #     DOCKER_IMAGE_URL="$(command grep --color=never --only-matching 'harbor.*:git-.*$' "$LOGFILE" | command uniq)"
+        #     echo "$SHORT_MESSAGE"
+        #     echo "Docker image URL copied to clipboard:"            
+        #     echo "$DOCKER_IMAGE_URL" | tee >(pbcopy)
+        # elif command grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
+        #     SHORT_MESSAGE="Jenkins login needed"
+        #     echo "First log in at $JENKINS_BASE_URL"; open -u "$JENKINS_BASE_URL"
+        # elif command grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
+        #     SHORT_MESSAGE="Failed to build repo '$REPO', branch '$BRANCH'"
+        #     cat "$LOGFILE"
+        #     echo
+        #     echo "$SHORT_MESSAGE"
+        # else
+        #     SHORT_MESSAGE="Unrecognized Jenkins output for repo '$REPO', branch '$BRANCH'"
+        #     cat "$LOGFILE"
+        #     echo
+        #     echo "^ $SHORT_MESSAGE"
+        # fi
+            
+        # if [[ -n "$JENKINS_SMS_ME" ]]; then
+        #     sms "$SHORT_MESSAGE"
+        # fi
+    fi
+}
+
+function jthis() {
+    local REPO  BRANCH
+    REPO="$(gr)"
+    if [[ $? -eq 0 ]]; then
+        BRANCH="$(gb)"
+        if [[ $? -eq 0 ]]; then
+            jenkins-repo "$REPO"
+            jenkins-branch "$BRANCH"
+        fi
+    fi
+    j
 }
 
 function jenkins-repo() {
@@ -2059,61 +2182,6 @@ function jenkins-branch() {
         echo "jenkins-branch: error: too many arguments" > /dev/stderr
     fi
 }
-
-function j() {
-    echo "Don't use this function; it's broken."
-    echo "Instead, inspect the build log via the GitHub web page for your PR."
-    return
-
-    local REPO  BRANCH  JENKINS_OUTPUT  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
-    
-    REPO="$(jenkins-repo)"
-    BRANCH="$(jenkins-branch)"
-    
-    if [[ -x "$JENKINS_BASE_URL" ]]; then
-        echo 'jenkins: error: first export $JENKINS_BASE_URL'
-    elif [[ -z "$REPO" ]]; then
-        echo 'jenkins: error: first call jenkins-repo $REPO_NAME'
-    elif [[ -z "$BRANCH" ]]; then
-        echo 'jenkins: error: first call jenkins-branch $BRANCH_NAME'
-    else
-        JENKINS_OUTPUT_URL="$JENKINS_BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
-        jenkins-fetch-output "$JENKINS_OUTPUT_URL"
-        LOGFILE=$(ls -t /tmp/jenkins-output* | head -1)
-        
-        if command grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
-            SHORT_MESSAGE="Successfully built repo '$REPO', branch '$BRANCH'"
-            DOCKER_IMAGE_URL="$(command grep --color=never --only-matching 'harbor.*:git-.*$' "$LOGFILE" | command uniq)"
-            echo "$SHORT_MESSAGE"
-            echo "Docker image URL copied to clipboard:"            
-            echo "$DOCKER_IMAGE_URL" | tee >(pbcopy)
-        elif command grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
-            SHORT_MESSAGE="Jenkins login needed"
-            echo "First log in at $JENKINS_BASE_URL"; open -u "$JENKINS_BASE_URL"
-        elif command grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
-            SHORT_MESSAGE="Failed to build repo '$REPO', branch '$BRANCH'"
-            cat "$LOGFILE"
-            echo
-            echo "$SHORT_MESSAGE"
-        else
-            SHORT_MESSAGE="Unrecognized Jenkins output for repo '$REPO', branch '$BRANCH'"
-            cat "$LOGFILE"
-            echo
-            echo "^ $SHORT_MESSAGE"
-        fi
-            
-        if [[ -n "$JENKINS_SMS_ME" ]]; then
-            ~/...sms-me "$SHORT_MESSAGE"
-        fi
-    fi
-}
-
-function jenkins-log() {
-    local LATEST_LOGFILE
-    LATEST_LOGFILE="$(ls -t /tmp/jenkins-output.* | head -1)"
-    command bat --color=always "$LATEST_LOGFILE" | $PAGER
-}
-function jl() { jenkins-log "$@" ;}
 
 #### Jira settings, regrettably
 
@@ -2148,7 +2216,7 @@ You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JI
     [[ -n "$PROJECT_ID" ]] || err "missing argument PROJECT_ID"
     
     if [[ ! "$ERROR_OCCURRED" ]]; then
-         open "${JIRA_BASE_URL}issues/secure/CreateIssue.jspa?issuetype=${ISSUE_TYPE}&pid=${PROJECT_ID}"
+         open "${JIRA_BASE_URL}/issues/secure/CreateIssue.jspa?issuetype=${ISSUE_TYPE}&pid=${PROJECT_ID}"
     fi
 }
 
@@ -2251,7 +2319,24 @@ function mus() {
 
 #### YAML and JSON settings
 
-# ys ("YAML Sort")" - take a file and sort its YAML keys alphabetically
+function yv() {
+    if [[ $# -ne 1 ]]; then
+        echo "yv: error: wrong number of arguments. Usage: yv YAML_KEY_NAME"
+    else
+        KEY="$1"
+        shift
+        
+        #FIXME: figure out how to glob for *.yaml case-insensitively. Maybe use fd?
+        # command grep --no-filename "${KEY}:[ ]*" *.yaml | sort | uniq | sed "s/^[ ]*${KEY}:[ ]*//"
+        fdd "$@" .yaml -X ggrep "${KEY}:"
+    fi
+}
+
+function yvu() {
+    yv "$@" | sed "s/.*${KEY}:[ ]*//" | sort | uniq
+}
+
+# ys ("YAML Sort")" - take a file and sort its YAML keys alphabetically.
 function ys() {
     local FILE="$1"
     yq -P "sort_keys(..)" "$FILE"
@@ -2288,9 +2373,9 @@ function yaml2json() {
 
 #### path settings (global)
 
-if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
+if [[ ! "$PATHS_SET_AT" ]]; then
     set -a
-    PATHS_SET_TIMESTAMP="$(date)"
+    PATHS_SET_AT="$(date)"
 
     ## executable PATH
     PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
@@ -2311,8 +2396,8 @@ if [[ ! "$PATHS_SET_TIMESTAMP" ]]; then
     # Same goes for a single trailing colon.
     PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
-    ## man page path
-    MANPATH="$NODE_MANPATH:$MANPATH"
+    ## man page path settings
+    MANPATH="$MANPATH_IN_PROGRESS"
 
     ## dynamic library path settings
     LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
