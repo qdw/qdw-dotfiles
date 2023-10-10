@@ -1,3 +1,5 @@
+-- -*- mode: sql -*-
+
 -- Important semantics
 
 \set ON_ERROR_ROLLBACK interactive
@@ -8,9 +10,10 @@
 
 -- Appearance
 
-\set QUIET on
--- ANSI color escape codes don't play well with libedit, which macOS
--- uses instead of libreadline, so stick to a monochrome prompt.
-\set PROMPT1 '%n@%m:%> [db=%/]%#  '
+-- \set QUIET on
 \x auto
 -- \pset null 🐙
+
+-- ANSI color escape codes don't play well with libedit, which macOS
+-- uses instead of libreadline; ditto Unicode chars.
+\set PROMPT1 '[%/] %n@%m%#  '
