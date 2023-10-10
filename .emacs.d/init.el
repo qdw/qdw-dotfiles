@@ -16,7 +16,6 @@
 
 ;; Experimental
 (require 'ivy)
-(require 'projectile)
 
 ;;;; Color settings
 
@@ -302,7 +301,6 @@ This command does the reverse of `fill-region'."
 ;;;; Basic comfort
 
 (setq-default
-
  ;;;; macOS-specific settings
  read-file-name-completion-ignore-case nil ;; Consider filenames case-sensitive
 
@@ -326,7 +324,6 @@ This command does the reverse of `fill-region'."
  org-indent-indentation-per-level 4
  typescript-indent-level 2
 
-
  ;;;; FIXME: organize these settings
  calendar-week-start-day 1           ;; First day of the week = Monday
  isearch-allow-scroll 'unlimited
@@ -339,7 +336,8 @@ This command does the reverse of `fill-region'."
 
  inhibit-startup-screen 't           ;; No GNU spam.
  visible-bell 't                     ;; Instead of beeping, flash screen
-
+ display-fill-column-indicator-column 80
+ 
  ;; Something is setting isearch to be case-sensitive. Undo that.
  case-fold-search 't
  )
@@ -459,7 +457,7 @@ This command does the reverse of `fill-region'."
   org-todo-keyword-faces
   '(("GET_HELP" . "#ff00af")
     ("NEXT_ACTION" . "#ff00af")
-    ("AWAITING_RESPONSE" . "#ffff00")
+    ("AWAITING_RESPONSE" . "#ff00af")
     ("QUESTION" . "#ffff00")
     ("POSTPONED" . "#ffff00")
     ("INFO" . "#ffff00")
@@ -848,7 +846,7 @@ This command does the reverse of `fill-region'."
  '(package-selected-packages
    '(outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
-(put 'narrow-to-region 'disabled nil)
+
 
 
 ;; FIXME: move these to my theme?
@@ -860,7 +858,8 @@ This command does the reverse of `fill-region'."
  '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))
 
-
+ 
+(put 'narrow-to-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
 
 ;;;; YAML settings
@@ -886,6 +885,20 @@ This command does the reverse of `fill-region'."
  (face-list))
 
 ;;;;;;;; Experimental area {{
+
+(defun my-after-push-hook ()
+  (message "Pushed!")
+
+(advice-add 'magit-push-current-to-upstream :after #'my-after-push-hook)
+
+;; ;; Broken; no-op
+;; (defun org-recursively-mark-as-done ()
+;;   (interactive)
+;;   (org-map-entries
+;;     (let ((state (nth 2 (org-heading-components))))
+;;       (when (cl-position state org-todo-keywords)
+;;         (org-todo "DONE")))))
+
 
 ;; N.G.
 ;;
