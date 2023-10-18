@@ -306,7 +306,6 @@ This command does the reverse of `fill-region'."
 
  ;;;; General file format settings
  prefer-coding-system 'utf-8         ;; Iff file contains non-ASCII chars
- auto-compression-mode 1             ;; Auto-uncompress compressed files
  large-file-warning-threshold 100000000 ;; Warn when opening large files
  ;; require-final-newline 't            ;; Make, e.g., 'wc -l' work right
 
@@ -411,7 +410,7 @@ This command does the reverse of `fill-region'."
 (defun org-insert-jira-link (ticket-name)
   (interactive "MTicket name (e.g. DATAPLAT-000): ")
   (org-insert-link nil
-                   (concat jiralib-url "/browse/" + ticket-name)
+                   (concat jiralib-url "/browse/" ticket-name)
                    ticket-name))
                    
 (add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c j") 'org-insert-jira-link)))
@@ -435,6 +434,8 @@ This command does the reverse of `fill-region'."
      "AWAITING_RESPONSE(a)"
      "IN_PROGRESS(i)"
      "GET_HELP(h)"
+     "INFO(f)"
+     "PROJECT(r)"
      
      "|"
   
@@ -442,7 +443,6 @@ This command does the reverse of `fill-region'."
      "POSTPONED(p)"
      "WONTFIX(w)"
      "JIRAFIED"
-     "INFO"
      ))
 
   ;; Always use colors compatible with TERM=xterm-256colors,
@@ -461,6 +461,8 @@ This command does the reverse of `fill-region'."
     ("QUESTION" . "#ffff00")
     ("POSTPONED" . "#ffff00")
     ("INFO" . "#ffff00")
+    ("PROJECT" . "#00afff")
+    ("IN_PROGRESS" . "color-46") ;; "#00ff00")
     )
   )
   

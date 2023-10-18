@@ -481,13 +481,13 @@
       ((t (:foreground ,phosphor-amber))))
 
     `(outline-2
-      ((t (:foreground ,cyan))))
+      ((t (:foreground ,axiomatic-purple))))
 
     `(outline-3
-      ((t (:foreground ,low-key-magenta))))
+      ((t (:foreground ,sea-green-cyan+1))))
 
     `(outline-4
-      ((t (:foreground ,low-key-magenta))))
+      ((t (:foreground ,sea-green-cyan))))
 
     `(outline-5
       ((t (:foreground ,blueish-purple))))
