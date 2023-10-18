@@ -37,9 +37,12 @@ function setx() {
 MY_OS="$(uname -s)"
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
-#### Settings related to editing this file itself
+#### cd settings
 
 function cq() { cd ~/src/1/qdw-dotfiles ;}
+
+# cdld - cd to the enclosing directory of the target of a symlink
+function cdld() { cd "$(dirname "$(readlink -f "$1")")" ;}
 
 #### Homebrew settings
 
@@ -109,19 +112,64 @@ fi
 # done
     
 
-if test -e "$HOMEBREW_BIN/curl";  then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gcut";  then function cut() { gcut "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gdircolors"; then function dircolors() { gdircolors "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gfind"; then function find() { gfind "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/ggrep"; then export MY_GREP="ggrep -E"; else export MY_GREP=egrep; fi
-if test -e "$HOMEBREW_BIN/gsed";  then function sed() { gsed "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gsort"; then function sort() { gsort "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gstat"; then function stat() { gstat "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gtac";  then function tac() { gtac "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/gtail"; then function tail() { gtail "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/groff"; then function roff() { groff "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/lsof";  then function lsof() { "$HOMEBREW_BIN/lsof" "$@" ;}; fi
-if test -e "$HOMEBREW_BIN/man";   then function man() { "$HOMEBREW_BIN/man" "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/curl" ]];  then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/gcut" ]];  then function cut() { gcut "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/gdircolors" ]]; then function dircolors() { gdircolors "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/gfind" ]]; then function find() { gfind "$@" ;}; fi
+
+if [[ -e "$HOMEBREW_BIN/gsed" ]];  then function sed() { gsed "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/gsort" ]]; then function sort() { gsort "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/gstat" ]]; then function stat() { gstat "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/gtac" ]];  then function tac() { gtac "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/gtail" ]]; then function tail() { gtail "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/groff" ]]; then function roff() { groff "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/lsof" ]];  then function lsof() { "$HOMEBREW_BIN/lsof" "$@" ;}; fi
+if [[ -e "$HOMEBREW_BIN/man" ]];   then function man() { "$HOMEBREW_BIN/man" "$@" ;}; fi
+
+#### grep settings
+
+if [[ -e "$HOMEBREW_BIN/ugrep" ]]; then
+    export MY_GREP="ugrep -E" MY_FGREP="ugrep -F" MY_PGREP="ugrep -P"
+elif [[ -e "$HOMEBREW_BIN/ggrep" ]]; then
+    export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
+else
+    export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform'"
+fi
+
+export GREP_COLORS="fn=01;36"
+GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir .github --exclude-dir node_modules --exclude .gitignore --exclude .npmignore"
+GREP_OPTIONS="-I --color=always $GREP_EXCLUDE_DIRS"
+
+function grep() { $MY_GREP $GREP_OPTIONS "$@" | $PAGER;}
+function fgrep() { $MY_FGREP $GREP_OPTIONS "$@" | $PAGER;}
+function g() { $MY_GREP -R $GREP_OPTIONS "$@" | $PAGER ;}
+function gbr() { $MY_GREP -R $GREP_OPTIONS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+function ge() { $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.emacs.d ;}
+
+function gfd() {
+    local REGEX USAGE
+    USAGE="Usage: gfd REGEX"
+    
+    if [[ $# -eq 0 ]]; then
+	echo "gfd: error: missing argument. $USAGE"
+    elif [[ $# -eq 1 ]]; then
+	REGEX="$1"
+	(g "$REGEX"; fd "$REGEX")
+    else
+        echo "gfd: error: wrong number of arguments. $USAGE"
+    fi
+}
+
+# count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
+function count() { 
+    command grep -Rc $GREP_EXCLUDE_DIRS "$@" | command grep -v ':0$' | sed -e 's/\(.*\):\(.*\)/\2 \1/' | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
+}
+
+# occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
+function occur() {
+    grep -Rl $GREP_EXCLUDE_DIRS "$@"
+}
+
 
 #### Bash settings
 
@@ -1210,40 +1258,6 @@ function pulls() {
     open "https://github.com/pulls"
 }
 
-#### grep settings
-
-export GREP_COLORS="fn=01;36"
-
-GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir .github --exclude-dir node_modules --exclude .gitignore --exclude .npmignore"
-function grep() { $MY_GREP -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
-function fgrep() { $MY_FGREP -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
-function g() { $MY_GREP -R -I --color=always $GREP_EXCLUDE_DIRS "$@" | $PAGER ;}
-function gbr() { $MY_GREP -R -I --color=always $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-
-function gfd() {
-    local REGEX USAGE
-    USAGE="Usage: gfd REGEX"
-    
-    if [[ $# -eq 0 ]]; then
-	echo "gfd: error: missing argument. $USAGE"
-    elif [[ $# -eq 1 ]]; then
-	REGEX="$1"
-	(g "$REGEX"; fd "$REGEX")
-    else
-        echo "gfd: error: wrong number of arguments. $USAGE"
-    fi
-}
-
-# count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
-function count() { 
-    command grep -Rc $GREP_EXCLUDE_DIRS "$@" | command grep -v ':0$' | sed -e 's/\(.*\):\(.*\)/\2 \1/' | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
-}
-
-# occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
-function occur() {
-    grep -Rl $GREP_EXCLUDE_DIRS "$@"
-}
-
 #### fd settings (fd is a faster and better replacement for find(1)
 
 function fdd() {
@@ -1829,12 +1843,6 @@ function ff() {
 }
 
 function ho() { grep "Host .*${1}" ~/.ssh/*conf* ;}
-
-function js() {
-    FILE="$1"
-    shift
-    jsl -process "$FILE" "$@"
-}
 
 # mr ("mount real") - show all mounted devices that are actually disks (see also dfr).
 function mr() { mount | grep ^/ ;}
