@@ -212,8 +212,11 @@
 
    `(font-lock-doc-face
      ((t (:foreground ,axiomatic-purple :italic t))))
-
-   ;; flymake
+     
+   ;; flycheck/flymake
+   
+   `(flycheck-error
+     ((t (:underline ,full-red))))
 
    `(flymake-errline
      ((t (:underline ,full-red))))
