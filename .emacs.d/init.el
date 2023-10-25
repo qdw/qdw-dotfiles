@@ -401,7 +401,7 @@ This command does the reverse of `fill-region'."
 (defun org-insert-slack-link (channel-name)
   (interactive "MSlack channel (without the '#'): ")
   (org-insert-link nil
-                   (concat "https://" slack-team "slack.com/channels/" channel-name)
+                   (concat "https://" slack-team "slack.com/channels/#" channel-name)
                    (concat "#" channel-name)))
                    
 (add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c s") 'org-insert-slack-link)))
