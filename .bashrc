@@ -137,14 +137,14 @@ else
 fi
 
 export GREP_COLORS="fn=01;36"
-GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir .github --exclude-dir node_modules --exclude .gitignore --exclude .npmignore"
-GREP_OPTIONS="-I --color=always $GREP_EXCLUDE_DIRS"
+GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore"
+GREP_OPTIONS="-I --color=always"
 
-function grep() { $MY_GREP $GREP_OPTIONS "$@" | $PAGER;}
-function fgrep() { $MY_FGREP $GREP_OPTIONS "$@" | $PAGER;}
-function g() { $MY_GREP -R $GREP_OPTIONS "$@" | $PAGER ;}
-function gbr() { $MY_GREP -R $GREP_OPTIONS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-function ge() { $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.emacs.d ;}
+function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
+function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
+function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER ;}
+function gbr() {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+function ge() {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.emacs.d ;}
 
 function gfd() {
     local REGEX USAGE
@@ -320,7 +320,7 @@ set +a
 
 #### Markdown settings
 
-# export GLAMOUR_STYLE="Dark"
+export GLAMOUR_STYLE="Dark"
 readme() {
     gh repo view
 }
