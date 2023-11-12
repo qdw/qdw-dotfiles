@@ -662,7 +662,17 @@ function bo() { brew update; brew outdated ;}
 # function bo() { brew doctor; brew update && brew outdated ;}
 function bs() { brew search "$@" ;}
 function bser() { brew services "$@" ;}
-function bu() { brew update && brew upgrade --formula && brew outdated ;}
+function bu() {
+    brew update
+    
+    if [[ "$I_HAVE_ADMIN_POWERS" ]]; then
+        brew upgrade
+    else
+        brew upgrade --formula \
+            && brew outdated
+    fi
+}
+
 function buc() {
     (brew update && brew upgrade --formula) \
         && (brew cleanup; brew doctor)
