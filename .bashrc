@@ -986,7 +986,7 @@ function gbb() {
     read DESCRIPTION
     DESC="$(branchify "$DESCRIPTION")"
     
-    NEW_BRANCH_NAME="$MY_GITHUB_USERNAME/$SHORTNAME/$DESC"
+    NEW_BRANCH_NAME="$GITHUB_USERNAME/$SHORTNAME/$DESC"
     
     echo "New branch is '$NEW_BRANCH_NAME'"    
     # gb "$NEW_BRANCH_NAME"
@@ -1242,7 +1242,7 @@ function pr() {
         
         if [[ "$1" = "--list" ]]; then
             shift
-            gh pr list "$@"
+            gh pr list --author "$GITHUB_USERNAME" "$@"
         elif [[ "$1" =~ $PR_NUMBER_REGEX ]]; then
             gh pr view --web "$1"
         else
