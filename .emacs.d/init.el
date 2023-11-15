@@ -888,8 +888,8 @@ This command does the reverse of `fill-region'."
 
 ;;;;;;;; Experimental area {{
 
-(defun my-after-push-hook ()
-  (message "Pushed!")
+;; (defun my-after-push-hook ()
+;;   (message "Pushed!"))
 
 (advice-add 'magit-push-current-to-upstream :after #'my-after-push-hook)
 
@@ -923,7 +923,7 @@ This command does the reverse of `fill-region'."
   (query-replace-regexp "^" string))
 
 ;; Needs work
-;;
+
 ;; org-mode: let me specify colors for text;
 ;; these colors show up both when editing
 ;; and in the export.
@@ -932,22 +932,24 @@ This command does the reverse of `fill-region'."
 ;; (load "org-colored-text" nil 't)
 
 ;; Needs work
-(defun gpt (prompt)
-  "Send a prompt to OpenAI *using my shell script*, and print its response in a separate buffer"
-  (interactive "MGPT prompt: ")
 
-  (let ((output-buffer "*GPT output*"))
-    (split-window-below)
-    (other-window 1)
-    (switch-to-buffer output-buffer 't)
-    (other-window -1)
+;; (defun gpt (prompt)
+;;   "Send a prompt to OpenAI *using my shell script*, and print its response in a separate buffer"
+;;   (interactive "MGPT prompt: ")
+
+;;   (let ((output-buffer "*GPT output*"))
+;;     (split-window-below)
+;;     (other-window 1)
+;;     (switch-to-buffer output-buffer 't)
+;;     (other-window -1)
   
-    (start-process "GPT"
-                   output-buffer
-                   "/Users/quinn.weaver/bin/ai"
-                   prompt)))
+;;     (start-process "GPT"
+;;                    output-buffer
+;;                    "/Users/quinn.weaver/bin/ai"
+;;                    prompt)))
 
 ;; Needs work
+
 ;; (defun bing (prompt)
 ;;   "Send a prompt to Bing Chat and return its response"
 ;;   (interactive "MBing prompt: ")
@@ -1026,9 +1028,6 @@ This command does the reverse of `fill-region'."
 ;;                       
 ;;                        FIXME: since my organization uses Okta with 2FA, I probably need to use a diffferent authentication mechanism - maybe I can make a bearer token?
 ;;                        (auth-file . "~/.jenkins.authinfo.gpg")))
-
-
-;; }} end experimental settings
 
 ;; Load Emacs settings specific to this organization
 ;; (may override any of the settings above)
