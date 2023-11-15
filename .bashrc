@@ -39,7 +39,7 @@ MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
 #### cd settings
 
-function cq() { cd ~/src/1/qdw-dotfiles ;}
+function cdq() { cd ~/src/1/qdw-dotfiles ;}
 
 # cdld - cd to the enclosing directory of the target of a symlink
 function cdld() { cd "$(dirname "$(readlink -f "$1")")" ;}
