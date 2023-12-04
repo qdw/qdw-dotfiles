@@ -119,7 +119,7 @@ if [[ -e "$HOMEBREW_BIN/gfind" ]]; then function find() { gfind "$@" ;}; fi
 
 if [[ -e "$HOMEBREW_BIN/gsed" ]];  then function sed() { gsed "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gsort" ]]; then function sort() { gsort "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gstat" ]]; then function stat() { gstat "$@" ;}; fi
+# if [[ -e "$HOMEBREW_BIN/gstat" ]]; then function stat() { gstat "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gtac" ]];  then function tac() { gtac "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gtail" ]]; then function tail() { gtail "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/groff" ]]; then function roff() { groff "$@" ;}; fi
@@ -135,6 +135,11 @@ elif [[ -e "$HOMEBREW_BIN/ggrep" ]]; then
 else
     export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform'"
 fi
+
+
+export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
+
+
 
 export GREP_COLORS="fn=01;36"
 GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore"
@@ -375,6 +380,30 @@ function ldd() {
 
 #### AWS settings
 
+function wait_for_proxy_to_come_up() {
+    local PROXY_NAME  STATUS
+    
+    if [[ $# -eq 1 ]]; then
+        PROXY_NAME="$1"
+        while true; do
+ 
+            # Broken
+            STATUS=`aws rds describe-db-proxies | jq ".DBProxies | select(.DBProxyName==\"$PROXY_NAME\") | .Status"`
+ 
+ 
+            if [[ $STATUS = '"creating"' ]]; then
+                sleep 60
+            else
+                break
+            fi
+        done
+        echo "$STATUS at $(date)"
+    else
+        echo "wait_for_proxy_to_come_up: wrong number of arguments. Usage: wait_for_proxy_to_come_up PROXY_NAME"
+    fi
+}
+            
+
 function rds() {
     usage() {
         echo "Usage: rds [ls | list]"
@@ -423,41 +452,28 @@ function secret() { get-secret "$@" ;}
 
 ## Emacs settings
 
-export EMACS_PLUS_VERSION="emacs-plus@28"
+export EMACS_VERSION="emacs" # I'm no longer using emacs-plus@28
 
-function brew-install-emacs-plus() {
-    brew install \
-         --formula \
-         --build-from-source \
-         "$EMACS_PLUS_VERSION" \
-         --with-modern-doom3-icon \
-         --with-imagemagick \
-         --with-mailutils
-}
-
-function the_emacs_daemon_is_running() {
+function the-emacs-daemon-is-running() {
     local OUTPUT
 
-    if [[ "$MY_OS" = "Darwin" ]]; then
+    if [[ "$MY_OS" = "Darwin" ]] && [[ $EMACS_VERSION =~ emacs-plus ]]; then
         command ps auxwww | command grep -v grep | command grep "Emacs.app/Contents/MacOS/Emacs --fg-daemon" >/dev/null 2>&1
-        OUTPUT=$?
-    elif [[ "$MY_OS" =~ Linux ]]; then
+    else
         command ps auxwww | command grep "$USER" | command grep -v grep | command grep -E -- "emacs.*--(daemon|bg-daemon|fg-daemon)"
         OUTPUT=$?
-    else
-        OUTPUT="error: edit your ~/.bashrc and add support for OS '$MY_OS' to function the_emacs_daemon_is_running()"
     fi
 
     echo "$OUTPUT"
 }
 
-function print_instructions_for_starting_the_emacs_daemon() {
+function print-instructions-for-starting-the-emacs-daemon() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        echo "brew services start "$EMACS_PLUS_VERSION""
+        echo "brew services start "$EMACS_VERSION""
     elif [[ "$MY_OS" =~ Linux ]]; then
         echo "command emacs --bg-daemon"
     else
-        echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print_instructions_for_starting_the_emacs_daemon"
+        echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print-instructions-for-starting-the-emacs-daemon"
     fi
 }
 
@@ -475,14 +491,14 @@ function emacs() {
         emacsclient --no-wait "$@"
     else
         local DAEMON_STATUS
-        DAEMON_STATUS="$(the_emacs_daemon_is_running)"
-        # echo "[DEBUG] in bash function emacs(), a call to bash function the_emacs_daemon_is_running() yielded output '$DAEMON_STATUS'"
+        DAEMON_STATUS="$(the-emacs-daemon-is-running)"
+        # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
 
         if [[ "$DAEMON_STATUS" = "0" ]]; then
             emacsclient --tty "$@"
         else
             echo "error: the emacs daemon is not running. Start it as follows:"
-            print_instructions_for_starting_the_emacs_daemon
+            print-instructions-for-starting-the-emacs-daemon
         fi
     fi
 }
@@ -1029,6 +1045,21 @@ function branchify() {
 
 ## GitHub-specific Git settings
 
+# branch BRANCH_NAME - display the GitHub web page for BRANCH_NAME
+function branch() {
+    local BRANCH_NAME
+    
+    if [[ $# -eq 0 ]]; then
+        BRANCH_NAME="$("gb")"
+    elif [[ $# -eq 1 ]]; then
+        BRANCH_NAME="$1"
+    else
+        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME]" > /dev/stderr
+    fi
+    
+    gh browse --branch "$BRANCH_NAME"
+}
+
 # gist - create a gist
 function gist() {
     if [[ $# -eq 0 ]]; then
@@ -1079,19 +1110,25 @@ function gline() {
     fi
 }
 
-function branch() {
-    local BRANCH_NAME
-    
+function lst() {
+    local LAST_ARG_IS_THE_FILENAME
+
     if [[ $# -eq 0 ]]; then
-        BRANCH_NAME=$(gb)
-    elif
-        [[ $# -eq 1 ]]; then
-        BRANCH_NAME="$1"
+        git diff HEAD^ HEAD
     else
-        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME" > /dev/stderr
+        local LAST_ARG_IS_THE_FILENAME
+
+        for ARG in "$@"; do
+            LAST_ARG_IS_THE_FILENAME="$ARG"
+        done
+
+        # Set $@ to a an array slice
+        # that includies all the args
+        # except the last one ($# - 1)
+        set -- "${@:1:${#-1}}"
+
+        git diff "$@" HEAD^ HEAD -- "$LAST_ARG_IS_THE_FILENAME"
     fi
-    
-    gh browse --branch "$BRANCH_NAME"
 }
 
 function readme() {
@@ -1120,7 +1157,6 @@ function gl() {
 function gn()  { git diff --name-only "$@" ;}
 function gs()  { git status "$@" ;}
 
-
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi() {
     if git-rev-parse --is-inside-work-tree; then
@@ -1132,8 +1168,6 @@ function gi() {
             && git branch -m master main 2>/dev/null
     fi
 }
-
-## GitHub-specific settings
 
 # gcl (Git CLone) - quickly clone a repo belonging to my organization
 function gcl() {
@@ -1274,6 +1308,7 @@ function fdd() {
     command fd \
         --exclude .git \
         --exclude .github \
+        --exclude node_modules \
         --follow \
         --full-path \
         --hidden \
@@ -1643,7 +1678,7 @@ function p() {
 # pe (Ps Emacs-daemon): show whether the Emacs daemon is running.
 function pe() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services | grep "$EMACS_PLUS_VERSION"
+        brew services | grep "$EMACS_VERSION"
     else
         ps auxwww | grep 'emacs.*daemon'
     fi
@@ -1652,7 +1687,7 @@ function pe() {
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services stop "$EMACS_PLUS_VERSION"
+        brew services stop "$EMACS_VERSION"
     else
         local EMACS_DAEMON_PID
         EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
@@ -1663,7 +1698,7 @@ function ke() {
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services start "$EMACS_PLUS_VERSION"
+        brew services start "$EMACS_VERSION"
         # Give it time to load my ~/.emacs.d/init.el
         sleep 2
     else
