@@ -36,7 +36,6 @@
       phosphor-amber    "#af5f00"
       comment-amber phosphor-amber
       blueish-purple    "#9164ff"
-      sea-blue          "#1077a3"
       light-cyan        "#008787"
       cyan              "#00cdcd"
       sea-green-cyan    "#2f4f4f"
@@ -172,7 +171,7 @@
 
    `(font-lock-keyword-face
      ;; ((t (:foreground ,deep-gold))))
-     ((t (:foreground ,phosphor-amber))))
+     ((t (:foreground ,victory-blue))))
 
    `(font-lock-function-name-face
      ;; ((t (:foreground ,victory-blue))))
@@ -523,8 +522,11 @@
     `(org-level-3
       ((t (:inherit outline-3))))
     
+    ;; `(org-level-4
+    ;;   ((t (:inherit outline-4))))
+    
     `(org-level-4
-      ((t (:inherit outline-4))))
+      ((t (:inherit outline-3))))
 
     `(org-level-5
       ((t (:inherit outline-5))))
