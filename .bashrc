@@ -12,6 +12,10 @@
 # export TIMEFORMAT='    real %3R'; export PS4=''
 # set -xT
 
+# Uncomment if you want to *stop* timing how long each command in this
+# file takes to run.
+# set +xT
+
 ## Also useful for timing:
 
 # TIMEFORMAT='%3R'
@@ -522,11 +526,8 @@ function emacs() {
     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
-        set -x
         emacsclient --no-wait "$@"
-        set +x
     else
-        set -x
         local DAEMON_STATUS
         DAEMON_STATUS=$(the-emacs-daemon-is-running)
         # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
@@ -2081,10 +2082,6 @@ fi
 
 function activate-perlbrew() { source ~/perl5/perlbrew/etc/bashrc ;}
 function perlbrew-activate() { activate-perlbrew ;}
-
-# Uncomment if you want to stop timing how long each command in this
-# file takes to run.
-# set +xT
 
 function psql-tips() { links ~/src/psql-tips/html/psql_tips_all.html ;}
 function tips() { psql-tips "$@" ;}
