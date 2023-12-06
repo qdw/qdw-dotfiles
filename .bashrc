@@ -2359,7 +2359,7 @@ function jira-to-org() {
         echo "jira-to-org: error: missing argument. Usage: jira-to-org FILE" > /dev/stderr
     else
         for TICKET_NAME in $(awk 'NR % 2 == 1 {print $NF}'  "$FILENAME"); do
-            echo "[[$(jira-url-for "$TICKET_NAME")][[$TICKET_NAME]]"
+            echo "[[$(jira-url-for "$TICKET_NAME")][$TICKET_NAME]"
         done
     fi
 }
