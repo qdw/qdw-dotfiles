@@ -2290,7 +2290,7 @@ function jenkins-branch() {
 # https://kerisavoca.medium.com/how-to-make-a-link-that-creates-a-new-issue-in-jira-54ff93c61e24
 
 function jira-create-ticket() {
-    local USAGE ISSUE_TYPE PROJECT_ID ERROR_OCCURRED
+    local  USAGE  ISSUE_TYPE  PROJECT_ID  ERROR_OCCURRED
 
     USAGE="jira-create-ticket [ISSUE_TYPE [PROJECT_ID]]
 You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JIRA_DEFAULT_ISSUE_ID"
@@ -2318,7 +2318,7 @@ function jc() {
     jira-create-ticket > /dev/null
 }
 
-function jira-open-existing-ticket() {
+function jira-url-for-ticket-name() {
     local TICKET_NUMBER
     
     if [[ $# -ne 1 ]]; then
@@ -2340,7 +2340,27 @@ function jira-open-existing-ticket() {
             fi
         fi
 
-        open -u "${JIRA_BASE_URL}/browse/${TICKET_NUMBER}"
+        echo "${JIRA_BASE_URL}/browse/${TICKET_NUMBER}"
+    fi
+}
+
+function jira-open-existing-ticket() {
+    open "$(jira-url-for-ticket-name "$@")"
+}
+
+# Take a file of text pasted from the left sidebar of Jira's "detailed view".
+# Output properly labeled emacs org-mode links for each named ticket.
+# 
+# FIXME: later, make this work with stdin if "-" is the filename.
+function jira-to-org() {
+    local FILENAME
+    
+    if [[ $# -ne 1 ]]; then
+        echo "jira-to-org: error: missing argument. Usage: jira-to-org FILE" > /dev/stderr
+    else
+        for TICKET_NAME in $(awk 'NR % 2 == 1 {print $NF}'  "$FILENAME"); do
+            echo "[[$(jira-url-for "$TICKET_NAME")][[$TICKET_NAME]]"
+        done
     fi
 }
 
