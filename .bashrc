@@ -172,7 +172,15 @@ function count() {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur() {
-    grep -Rl $GREP_EXCLUDE_DIRS "$@"
+    local OCCUR_PAGER
+
+    if [[ "$PAGER" = "cat" ]]; then
+        OCCUR_PAGER="$PAGER"
+    else
+        OCCUR_PAGER="less --no-init --quit-if-one-screen"
+    fi
+    
+    $MY_GREP -Rl $GREP_EXCLUDE_DIRS "$@" | $OCCUR_PAGER
 }
 
 
@@ -380,6 +388,27 @@ function ldd() {
 
 #### AWS settings
 
+# tags - show CDK tags for a project
+function tags() {
+    local ORIG_DIR
+    ORIG_DIR="$(pwd)"
+
+    local GIT_WORKING_COPY_ROOT_DIR
+    GIT_WORKING_COPY_ROOT_DIR="$(git rev-parse --show-toplevel)"
+    if [[ $? -eq 0 ]]; then
+        if cd "$GIT_WORKING_COPY_ROOT_DIR/cdk.out"; then
+            CDK_OUTPUT_FILES="$(fdd -t f '.json$')"
+            if [[ -n "$CDK)OUTPUT_FILES" ]]; then
+                for FILENAME in $CDK_OUTPUT_FILES; do
+                    gron "$FILENAME" | grep tags | awk "{print \"$FILENAME: \" \$0}"
+                done
+            fi
+        fi
+    fi
+    
+    cd "$ORIG_DIR"
+}
+
 function wait_for_proxy_to_come_up() {
     local PROXY_NAME  STATUS
     
@@ -457,14 +486,15 @@ export EMACS_VERSION="emacs" # I'm no longer using emacs-plus@28
 function the-emacs-daemon-is-running() {
     local OUTPUT
 
-    if [[ "$MY_OS" = "Darwin" ]] && [[ $EMACS_VERSION =~ emacs-plus ]]; then
-        command ps auxwww | command grep -v grep | command grep "Emacs.app/Contents/MacOS/Emacs --fg-daemon" >/dev/null 2>&1
+    if [[ "$MY_OS" = "Darwin" ]] && [[ -n "$EMACS_VERSION" ]]; then
+        brew services "$EMACS_VERSION" | grep "PID"
+	OUTPUT=$?
     else
         command ps auxwww | command grep "$USER" | command grep -v grep | command grep -E -- "emacs.*--(daemon|bg-daemon|fg-daemon)"
         OUTPUT=$?
     fi
 
-    echo "$OUTPUT"
+    echo $OUTPUT
 }
 
 function print-instructions-for-starting-the-emacs-daemon() {
@@ -491,10 +521,10 @@ function emacs() {
         emacsclient --no-wait "$@"
     else
         local DAEMON_STATUS
-        DAEMON_STATUS="$(the-emacs-daemon-is-running)"
+        DAEMON_STATUS=$(the-emacs-daemon-is-running)
         # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
 
-        if [[ "$DAEMON_STATUS" = "0" ]]; then
+        if [[ $DAEMON_STATUS -eq 0 ]]; then
             emacsclient --tty "$@"
         else
             echo "error: the emacs daemon is not running. Start it as follows:"
@@ -2274,6 +2304,9 @@ You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JI
 }
 
 function jc() {
+    if [[ $# -ne 0 ]]; then
+        echo "jc: warning: jc takes zero arguments; ignoring the $# passed"
+    fi
     jira-create-ticket > /dev/null
 }
 
