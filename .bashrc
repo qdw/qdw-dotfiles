@@ -8,7 +8,6 @@
 ## Uncomment the following lines if you want to time each command in this file.
 ## You will also need to add 'time ' before every command in this file,
 ## because Bash doesn't have a good builtin time-tracing function.
-
 # export TIMEFORMAT='    real %3R'; export PS4=''
 # set -xT
 
@@ -490,18 +489,12 @@ export EMACS_VERSION="emacs" # I'm no longer using emacs-plus@28
 function the-emacs-daemon-is-running() {
     local OUTPUT
 
-    if [[ "$MY_OS" = "Darwin" ]] && [[ -n "$EMACS_VERSION" ]]; then
-        brew services | command grep -E "$EMACS_VERSION[ ]+started" > /dev/null
-	OUTPUT=$?
-    else
-        command ps auxwww \
-            | command grep "$USER" \
-            | command grep -v grep \
-            | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)" \
-            > /dev/null
-        OUTPUT=$?
-    fi
-
+    command ps auxwww \
+        | command grep "$USER" \
+        | command grep -v grep \
+        | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)" \
+                  > /dev/null
+    OUTPUT=$?
     echo $OUTPUT
 }
 
@@ -526,7 +519,11 @@ function emacs() {
     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
-        emacsclient --no-wait "$@"
+        if [[ $# -gt 0 ]]; then
+            emacsclient --no-wait "$@"
+        else
+            echo "You're already in emacs, genius" > /dev/stderr
+        fi
     else
         local DAEMON_STATUS
         DAEMON_STATUS=$(the-emacs-daemon-is-running)
