@@ -487,10 +487,14 @@ function the-emacs-daemon-is-running() {
     local OUTPUT
 
     if [[ "$MY_OS" = "Darwin" ]] && [[ -n "$EMACS_VERSION" ]]; then
-        brew services "$EMACS_VERSION" | grep "PID"
+        brew services | command grep -E "$EMACS_VERSION[ ]+started" > /dev/null
 	OUTPUT=$?
     else
-        command ps auxwww | command grep "$USER" | command grep -v grep | command grep -E -- "emacs.*--(daemon|bg-daemon|fg-daemon)"
+        command ps auxwww \
+            | command grep "$USER" \
+            | command grep -v grep \
+            | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)" \
+            > /dev/null
         OUTPUT=$?
     fi
 
@@ -518,8 +522,11 @@ function emacs() {
     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
+        set -x
         emacsclient --no-wait "$@"
+        set +x
     else
+        set -x
         local DAEMON_STATUS
         DAEMON_STATUS=$(the-emacs-daemon-is-running)
         # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
