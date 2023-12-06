@@ -111,7 +111,7 @@ fi
 #     fi
 # done
     
-
+if [[ -e "$HOMEBREW_ROOT/opt/curl/bin/curl" ]]; then function curl() { "$HOMEBREW_ROOT/opt/curl/bin/curl" "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/curl" ]];  then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gcut" ]];  then function cut() { gcut "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gdircolors" ]]; then function dircolors() { gdircolors "$@" ;}; fi
@@ -147,7 +147,7 @@ GREP_OPTIONS="-I --color=always"
 
 function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
 function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
-function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER ;}
+function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS --exclude '*.js' "$@" | $PAGER ;}
 function gbr() {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
 function ge() {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.emacs.d ;}
 
@@ -1444,20 +1444,27 @@ function csview() { command csview "$@" | $PAGER ;}
 ####     ~/.pgpass
 
 function pg() {
-    local VERSION ENV_VAR_COMMAND
-    if [[ $# -lt 2 ]]; then
-        echo "pg: error: missing argument. Usage: pg POSTGRESQL_VERSION EXECUTABLE_NAME arguments"
-        echo "    (for instance, pg 14 psql -c 'SELECT 1')"
+    local  VERSION  PROGRAM_NAME  BINARY_PATH  COMMAND
+    
+    if [[ "$1" ]]; then
+        VERSION="$1"
+        shift
     else
-        VERSION="$1";
-        EXECUTABLE_NAME="$2"
-        shift
-        shift
-        if [[ "$EXECUTABLE_NAME" = "psql" ]] && [[ $# -eq 0 ]]; then
-            ENV_VAR_COMMAND="export PGSERVICE=pg${VERSION}"
-        fi
-        ( $ENV_VAR_COMMAND; $HOMEBREW_ROOT/Cellar/postgresql@${VERSION}/*/bin/$EXECUTABLE_NAME "$@" )
+        echo "pg: error: missing argument. Usage: pg VERSION [COMMAND] [ARG ...]" > /dev/stderr
+        return
     fi
+
+    if [[ "$1" ]]; then
+        PROGRAM_NAME="$1"
+        shift
+    else
+        PROGRAM_NAME="psql"
+    fi
+    
+    BINARY_PATH=$(echo $HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/$PROGRAM_NAME)
+
+    local ENV_VAR_COMMAND="export PGSERVICE=pg${VERSION}"
+    ($ENV_VAR_COMMAND; "$BINARY_PATH" "$@")
 }
 
 # replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or PSQL prompt)
