@@ -1474,7 +1474,9 @@ function air() {
 ## Coffee-bean-ordering settings
 
 function coffee() {
-    open -a Firefox "https://store.awakencafe.com/s/customer-accounts"
+    local URL="https://store.awakencafe.com/s/order?location=11e93a189ebfc0bcb7910a580a1c0333#6"
+    # local URL="https://store.awakencafe.com/s/customer-accounts"
+    open -a Firefox "$URL"
 }
 
 #### Aranet4 air quality monitoring settings
