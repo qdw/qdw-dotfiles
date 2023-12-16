@@ -2,10 +2,6 @@
 	name = Quinn Weaver
 	email = quinn.weaver@gmail.com
 
-[push]
-	default = upstream
-	autoSetupRemote = true
-
 [blame]
 	coloring = highlightRecent
 	
