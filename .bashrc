@@ -8,9 +8,12 @@
 ## Uncomment the following lines if you want to time each command in this file.
 ## You will also need to add 'time ' before every command in this file,
 ## because Bash doesn't have a good builtin time-tracing function.
-
 # export TIMEFORMAT='    real %3R'; export PS4=''
 # set -xT
+
+# Uncomment if you want to *stop* timing how long each command in this
+# file takes to run.
+# set +xT
 
 ## Also useful for timing:
 
@@ -39,7 +42,7 @@ MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
 #### cd settings
 
-function cq() { cd ~/src/1/qdw-dotfiles ;}
+function cdq() { cd ~/src/1/qdw-dotfiles ;}
 
 # cdld - cd to the enclosing directory of the target of a symlink
 function cdld() { cd "$(dirname "$(readlink -f "$1")")" ;}
@@ -111,7 +114,7 @@ fi
 #     fi
 # done
     
-
+if [[ -e "$HOMEBREW_ROOT/opt/curl/bin/curl" ]]; then function curl() { "$HOMEBREW_ROOT/opt/curl/bin/curl" "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/curl" ]];  then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gcut" ]];  then function cut() { gcut "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gdircolors" ]]; then function dircolors() { gdircolors "$@" ;}; fi
@@ -119,7 +122,7 @@ if [[ -e "$HOMEBREW_BIN/gfind" ]]; then function find() { gfind "$@" ;}; fi
 
 if [[ -e "$HOMEBREW_BIN/gsed" ]];  then function sed() { gsed "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gsort" ]]; then function sort() { gsort "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gstat" ]]; then function stat() { gstat "$@" ;}; fi
+# if [[ -e "$HOMEBREW_BIN/gstat" ]]; then function stat() { gstat "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gtac" ]];  then function tac() { gtac "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/gtail" ]]; then function tail() { gtail "$@" ;}; fi
 if [[ -e "$HOMEBREW_BIN/groff" ]]; then function roff() { groff "$@" ;}; fi
@@ -136,13 +139,18 @@ else
     export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform'"
 fi
 
+
+export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
+
+
+
 export GREP_COLORS="fn=01;36"
 GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore"
 GREP_OPTIONS="-I --color=always"
 
 function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
 function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
-function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER ;}
+function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS --exclude '*.js' "$@" | $PAGER ;}
 function gbr() {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
 function ge() {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.emacs.d ;}
 
@@ -167,7 +175,15 @@ function count() {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur() {
-    grep -Rl $GREP_EXCLUDE_DIRS "$@"
+    local OCCUR_PAGER
+
+    if [[ "$PAGER" = "cat" ]]; then
+        OCCUR_PAGER="$PAGER"
+    else
+        OCCUR_PAGER="less --no-init --quit-if-one-screen"
+    fi
+    
+    $MY_GREP -Rl $GREP_EXCLUDE_DIRS "$@" | $OCCUR_PAGER
 }
 
 
@@ -375,6 +391,51 @@ function ldd() {
 
 #### AWS settings
 
+# tags - show CDK tags for a project
+function tags() {
+    local ORIG_DIR
+    ORIG_DIR="$(pwd)"
+
+    local GIT_WORKING_COPY_ROOT_DIR
+    GIT_WORKING_COPY_ROOT_DIR="$(git rev-parse --show-toplevel)"
+    if [[ $? -eq 0 ]]; then
+        if cd "$GIT_WORKING_COPY_ROOT_DIR/cdk.out"; then
+            CDK_OUTPUT_FILES="$(fdd -t f '.json$')"
+            if [[ -n "$CDK)OUTPUT_FILES" ]]; then
+                for FILENAME in $CDK_OUTPUT_FILES; do
+                    gron "$FILENAME" | grep tags | awk "{print \"$FILENAME: \" \$0}"
+                done
+            fi
+        fi
+    fi
+    
+    cd "$ORIG_DIR"
+}
+
+function wait_for_proxy_to_come_up() {
+    local PROXY_NAME  STATUS
+    
+    if [[ $# -eq 1 ]]; then
+        PROXY_NAME="$1"
+        while true; do
+ 
+            # Broken
+            STATUS=`aws rds describe-db-proxies | jq ".DBProxies | select(.DBProxyName==\"$PROXY_NAME\") | .Status"`
+ 
+ 
+            if [[ $STATUS = '"creating"' ]]; then
+                sleep 60
+            else
+                break
+            fi
+        done
+        echo "$STATUS at $(date)"
+    else
+        echo "wait_for_proxy_to_come_up: wrong number of arguments. Usage: wait_for_proxy_to_come_up PROXY_NAME"
+    fi
+}
+            
+
 function rds() {
     usage() {
         echo "Usage: rds [ls | list]"
@@ -423,41 +484,27 @@ function secret() { get-secret "$@" ;}
 
 ## Emacs settings
 
-export EMACS_PLUS_VERSION="emacs-plus@28"
+export EMACS_VERSION="emacs" # I'm no longer using emacs-plus@28
 
-function brew-install-emacs-plus() {
-    brew install \
-         --formula \
-         --build-from-source \
-         "$EMACS_PLUS_VERSION" \
-         --with-modern-doom3-icon \
-         --with-imagemagick \
-         --with-mailutils
-}
-
-function the_emacs_daemon_is_running() {
+function the-emacs-daemon-is-running() {
     local OUTPUT
 
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        command ps auxwww | command grep -v grep | command grep "Emacs.app/Contents/MacOS/Emacs --fg-daemon" >/dev/null 2>&1
-        OUTPUT=$?
-    elif [[ "$MY_OS" =~ Linux ]]; then
-        command ps auxwww | command grep "$USER" | command grep -v grep | command grep -E -- "emacs.*--(daemon|bg-daemon|fg-daemon)"
-        OUTPUT=$?
-    else
-        OUTPUT="error: edit your ~/.bashrc and add support for OS '$MY_OS' to function the_emacs_daemon_is_running()"
-    fi
-
-    echo "$OUTPUT"
+    command ps auxwww \
+        | command grep "$USER" \
+        | command grep -v grep \
+        | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)" \
+                  > /dev/null
+    OUTPUT=$?
+    echo $OUTPUT
 }
 
-function print_instructions_for_starting_the_emacs_daemon() {
+function print-instructions-for-starting-the-emacs-daemon() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        echo "brew services start "$EMACS_PLUS_VERSION""
+        echo "brew services start "$EMACS_VERSION""
     elif [[ "$MY_OS" =~ Linux ]]; then
         echo "command emacs --bg-daemon"
     else
-        echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print_instructions_for_starting_the_emacs_daemon"
+        echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print-instructions-for-starting-the-emacs-daemon"
     fi
 }
 
@@ -472,17 +519,21 @@ function emacs() {
     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
-        emacsclient --no-wait "$@"
+        if [[ $# -gt 0 ]]; then
+            emacsclient --no-wait "$@"
+        else
+            echo "You're already in emacs, genius" > /dev/stderr
+        fi
     else
         local DAEMON_STATUS
-        DAEMON_STATUS="$(the_emacs_daemon_is_running)"
-        # echo "[DEBUG] in bash function emacs(), a call to bash function the_emacs_daemon_is_running() yielded output '$DAEMON_STATUS'"
+        DAEMON_STATUS=$(the-emacs-daemon-is-running)
+        # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
 
-        if [[ "$DAEMON_STATUS" = "0" ]]; then
+        if [[ $DAEMON_STATUS -eq 0 ]]; then
             emacsclient --tty "$@"
         else
             echo "error: the emacs daemon is not running. Start it as follows:"
-            print_instructions_for_starting_the_emacs_daemon
+            print-instructions-for-starting-the-emacs-daemon
         fi
     fi
 }
@@ -986,7 +1037,7 @@ function gbb() {
     read DESCRIPTION
     DESC="$(branchify "$DESCRIPTION")"
     
-    NEW_BRANCH_NAME="$MY_GITHUB_USERNAME/$SHORTNAME/$DESC"
+    NEW_BRANCH_NAME="$GITHUB_USERNAME/$SHORTNAME/$DESC"
     
     echo "New branch is '$NEW_BRANCH_NAME'"    
     # gb "$NEW_BRANCH_NAME"
@@ -1028,6 +1079,21 @@ function branchify() {
 }
 
 ## GitHub-specific Git settings
+
+# branch BRANCH_NAME - display the GitHub web page for BRANCH_NAME
+function branch() {
+    local BRANCH_NAME
+    
+    if [[ $# -eq 0 ]]; then
+        BRANCH_NAME="$("gb")"
+    elif [[ $# -eq 1 ]]; then
+        BRANCH_NAME="$1"
+    else
+        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME]" > /dev/stderr
+    fi
+    
+    gh browse --branch "$BRANCH_NAME"
+}
 
 # gist - create a gist
 function gist() {
@@ -1079,19 +1145,25 @@ function gline() {
     fi
 }
 
-function branch() {
-    local BRANCH_NAME
-    
+function lst() {
+    local LAST_ARG_IS_THE_FILENAME
+
     if [[ $# -eq 0 ]]; then
-        BRANCH_NAME=$(gb)
-    elif
-        [[ $# -eq 1 ]]; then
-        BRANCH_NAME="$1"
+        git diff HEAD^ HEAD
     else
-        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME" > /dev/stderr
+        local LAST_ARG_IS_THE_FILENAME
+
+        for ARG in "$@"; do
+            LAST_ARG_IS_THE_FILENAME="$ARG"
+        done
+
+        # Set $@ to a an array slice
+        # that includies all the args
+        # except the last one ($# - 1)
+        set -- "${@:1:${#-1}}"
+
+        git diff "$@" HEAD^ HEAD -- "$LAST_ARG_IS_THE_FILENAME"
     fi
-    
-    gh browse --branch "$BRANCH_NAME"
 }
 
 function readme() {
@@ -1120,7 +1192,6 @@ function gl() {
 function gn()  { git diff --name-only "$@" ;}
 function gs()  { git status "$@" ;}
 
-
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi() {
     if git-rev-parse --is-inside-work-tree; then
@@ -1132,8 +1203,6 @@ function gi() {
             && git branch -m master main 2>/dev/null
     fi
 }
-
-## GitHub-specific settings
 
 # gcl (Git CLone) - quickly clone a repo belonging to my organization
 function gcl() {
@@ -1242,7 +1311,7 @@ function pr() {
         
         if [[ "$1" = "--list" ]]; then
             shift
-            gh pr list "$@"
+            gh pr list --author "$GITHUB_USERNAME" "$@"
         elif [[ "$1" =~ $PR_NUMBER_REGEX ]]; then
             gh pr view --web "$1"
         else
@@ -1274,6 +1343,7 @@ function fdd() {
     command fd \
         --exclude .git \
         --exclude .github \
+        --exclude node_modules \
         --follow \
         --full-path \
         --hidden \
@@ -1379,20 +1449,27 @@ function csview() { command csview "$@" | $PAGER ;}
 ####     ~/.pgpass
 
 function pg() {
-    local VERSION ENV_VAR_COMMAND
-    if [[ $# -lt 2 ]]; then
-        echo "pg: error: missing argument. Usage: pg POSTGRESQL_VERSION EXECUTABLE_NAME arguments"
-        echo "    (for instance, pg 14 psql -c 'SELECT 1')"
+    local  VERSION  PROGRAM_NAME  BINARY_PATH  COMMAND
+    
+    if [[ "$1" ]]; then
+        VERSION="$1"
+        shift
     else
-        VERSION="$1";
-        EXECUTABLE_NAME="$2"
-        shift
-        shift
-        if [[ "$EXECUTABLE_NAME" = "psql" ]] && [[ $# -eq 0 ]]; then
-            ENV_VAR_COMMAND="export PGSERVICE=pg${VERSION}"
-        fi
-        ( $ENV_VAR_COMMAND; $HOMEBREW_ROOT/Cellar/postgresql@${VERSION}/*/bin/$EXECUTABLE_NAME "$@" )
+        echo "pg: error: missing argument. Usage: pg VERSION [COMMAND] [ARG ...]" > /dev/stderr
+        return
     fi
+
+    if [[ "$1" ]]; then
+        PROGRAM_NAME="$1"
+        shift
+    else
+        PROGRAM_NAME="psql"
+    fi
+    
+    BINARY_PATH=$(echo $HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/$PROGRAM_NAME)
+
+    local ENV_VAR_COMMAND="export PGSERVICE=pg${VERSION}"
+    ($ENV_VAR_COMMAND; "$BINARY_PATH" "$@")
 }
 
 # replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or PSQL prompt)
@@ -1645,7 +1722,7 @@ function p() {
 # pe (Ps Emacs-daemon): show whether the Emacs daemon is running.
 function pe() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services | grep "$EMACS_PLUS_VERSION"
+        brew services | grep "$EMACS_VERSION"
     else
         ps auxwww | grep 'emacs.*daemon'
     fi
@@ -1654,7 +1731,7 @@ function pe() {
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services stop "$EMACS_PLUS_VERSION"
+        brew services stop "$EMACS_VERSION"
     else
         local EMACS_DAEMON_PID
         EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
@@ -1665,7 +1742,7 @@ function ke() {
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services start "$EMACS_PLUS_VERSION"
+        brew services start "$EMACS_VERSION"
         # Give it time to load my ~/.emacs.d/init.el
         sleep 2
     else
@@ -2005,10 +2082,6 @@ fi
 function activate-perlbrew() { source ~/perl5/perlbrew/etc/bashrc ;}
 function perlbrew-activate() { activate-perlbrew ;}
 
-# Uncomment if you want to stop timing how long each command in this
-# file takes to run.
-# set +xT
-
 function psql-tips() { links ~/src/psql-tips/html/psql_tips_all.html ;}
 function tips() { psql-tips "$@" ;}
 function mutt() { neomutt "$@" ;}
@@ -2219,7 +2292,7 @@ function jenkins-branch() {
 # https://kerisavoca.medium.com/how-to-make-a-link-that-creates-a-new-issue-in-jira-54ff93c61e24
 
 function jira-create-ticket() {
-    local USAGE ISSUE_TYPE PROJECT_ID ERROR_OCCURRED
+    local  USAGE  ISSUE_TYPE  PROJECT_ID  ERROR_OCCURRED
 
     USAGE="jira-create-ticket [ISSUE_TYPE [PROJECT_ID]]
 You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JIRA_DEFAULT_ISSUE_ID"
@@ -2241,10 +2314,13 @@ You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JI
 }
 
 function jc() {
+    if [[ $# -ne 0 ]]; then
+        echo "jc: warning: jc takes zero arguments; ignoring the $# passed"
+    fi
     jira-create-ticket > /dev/null
 }
 
-function jira-open-existing-ticket() {
+function jira-url-for-ticket-name() {
     local TICKET_NUMBER
     
     if [[ $# -ne 1 ]]; then
@@ -2266,7 +2342,27 @@ function jira-open-existing-ticket() {
             fi
         fi
 
-        open -u "${JIRA_BASE_URL}/browse/${TICKET_NUMBER}"
+        echo "${JIRA_BASE_URL}/browse/${TICKET_NUMBER}"
+    fi
+}
+
+function jira-open-existing-ticket() {
+    open "$(jira-url-for-ticket-name "$@")"
+}
+
+# Take a file of text pasted from the left sidebar of Jira's "detailed view".
+# Output properly labeled emacs org-mode links for each named ticket.
+# 
+# FIXME: later, make this work with stdin if "-" is the filename.
+function jira-to-org() {
+    local FILENAME
+    
+    if [[ $# -ne 1 ]]; then
+        echo "jira-to-org: error: missing argument. Usage: jira-to-org FILE" > /dev/stderr
+    else
+        for TICKET_NAME in $(awk 'NR % 2 == 1 {print $NF}'  "$FILENAME"); do
+            echo "[[$(jira-url-for "$TICKET_NAME")][$TICKET_NAME]"
+        done
     fi
 }
 
