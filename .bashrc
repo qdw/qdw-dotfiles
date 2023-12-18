@@ -170,7 +170,24 @@ function gfd() {
 
 # count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
 function count() { 
-    command grep -Rc $GREP_EXCLUDE_DIRS "$@" | command grep -v ':0$' | sed -e 's/\(.*\):\(.*\)/\2 \1/' | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
+    command grep -Rc $GREP_EXCLUDE_DIRS "$@" \
+        | command grep -v ':0$' \
+        | sed -e 's/\(.*\):\(.*\)/\2 \1/' \
+        | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
+}
+
+function count_one_level() {
+    local COUNT  PATTERN
+
+    PATTERN="$1"
+    shift
+
+    (for FILE in $@; do
+         COUNT=$(command grep -REio -E $GREP_EXCLUDE_DIRS --exclude "cdk.out" --exclude "*.js" --exclude "*.json"  "$FILE" | wc -l)
+         echo "$COUNT $FILE"
+    done) \
+    | command grep -vE "^0 " \
+    | sort --reverse --general-numeric-sort
 }
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
@@ -183,7 +200,7 @@ function occur() {
         OCCUR_PAGER="less --no-init --quit-if-one-screen"
     fi
     
-    $MY_GREP -Rl $GREP_EXCLUDE_DIRS "$@" | $OCCUR_PAGER
+    command grep -RlE $GREP_EXCLUDE_DIRS "$@" | $OCCUR_PAGER
 }
 
 
@@ -484,7 +501,14 @@ function secret() { get-secret "$@" ;}
 
 ## Emacs settings
 
-export EMACS_VERSION="emacs" # I'm no longer using emacs-plus@28
+set -a
+EMACS_BINARY="/opt/homebrew/bin/emacs"
+EMACSCLIENT_BINARY="/opt/homebrew/bin/emacsclient"
+EMACS_VARIANT="emacs"
+# EMACS_BINARY="/opt/homebrew/Cellar/emacs-plus@29/29.1/bin/emacs"
+# EMACSCLIENT_BINARY="/opt/homebrew/Cellar/emacs-plus@29/29.1/bin/emacsclient"
+# EMACS_VARIANT="emacs-plus@29"
+set +a
 
 function the-emacs-daemon-is-running() {
     local OUTPUT
@@ -500,7 +524,7 @@ function the-emacs-daemon-is-running() {
 
 function print-instructions-for-starting-the-emacs-daemon() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        echo "brew services start "$EMACS_VERSION""
+        echo "brew services start "$EMACS_VARIANT""
     elif [[ "$MY_OS" =~ Linux ]]; then
         echo "command emacs --bg-daemon"
     else
@@ -520,7 +544,7 @@ function emacs() {
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
         if [[ $# -gt 0 ]]; then
-            emacsclient --no-wait "$@"
+            "$EMACSCLIENT_BINARY" --no-wait "$@"
         else
             echo "You're already in emacs, genius" > /dev/stderr
         fi
@@ -530,7 +554,7 @@ function emacs() {
         # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
 
         if [[ $DAEMON_STATUS -eq 0 ]]; then
-            emacsclient --tty "$@"
+            "$EMACSCLIENT_BINARY" --tty "$@"
         else
             echo "error: the emacs daemon is not running. Start it as follows:"
             print-instructions-for-starting-the-emacs-daemon
@@ -538,10 +562,10 @@ function emacs() {
     fi
 }
 
-export VISUAL="emacs"
+export VISUAL="$EMACS_BINARY"
 export EDITOR="$VISUAL"
-export GIT_EDITOR="emacsclient"
-export PSQL_EDITOR="emacs -nw"
+export GIT_EDITOR="$EMACSCLIENT_BINARY"
+export PSQL_EDITOR="$EMACS_BINARY -nw"
 
 #### Permission settings
 
@@ -1390,7 +1414,7 @@ function oc() {
             open "$AUTH_URL"
         fi
     else
-        command oc "$@" | $PAGER    
+        command oc "$@" | $PAGER
     fi
 }
 
@@ -1504,9 +1528,9 @@ function ser() {
     local CONF=~/.pg_service.conf
 
     if [[ $# -eq 0 ]]; then
-        $VISUAL "$CONF"
+        "$VISUAL" "$CONF"
     else
-        para "\\[.*$1.*\\]" "$CONF"
+        para "\\[.*$1.*\\]" "$CONF" | grep "$CONF"
     fi
 }
 
@@ -1722,7 +1746,7 @@ function p() {
 # pe (Ps Emacs-daemon): show whether the Emacs daemon is running.
 function pe() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services | grep "$EMACS_VERSION"
+        brew services | grep "$EMACS_VARIANT"
     else
         ps auxwww | grep 'emacs.*daemon'
     fi
@@ -1731,7 +1755,7 @@ function pe() {
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services stop "$EMACS_VERSION"
+        brew services stop "$EMACS_VARIANT"
     else
         local EMACS_DAEMON_PID
         EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
@@ -1742,7 +1766,7 @@ function ke() {
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se() {
     if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services start "$EMACS_VERSION"
+        brew services start "$EMACS_VARIANT"
         # Give it time to load my ~/.emacs.d/init.el
         sleep 2
     else
@@ -1902,7 +1926,7 @@ function aa() { sudo apache2ctl "$@" ;}
 function atom() { newsbeuter "$@" ;}
 
 # cel FILE.el ("compile LISP") - byte-compile an emacs LISP file.
-function cel() { emacs -nw -q -batch -f batch-byte-compile "$@" ;}
+function cel() { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
 
 # d ("date") - give today's date in YYYY-MM-DD format.
 function d() { date +%Y-%m-%d ;}
@@ -2320,7 +2344,7 @@ function jc() {
     jira-create-ticket > /dev/null
 }
 
-function jira-url-for-ticket-name() {
+function jira-url-for() {
     local TICKET_NUMBER
     
     if [[ $# -ne 1 ]]; then
@@ -2347,7 +2371,7 @@ function jira-url-for-ticket-name() {
 }
 
 function jira-open-existing-ticket() {
-    open "$(jira-url-for-ticket-name "$@")"
+    open "$(jira-url-for "$@")"
 }
 
 # Take a file of text pasted from the left sidebar of Jira's "detailed view".
@@ -2360,8 +2384,9 @@ function jira-to-org() {
     if [[ $# -ne 1 ]]; then
         echo "jira-to-org: error: missing argument. Usage: jira-to-org FILE" > /dev/stderr
     else
+        FILENAME="$1"   
         for TICKET_NAME in $(awk 'NR % 2 == 1 {print $NF}'  "$FILENAME"); do
-            echo "[[$(jira-url-for "$TICKET_NAME")][$TICKET_NAME]"
+            echo "[[$(jira-url-for "$TICKET_NAME")][$TICKET_NAME]]"
         done
     fi
 }
@@ -2410,11 +2435,11 @@ function jql() {
 }
 
 function epics() {
-    jql "(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic"
+    jql "(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic AND resolution = Unresolved ORDER BY updated DESC"
 }
 
 function jmine() {
-    jql "(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved order by updated DESC"
+    jql "(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved ORDER BY updated DESC"
 }
 
 #### Music-related settings

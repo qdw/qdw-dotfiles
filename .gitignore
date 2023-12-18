@@ -1,3 +1,9 @@
+# Git: hooks and meta-stuff
+**/.husky/**
+hooks**
+initialize-repo.sh
+.gitattributes
+
 # Compiled objects
 .pyc .elc .o __pycache__
 
@@ -26,11 +32,6 @@ history
 auto-save-list
 desktop
 .projectile
-
-# Git: hooks and meta-stuff
-.husky/**
-hooks**
-initialize-repo.sh
 
 # Other editor/IDE/operating system droppings
 .DS_Store

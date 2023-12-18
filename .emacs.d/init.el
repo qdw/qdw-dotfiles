@@ -121,7 +121,7 @@ Test cases
   (save-window-excursion
     (async-shell-command
      (format
-      "subl --background %S:%d"
+      "/opt/homebrew/bin/subl --background %S:%d"
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
