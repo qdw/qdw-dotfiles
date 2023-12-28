@@ -116,7 +116,7 @@ Test cases
 ;;;; FIXME: abstract this repetitive code
 
 ;; FIXME: abstract this repetitive code
-(defun open-in-sublime-text ()
+(defun sublime ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -125,9 +125,7 @@ Test cases
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
-(defalias 'sublime 'open-in-sublime-text)
-
-(defun open-in-gvim ()
+(defun gvim ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -137,7 +135,7 @@ Test cases
       (shell-quote-argument buffer-file-name)
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
-(defun open-in-vscode ()
+(defun vscode ()
   (interactive)
   (save-window-excursion
     (async-shell-command
@@ -145,9 +143,6 @@ Test cases
              (expand-file-name "~/.emacs.d/open-file-in-macos-vscode.scpt")
              (shell-quote-argument buffer-file-name)
              (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
-
-(global-set-key (kbd "C-c v")
-                'open-in-vscode)
 
 
 ;; (if (getenv "TMUX")
