@@ -502,12 +502,9 @@ function secret() { get-secret "$@" ;}
 ## Emacs settings
 
 set -a
-EMACS_BINARY="/opt/homebrew/bin/emacs"
-EMACSCLIENT_BINARY="/opt/homebrew/bin/emacsclient"
-EMACS_VARIANT="emacs"
-# EMACS_BINARY="/opt/homebrew/Cellar/emacs-plus@29/29.1/bin/emacs"
-# EMACSCLIENT_BINARY="/opt/homebrew/Cellar/emacs-plus@29/29.1/bin/emacsclient"
-# EMACS_VARIANT="emacs-plus@29"
+EMACS_BINARY="$HOMEBREW_BIN/emacs"
+EMACSCLIENT_BINARY="$HOMEBREW_BIN/emacsclient"
+EMACS_VARIANT="emacs-plus@29"
 set +a
 
 function the-emacs-daemon-is-running() {
@@ -1745,11 +1742,7 @@ function p() {
 
 # pe (Ps Emacs-daemon): show whether the Emacs daemon is running.
 function pe() {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services | grep "$EMACS_VARIANT"
-    else
-        ps auxwww | grep 'emacs.*daemon'
-    fi
+    p -i 'emacs.*daemon'
 }
 
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
