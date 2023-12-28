@@ -1218,7 +1218,7 @@ function gs()  { git status "$@" ;}
 
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi() {
-    if git-rev-parse --is-inside-work-tree; then
+    if git rev-parse --is-inside-work-tree; then
         echo "gi: error: $(pwd) is already under git control"
     else
         git init \
