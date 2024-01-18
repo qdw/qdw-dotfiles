@@ -8,6 +8,7 @@
 (require 'magit)
 (require 'menu-bar)   
 (require 'org)
+(require 'osx-trash)
 (require 'package)
 (require 'ruby-mode)
 (require 'scroll-bar)
@@ -220,14 +221,19 @@ Test cases
 ;;;; macOS settings
 
 (when (string= system-type "darwin")
+
   ;; In macOS, the bundled BSD ls doesn't play well with Emacs,
   ;; so use Homebrewed GNU ls instead
   (dolist (gnu-ls '("/opt/homebrew/bin/gls" "/usr/local/bin/gls"))
     (when (file-exists-p gnu-ls)
       (setq insert-directory-program gnu-ls
             dired-use-ls-dired t
-            dired-listing-switches "-aBhl --group-directories-first"))))
+            dired-listing-switches "-aBhl --group-directories-first")))
             
+  ;; When I delete files in dired, send them to the macOS Trash
+  (osx-trash-setup)
+  (setq-default delete-by-moving-to-trash 't))
+
 ;;;; Human-language settings (including English)
 
 ;; From xahlee.org
@@ -384,43 +390,22 @@ This command does the reverse of `fill-region'."
 ;;                 (open-in-gvim)
 ;;                 (open-in-vscode))))
 
-;;;; org-mode settings (a.k.a. org settings)
+;;;; org-mode settings
 
-(add-to-list 'org-file-apps
-             (cons "png" "open %s"))
-             
-(defun org-fold ()
-  (interactive)
-  (org-set-property "VISIBILITY" "folded"))
+;; Hide the PROPERTIES section if folded;
+;; pasted from https://stackoverflow.com/a/17492723
+;; Open *.org_archive files in read-only mode;
+;; the record of completed items should be immutable.
+(defun qdw-org-archive-read-only-hook ()
+  (when (string-match "[.]org_archive" buffer-file-name)
+        (read-only-mode)))
+(add-hook 'find-file-hook 'qdw-org-archive-read-only-hook)
 
-(defun org-insert-slack-link (channel-name)
-  (interactive "MSlack channel (without the '#'): ")
-  (org-insert-link nil
-                   (concat "https://" slack-team ".slack.com/channels/#" channel-name)
-                   (concat "#" channel-name)))
-                   
-(add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c s") 'org-insert-slack-link)))
-
-
-(defun org-insert-jira-link (ticket-name)
-  (interactive "MTicket name (e.g. DATAPLAT-000): ")
-  (org-insert-link nil
-                   (concat jiralib-url "/browse/" ticket-name)
-                   ticket-name))
-                   
-(add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c j") 'org-insert-jira-link)))
-
-(defun org-insert-pr-link (repo pr-number)
-  (interactive "MRepo: \nnPR number: ")
-  (org-insert-link nil
-                   (format "https://github.com/%s/%s/pull/%s"
-                           getenv("GITHUB_ORG")
-                           repo
-                            pr-number)))
-
-(setq-default org-catch-invisible-edits "show")
-
-(setq-default
+(setq-default ;; for yet more org-mode settings, see ~/.emacs.d/site-lisp.el
+  org-startup-folded 't
+  org-cycle-separator-lines -2
+  org-return-follows-link 't 
+  org-agenda-files (list (expand-file-name "~/main.org"))
   org-todo-keywords
   '((sequence
      "TODO(t)"
@@ -457,12 +442,10 @@ This command does the reverse of `fill-region'."
     ("POSTPONED" . "#ffff00")
     ("INFO" . "#ffff00")
     ("PROJECT" . "#00afff")
-    ("IN_PROGRESS" . "color-46") ;; "#00ff00")
-    )
-  )
-  
-;; Hide the PROPERTIES section if folded;
-;; pasted from https://stackoverflow.com/a/17492723
+    ("IN_PROGRESS" . "color-46")))
+
+(add-to-list 'org-file-apps
+             (cons "png" "open %s"))
 
 (defun org-cycle-hide-drawers (state)
   "Re-hide all drawers after a visibility state change."
@@ -500,32 +483,65 @@ This command does the reverse of `fill-region'."
                   (outline-flag-region start (point-at-eol) t)
                   (user-error msg))))))))))
 
-(defun org-archive-read-only-hook ()
-  (when (string-match "[.]org_archive" buffer-file-name)
-        (read-only-mode)))
-;; (add-hook 'find-file-hook 'org-archive-read-only-hook)
+;; Damn, GPT is good at writing code to English-language spec
+(defun org-fold ()
+  "Set the VISIBILITY property of the element at point to 'folded' in org-mode."
+  (interactive)
+  (when (org-at-heading-p)
+    (org-set-property "VISIBILITY" "folded")))
 
-(defun qdw-org-insert-subheading-respect-content (arg)
+;; Another gem from org-mode. Prompt:
+;; Please write me an interactive Emacs function that starts a
+;; minibuffer dialog like the "Find file: " dialog, but with the label
+;; "Link to file." The function should handle tab completion the same
+;; way that find-file does, including tilde expansion. After you
+;; choose a filename and hit RET, the function should prompt you for
+;; the visible link text, supplying the basename of the file as a
+;; default option if you just hit RET without specifying a label.
+(defun org-insert-file-link ()
+  "Insert a link to a local file."
+  (interactive)
+  (let* ((filename (read-file-name "Link to file: "))
+         (link-text (read-string "Link text: " (file-name-nondirectory filename))))
+    (insert (format "[[file:%s][%s]]" filename link-text))))
+
+(defun org-insert-slack-link (channel-name)
+  (interactive "MSlack channel (without the '#'): ")
+  (org-insert-link nil
+                   (concat "https://" slack-team ".slack.com/channels/#" channel-name)
+                   (concat "#" channel-name)))            
+
+(defun org-insert-jira-link (ticket-name)
+  (interactive "MTicket name (e.g. DATAPLAT-000): ")
+  (org-insert-link nil
+                   (concat jiralib-url "/browse/" ticket-name)
+                   ticket-name))
+
+(defun org-insert-pr-link (repo pr-number)
+  (interactive "MRepo: \nnPR number: ")
+  (org-insert-link nil
+                   (format "https://github.com/%s/%s/pull/%s"
+                           getenv("GITHUB_ORG")
+                           repo
+                           pr-number)))
+
+(defun org-insert-subheading-respect-content (arg)
   (interactive "P")
-  (org-insert-heading-respect-content arg)
+  (org-insert-todo-subheading-respect-content arg)
     (cond
       ((org-at-heading-p) (org-do-demote))
       ((org-at-item-p) (org-indent-item))))
 
-;; For more org-mode settings, see ~/.emacs.d/site-lisp.el
-(setq-default
- org-cycle-separator-lines -2
- org-return-follows-link 't 
- org-agenda-files (list (expand-file-name "~/main.org")))
-
-(define-key org-mode-map (kbd "C-c (")   'org-promote-subtree)
-(define-key org-mode-map (kbd "C-c )")   'org-demote-subtree)
-(define-key org-mode-map (kbd "C-c [")   'org-table-move-column-left)
-(define-key org-mode-map (kbd "C-c ]")   'org-table-move-column-right)
-(define-key org-mode-map (kbd "C-c RET") 'qdw-org-insert-subheading-respect-content)
-
-;; By default, open .org files with headings collapsed
-;; (setq-default org-startup-folded 't)
+(add-hook 'org-mode-hook
+          (lambda ()
+            (keymap-set org-mode-map "C-c s" 'org-insert-slack-link)
+            (keymap-set org-mode-map "C-c j" 'org-insert-jira-link)
+            (keymap-set org-mode-map "C-c (" 'org-promote-subtree)
+            (keymap-set org-mode-map "C-c )" 'org-demote-subtree)
+            (keymap-set org-mode-map "C-c [" 'org-table-move-column-left)
+            (keymap-set org-mode-map "C-c ]" 'org-table-move-column-right)
+            
+            ))
 
 ;;;; Help
 
@@ -533,12 +549,6 @@ This command does the reverse of `fill-region'."
 (define-key 'help-command (kbd "C-f") 'find-function) ;; Look up Emacs func src.
 (define-key 'help-command (kbd "C-k") 'find-function-on-key) ;; " " macro src.
 (define-key 'help-command (kbd "C-v") 'find-variable) ;; " " variable definition
-
-;;;; Projectile
-
-;; (grep-apply-setting 'grep-command "ggrep -E --with-filename --line-number --regexp ")
-(projectile-mode +1)
-(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
 ;;;; Viewport management
 
@@ -568,8 +578,7 @@ This command does the reverse of `fill-region'."
              (set-window-start w2 s1)
              (setq i (1+ i)))))))
              
-(global-unset-key (kbd "C-x C-o"))
-(global-set-key (kbd "C-x C-o") 'rotate-windows)
+(global-set-key (kbd "C-c C-o") 'rotate-windows)
 
 (defun other-window-reverse ()
   (interactive)
@@ -577,8 +586,9 @@ This command does the reverse of `fill-region'."
   
 
 ;; Editor macros
+
 (global-set-key (kbd "C-(") 'eval-expression)
-(global-set-key (kbd "C-c 0") 'async-shell-command)
+(global-set-key (kbd "C-c !") 'async-shell-command)
 (global-set-key (kbd "C-c i") 'indent-region)
 (global-set-key (kbd "C-c c") 'comment-region)
 (global-set-key (kbd "C-c u") 'uncomment-region)
@@ -730,23 +740,22 @@ This command does the reverse of `fill-region'."
           (lambda ()
             (local-set-key
              "\r"
-             (lambda ()
-               (electric-newline-and-maybe-indent)
-               (clang-format-buffer)))))
-
+             'electric-newline-and-maybe-indent)))
 
 ;;;; Lisp settings FIXME: use slime.el instead
 (setq lisp-indent-function 'common-lisp-indent-function)
 (add-hook 'lisp-mode-hook (lambda ()
                             (eldoc-mode +1)))
 
-;; When I run C-( or M-:
+;; When I run C-(
 ;; (which lets me write and eval a quick Lisp expression
 ;; in the minibuffer),
 ;; add the opening parenthesis for me.
 (add-hook 'eval-expression-minibuffer-setup-hook
-	  (lambda () ;; confirmation number 492 474 2781
+	  (lambda ()
 	    (insert "(")))
+            
+(global-set-key (kbd "C-c :") 'eval-expression)
 
 ;;;; JSON settings
 
@@ -840,8 +849,9 @@ This command does the reverse of `fill-region'."
      ("`" org-code verbatim)
      ("~"
       (:strike-through t))))
+ '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro projectile gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 
 

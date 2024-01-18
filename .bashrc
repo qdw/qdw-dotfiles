@@ -551,7 +551,7 @@ function emacs() {
         # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
 
         if [[ $DAEMON_STATUS -eq 0 ]]; then
-            "$EMACSCLIENT_BINARY" --tty "$@"
+            "$EMACSCLIENT_BINARY" --tty --no-wait "$@"
         else
             echo "error: the emacs daemon is not running. Start it as follows:"
             print-instructions-for-starting-the-emacs-daemon
@@ -1937,14 +1937,14 @@ function dfr() {
 
 # ff [PROFILE_NAME] - run Firefox with a profile. No args? Open the dialog box to list/create profiles.
 function ff() {
-    FIREFOX_EXECUTABLE='/Applications/Firefox.app/Contents/MacOS/firefox-bin'
-    if [[ $1 ]]; then
+    FIREFOX_EXECUTABLE="/Applications/Firefox.app/Contents/MacOS/firefox-bin"
+    if [[ $# -eq 1 ]]; then
         # Run with a specific profile, named in $1.
-        sh -exec "$FIREFOX_EXECUTABLE -ProfileManager $1"
+        "$FIREFOX_EXECUTABLE" -ProfileManager "$1" & exit
     else
         # Run the Profile Manager (which allows you to view all profiles and
         # add a new one).
-        sh -exec "$FIREFOX_EXECUTABLE -p"
+        "$FIREFOX_EXECUTABLE" -p & exit
     fi
 }
 
