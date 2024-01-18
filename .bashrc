@@ -145,14 +145,14 @@ export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
 
 
 export GREP_COLORS="fn=01;36"
-GREP_EXCLUDE_DIRS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore"
+GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json"
 GREP_OPTIONS="-I --color=always"
 
-function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
-function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" | $PAGER;}
-function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS --exclude '*.js' "$@" | $PAGER ;}
-function gbr() {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-function ge() {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_DIRS "$@" ~/.emacs.d ;}
+function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER;}
+function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER;}
+function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS --exclude '*.js' "$@" | $PAGER ;}
+function gbr() {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+function ge() {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.emacs.d ;}
 
 function gfd() {
     local REGEX USAGE
@@ -170,7 +170,7 @@ function gfd() {
 
 # count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
 function count() { 
-    command grep -Rc $GREP_EXCLUDE_DIRS "$@" \
+    command grep -Rc $GREP_EXCLUDE_FLAGS "$@" \
         | command grep -v ':0$' \
         | sed -e 's/\(.*\):\(.*\)/\2 \1/' \
         | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
@@ -183,7 +183,7 @@ function count_one_level() {
     shift
 
     (for FILE in $@; do
-         COUNT=$(command grep -REio -E $GREP_EXCLUDE_DIRS --exclude "cdk.out" --exclude "*.js" --exclude "*.json"  "$FILE" | wc -l)
+         COUNT=$(command grep -REio -E $GREP_EXCLUDE_FLAGS --exclude "cdk.out" --exclude "*.js" --exclude "*.json"  "$FILE" | wc -l)
          echo "$COUNT $FILE"
     done) \
     | command grep -vE "^0 " \
@@ -200,7 +200,7 @@ function occur() {
         OCCUR_PAGER="less --no-init --quit-if-one-screen"
     fi
     
-    command grep -RlE $GREP_EXCLUDE_DIRS "$@" | $OCCUR_PAGER
+    command grep -RlE $GREP_EXCLUDE_FLAGS "$@" | $OCCUR_PAGER
 }
 
 
