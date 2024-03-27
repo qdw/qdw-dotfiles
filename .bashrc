@@ -1729,12 +1729,17 @@ function mshost() {
 # Display all processes, in a style that I like. If an argument is given, interpret it as a grep regex, and display only those that match that regex.
 function p() {
     local HEADER PROCS
-
-    HEADER=$(ps auxwww | head -1)
-    PROCS=$(ps auxwww | command grep -v grep | grep "$@")
-    if [[ -n "$PROCS" ]]; then
-        echo "$HEADER"
-        echo "$PROCS"
+    local PS_COMMAND="ps auxwww"
+    
+    if [[ $# -eq 0 ]]; then
+        $PS_COMMAND | $PAGER
+    else
+        HEADER=$($PS_COMMAND | head -1)
+        PROCS=$($PS_COMMAND | command grep -v grep | grep "$@")
+        if [[ -n "$PROCS" ]]; then
+            echo "$HEADER"
+            echo "$PROCS"
+        fi
     fi
 }
 
