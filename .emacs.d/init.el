@@ -15,9 +15,6 @@
 (require 'sh-script)
 (require 'tool-bar)
 
-;; Experimental
-(require 'ivy)
-
 ;;;; Color settings
 
 (add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes"))
@@ -302,19 +299,18 @@ This command does the reverse of `fill-region'."
 ;;;; Basic comfort
 
 (setq-default
- ;;;; macOS-specific settings
+ ;;;; Settings for use with macOS
  read-file-name-completion-ignore-case nil ;; Consider filenames case-sensitive
 
- ;;;; General file format settings
  prefer-coding-system 'utf-8         ;; Iff file contains non-ASCII chars
  large-file-warning-threshold 100000000 ;; Warn when opening large files
- ;; require-final-newline 't            ;; Make, e.g., 'wc -l' work right
+ require-final-newline 't            ;; Make, e.g., 'wc -l' work right
 
- ;;;; Autocorrect-like settings
+ ;; Natural-language settings
  auto-fill-mode nil                  ;; Don't automatically hard-break lines
  word-wrap nil
  colon-double-space nil              ;; Single-space: always
- sentence-end-double-space nil       ;; Single-space: always
+ sentence-end-double-space nil       ;; Single-space. Always
  delete-selection-mode +1            ;; Overwrite selection when I type
 
  ;;;; Auto-indentation settings
@@ -324,7 +320,6 @@ This command does the reverse of `fill-region'."
  org-indent-indentation-per-level 4
  typescript-indent-level 2
 
- ;;;; FIXME: organize these settings
  calendar-week-start-day 1           ;; First day of the week = Monday
  isearch-allow-scroll 'unlimited
  transient-mark-mode 't              ;; Operate on highlighted region
