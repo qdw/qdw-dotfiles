@@ -36,6 +36,7 @@
 
 [alias]
 	char-diff = diff --word-diff-regex=.
+	ch = "!function _ch() { git diff \"${1}^\" \"${1}\" ;}; _ch "
 	co = checkout
 	comp = diff --compact-summary
 	dr = "!git diff  \"origin/$(git branch --show-current)\"  \"$(git branch --show-current)\"  "
