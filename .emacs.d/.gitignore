@@ -1,3 +1,4 @@
 secrets.el
+site-lisp/**
 transient/**
 upstart.el

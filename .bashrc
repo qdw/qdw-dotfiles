@@ -29,6 +29,10 @@
 # command, then turn on tracing. This makes the trace much more
 # uncluttered.
 
+function carp() {
+    echo "$@" > /dev/stderr
+}
+
 function setx() {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
@@ -200,7 +204,7 @@ function occur() {
         OCCUR_PAGER="less --no-init --quit-if-one-screen"
     fi
     
-    command grep -RlE $GREP_EXCLUDE_FLAGS "$@" | $OCCUR_PAGER
+    command grep -RlE $GREP_EXCLUDE_FLAGS "$@" | sort | $OCCUR_PAGER
 }
 
 
@@ -333,6 +337,7 @@ else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
     export PAGER="command less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+    export GIT_PAGER="$PAGER -j 2" # Show an extra line before match - useful with 'git diff'
     export PSQL_PAGER="less --no-init"
 
     if command -v jless > /dev/null; then
@@ -347,13 +352,12 @@ function less() { $PAGER "$@" ;}
 set -a
 ACK_PAGER="$PAGER"
 BAT_PAGER="less --RAW-CONTROL-CHARS --no-init --mouse"
-GIT_PAGER="$PAGER"
 MANPAGER="$PAGER"
 set +a
 
 #### Markdown settings
 
-export GLAMOUR_STYLE="Dark"
+# export GLAMOUR_STYLE="Dark"
 readme() {
     gh repo view
 }
@@ -407,6 +411,16 @@ function ldd() {
 # set +a
 
 #### AWS settings
+
+function iam() {
+    if [[ $# -eq 0 ]]; then
+        echo "USAGE:"
+        echo
+        echo 'iam --hostname "$host" --port "$port" --region "$region" --username "$user" --profile "$profile"'
+    else
+        aws rds generate-db-auth-token "$@"
+    fi
+}
 
 # tags - show CDK tags for a project
 function tags() {
@@ -498,8 +512,7 @@ function get-secret() {
 function secret() { get-secret "$@" ;}
 
 #### Editor settings
-
-## Emacs settings
+#### Emacs settings
 
 set -a
 EMACS_BINARY="$HOMEBREW_BIN/emacs"
@@ -507,16 +520,19 @@ EMACSCLIENT_BINARY="$HOMEBREW_BIN/emacsclient"
 EMACS_VARIANT="emacs-plus@29"
 set +a
 
-function the-emacs-daemon-is-running() {
-    local OUTPUT
+### Emacs daemon settings
 
+function pe() { 
     command ps auxwww \
         | command grep "$USER" \
-        | command grep -v grep \
-        | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)" \
-                  > /dev/null
-    OUTPUT=$?
-    echo $OUTPUT
+        | command grep -vF grep \
+	| command grep -vE "gnupg|gpg" \
+        | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)"
+}
+
+function the-emacs-daemon-is-running() {
+    pe > /dev/null
+    echo $?
 }
 
 function print-instructions-for-starting-the-emacs-daemon() {
@@ -527,6 +543,41 @@ function print-instructions-for-starting-the-emacs-daemon() {
     else
         echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print-instructions-for-starting-the-emacs-daemon"
     fi
+}
+
+# ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
+function ke() {
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        brew services stop "$EMACS_VARIANT"
+    else
+        local EMACS_DAEMON_PID
+        EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
+        kill "$EMACS_DAEMON_PID"
+    fi
+}
+
+# se (Start Emacs-daemon): start the Emacs daemon.
+function se() {
+    local DAEMON_STATUS
+    DAEMON_STATUS="$(the-emacs-daemon-is-running)"
+    if [[ "$DAEMON_STATUS" -eq 0 ]]; then
+        echo "Looks like the emacs daemon is already running"
+        return
+    else
+        if [[ "$MY_OS" = "Darwin" ]]; then
+            brew services start "$EMACS_VARIANT"
+        else
+            emacs --bg-daemon
+        fi
+        
+	# Give it time to start up and load my ~/.emacs.d/init.el
+        sleep 4
+    fi
+}
+
+# re (Restart Emacs-daemon): stop it, then start it.
+function re() {
+    ke && se
 }
 
 # If we're in a terminal session, start an emacsclient session inside that terminal
@@ -962,6 +1013,56 @@ set +a
 
 export GIT_SHELL_PATH="$HOMEBREW_BIN/bash"
 
+function branch-name() {
+    local PHRASE_STRING
+    if [[ $# -eq 1 ]]; then
+        PHRASE="$1"
+        kebab-case "$(strip-punctuation "$PHRASE")"
+    else
+        carp "branch-name: error: wrong number of arguments. Usage: branch-name 'Some (explanatory) phase'"
+    fi
+}
+
+function popb() {
+    command popb --quiet "$@"
+}
+
+function pushb() {
+    local NEW_BRANCH
+    
+    if [[ $# -eq 1 ]] && { [[ "$1" = "-l" ]] || [[ "$1" = "--list" ]] }; then
+        command popb --list
+    else
+        command pushb --quiet "$@"
+    fi
+}
+
+function strip-punctuation() {
+    local INPUT_STRING
+
+    if [[ $# -eq 1 ]]; then
+        INPUT_STRING="$1"
+        echo "$INPUT_STRING" | tr -d '[:punct:]'
+    else
+        carp "strip-punctuation: error: wrong number of arguments. Usage: strip-punctuation 'my string'"
+    fi
+}
+
+# kebab-case convert "A Phrase with mixed Case" to "a-phrase-with-mixed-case"
+# (useful for generating git branch names)
+function kebab-case() {
+    local INPUT_STRING
+
+    if [[ $# -eq 1 ]]; then
+        INPUT_STRING="$1"
+        echo "$INPUT_STRING" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'
+    else
+        carp "kebab-case: error: wrong number of arguments. Usage: kebab-case 'My input String'"
+    fi   
+}
+
+function lisp-case() { kebab-case "$@" ;}
+
 # gcd ("Git CD") - cd to a directory, relative to the root dir of this repo.
 function gcd() {
     # gcd ("Git CD") - cd to a directory, relative to the root dir of this repo
@@ -1232,6 +1333,8 @@ function gcl() {
         && git clone "git@github.com:${GITHUB_ORG}/${REPO}"
 }
 
+function clone() { gcl "$@" ;}
+
 # repos - multitool for listing/searching GitHub repositories 
 function repos() {
     PATTERN="$1"
@@ -1299,7 +1402,23 @@ function repo() {
 #     pr crv    # Same thing.
 #
 # PR (Pull Request) - manipulate GitHub pull requests
+
+# show my latest PR (and capture the PR number)
+function spr() {
+    gh pr list --author @me --state open --limit 1 "$@"
+
+    # local PR_NUMBER=$($LIST_COMMAND) # | awk '{print $1}') # | tee >(awk '{print $1}'))
+    # echo ">'$PR_NUMBER'<"
+    # $LIST_COMMAND
+    # gh pr view "$PR_NUMBER" --json url --jq '.url' | tee >(tr -d '\n' | pbcopy)
+}
+
+
 function pr() {
+    list_my_prs() {
+        gh pr list --author "$GITHUB_USERNAME" "$@"
+    }
+
     push_it() {
         # Push to a remote branch (creating if necessary)
         local BRANCH
@@ -1324,6 +1443,7 @@ function pr() {
                 # URL=$(gh pr create --fill 2>&1 | tail -1)
                 gh pr create --fill
             fi
+            list_my_prs
         fi
     }
     
@@ -1332,7 +1452,7 @@ function pr() {
         
         if [[ "$1" = "--list" ]]; then
             shift
-            gh pr list --author "$GITHUB_USERNAME" "$@"
+            list_my_prs
         elif [[ "$1" =~ $PR_NUMBER_REGEX ]]; then
             gh pr view --web "$1"
         else
@@ -1348,9 +1468,9 @@ function prs() {
     pr --list
 }
 
-# pru ("Pull Request URL") - print the URL of the latest pull request on this branch.
+# purl ("Pull request URL") - print the URL of the latest pull request on this branch.
 # Also copy it to the clipboard.
-function pru() {
+function purl() {
     gh pr view | command grep --color=never --only-matching 'https://.*' | tee >(pbcopy)
 }
 
@@ -1380,7 +1500,7 @@ function fdgrep() {
     local FILENAME_REGEX="$1"; shift
     local GREP_REGEX="${!#}"; set -- "${@:1:$(($#-1))}"
     
-    local FILES=$(fdd "$FILENAME_REGEX")
+    local FILES=$(fdd --type f "$FILENAME_REGEX")
     if [[ "$FILES" ]]; then
         grep -Ri "$@" "$GREP_REGEX" $FILES
     fi
@@ -1459,7 +1579,6 @@ function pd_encode() {
 }
 
 #### Data risotto spatulae
-
 function csview() { command csview "$@" | $PAGER ;}
 
 #### PostgreSQL settings
@@ -1493,7 +1612,23 @@ function pg() {
     ($ENV_VAR_COMMAND; "$BINARY_PATH" "$@")
 }
 
-# replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or PSQL prompt)
+function pgpassword() {
+    read -se PGPASSWORD
+    export PGPASSWORD
+}
+
+function qql() {
+    if [[ $# -eq 1 ]]; then
+        read -sep "Enter the password for '$1': " PGPASSWORD
+        export PGPASSWORD
+        PGSERVICE="$1" psql
+    else
+        echo "qql: error: wrong number of arguments. Usage: qql pg_service.conf-stanza-name" \
+            > /dev/stderr
+    fi
+}
+
+# replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or psql prompt)
 function replication_role()
 {
     if ! which psql; then
@@ -1522,12 +1657,48 @@ function replication_role()
 # 
 # ser - display sections of my ~/.pg_service.conf, or the whole thing
 function ser() {
-    local CONF=~/.pg_service.conf
+    local REGEX
+    
+    if [[ $# -eq 0 ]]; then
+        echo "ser: missing argument. Usage: ser [GREP_FLAG ...] REGEX" > /dev/stderr
+    else
+        REGEX="$1"
+        shift
+
+        command grep -E $@ "^[[].*$REGEX.*[]]" ~/.pg_service.conf
+    fi
+}
+
+function load_pg_password {
+    local SERVICE_NAME
+
+    if [[ $# -ne 1 ]]; then
+        echo "load_pg_password: error: wrong number of arguments. Usage: load_pg_password PG_SERVICE_STANZA_NAME" > /dev/stderr
+    else
+        SERVICE_NAME="$1"
+        ENV_VAR_NAME="PGPASSWORD_${SERVICE_NAME}"
+        read -sep "Password for service '$SERVICE_NAME': "  "$ENV_VAR_NAME"
+        export "$ENV_VAR_NAME"
+    fi
+}
+
+function qql_plus() {
+    local SERVICE_NAME
 
     if [[ $# -eq 0 ]]; then
-        "$VISUAL" "$CONF"
+        echo "load_pg_password: error: wrong number of arguments. Usage: qql_plus PG_SERVICE_STANZA_NAME [PSQL_ARG...]" > /dev/stderr
     else
-        para "\\[.*$1.*\\]" "$CONF" | grep "$CONF"
+        SERVICE_NAME="$1"
+        shift
+        
+        ENV_VAR_NAME="PGPASSWORD_${SERVICE_NAME}"
+        ENV_VAR_VALUE="${$ENV_VAR_NAME}"
+        
+        if [[ -z "$ENV_VAR_VALUE" ]]; then
+            read -sep "Enter the password for '$SERVICE_NAME': "  "$ENV_VAR_NAME"
+        fi
+        
+        PGSERVICE="$ENV_VAR_NAME" PGPASSWORD="$ENV_VAR_NAME" psql "$@"
     fi
 }
 
@@ -1724,7 +1895,7 @@ function mshost() {
     mhost "$COMMAND" "$@"
 }
 
-#### Password-generation settings
+#### Process-related settings
 
 # Display all processes, in a style that I like. If an argument is given, interpret it as a grep regex, and display only those that match that regex.
 function p() {
@@ -2517,7 +2688,7 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     PATHS_SET_AT="$(date)"
 
     ## executable PATH
-    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
     
     ## C settings/dynamic library path settings
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"

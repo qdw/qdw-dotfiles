@@ -1,3 +1,5 @@
+# -*- eval: (indent-tabs-mode 1) -*-
+	
 [user]
 	name = Quinn Weaver
 	email = quinn.weaver@gmail.com
@@ -51,6 +53,7 @@
 	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	s = status
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit
+	branch = branch --quiet
 
 [init]
 	defaultBranch = main
@@ -60,3 +63,5 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+[push]
+	autoSetupRemote = on

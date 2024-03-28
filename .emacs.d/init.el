@@ -1,3 +1,9 @@
+;; Emacs Lisp (.el) files get compiled to bytecode (.elc files).
+;; This code says to load the .el file if it is newer than its
+;; corresponding .elc file (which means that the .el file
+;; contains changes that haven't been compiled yet).
+(setq-default load-prefer-newer 't)
+
 (load (expand-file-name "~/.emacs.d/secrets.el") 't)
 
 (require 'ansi-color)
@@ -7,6 +13,7 @@
 (require 'json)
 (require 'magit)
 (require 'menu-bar)   
+(require 'origami)
 (require 'org)
 (require 'osx-trash)
 (require 'package)
@@ -14,6 +21,7 @@
 (require 'scroll-bar)
 (require 'sh-script)
 (require 'tool-bar)
+(require 'typescript-mode)
 
 ;;;; Color settings
 
@@ -113,6 +121,9 @@ Test cases
 ;;;; Alternative-editor settings
 ;;;; FIXME: abstract this repetitive code
 
+;; (defun open-in-other-editor (editor-path file-arg)
+  
+
 ;; FIXME: abstract this repetitive code
 (defun sublime ()
   (interactive)
@@ -172,7 +183,7 @@ Test cases
 
 ;; (add-to-list 'load-path
 ;;              (expand-file-name "~/.emacs.d/themes"))
-;; (oad-theme 'almost-mono-cream 't)
+;; (load-theme 'almost-mono-cream 't)
 
 ;; No matter what theme I chose above,
 ;; make the cursor orange.
@@ -195,26 +206,26 @@ Test cases
 ;; (defvar current-favorite-font "JetBrains Mono-14")
 ;; (defvar current-favorite-font "Fira Code-16")
 
-(add-hook 'after-make-frame-functions
+(defun initialize-ui ()
+    (cond ((display-graphic-p)
+           ;; If running in a GUI frame, set the font explicitly
+           ;; (unnecessary when running in a terminal)
+           (set-face-font 'default current-favorite-font frame))
+           ;; ;; I often mistake Emacs windows for iTerm2 windows,
+           ;; ;; press Command-N, and then get annoyed when I get another Emacs window.
+           ;; ;; So just remap Command-N to open an iTerm2 window! FIXME: broken
+           ;; (global-set-key (kbd "s-n")
+           ;;   (lamdba () nil)))
+           (t 
+            ;; If running in a terminal-based frame,
+            ;; enable terminal mouse integration.
+            (xterm-mouse-mode 1))))
 
-          ;; FIXME: figure out how to make this function run for the very first frame created when I launch Emacs
+(initialize-ui)
+(add-hook 'after-make-frame-functions
           (lambda (frame)
-            (if (display-graphic-p)              
-                
-                ;; If running in a GUI frame, set the font explicitly
-                ;; (unnecessary when running in a terminal)
-                (set-face-font 'default current-favorite-font frame)
-                
-                ;; If running in a terminal-based frame,
-                ;; enable terminal mouse integration.
-                (xterm-mouse-mode 1)))
-	  99)
-;;       ;; ;; I often mistake Emacs windows for iTerm2 windows,
-;;       ;; ;; press Command-N, and then get annoyed when I get another Emacs window.
-;;       ;; ;; So just remap Command-N to open an iTerm2 window! FIXME: broken
-;;       ;; (global-set-key (kbd "s-n")
-;;       ;;   (lamdba () nil)))
-  
+            (initialize-ui)))
+
 ;;;; macOS settings
 
 (when (string= system-type "darwin")
@@ -358,23 +369,15 @@ This command does the reverse of `fill-region'."
 (tool-bar-mode -1)   ;; Turn off toolbar.
 (menu-bar-mode -1)   ;; Turn off menubar.
 (scroll-bar-mode -1) ;; Turn off scrollbar.
-(blink-cursor-mode 0) ;; Use a solid cursor (blinking is too distracting).
+(blink-cursor-mode -1) ;; Use a solid cursor (blinking is too distracting).
 
-;;;; Settings for ecb, an emacs sidebar showing directory trees, compilation,
-;;;; lists of functions defined in the current file, and more
+;;;; Settings related to other editors
 
-;; (require 'ecb)
-;; (global-unset-key (kbd "M-e"))
-;; (global-set-key (kbd "M-e") 'ecb-show-layout-help)
-
-;;;; Other editors
-
-
+;;;; When I open a file in Emacs, automatically open it in other editors.
 ;; (add-hook 'find-file-hook
 ;;           (open-in-sublime-text)
 ;;           (open-in-gvim)
-;;           (open-in-vscode))
-                                
+;;           (open-in-vscode))                                
 ;;   (add-hook 'find-file-hook
 ;;             (lambda ()
 ;;               (letrec dirname (file-name-directory (buffer-file-name current-buffer))
@@ -400,7 +403,36 @@ This command does the reverse of `fill-region'."
   org-startup-folded 't
   org-cycle-separator-lines -2
   org-return-follows-link 't 
-  org-agenda-files (list (expand-file-name "~/main.org"))
+  org-agenda-files (list (expand-file-name "~/main.org")
+                         (expand-file-name "~/personal.org")
+                         ))
+
+(defun org-insert-slack-link (channel-name)
+  (interactive "MSlack channel (without the '#'): ")
+  (org-insert-link
+    nil
+    (concat "https://" slack-team ".slack.com/channels/#" channel-name)
+    (concat "#" channel-name)))
+
+(defun org-insert-jira-link (ticket-name)
+  (interactive "MTicket name (e.g. DATAPLAT-000): ")
+  (org-insert-link nil
+                   (concat jiralib-url "/browse/" ticket-name)
+                   ticket-name))
+                   
+
+
+(defun org-insert-pr-link (repo pr-number)
+  (interactive "MRepo: \nnPR number: ")
+  (org-insert-link nil
+                   (format "https://github.com/%s/%s/pull/%s"
+                           getenv("GITHUB_ORG")
+                           repo
+                            pr-number)))
+
+(setq-default org-catch-invisible-edits "show")
+
+(setq-default
   org-todo-keywords
   '((sequence
      "TODO(t)"
@@ -573,51 +605,10 @@ This command does the reverse of `fill-region'."
              (set-window-start w2 s1)
              (setq i (1+ i)))))))
              
-(global-set-key (kbd "C-c C-o") 'rotate-windows)
-
 (defun other-window-reverse ()
   (interactive)
   (other-window -1))
   
-
-;; Editor macros
-
-(global-set-key (kbd "C-(") 'eval-expression)
-(global-set-key (kbd "C-c !") 'async-shell-command)
-(global-set-key (kbd "C-c i") 'indent-region)
-(global-set-key (kbd "C-c c") 'comment-region)
-(global-set-key (kbd "C-c u") 'uncomment-region)
-(global-set-key (kbd "M-5")  'query-replace-regexp)
-(global-set-key (kbd "C-c C-l") 'display-line-numbers-mode)
-(global-set-key (kbd "C-h 1") 'describe-face)
-(global-set-key (kbd "C-c C-f") 'multi-occur-in-matching-buffers)
-(global-set-key (kbd "M-o") 'other-window)
-
-;;;; TRAMP: edit remote files as if they were local.
-
-;; TRAMP into Docker containers
-;; (code from https://www.emacswiki.org/emacs/TrampAndDocker):
-;; (defadvice tramp-completion-handle-file-name-all-completions
-;;   (around dotemacs-completion-docker activate)
-;;   "(tramp-completion-handle-file-name-all-completions \"\" \"/docker:\" returns
-;;     a list of active Docker container names, followed by colons."
-;;   (if (equal (ad-get-arg 1) "/docker:")
-;;       (let* ((dockernames-raw (shell-command-to-string "docker ps | awk '$NF != \"NAMES\" { print $NF \":\" }'"))
-;;              (dockernames (cl-remove-if-not
-;;                            #'(lambda (dockerline) (string-match ":$" dockerline))
-;;                            (split-string dockernames-raw "\n"))))
-;;         (setq ad-return-value dockernames))
-;;     ad-do-it))
-
-;; (push
-;;  (cons
-;;   "docker"
-;;   '((tramp-login-program "docker")
-;;     (tramp-login-args (("exec" "-it") ("%h") ("/bin/bash")))
-;;     (tramp-remote-shell "/bin/sh")
-;;     (tramp-remote-shell-args ("-i") ("-c"))))
-;; tramp-methods)
-
 ;;;; Directories and directory trees
 
 ;; dired is emacs's built-in mode for viewing and changing
@@ -754,7 +745,11 @@ This command does the reverse of `fill-region'."
 
 ;;;; JSON settings
 
-(setq-default json-encoding-default-indentation "    ")
+(setq-default json-encoding-default-indentation "  ")
+
+(add-hook 'json-mode-hook
+          (lambda ()
+            (origami-mode 1)))
 
 ;;;; Magit settings
 
@@ -821,9 +816,6 @@ This command does the reverse of `fill-region'."
  '(async-shell-command-buffer 'new-buffer)
  '(custom-safe-themes
    '("6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
- '(ecb-layout-name "left13")
- '(ecb-options-version "2.50")
- '(ecb-tip-of-the-day nil)
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
@@ -848,8 +840,6 @@ This command does the reverse of `fill-region'."
  '(package-selected-packages
    '(osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
-
-
 
 ;; FIXME: move these to my theme?
 (custom-set-faces
@@ -887,6 +877,10 @@ This command does the reverse of `fill-region'."
  (face-list))
 
 ;;;;;;;; Experimental area {{
+
+;; (defun t ()
+;;   (interactive)
+;;   (async-shell-command "gh pr view --web 12" "newbufout" "newbuferr"))
 
 ;; (defun my-after-push-hook ()
 ;;   (message "Pushed!"))
@@ -1032,3 +1026,62 @@ This command does the reverse of `fill-region'."
 ;; Load Emacs settings specific to this organization
 ;; (may override any of the settings above)
 (load (expand-file-name "~/.emacs.d/site-lisp.el") 't)
+
+;;;; Editor MACroS settings
+
+(add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c j") 'org-insert-jira-link)))
+(define-key 'help-command (kbd "C-f") 'find-function) ;; Look up Emacs func src.
+(define-key 'help-command (kbd "C-k") 'find-function-on-key)
+(define-key 'help-command (kbd "C-l") 'find-library)  ;; Look up Emacs Lisp lib.
+(define-key 'help-command (kbd "C-v") 'find-variable) ;; " " variable definition
+(define-key org-mode-map (kbd "C-c (")   'org-promote-subtree)
+(define-key org-mode-map (kbd "C-c )")   'org-demote-subtree)
+(define-key org-mode-map (kbd "C-c >")   'qdw-org-insert-subheading-respect-content)
+(define-key org-mode-map (kbd "C-c RET") 'org-insert-subheading)
+(define-key org-mode-map (kbd "C-c [")   'org-table-move-column-left)
+(define-key org-mode-map (kbd "C-c ]")   'org-table-move-column-right)
+(global-set-key (kbd "C-(")   'eval-expression)
+(global-set-key (kbd "C-c !") 'async-shell-command)
+(global-set-key (kbd "C-c %") 'query-replace-regexp)
+(global-set-key (kbd "C-c C-f") 'multi-occur-in-matching-buffers)
+(global-set-key (kbd "C-c C-s") 'isearch-forward-regexp)
+(global-set-key (kbd "C-c c") 'comment-region)
+(global-set-key (kbd "C-c i") 'indent-region)
+(global-set-key (kbd "C-c l") 'display-line-numbers-mode)
+(global-set-key (kbd "C-c C-o") 'rotate-windows)
+(global-set-key (kbd "C-c u") 'uncomment-region)
+(global-set-key (kbd "C-c v") 'vscode)
+(global-set-key (kbd "C-h 1") 'describe-face)
+(global-set-key (kbd "M-o") 'other-window-reverse)
+(global-set-key (kbd "M-5") 'query-replace-regexp)
+
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (local-set-key (kbd "C-c s") 'org-insert-slack-link)))
+
+;;; Code-folding
+(add-hook 'origami-mode-hook
+          (lambda ()
+            (define-key origami-mode-map
+                        (kbd "C-c f")
+                        'origami-toggle-node)
+            (define-key origami-mode-map
+                        (kbd "C-c C-f")
+                        'origami-toggle-node)))
+
+;; dired is emacs's built-in mode for viewing and changing
+;; the contents of a directory, including subdirs.
+;; 
+;; By default, when you press return while the point is on a subdir,
+;; it will open that subdir in a separate dired buffer.
+;; I don't want that, since it leads to a lot of unneeded buffers
+;; when I'm just navigating around.
+;;
+;; So I'm changing RET to open the subdir in the *current* buffer
+;; instead:
+;; (add-to-hook 'dired-mode-hook
+;;              (lambda ()
+;;                (if 
+;;                (set-key (kbd RET) 
+;;                         'dired-find-alternate-file

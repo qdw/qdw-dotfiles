@@ -4,6 +4,11 @@ hooks**
 initialize-repo.sh
 .gitattributes
 
+# AWS CDK JSON output
+cdk.context.json
+cdk.json
+cdk.out
+
 # Compiled objects
 .pyc .elc .o __pycache__
 
