@@ -1055,6 +1055,7 @@ This command does the reverse of `fill-region'."
 (global-set-key (kbd "M-o") 'other-window-reverse)
 (global-set-key (kbd "M-5") 'query-replace-regexp)
 
+(defalias 'pos 'goto-char)
 
 (add-hook 'org-mode-hook
           (lambda ()
