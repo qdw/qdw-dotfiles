@@ -551,7 +551,7 @@ function emacs() {
         # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
 
         if [[ $DAEMON_STATUS -eq 0 ]]; then
-            "$EMACSCLIENT_BINARY" --tty --no-wait "$@"
+            "$EMACSCLIENT_BINARY" --tty "$@"
         else
             echo "error: the emacs daemon is not running. Start it as follows:"
             print-instructions-for-starting-the-emacs-daemon
