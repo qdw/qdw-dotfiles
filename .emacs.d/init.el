@@ -329,7 +329,6 @@ This command does the reverse of `fill-region'."
  cperl-indent-level 4
  elisp-indent-level 2
  org-indent-indentation-per-level 4
- typescript-indent-level 2
 
  calendar-week-start-day 1           ;; First day of the week = Monday
  isearch-allow-scroll 'unlimited
@@ -411,7 +410,7 @@ This command does the reverse of `fill-region'."
   (interactive "MSlack channel (without the '#'): ")
   (org-insert-link
     nil
-    (concat "https://" slack-team ".slack.com/channels/#" channel-name)
+    (concat "https://" slack-team "slack.com/channels/#" channel-name)
     (concat "#" channel-name)))
 
 (defun org-insert-jira-link (ticket-name)
@@ -517,14 +516,6 @@ This command does the reverse of `fill-region'."
   (when (org-at-heading-p)
     (org-set-property "VISIBILITY" "folded")))
 
-;; Another gem from org-mode. Prompt:
-;; Please write me an interactive Emacs function that starts a
-;; minibuffer dialog like the "Find file: " dialog, but with the label
-;; "Link to file." The function should handle tab completion the same
-;; way that find-file does, including tilde expansion. After you
-;; choose a filename and hit RET, the function should prompt you for
-;; the visible link text, supplying the basename of the file as a
-;; default option if you just hit RET without specifying a label.
 (defun org-insert-file-link ()
   "Insert a link to a local file."
   (interactive)
@@ -535,7 +526,7 @@ This command does the reverse of `fill-region'."
 (defun org-insert-slack-link (channel-name)
   (interactive "MSlack channel (without the '#'): ")
   (org-insert-link nil
-                   (concat "https://" slack-team ".slack.com/channels/#" channel-name)
+                   (concat "https://" slack-team "slack.com/channels/#" channel-name)
                    (concat "#" channel-name)))            
 
 (defun org-insert-jira-link (ticket-name)
@@ -778,9 +769,15 @@ This command does the reverse of `fill-region'."
                 magit-insert-unpulled-from-pushremote
                 magit-insert-unpulled-from-upstream))
 
-;;;; TypeScript settings
+;;;; TypeScript and JavaScript settings
 
-(setq-default tide-node-executable (expand-file-name "~/.asdf/shims/node"))
+(let ((desired-indent-level 2))
+  (setq-default
+   typescript-indent-level desired-indent-level
+   js-indent-level desired-indent-level))
+
+(setq-default tide-node-executable
+              (expand-file-name "~/.asdf/installs/nodejs/16.20.0/bin/node"))
 
 ;; eslint (JavaScript/TypeScript linter) settings
 (defun seteslintrc ()
