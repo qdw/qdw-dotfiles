@@ -780,6 +780,7 @@ function leaf() { brew-next-leaf "$@" ;}
 
 function bi() { brew install "$@" ;}
 function be() { brew edit "$@" ;}
+function bh() { brew home "$@" ;}
 function bl() { brew list -1 "$@" ;}
 function bo() { brew update; brew outdated ;}
 # function bo() { brew doctor; brew update && brew outdated ;}
@@ -912,8 +913,8 @@ function bat() {
       | $PAGER
 }
 
-# bh ("Bat Head") FILENAME NUMBER: use color bat to show a file's first n lines
-function bh() {
+# bat-head FILENAME NUMBER: use color bat to show a file's first n lines
+function bat-head() {
     local FILENAME="$1"
     local NUMBER="$2"
     
@@ -1329,8 +1330,9 @@ function gi() {
 # gcl (Git CLone) - quickly clone a repo belonging to my organization
 function gcl() {
     REPO="$1"
-    cd ~/src \
+    cd ~/src >/dev/null \
         && git clone "git@github.com:${GITHUB_ORG}/${REPO}"
+    cd - >/dev/null
 }
 
 function clone() { gcl "$@" ;}
@@ -1612,19 +1614,26 @@ function pg() {
     ($ENV_VAR_COMMAND; "$BINARY_PATH" "$@")
 }
 
-function pgpassword() {
-    read -se PGPASSWORD
-    export PGPASSWORD
-}
-
+declare -Ax pgpasses
 function qql() {
-    if [[ $# -eq 1 ]]; then
-        read -sep "Enter the password for '$1': " PGPASSWORD
-        export PGPASSWORD
-        PGSERVICE="$1" psql
-    else
+    local SERVICE
+    
+    if [[ $# -ne 1 ]]; then
         echo "qql: error: wrong number of arguments. Usage: qql pg_service.conf-stanza-name" \
             > /dev/stderr
+    else
+        SERVICE="$1"
+        
+        if [[ -n ${pgpasses["$SERVICE"]} ]]; then
+            export PGPASSWORD=${pgpasses["$SERVICE"]}
+        else
+            read -sep "Enter the password for '$SERVICE': " PGPASSWORD
+            pgpasses["$SERVICE"]="$PGPASSWORD"
+            export PGPASSWORD
+        fi
+        
+        echo ${pgpasses}
+        PGSERVICE="$SERVICE" psql
     fi
 }
 
@@ -1666,39 +1675,6 @@ function ser() {
         shift
 
         command grep -E $@ "^[[].*$REGEX.*[]]" ~/.pg_service.conf
-    fi
-}
-
-function load_pg_password {
-    local SERVICE_NAME
-
-    if [[ $# -ne 1 ]]; then
-        echo "load_pg_password: error: wrong number of arguments. Usage: load_pg_password PG_SERVICE_STANZA_NAME" > /dev/stderr
-    else
-        SERVICE_NAME="$1"
-        ENV_VAR_NAME="PGPASSWORD_${SERVICE_NAME}"
-        read -sep "Password for service '$SERVICE_NAME': "  "$ENV_VAR_NAME"
-        export "$ENV_VAR_NAME"
-    fi
-}
-
-function qql_plus() {
-    local SERVICE_NAME
-
-    if [[ $# -eq 0 ]]; then
-        echo "load_pg_password: error: wrong number of arguments. Usage: qql_plus PG_SERVICE_STANZA_NAME [PSQL_ARG...]" > /dev/stderr
-    else
-        SERVICE_NAME="$1"
-        shift
-        
-        ENV_VAR_NAME="PGPASSWORD_${SERVICE_NAME}"
-        ENV_VAR_VALUE="${$ENV_VAR_NAME}"
-        
-        if [[ -z "$ENV_VAR_VALUE" ]]; then
-            read -sep "Enter the password for '$SERVICE_NAME': "  "$ENV_VAR_NAME"
-        fi
-        
-        PGSERVICE="$ENV_VAR_NAME" PGPASSWORD="$ENV_VAR_NAME" psql "$@"
     fi
 }
 
