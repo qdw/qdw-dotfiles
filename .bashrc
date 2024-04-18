@@ -536,10 +536,9 @@ function the-emacs-daemon-is-running() {
 }
 
 function print-instructions-for-starting-the-emacs-daemon() {
-    # if [[ "$MY_OS" = "Darwin" ]]; then
-    #     echo "brew services start "$EMACS_VARIANT""
-    # el
-    if [[ "$MY_OS" =~ "Linux" ]]; then
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        echo "brew services start "$EMACS_VARIANT""
+    elif [[ "$MY_OS" =~ Linux ]]; then
         echo "command emacs --bg-daemon"
     else
         echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print-instructions-for-starting-the-emacs-daemon"
