@@ -548,26 +548,28 @@ function print-instructions-for-starting-the-emacs-daemon() {
 
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
-    # if [[ "$MY_OS" = "Darwin" ]]; then
-    #     brew services stop "$EMACS_VARIANT"
-    # else
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        brew services stop "$EMACS_VARIANT"
+    else
         local EMACS_DAEMON_PID
         EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
         kill "$EMACS_DAEMON_PID"
-    # fi
+    fi
 }
 
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se() {
-    if the-emacs-daemon-is-running; then
+    local DAEMON_STATUS
+    DAEMON_STATUS="$(the-emacs-daemon-is-running)"
+    if [[ "$DAEMON_STATUS" -eq 0 ]]; then
         echo "Looks like the emacs daemon is already running"
         return
     else
-        # if [[ "$MY_OS" = "Darwin" ]]; then
-        #     brew services start "$EMACS_VARIANT"
-        # else
+        if [[ "$MY_OS" = "Darwin" ]]; then
+            brew services start "$EMACS_VARIANT"
+        else
             emacs --bg-daemon
-        # fi
+        fi
         
 	# Give it time to start up and load my ~/.emacs.d/init.el
         sleep 4

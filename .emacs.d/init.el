@@ -10,6 +10,7 @@
 (require 'blacken)
 (require 'dirtrack)
 (require 'dockerfile-mode)
+(require 'fd-dired)
 (require 'json)
 (require 'magit)
 (require 'menu-bar)   
@@ -558,7 +559,6 @@ This command does the reverse of `fill-region'."
             (keymap-set org-mode-map "C-c )" 'org-demote-subtree)
             (keymap-set org-mode-map "C-c [" 'org-table-move-column-left)
             (keymap-set org-mode-map "C-c ]" 'org-table-move-column-right)
-            
             ))
 
 ;;;; Help
@@ -835,7 +835,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 
 ;; FIXME: move these to my theme?
@@ -1031,8 +1031,6 @@ This command does the reverse of `fill-region'."
 (define-key 'help-command (kbd "C-k") 'find-function-on-key)
 (define-key 'help-command (kbd "C-l") 'find-library)  ;; Look up Emacs Lisp lib.
 (define-key 'help-command (kbd "C-v") 'find-variable) ;; " " variable definition
-(define-key org-mode-map (kbd "C-c (")   'org-promote-subtree)
-(define-key org-mode-map (kbd "C-c )")   'org-demote-subtree)
 (define-key org-mode-map (kbd "C-c >")   'qdw-org-insert-subheading-respect-content)
 (define-key org-mode-map (kbd "C-c RET") 'org-insert-subheading)
 (define-key org-mode-map (kbd "C-c [")   'org-table-move-column-left)
