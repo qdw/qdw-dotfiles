@@ -1901,13 +1901,13 @@ function pe() {
 
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services stop "$EMACS_VARIANT"
-    else
+    # if [[ "$MY_OS" = "Darwin" ]]; then
+    #     brew services stop "$EMACS_VARIANT"
+    # else
         local EMACS_DAEMON_PID
         EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
         kill "$EMACS_DAEMON_PID"
-    fi
+    # fi
 }
 
 # se (Start Emacs-daemon): start the Emacs daemon.
