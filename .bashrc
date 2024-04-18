@@ -1618,11 +1618,12 @@ declare -Ax pgpasses
 function qql() {
     local SERVICE
     
-    if [[ $# -ne 1 ]]; then
-        echo "qql: error: wrong number of arguments. Usage: qql pg_service.conf-stanza-name" \
+    if [[ $# -eq 0 ]]; then
+        echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
             > /dev/stderr
     else
         SERVICE="$1"
+        shift
         
         if [[ -n ${pgpasses["$SERVICE"]} ]]; then
             export PGPASSWORD=${pgpasses["$SERVICE"]}
@@ -1633,7 +1634,7 @@ function qql() {
         fi
         
         echo ${pgpasses}
-        PGSERVICE="$SERVICE" psql
+        PGSERVICE="$SERVICE" psql "$@"
     fi
 }
 
