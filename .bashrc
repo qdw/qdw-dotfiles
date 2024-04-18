@@ -536,9 +536,10 @@ function the-emacs-daemon-is-running() {
 }
 
 function print-instructions-for-starting-the-emacs-daemon() {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        echo "brew services start "$EMACS_VARIANT""
-    elif [[ "$MY_OS" =~ Linux ]]; then
+    # if [[ "$MY_OS" = "Darwin" ]]; then
+    #     echo "brew services start "$EMACS_VARIANT""
+    # el
+    if [[ "$MY_OS" =~ "Linux" ]]; then
         echo "command emacs --bg-daemon"
     else
         echo "[error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print-instructions-for-starting-the-emacs-daemon"
@@ -547,28 +548,26 @@ function print-instructions-for-starting-the-emacs-daemon() {
 
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke() {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services stop "$EMACS_VARIANT"
-    else
+    # if [[ "$MY_OS" = "Darwin" ]]; then
+    #     brew services stop "$EMACS_VARIANT"
+    # else
         local EMACS_DAEMON_PID
         EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
         kill "$EMACS_DAEMON_PID"
-    fi
+    # fi
 }
 
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se() {
-    local DAEMON_STATUS
-    DAEMON_STATUS="$(the-emacs-daemon-is-running)"
-    if [[ "$DAEMON_STATUS" -eq 0 ]]; then
+    if the-emacs-daemon-is-running; then
         echo "Looks like the emacs daemon is already running"
         return
     else
-        if [[ "$MY_OS" = "Darwin" ]]; then
-            brew services start "$EMACS_VARIANT"
-        else
+        # if [[ "$MY_OS" = "Darwin" ]]; then
+        #     brew services start "$EMACS_VARIANT"
+        # else
             emacs --bg-daemon
-        fi
+        # fi
         
 	# Give it time to start up and load my ~/.emacs.d/init.el
         sleep 4
