@@ -1893,39 +1893,6 @@ function p() {
 
 #### Process-related settings
 
-# pe (Ps Emacs-daemon): show whether the Emacs daemon is running.
-function pe() {
-    p -i 'emacs.*daemon'
-}
-
-# ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
-function ke() {
-    # if [[ "$MY_OS" = "Darwin" ]]; then
-    #     brew services stop "$EMACS_VARIANT"
-    # else
-        local EMACS_DAEMON_PID
-        EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
-        kill "$EMACS_DAEMON_PID"
-    # fi
-}
-
-# se (Start Emacs-daemon): start the Emacs daemon.
-function se() {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        brew services start "$EMACS_VARIANT"
-        # Give it time to load my ~/.emacs.d/init.el
-        sleep 2
-    else
-        emacs --bg-daemon
-    fi
-}
-
-# re (Restart Emacs-daemon): stop it, then start it.
-function re() {
-    ke && se
-}
-
-# pbc ('(p)aste(b)oard (c)opy') - macOS only: copy file to the system clipboard
 function pbc() { 
     local FILENAME
     FILENAME="$1"
