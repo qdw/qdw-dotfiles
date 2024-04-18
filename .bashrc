@@ -567,7 +567,7 @@ function se() {
         # if [[ "$MY_OS" = "Darwin" ]]; then
         #     brew services start "$EMACS_VARIANT"
         # else
-            emacs --bg-daemon
+            command emacs --bg-daemon
         # fi
         
 	# Give it time to start up and load my ~/.emacs.d/init.el
