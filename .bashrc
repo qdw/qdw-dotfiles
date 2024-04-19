@@ -562,7 +562,7 @@ function ke() {
     #     brew services stop "$EMACS_VARIANT"
     # else
         local EMACS_DAEMON_PID
-        EMACS_DAEMON_PID="$(p 'emacs.*daemon' | awk '{print $2}')"
+        EMACS_DAEMON_PID="$(ps auxwww | command grep -v grep | command grep -E 'emacs.*daemon' | awk '{print $2}')"
         kill "$EMACS_DAEMON_PID"
     # fi
 }
