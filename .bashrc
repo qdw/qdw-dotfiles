@@ -51,6 +51,17 @@ function cdq() { cd ~/src/1/qdw-dotfiles ;}
 # cdld - cd to the enclosing directory of the target of a symlink
 function cdld() { cd "$(dirname "$(readlink -f "$1")")" ;}
 
+# cdd - cd to the enclosing dir of a file/dir.
+# If the argument is a symlink, resolve it and then cd to the enclosing dir
+# of the file that it point to.
+function cdd() {
+    if [[ $# -ne 1 ]]; then
+        echo "cdd: wrong number of arguments. Usage: cdd PATH"
+    else
+        cd "$(dirname "$(realpath "$1")")"
+    fi
+}
+
 #### Homebrew settings
 
 if [[ ! "$PATHS_SET_AT" ]]; then
@@ -876,19 +887,6 @@ function mac-globalize-fonts {
 function mac-disable-font-smoothing() {
     defaults write -g AppleFontSmoothing -int 0
     defaults write CGFontRenderingFontSmoothingDisabled -INT 1
-}
-
-function cdd() {
-    local USAGE="Usage: cdd PATH"
-
-    if [[ $# -eq 0 ]]; then
-        echo "cdd: error: missing argument. $USAGE"
-    elif
-        [[ $# -gt 1 ]]; then
-        echo "cdd: error: too many arguments. $USAGE"
-    else
-        cd "$(dirname "$1")"
-    fi
 }
 
 function mac-do-not-switch-to--desktop-when-switching-to-app() { 

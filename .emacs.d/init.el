@@ -400,6 +400,7 @@ This command does the reverse of `fill-region'."
 (add-hook 'find-file-hook 'qdw-org-archive-read-only-hook)
 
 (setq-default ;; for yet more org-mode settings, see ~/.emacs.d/site-lisp.el
+  org-agenda-restore-windows-after-quit 't
   org-startup-folded 't
   org-cycle-separator-lines -2
   org-return-follows-link 't 
@@ -433,6 +434,7 @@ This command does the reverse of `fill-region'."
 (setq-default org-catch-invisible-edits "show")
 
 (setq-default
+
   org-todo-keywords
   '((sequence
      "TODO(t)"
@@ -443,13 +445,13 @@ This command does the reverse of `fill-region'."
      "GET_HELP(h)"
      "INFO(f)"
      "PROJECT(r)"
+     "SUBPROJECT(s)"
      
      "|"
   
      "DONE(d)"
      "POSTPONED(p)"
      "WONTFIX(w)"
-     "JIRAFIED"
      ))
 
   ;; Always use colors compatible with TERM=xterm-256colors,
@@ -458,9 +460,6 @@ This command does the reverse of `fill-region'."
   ;; You can browse colors and copy their hex values here:
   ;; https://www.ditig.com/256-colors-cheat-sheet
 
-  ;; FIXME: assign hex codes to color names,
-  ;; either here using (let ...
-  ;; or in the subatomic-256.el theme file.
   org-todo-keyword-faces
   '(("GET_HELP" . "#ff00af")
     ("NEXT_ACTION" . "#ff00af")
@@ -469,7 +468,9 @@ This command does the reverse of `fill-region'."
     ("POSTPONED" . "#ffff00")
     ("INFO" . "#ffff00")
     ("PROJECT" . "#00afff")
-    ("IN_PROGRESS" . "color-46")))
+    ("SUBPROJECT" . "#00afaf")
+    ("IN_PROGRESS" . "color-46"))  
+  )
 
 (add-to-list 'org-file-apps
              (cons "png" "open %s"))
