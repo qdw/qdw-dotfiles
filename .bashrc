@@ -29,15 +29,80 @@
 # command, then turn on tracing. This makes the trace much more
 # uncluttered.
 
-function carp() {
-    echo "$@" > /dev/stderr
-}
-
 function setx() {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
     set -x
 }
+
+#### Settings related to my little Bash metaprogramming library
+
+function complain() {
+    for STRING in "$@"; do
+        echo "$STRING" > /dev/stderr
+    done
+}
+
+function check_args() {
+    local FUNCTION="${FUNCNAME[1]}"
+    
+    if [[ $# -lt 3 ]]; then
+        # Wrong number of args to check_args itself. Print an informative error message.
+
+        local ARGUMENTS_INFLECTED
+        if [[ $# -eq 1 ]]; then
+            ARGUMENTS_INFLECTED="arguments"
+        else
+            ARGUMENTS_INFLECTED="argument"
+        fi
+        
+        complain "check_args: error: $FUNCTION passed the wrong number of arguments to check_args itself" \
+                 "$FUNCTION called check_args with $# $ARGUMENTS_INFLECTED, but it requires" \
+                 "at least 3. Usage:" \
+                 "checks_args MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING [ACTUAL_ARGUMENT_PASSED ...]"
+        return 1
+    else
+        # Happy path: the caller passed the correct number of args to check_args itself.
+        # Check whether the caller's caller called the caller properly.
+        local MIN_ARGS="$1"; shift
+        local MAX_ARGS="$1"; shift
+        local USAGE="$1"; shift
+        local ARGC=$#
+        if ((ARGC < MIN_ARGS)); then
+            
+            local VARCLAUSE
+            if [[ "$MAX_ARGS" = "varargs" ]]; then
+                VARCLAUSE=" or more"
+            else
+                VARCLAUSE=""
+            fi
+            
+            complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARCLAUSE} required). Usage:" \
+                     "$USAGE"
+            return 2
+        elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
+            complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed). Usage:" \
+                     "$USAGE"
+            return 3
+        else
+            return 0
+        fi
+    fi
+}
+
+# function tca() {
+#     check_args 2 2 "forca NUMBER_OF_PLAYERS [NUMBER_OF_SPECTATORS]" "$@" || return
+#     echo "Starting a match with $1 players and $2 spectators"
+# }
+
+# function tcavar() {
+#     check_args 2 varargs "test_function_forsooth NUMBER_OF_DANCERS [NUMBER_OF_SPECTATORS] [OTHER_ARG ...]" "$@" || return
+    
+#     local PLAYERS="$1"; shift
+#     local SPECTATORS="$1"; shift
+    
+#     echo "Starting a dance with $PLAYERS dancers and $SPECTATORS spectators (PS: $@)"
+# }
 
 #### Basic settings
 
@@ -667,7 +732,18 @@ function update_terminal_cwd() {
 
 export TERM=xterm-256color # used by tmux
 
+function strip_control_characters_from() {
+    local STRING
+    if [[ $# -eq 1 ]]; then
+        echo "$(tr -cd  "[:print:]"  "$STRING")"
+    else
+        echo "strip_control_characters_from: error: wrong number of arguments. Usage: strip_control_characters_from STRING" > /dev/stderr
+    fi
+}
+
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
+# This works by using a special ANSI-like escape code that not all terminal
+# emulators support.
 function title() { echo -ne "\033]2;" "$1" "\007" ;}
 
 ## iTerm2 settings
@@ -709,7 +785,6 @@ fi
 
 # Color the shell prompt ANSI blue (to distinguish commands from output).
 
-# Remove some info, since I now live in a self-built DevOps prison sans ssh.
 #export PS1="\\[\\e[34;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
 export PS1="\\[\\e[34;1m\\]\\w\\$\\[\\e[0m\\] "
 export DEFAULT_PS1="$PS1"
@@ -1018,7 +1093,7 @@ function branch-name() {
         PHRASE="$1"
         kebab-case "$(strip-punctuation "$PHRASE")"
     else
-        carp "branch-name: error: wrong number of arguments. Usage: branch-name 'Some (explanatory) phase'"
+        complain "branch-name: error: wrong number of arguments. Usage: branch-name 'Some (explanatory) phase'"
     fi
 }
 
@@ -1043,7 +1118,7 @@ function strip-punctuation() {
         INPUT_STRING="$1"
         echo "$INPUT_STRING" | tr -d '[:punct:]'
     else
-        carp "strip-punctuation: error: wrong number of arguments. Usage: strip-punctuation 'my string'"
+        complain "strip-punctuation: error: wrong number of arguments. Usage: strip-punctuation 'my string'"
     fi
 }
 
@@ -1056,7 +1131,7 @@ function kebab-case() {
         INPUT_STRING="$1"
         echo "$INPUT_STRING" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'
     else
-        carp "kebab-case: error: wrong number of arguments. Usage: kebab-case 'My input String'"
+        complain "kebab-case: error: wrong number of arguments. Usage: kebab-case 'My input String'"
     fi   
 }
 
@@ -2545,9 +2620,11 @@ function jql() {
     fi
 }
 
-function epics() {
+function jepic() {
     jql "(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic AND resolution = Unresolved ORDER BY updated DESC"
 }
+
+function epics() { jepic "$@" ;}
 
 function jmine() {
     jql "(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved ORDER BY updated DESC"
