@@ -846,6 +846,7 @@ This command does the reverse of `fill-region'."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
+ '(org-date ((t (:foreground "color-33" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))
 
  
