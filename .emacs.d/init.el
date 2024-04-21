@@ -390,15 +390,6 @@ This command does the reverse of `fill-region'."
 
 ;;;; org-mode settings
 
-;; Hide the PROPERTIES section if folded;
-;; pasted from https://stackoverflow.com/a/17492723
-;; Open *.org_archive files in read-only mode;
-;; the record of completed items should be immutable.
-(defun qdw-org-archive-read-only-hook ()
-  (when (string-match "[.]org_archive" buffer-file-name)
-        (read-only-mode)))
-(add-hook 'find-file-hook 'qdw-org-archive-read-only-hook)
-
 (setq-default ;; for yet more org-mode settings, see ~/.emacs.d/site-lisp.el
   org-agenda-restore-windows-after-quit 't
   org-startup-folded 't
@@ -475,6 +466,8 @@ This command does the reverse of `fill-region'."
 (add-to-list 'org-file-apps
              (cons "png" "open %s"))
 
+;; Hide the PROPERTIES section if folded;
+;; pasted from https://stackoverflow.com/a/17492723
 (defun org-cycle-hide-drawers (state)
   "Re-hide all drawers after a visibility state change."
   (when (and (derived-mode-p 'org-mode)
