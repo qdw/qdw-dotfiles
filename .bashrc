@@ -133,8 +133,12 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     for HDIR in "/opt/homebrew" "/usr/local"; do
         if [[ -x "$HDIR/bin/brew" ]]; then
             set -a
-            
+                        
+            HOMEBREW_EDITOR="command emacs -nw"
             HOMEBREW_ROOT="$HDIR"
+            
+            # Fix a problem with the nmap formula
+            PYTHONPATH="${PYTHONPATH}:${HDIR}/lib/python3.9/site-packages"
 
             # man pages for software installed using brew
             HOMEBREW_MANPATH="$HDIR/share/man"
@@ -407,6 +411,7 @@ if [[ "$INSIDE_EMACS" ]]; then
     # Emacs shell-mode is a dumb terminal, so use special pager settings there.
     export PAGER="cat"
     export AWS_PAGER="$PAGER"
+    export GIT_PAGER="$PAGER"
     export PSQL_PAGER="$PAGER"
     fd() { fdd "$@" ;}
 else
