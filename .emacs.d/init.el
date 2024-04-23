@@ -649,7 +649,7 @@ This command does the reverse of `fill-region'."
   
 ;;;; diff, merge, and git settings
 
-(defun qdw-open-current-line-in-github-web-ui ()
+(defun open-current-line-in-github-web-ui-qdw ()
   (interactive)
   (letrec ((filename (file-name-nondirectory (buffer-file-name)))
            (line (number-to-string (line-number-at-pos))))
@@ -1038,7 +1038,7 @@ This command does the reverse of `fill-region'."
 (define-key 'help-command (kbd "C-k") 'find-function-on-key)
 (define-key 'help-command (kbd "C-l") 'find-library)  ;; Look up Emacs Lisp lib.
 (define-key 'help-command (kbd "C-v") 'find-variable) ;; " " variable definition
-(define-key org-mode-map (kbd "C-c >")   'qdw-org-insert-subheading-respect-content)
+(define-key org-mode-map (kbd "C-c >")   'org-insert-subheading-respect-content-qdw)
 (define-key org-mode-map (kbd "C-c RET") 'org-insert-subheading)
 (define-key org-mode-map (kbd "C-c [")   'org-table-move-column-left)
 (define-key org-mode-map (kbd "C-c ]")   'org-table-move-column-right)
