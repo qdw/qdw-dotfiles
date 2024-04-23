@@ -32,6 +32,18 @@
 
 ;;;; dired settings
 
+(defun my-dired-find-file ()
+  "In Dired, visit the file or directory on the cursor.
+If the file is a directory, use `dired-find-alternate-file' to avoid creating many buffers.
+If the file is a regular file, use `dired-find-file' to open it in a new buffer."
+  (interactive)
+  (let ((is-dir (file-directory-p (dired-get-file-for-visit))))
+    (if is-dir
+      (dired-find-alternate-file)
+      (dired-find-file))))
+
+(define-key dired-mode-map (kbd "RET") 'my-dired-find-file)
+            
 (defun system-move-file-to-trash (path)
   "Moves file at PATH to the macOS Trash according to `move-file-to-trash' convention.
 
@@ -505,32 +517,32 @@ This command does the reverse of `fill-region'."
                   (user-error msg))))))))))
 
 ;; Damn, GPT is good at writing code to English-language spec
-(defun org-fold ()
+(defun org-fold-qdw ()
   "Set the VISIBILITY property of the element at point to 'folded' in org-mode."
   (interactive)
   (when (org-at-heading-p)
     (org-set-property "VISIBILITY" "folded")))
 
-(defun org-insert-file-link ()
+(defun org-insert-file-link-qdw ()
   "Insert a link to a local file."
   (interactive)
   (let* ((filename (read-file-name "Link to file: "))
          (link-text (read-string "Link text: " (file-name-nondirectory filename))))
     (insert (format "[[file:%s][%s]]" filename link-text))))
 
-(defun org-insert-slack-link (channel-name)
+(defun org-insert-slack-link-qdw (channel-name)
   (interactive "MSlack channel (without the '#'): ")
   (org-insert-link nil
                    (concat "https://" slack-team "slack.com/channels/#" channel-name)
                    (concat "#" channel-name)))            
 
-(defun org-insert-jira-link (ticket-name)
+(defun org-insert-jira-link-qdw (ticket-name)
   (interactive "MTicket name (e.g. DATAPLAT-000): ")
   (org-insert-link nil
                    (concat jiralib-url "/browse/" ticket-name)
                    ticket-name))
 
-(defun org-insert-pr-link (repo pr-number)
+(defun org-insert-pr-link-qdw (repo pr-number)
   (interactive "MRepo: \nnPR number: ")
   (org-insert-link nil
                    (format "https://github.com/%s/%s/pull/%s"
@@ -538,7 +550,7 @@ This command does the reverse of `fill-region'."
                            repo
                            pr-number)))
 
-(defun org-insert-subheading-respect-content (arg)
+(defun org-insert-subheading-respect-content-qdw (arg)
   (interactive "P")
   (org-insert-todo-subheading-respect-content arg)
     (cond
@@ -1076,3 +1088,5 @@ This command does the reverse of `fill-region'."
 ;;                (if 
 ;;                (set-key (kbd RET) 
 ;;                         'dired-find-alternate-file
+(put 'downcase-region 'disabled nil)
+(put 'dired-find-alternate-file 'disabled nil)
