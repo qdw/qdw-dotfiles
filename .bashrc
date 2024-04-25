@@ -132,28 +132,24 @@ function cdd() {
 if [[ ! "$PATHS_SET_AT" ]]; then
     for HDIR in "/opt/homebrew" "/usr/local"; do
         if [[ -x "$HDIR/bin/brew" ]]; then
-            set -a
-                        
+            set -a    
             HOMEBREW_EDITOR="command emacs -nw"
             HOMEBREW_ROOT="$HDIR"
+            HOMEBREW_BIN="$HDIR/bin"            
             
+            PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
+
+            # man pages for brew(1) itself
+            MY_MANPATH="$HDIR/manpages"            
+            
+            # man pages for software installed using brew
+            MY_MANPATH="$HDIR/share/man"            
+            PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
+
             # Fix a problem with the nmap formula
             PYTHONPATH="${PYTHONPATH}:${HDIR}/lib/python3.9/site-packages"
-
-            # man pages for software installed using brew
-            HOMEBREW_MANPATH="$HDIR/share/man"
-            
-            # the man page for brew(1) itself
-            HOMEBREW_MANPATH="$HDIR/manpages"
-            
-            MANPATH_IN_PROGRESS="$HOMEBREW_MANPATH:$MANPATH"
-
-            HOMEBREW_BIN="$HDIR/bin"
-            HOMEBREW_SBIN="$HDIR/sbin"
-	    PATH="$HOMEBREW_BIN:$HOMEBREW_SBIN:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
-            PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
-	    
             set +a
+
             break
         fi
     done
@@ -168,50 +164,25 @@ fi
 ## If on macOS, use the Homebrew versions of basic command-line utilities
 ## instead of the bundled macOS versions, as the Homebrewed versions
 ## are more frequently updated.
-##
-## In some cases, this means using the GNU version of a command
-## rather than the bundled BSD version.
 
-# Disabled for now
-# Use a function rather than adding $HOMEBREW_BIN to my path;
-# that way I can easily get the bundled macOS version of the function
-# by doing "command tail" (or whatever)
-# for MY_FORMULA in \
-    # curl \
-    # lsof \
-    # man \
-    # ssh \
-    # ssh-add \
-    # ssh-add-all \
-    # ssh-agent \
-    # ssh-copy-id \
-    # ssh-keygen \
-    # ssh-keyscan; do
-#     if [[ -e "$HOMEBREW_BIN/MY_FORMULA" ]]; then
-#         eval "function $MY_FORMULA() { $HOMEBREW_BIN/$MY_FORMULA \"\$@\" ;}"
-#     fi
-# done
+function funcalias() {
+    local FUNCTION_NAME  EXECUTABLE_PATH
 
-# for GNU_FORMULA in cut dircolors find grep roff sed sort stat tac tail; do
-#     if [[ -e "$HOMEBREW_BIN/g${GNU_FORMULA}" ]]; then
-#         eval "function $GNU_FORMULA() { $HOMEBREW_BIN/g${GNU_FORMULA} \"\$@\" ;}"
-#     fi
-# done
-    
-if [[ -e "$HOMEBREW_ROOT/opt/curl/bin/curl" ]]; then function curl() { "$HOMEBREW_ROOT/opt/curl/bin/curl" "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/curl" ]];  then function curl() { "$HOMEBREW_BIN/curl" "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gcut" ]];  then function cut() { gcut "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gdircolors" ]]; then function dircolors() { gdircolors "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gfind" ]]; then function find() { gfind "$@" ;}; fi
+    if [[ $# -ne 2 ]]; then
+        complain "funcalias: error: wrong number of args. Usage: funcalias FUNCTION_NAME EXECUTABLE_PATH"
+    else
+        FUNCTION_NAME="$1"
+        EXECUTABLE_PATH="$2"
+        eval "function $FUNCTION_NAME { $EXECUTABLE_PATH \"\$@\" ;}"
+    fi
+}
 
-if [[ -e "$HOMEBREW_BIN/gsed" ]];  then function sed() { gsed "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gsort" ]]; then function sort() { gsort "$@" ;}; fi
-# if [[ -e "$HOMEBREW_BIN/gstat" ]]; then function stat() { gstat "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gtac" ]];  then function tac() { gtac "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/gtail" ]]; then function tail() { gtail "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/groff" ]]; then function roff() { groff "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/lsof" ]];  then function lsof() { "$HOMEBREW_BIN/lsof" "$@" ;}; fi
-if [[ -e "$HOMEBREW_BIN/man" ]];   then function man() { "$HOMEBREW_BIN/man" "$@" ;}; fi
+for GNU_COMMAND in cut dircolors find roff sed sort stat tac tail; do
+    BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
+    if [[ -f "$BREWED_GNU" ]]; then
+        funcalias "$GNU_COMMAND" "$BREWED_GNU"
+    fi
+done
 
 #### grep settings
 
@@ -225,8 +196,6 @@ fi
 
 
 export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
-
-
 
 export GREP_COLORS="fn=01;36"
 GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json"
@@ -281,7 +250,7 @@ function occur() {
     if [[ "$PAGER" = "cat" ]]; then
         OCCUR_PAGER="$PAGER"
     else
-        OCCUR_PAGER="less --no-init --quit-if-one-screen"
+        OCCUR_PAGER="command less --no-init --quit-if-one-screen"
     fi
     
     command grep -RlE $GREP_EXCLUDE_FLAGS "$@" | sort | $OCCUR_PAGER
@@ -407,11 +376,11 @@ fi
 
 #### Pager settings
 
+set -a
 if [[ "$INSIDE_EMACS" ]]; then
     # Emacs shell-mode is a dumb terminal, so use special pager settings there.
     export PAGER="cat"
     export AWS_PAGER="$PAGER"
-    export GIT_PAGER="$PAGER"
     export PSQL_PAGER="$PAGER"
     fd() { fdd "$@" ;}
 else
@@ -419,22 +388,19 @@ else
     # with the color and pagination options I like.
     export PAGER="command less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
     export GIT_PAGER="$PAGER -j 2" # Show an extra line before match - useful with 'git diff'
-    export PSQL_PAGER="less --no-init"
-
+    export PSQL_PAGER="command less --no-init"
     if command -v jless > /dev/null; then
         export AWS_PAGER="jless"
     else
         export AWS_PAGER="$PAGER"
     fi
 fi
-
-function less() { $PAGER "$@" ;}
-
-set -a
 ACK_PAGER="$PAGER"
-BAT_PAGER="less --RAW-CONTROL-CHARS --no-init --mouse"
+BAT_PAGER="$PAGER"
 MANPAGER="$PAGER"
 set +a
+
+function less() { $PAGER "$@" ;}
 
 #### Markdown settings
 
@@ -800,7 +766,7 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 ## Bash history
 set -a
 # Add a timestamp to history(1) output, using strftime(3) formatting.
-HISTTIMEFORMAT='  %Y-%m-%d_%H:%M:%S_%z    ' #FIXME: add milliseconds?
+HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
 # Keep all history forever
 HISTFILESIZE=-1
 HISTSIZE=-1
@@ -1058,25 +1024,24 @@ function lsd() {
 
 #### diff settings
 
+
 function dcc() { colordiff -u "$@" | $PAGER ;}
 
-# Color legend:
-# ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
-# de - deleted lines (31 is SGR red, which shows as orange in my terminal)
-# hd - header        (35 is SGR magenta, which shows as magenta in my term)
-# ln - line numbers  (34 is SGR blue, which shows as light pink in my term)
-# rs - undocumented, but the default seems fine
-# 
+export PATH="/opt/homebrew/opt/diffutils/bin:$PATH"
 function diff() {
-    command diff \
-        -u \
-        --color=always \
-        --palette="ad=36:de=31:hd=35:ln=34:rs=0" \
-        "$@" \
-      | $PAGER
+    local COMMON_DIFF_OPTIONS="-u --color=always"
+    if [[ -f "/opt/homebrew/opt/diffutils/bin/diff" ]]; then
+        # Color legend:
+        # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
+        # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
+        # hd - header        (35 is SGR magenta, which shows as magenta in my term)
+        # ln - line numbers  (34 is SGR blue, which shows as light pink in my term)
+        # rs - undocumented, but the default seems fine
+        command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
+    else
+        command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
+    fi
 }
-
-# function diff() { difft --background dark --color always --display side-by-side --missing-as-empty --skip-unchanged "$@" | $PAGER ;}
 
 #### FTP settings
 
@@ -2386,7 +2351,7 @@ export JPATH="/usr/local/opt/openjdk/bin"
 
 export NODE_PATH="/opt/node/bin"
 export NODE_MANPATH="/opt/node/share/man:/opt/node/lib/node_modules/npm/man/"
-MANPATH_IN_PROGRESS="$NODE_MANPATH:$MANPATH_IN_PROGRESS"
+MY_MANPATH="$NODE_MANPATH:$MY_MANPATH"
 
 #### Jenkins settings
 
@@ -2731,7 +2696,7 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
     ## man page path settings
-    MANPATH="$MANPATH_IN_PROGRESS"
+    MANPATH="$MY_MANPATH:$MANPATH"
 
     ## dynamic library path settings
     LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
