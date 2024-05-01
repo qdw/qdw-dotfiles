@@ -90,24 +90,54 @@ function check_args() {
     fi
 }
 
-# function tca() {
-#     check_args 2 2 "forca NUMBER_OF_PLAYERS [NUMBER_OF_SPECTATORS]" "$@" || return
-#     echo "Starting a match with $1 players and $2 spectators"
-# }
+function filter() {
+    check_args 1 varargs "filter FUNCTION_NAME [FUNCTION_ARGUMENT ...]"
 
-# function tcavar() {
-#     check_args 2 varargs "test_function_forsooth NUMBER_OF_DANCERS [NUMBER_OF_SPECTATORS] [OTHER_ARG ...]" "$@" || return
-    
-#     local PLAYERS="$1"; shift
-#     local SPECTATORS="$1"; shift
-    
-#     echo "Starting a dance with $PLAYERS dancers and $SPECTATORS spectators (PS: $@)"
-# }
+    local FUNCTION_NAME="$1"
+    shift    
+    if [[ $# -eq 0 ]]; then
+        cat | "$FUNCTION_NAME"
+    else
+        "$FUNCTION_NAME" "$@"
+    fi
+}
+
+function funcalias() {
+    local FUNCTION_NAME  EXECUTABLE_PATH
+
+    if [[ $# -ne 2 ]]; then
+        complain "funcalias: error: wrong number of args. Usage: funcalias FUNCTION_NAME EXECUTABLE_PATH"
+    else
+        FUNCTION_NAME="$1"
+        EXECUTABLE_PATH="$2"
+        eval "function $FUNCTION_NAME { command $EXECUTABLE_PATH \"\$@\" ;}"
+    fi
+}
 
 #### Basic settings
 
 MY_OS="$(uname -s)"
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
+
+# bw (Black and White): remove ANSI color (and other) sequences
+function bw() {
+    local  INPUT_STRING
+
+    function sed_it() {
+        gsed 's/\x1b\[[0-9;]*m//g'
+    }
+
+    if [[ $# -eq 0 ]]; then
+        cat | tr -d '[:punct:]'
+    elif [[ $# -eq 1 ]]; then
+        echo "$1" | tr -d '[:punct:]'
+    else
+        complain "bw: error: too many arguments. Usage:
+    echo "some string" | bw
+    cat some_file | bw
+    bw FILENAME"
+    fi
+}
 
 #### cd settings
 
@@ -165,19 +195,7 @@ fi
 ## instead of the bundled macOS versions, as the Homebrewed versions
 ## are more frequently updated.
 
-function funcalias() {
-    local FUNCTION_NAME  EXECUTABLE_PATH
-
-    if [[ $# -ne 2 ]]; then
-        complain "funcalias: error: wrong number of args. Usage: funcalias FUNCTION_NAME EXECUTABLE_PATH"
-    else
-        FUNCTION_NAME="$1"
-        EXECUTABLE_PATH="$2"
-        eval "function $FUNCTION_NAME { $EXECUTABLE_PATH \"\$@\" ;}"
-    fi
-}
-
-for GNU_COMMAND in cut dircolors find roff sed sort stat tac tail; do
+for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail; do
     BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
     if [[ -f "$BREWED_GNU" ]]; then
         funcalias "$GNU_COMMAND" "$BREWED_GNU"
@@ -186,14 +204,11 @@ done
 
 #### grep settings
 
-if [[ -e "$HOMEBREW_BIN/ugrep" ]]; then
-    export MY_GREP="ugrep -E" MY_FGREP="ugrep -F" MY_PGREP="ugrep -P"
-elif [[ -e "$HOMEBREW_BIN/ggrep" ]]; then
+if [[ -e "$HOMEBREW_BIN/ggrep" ]]; then
     export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
 else
-    export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform'"
+    export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform' > /dev/stderr"
 fi
-
 
 export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
 
@@ -201,8 +216,8 @@ export GREP_COLORS="fn=01;36"
 GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json"
 GREP_OPTIONS="-I --color=always"
 
-function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER;}
-function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER;}
+function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
+function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
 function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS --exclude '*.js' "$@" | $PAGER ;}
 function gbr() {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
 function ge() {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.emacs.d ;}
@@ -245,17 +260,8 @@ function count_one_level() {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur() {
-    local OCCUR_PAGER
-
-    if [[ "$PAGER" = "cat" ]]; then
-        OCCUR_PAGER="$PAGER"
-    else
-        OCCUR_PAGER="command less --no-init --quit-if-one-screen"
-    fi
-    
-    command grep -RlE $GREP_EXCLUDE_FLAGS "$@" | sort | $OCCUR_PAGER
+    $MY_GREP $GREP_OPTIONS -l -m 1 $GREP_EXCLUDE_FLAGS | sort | $PAGER
 }
-
 
 #### Bash settings
 
@@ -274,8 +280,21 @@ function grbash() {
     fi
 }
 
-## Bash settings that shouldn't be checked into git
-## (either because they contain secrets, or because of license issues)
+#### Bash history settings
+
+set -a
+
+# Add a timestamp to history(1) output, using strftime(3) formatting.
+HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
+
+# Keep all history forever
+HISTFILESIZE=-1
+HISTSIZE=-1
+
+set +a
+
+#### Bash settings that shouldn't be checked into git
+#### (either because they contain secrets, or because of license issues)
 
 source-if-exists ~/.bashrc.d/daemons.bash
 source-if-exists ~/.site.bash.d/preamble.bash
@@ -305,7 +324,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
 
     # comp - activate shell completion
     function comp() {
-        sc() {
+        function sc() {
             for FILENAME in "$@"; do
                 source "$BASH_COMPLETION_DIR/${FILENAME}"
             done
@@ -362,8 +381,25 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
         comp "aws_bash_completer"
     }
     
-    GIT_COMPLETION_ACTIVATED=""
-    export PROMPT_COMMAND=('if [[ -d "$PWD/.git" && ("$INSIDE_EMACS" || -z "$GIT_COMPLETION_ACTIVATED") ]] ; then source "$HOMEBREW_ROOT/share/gitprompt.sh"; source "$BASH_COMPLETION_DIR/gh"; source "$BASH_COMPLETION_DIR/git-completion.bash"; export GIT_COMPLETION_ACTIVATED=1; fi')
+    function my_prompt_function() {
+        REALPATH="$(realpath "$PWD")"
+        
+        if [[ -d "$REALPATH/.git" \
+              && ( ! "$REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION" \
+                       || \
+                   ! "$REALPATH" =~ $REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION ) \
+              && ( ! "$GIT_COMPLETION_ACTIVATED" \
+                       || \
+                     "$INSIDE_EMACS" ) ]]; then
+            source "$HOMEBREW_ROOT/share/gitprompt.sh"
+            source "$BASH_COMPLETION_DIR/gh"
+            source "$BASH_COMPLETION_DIR/git-completion.bash"
+            export GIT_COMPLETION_ACTIVATED=1
+        fi
+    }
+    
+    MY_PROMPT_FUNCTION_DEFINITION=$(command -V my_prompt_function | tail -n +2)
+    export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
 fi
 
 #### Scheme Shell settings (keywords: Lisp, scsh)
@@ -375,26 +411,30 @@ if [[ -d "/opt/scsh" ]]; then
 fi    
 
 #### Pager settings
-
 set -a
 if [[ "$INSIDE_EMACS" ]]; then
     # Emacs shell-mode is a dumb terminal, so use special pager settings there.
     export PAGER="cat"
     export AWS_PAGER="$PAGER"
+    export GIT_PAGER="$PAGER"
     export PSQL_PAGER="$PAGER"
     fd() { fdd "$@" ;}
 else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
-    export PAGER="command less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
-    export GIT_PAGER="$PAGER -j 2" # Show an extra line before match - useful with 'git diff'
-    export PSQL_PAGER="command less --no-init"
     if command -v jless > /dev/null; then
         export AWS_PAGER="jless"
     else
         export AWS_PAGER="$PAGER"
     fi
+
+    export PAGER="command less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+    
+    export GIT_PAGER="$PAGER -j 2" # Show an extra line before match - useful with 'git diff'
+    
+    export PSQL_PAGER="command less --no-init"
 fi
+
 ACK_PAGER="$PAGER"
 BAT_PAGER="$PAGER"
 MANPAGER="$PAGER"
@@ -763,15 +803,6 @@ export DEFAULT_PS1="$PS1"
 # macOS: suppress nag message about Bash being deprecated in favor of zsh
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
-## Bash history
-set -a
-# Add a timestamp to history(1) output, using strftime(3) formatting.
-HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
-# Keep all history forever
-HISTFILESIZE=-1
-HISTSIZE=-1
-set +a
-
 #### Homebrew settings
 
 set -a
@@ -1107,16 +1138,12 @@ function kebab-case() {
 
 function lisp-case() { kebab-case "$@" ;}
 
-# gcd ("Git CD") - cd to a directory, relative to the root dir of this repo.
+# gcd ("Git CD") - cd to a directory, relative to the root dir of this repo
+# For example, if you're in directory ~/src/my-project/javascript then
+# 'gcd python' will change the cwd to ~/src/my-project/python
 function gcd() {
-    # gcd ("Git CD") - cd to a directory, relative to the root dir of this repo
-    # For example, if you're in directory ~/src/my-project/javascript then
-    # 'gcd python' will change the cwd to ~/src/my-project/python
-
-    local DESIRED_RELATIVE_DIR
-    DESIRED_RELATIVE_DIR=${1:.}
-
-    cd "$(git rev-parse --show-toplevel)/$DESIRED_RELATIVE_DIR"
+    check_args 0 1 "gcd [RELATIVE_DIR]"
+    cd "$(git rev-parse --show-toplevel)/$1"
 }
 
 # function git-delete-this-branch() {
@@ -1261,23 +1288,54 @@ function branch() {
     gh browse --branch "$BRANCH_NAME"
 }
 
-# gist - create a gist
+function gists() {
+    gh git list "$@"
+}
+
+function all_gists() {
+    gists --limit -1
+}
+
+# gist - view gists or create a gist
 function gist() {
-    if [[ $# -eq 0 ]]; then
-        open "https://gist.github.com/$GITHUB_USERNAME"
-    elif [[ $# -gt 2 ]]; then
-        echo "gist: error: wrong number of arguments. Usage: gist SOURCE_FILENAME"
-    else
-        local REALPATH DESCRIPTION
-        REALPATH="$(realpath "$1")"
-        if [[ $# -eq 2 ]]; then
-            DESCRIPTION="$2"
-        else
-            DESCRIPTION="$REALPATH"
+    local DESCRIPTION
+    local FILENAME="$(mktemp "$HOME/tmp")"
+
+    if [[ $# -gt 2 ]]; then
+        complain "gist: error: wrong number of arguments."
+        complain "Usage:
+                     gist DESCRIPTION # invokes GIT_EDITOR
+                     gist ???"
+        return
+    elif [[ $# -eq 0 ]]; then
+        local GIST_EDITOR
+        for EDITOR_VAR in GIT_EDITOR VISUAL EDITOR; do
+            if [[ -n "$EDITOR_VAR" ]]; then
+                GIST_EDITOR="$EDITOR_VAR"
+                break
+            fi
+        done
+        if [[ -z "$EDITOR_VAR" ]]; then
+            GIST_EDITOR=vi
         fi
-        
-        gh gist create --desc "$DESCRIPTION" "$REALPATH"
+        $GIST_EDITOR "$FILENAME"        
+    elif [[ $# -eq 1 ]]; then
+        # Assume we were invoked like this:
+        #     some_command | gist DESCRIPTION
+        DESCRIPTION="$1"
+        local PIPED_INPUT="$(cat)"
+        echo "$PIPED_INPUT" > "$FILENAME"
+    elif [[ $# -eq 2 ]]; then
+        DESCRIPTION="$1"
+        FILENAME="$2"
     fi
+    
+    local DESCRIPTION_CLAUSE
+    if [[ -n "$DESCRIPTION" ]]; then
+        DESCRIPTION_CLAUSE="--desc '$DESCRIPTION'"
+    fi
+    
+    gh gist create --web --filename "$FILENAME" "$DESCRIPTION_CLAUSE"
 }
 
 # gtr (Git Team and Repo) - run this in any dir inside a working copy of a GitHub repo to show the team name plus repo name in GitHub notation, e.g., myorg/myrepo
@@ -1542,28 +1600,15 @@ function fd() {
 }
 
 function fdgrep() {
-    local FILENAME_REGEX="$1"; shift
-    local GREP_REGEX="${!#}"; set -- "${@:1:$(($#-1))}"
-    
-    local FILES=$(fdd --type f "$FILENAME_REGEX")
-    if [[ "$FILES" ]]; then
-        grep -Ri "$@" "$GREP_REGEX" $FILES
-    fi
+    # check_args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    local FILENAME_REGEX="$1"; shift    
+    ( fdd --type f "$FILENAME_REGEX" -x $MY_GREP -H $GREP_OPTIONS $GREP_EXCLUDE_FLAGS $@ \; ) | $PAGER
 }
 
 function fdoccur() {
-    local FILENAME_REGEX GREP_REGEX FILES
-
-    local FILENAME_REGEX="$1"
-    shift
-    local GREP_REGEX="$1"
-    shift
-    
-    local FILES=$(fdd "$FILENAME_REGEX")
-    if [[ "$FILES" ]]; then
-        # Breaks if a filename contains whitespace; what do?
-        occur "$GREP_REGEX" "$@" $FILES
-    fi
+    # check_args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    local FILENAME_REGEX="$1"; shift
+    fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
 }
 
 #### Kubernetes (and OpenShift) settings
@@ -2087,8 +2132,13 @@ function cel() { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
 # d ("date") - give today's date in YYYY-MM-DD format.
 function d() { date +%Y-%m-%d ;}
 
-# dos2unix FILE1 ... - translate-in-place DOS newlines to Unix newlines.
-function dos2unix() { perl -pi -e 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
+function epoch2human() {
+    # check_args 1 1 "epoch2human EPOCH_SECONDS"
+    local EPOCH_SECONDS="$1"
+    date -d "@${EPOCH_SECONDS}"
+}
+
+function dos2unix() { perl -pe 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 
 # dream - run the Electric Sheep fractal generation daemon
 function dream() { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
@@ -2588,16 +2638,6 @@ function jql() {
         FULL_URL="${JQL_BASE_URL}${URLENCODED_QUERY}"
         open "$FULL_URL"
     fi
-}
-
-function jepic() {
-    jql "(creator = currentUser() OR assignee = currentUser()) AND issuetype = Epic AND resolution = Unresolved ORDER BY updated DESC"
-}
-
-function epics() { jepic "$@" ;}
-
-function jmine() {
-    jql "(creator = currentUser() OR assignee = currentUser()) AND resolution = Unresolved ORDER BY updated DESC"
 }
 
 #### Music-related settings
