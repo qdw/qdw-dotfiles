@@ -418,7 +418,9 @@ if [[ "$INSIDE_EMACS" ]]; then
     export AWS_PAGER="$PAGER"
     export GIT_PAGER="$PAGER"
     export PSQL_PAGER="$PAGER"
-    fd { fdd "$@" ;}
+    function fd {
+        fdd "$@"
+    }
 else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
@@ -445,7 +447,7 @@ function less { $PAGER "$@" ;}
 #### Markdown settings
 
 # export GLAMOUR_STYLE="Dark"
-readme {
+function readme {
     gh repo view
 }
 
@@ -555,7 +557,7 @@ function wait_for_proxy_to_come_up {
             
 
 function rds {
-    usage {
+    function usage {
         echo "Usage: rds [ls | list]"
     }
 
@@ -1102,10 +1104,8 @@ function popb {
     command popb --quiet "$@"
 }
 
-function pushb {
-    local NEW_BRANCH
-    
-    if [[ $# -eq 1 ]] && { [[ "$1" = "-l" ]] || [[ "$1" = "--list" ]] }; then
+function pushb {    
+    if [[ $# -eq 0 || ($# -eq 1 && ("$1" = "-l" || "$1" = "--list")) ]]; then
         command popb --list
     else
         command pushb --quiet "$@"
@@ -1518,18 +1518,18 @@ function spr {
 
 
 function pr {
-    list_my_prs {
+    function list_my_prs {
         gh pr list --author "$GITHUB_USERNAME" "$@"
     }
 
-    push_it {
+    function push_it {
         # Push to a remote branch (creating if necessary)
         local BRANCH
         BRANCH="$(git branch --show-current)"
         git push --set-upstream origin "$BRANCH" --quiet
     }
 
-    create_pr {
+    function create_pr {
         local GIT_FETCH_STDOUTERR=$(git fetch 2>&1)
         if [[ "$GIT_FETCH_STDOUTERR" ]]; then
             # If there's stuff to merge, cowardly bail
@@ -1550,7 +1550,7 @@ function pr {
         fi
     }
     
-    main {
+    function main {
         local PR_NUMBER_REGEX='^[[:digit:]]+$'
         
         if [[ "$1" = "--list" ]]; then
@@ -1832,8 +1832,8 @@ PYTHON_INTERPRETER_PATH="/usr/local/bin"
 PYTHON_PIPX_PATH=~/.local/bin
 set +a
 
-python { python3 "$@" ;}
-pip { pip3 "$@" ;}
+function python { python3 "$@" ;}
+function pip { pip3 "$@" ;}
 
 function va {
     local VENV_NAME
@@ -2111,7 +2111,7 @@ function quinnify_host {
     # set +x
 }
 
-my_ssh {
+function my_ssh {
     NODE=$1
 
     if (! ssh "$NODE" test -e ~/.quinnified > /dev/null 2>&1); then
@@ -2391,7 +2391,9 @@ function google {
     fi
 }
 
-function goog { google "$@" ;}
+function goog {
+    google "$@"
+}
 
 #### Java settings
 
@@ -2409,15 +2411,14 @@ function j {
     local  REPO  BRANCH  JENKINS_OUTPUT_FILENAME  JENKINS_OUTPUT_URL  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
     
     if [[ "$1" = "--no-sms" ]] || [[ "$JENKINS_NO_SMS" ]]; then
-        sms {
+        function sms {
             : # no-op
         }
     else
-        sms {
+        function sms {
             ~/...sms-me "$@"
         }
     fi
-            
 
     REPO="$(jenkins-repo)"
     BRANCH="$(jenkins-branch)"
@@ -2438,7 +2439,6 @@ function j {
             2>&1
 
         sms "Jenkins finished the build"
-                
         # # This logfile-parsing code is brittle, so disable it for now
         # if command grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
         #     SHORT_MESSAGE="Successfully built repo '$REPO', branch '$BRANCH'"
@@ -2529,7 +2529,7 @@ You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JI
     ISSUE_TYPE="$1"; if [[ ! "$ISSUE_TYPE" ]]; then ISSUE_TYPE="$JIRA_DEFAULT_ISSUE_TYPE"; fi
     PROJECT_ID="$2"; if [[ ! "$PROJECT_ID" ]]; then PROJECT_ID="$JIRA_DEFAULT_PROJECT_ID"; fi
     
-    err {
+    function err {
         ERROR_OCCURED=1
         echo "jira-create-ticket: error: $@"
     }
