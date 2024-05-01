@@ -18,7 +18,7 @@
 ## Also useful for timing:
 
 # TIMEFORMAT='%3R'
-# function time_source() {
+# function time_source {
 #     echo -n "$1:  "
 #     time source "$1"
 #     echo
@@ -29,7 +29,7 @@
 # command, then turn on tracing. This makes the trace much more
 # uncluttered.
 
-function setx() {
+function setx {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
     set -x
@@ -37,13 +37,13 @@ function setx() {
 
 #### Settings related to my little Bash metaprogramming library
 
-function complain() {
+function complain {
     for STRING in "$@"; do
         echo "$STRING" > /dev/stderr
     done
 }
 
-function check_args() {
+function check_args {
     local FUNCTION="${FUNCNAME[1]}"
     
     if [[ $# -lt 3 ]]; then
@@ -90,7 +90,7 @@ function check_args() {
     fi
 }
 
-function filter() {
+function filter {
     check_args 1 varargs "filter FUNCTION_NAME [FUNCTION_ARGUMENT ...]"
 
     local FUNCTION_NAME="$1"
@@ -102,7 +102,7 @@ function filter() {
     fi
 }
 
-function funcalias() {
+function funcalias {
     local FUNCTION_NAME  EXECUTABLE_PATH
 
     if [[ $# -ne 2 ]]; then
@@ -120,10 +120,10 @@ MY_OS="$(uname -s)"
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
 # bw (Black and White): remove ANSI color (and other) sequences
-function bw() {
+function bw {
     local  INPUT_STRING
 
-    function sed_it() {
+    function sed_it {
         gsed 's/\x1b\[[0-9;]*m//g'
     }
 
@@ -141,15 +141,15 @@ function bw() {
 
 #### cd settings
 
-function cdq() { cd ~/src/1/qdw-dotfiles ;}
+function cdq { cd ~/src/1/qdw-dotfiles ;}
 
 # cdld - cd to the enclosing directory of the target of a symlink
-function cdld() { cd "$(dirname "$(readlink -f "$1")")" ;}
+function cdld { cd "$(dirname "$(readlink -f "$1")")" ;}
 
 # cdd - cd to the enclosing dir of a file/dir.
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
-function cdd() {
+function cdd {
     if [[ $# -ne 1 ]]; then
         echo "cdd: wrong number of arguments. Usage: cdd PATH"
     else
@@ -186,7 +186,7 @@ if [[ ! "$PATHS_SET_AT" ]]; then
 fi
 
 if [[ "$MY_OS" = "Darwin" ]] && [[ -f "$HOMEBREW_BIN/trash" ]]; then
-    function rm() {
+    function rm {
         trash "$@"
     }
 fi
@@ -216,13 +216,13 @@ export GREP_COLORS="fn=01;36"
 GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json"
 GREP_OPTIONS="-I --color=always"
 
-function grep() {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
-function fgrep() { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
-function g() {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS --exclude '*.js' "$@" | $PAGER ;}
-function gbr() {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-function ge() {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.emacs.d ;}
+function grep {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
+function fgrep { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
+function g {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS --exclude '*.js' "$@" | $PAGER ;}
+function gbr {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+function ge {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.emacs.d ;}
 
-function gfd() {
+function gfd {
     local REGEX USAGE
     USAGE="Usage: gfd REGEX"
     
@@ -237,14 +237,14 @@ function gfd() {
 }
 
 # count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
-function count() { 
+function count { 
     command grep -Rc $GREP_EXCLUDE_FLAGS "$@" \
         | command grep -v ':0$' \
         | sed -e 's/\(.*\):\(.*\)/\2 \1/' \
         | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
 }
 
-function count_one_level() {
+function count_one_level {
     local COUNT  PATTERN
 
     PATTERN="$1"
@@ -259,20 +259,20 @@ function count_one_level() {
 }
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
-function occur() {
+function occur {
     $MY_GREP $GREP_OPTIONS -l -m 1 $GREP_EXCLUDE_FLAGS | sort | $PAGER
 }
 
 #### Bash settings
 
-function source-if-exists() {
+function source-if-exists {
     if [[ $# -eq 1 ]] && [[ -f "$1" ]]; then
         source "$1"
     fi
 }
 
 # grbash - grep my Bash config files
-function grbash() {
+function grbash {
     if [[ $# -ne 1 ]]; then
         echo "grbash: error: wrong number of arguments. Usage: grbash REGEX"
     else
@@ -323,8 +323,8 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     export BASH_COMPLETION_DIR="$HOMEBREW_ROOT/etc/bash_completion.d"
 
     # comp - activate shell completion
-    function comp() {
-        function sc() {
+    function comp {
+        function sc {
             for FILENAME in "$@"; do
                 source "$BASH_COMPLETION_DIR/${FILENAME}"
             done
@@ -370,18 +370,18 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
         esac
     }
 
-    function ag() {
+    function ag {
         comp "git"
         export GIT_COMPLETION_ACTIVATED=1
     }
     
     # AWS command completion - pretty fast,
     # so it's OK to run this at shell startup time if you want
-    function aw() {
+    function aw {
         comp "aws_bash_completer"
     }
     
-    function my_prompt_function() {
+    function my_prompt_function {
         REALPATH="$(realpath "$PWD")"
         
         if [[ -d "$REALPATH/.git" \
@@ -418,7 +418,7 @@ if [[ "$INSIDE_EMACS" ]]; then
     export AWS_PAGER="$PAGER"
     export GIT_PAGER="$PAGER"
     export PSQL_PAGER="$PAGER"
-    fd() { fdd "$@" ;}
+    fd { fdd "$@" ;}
 else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
@@ -440,17 +440,17 @@ BAT_PAGER="$PAGER"
 MANPAGER="$PAGER"
 set +a
 
-function less() { $PAGER "$@" ;}
+function less { $PAGER "$@" ;}
 
 #### Markdown settings
 
 # export GLAMOUR_STYLE="Dark"
-readme() {
+readme {
     gh repo view
 }
 
 # bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub)
-function bbat() {
+function bbat {
     local TMPFILE
     
     TMPFILE=$(gmktemp --suffix .html /tmp/bbat.XXXXXX) \
@@ -458,11 +458,11 @@ function bbat() {
         && elinks "$TMPFILE"
 }
 
-#### #FIXME settings: rewrite 'function bbat() {...}' to use 'gh' and GLAMOUR_STYLE, which should make the output look nicer
+#### #FIXME settings: rewrite 'function bbat {...}' to use 'gh' and GLAMOUR_STYLE, which should make the output look nicer
 
 #### Linker settings
 
-function ldd-app() {
+function ldd-app {
     local APP_NAME EXECUTABLE_PATH
 
     APP_NAME="$1"
@@ -475,7 +475,7 @@ function ldd-app() {
     done
 }
 
-function ldd() {
+function ldd {
     if [[ "$MY_OS" = "Darwin" ]]; then
         if [[ "$1" =~ ^[[:upper:]] ]] || [[ "$1" =~ [.]app$ ]]; then
             ldd-app "$@" | $PAGER
@@ -499,7 +499,7 @@ function ldd() {
 
 #### AWS settings
 
-function iam() {
+function iam {
     if [[ $# -eq 0 ]]; then
         echo "USAGE:"
         echo
@@ -510,7 +510,7 @@ function iam() {
 }
 
 # tags - show CDK tags for a project
-function tags() {
+function tags {
     local ORIG_DIR
     ORIG_DIR="$(pwd)"
 
@@ -530,7 +530,7 @@ function tags() {
     cd "$ORIG_DIR"
 }
 
-function wait_for_proxy_to_come_up() {
+function wait_for_proxy_to_come_up {
     local PROXY_NAME  STATUS
     
     if [[ $# -eq 1 ]]; then
@@ -554,8 +554,8 @@ function wait_for_proxy_to_come_up() {
 }
             
 
-function rds() {
-    usage() {
+function rds {
+    usage {
         echo "Usage: rds [ls | list]"
     }
 
@@ -572,7 +572,7 @@ function rds() {
 }
 
 # rds_ls ("RDS LiSt") - list RDS instances (highlighting the hostname portio nof the FQDN)
-function rds_ls() {
+function rds_ls {
     if [[ -n "$1" ]]; then
         aws rds describe-db-instances --no-paginate \
             | jq --raw-output '.DBInstances[].Endpoint.Address' \
@@ -586,17 +586,17 @@ function rds_ls() {
     fi
 }
 
-function list-rds-instances() { rds_ls "$@" ;}
+function list-rds-instances { rds_ls "$@" ;}
 
-function list-secrets() { aws secretsmanager list-secrets ;}
-function list-secret-ids() { list-secrets | jq --raw-output '.SecretList[].Name' | sort ;}
+function list-secrets { aws secretsmanager list-secrets ;}
+function list-secret-ids { list-secrets | jq --raw-output '.SecretList[].Name' | sort ;}
 
 
-function get-secret() {
+function get-secret {
     aws secretsmanager get-secret-value --secret-id "$1" \
         | jq '.SecretString | fromjson'
 }
-function secret() { get-secret "$@" ;}
+function secret { get-secret "$@" ;}
 
 #### Editor settings
 #### Emacs settings
@@ -609,7 +609,7 @@ set +a
 
 ### Emacs daemon settings
 
-function pe() { 
+function pe { 
     command ps auxwww \
         | command grep "$USER" \
         | command grep -vF grep \
@@ -617,12 +617,12 @@ function pe() {
         | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)"
 }
 
-function the-emacs-daemon-is-running() {
+function the-emacs-daemon-is-running {
     pe > /dev/null
     echo $?
 }
 
-function print-instructions-for-starting-the-emacs-daemon() {
+function print-instructions-for-starting-the-emacs-daemon {
     # if [[ "$MY_OS" = "Darwin" ]]; then
     #     echo "brew services start "$EMACS_VARIANT""
     # elif [[ "$MY_OS" =~ Linux ]]; then
@@ -633,7 +633,7 @@ function print-instructions-for-starting-the-emacs-daemon() {
 }
 
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
-function ke() {
+function ke {
     # if [[ "$MY_OS" = "Darwin" ]]; then
     #     brew services stop "$EMACS_VARIANT"
     # else
@@ -644,7 +644,7 @@ function ke() {
 }
 
 # se (Start Emacs-daemon): start the Emacs daemon.
-function se() {
+function se {
     local DAEMON_STATUS
     DAEMON_STATUS="$(the-emacs-daemon-is-running)"
     if [[ "$DAEMON_STATUS" -eq 0 ]]; then
@@ -663,7 +663,7 @@ function se() {
 }
 
 # re (Restart Emacs-daemon): stop it, then start it.
-function re() {
+function re {
     ke && se
 }
 
@@ -672,7 +672,7 @@ function re() {
 # 
 # This looks just like a normal terminal emacs session, but starts faster
 # (and can see buffers from other emacsclient sessions, but whatever).
-function emacs() {
+function emacs {
     # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
     # I directly type "emacs my-file", then...
     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
@@ -710,17 +710,17 @@ umask 0022
 # see ~/.bashrc.d/third-party.bash)
 # 
 # te ("TErminal window") - create a new Terminal.app window in the same directory I'm in when I run te.
-function te() {
+function te {
     newtab bash # -c "cd $(pwd); $@" #FIXME: get this -c thing to work
 }
 
-function nt() { newtab "$@" ;}
+function nt { newtab "$@" ;}
 
 # Required for the corner case where you
 # want to run emacs M-x shell in Terminal.app
 # without getting error messages in Emacs.
 # Not needed for other terminal emulators.
-function update_terminal_cwd() {
+function update_terminal_cwd {
     : # no-op
 }
 
@@ -729,7 +729,7 @@ function update_terminal_cwd() {
 # to open it in Finder... but I don't like
 # that feature, so I'm comment it out for now.
 #
-# function update_terminal_cwd() {
+# function update_terminal_cwd {
 #     # Identify the directory using a "file:" scheme URL,
 #     # including the host name to disambiguate local vs.
 #     # remote connections. Percent-escape spaces.
@@ -743,7 +743,7 @@ function update_terminal_cwd() {
 
 export TERM=xterm-256color # used by tmux
 
-function strip_control_characters_from() {
+function strip_control_characters_from {
     local STRING
     if [[ $# -eq 1 ]]; then
         echo "$(tr -cd  "[:print:]"  "$STRING")"
@@ -755,14 +755,14 @@ function strip_control_characters_from() {
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
 # This works by using a special ANSI-like escape code that not all terminal
 # emulators support.
-function title() { echo -ne "\033]2;" "$1" "\007" ;}
+function title { echo -ne "\033]2;" "$1" "\007" ;}
 
 ## iTerm2 settings
 
 # See https://iterm2.com/documentation-captured-output.html
-function cl() { printf "\e]1337;ClearCapturedOutput\e\\" ;}
+function cl { printf "\e]1337;ClearCapturedOutput\e\\" ;}
 
-function activate-iTerm2-integration() {
+function activate-iTerm2-integration {
     # Enable "iTerm2 integration," that is, a bunch of fancy features
     # specific to the iTerm2 terminal emulator (example: click-to-download
     # over ssh plus lots more).
@@ -813,7 +813,7 @@ HOMEBREW_NO_ANALYTICS=1
 HOMEBREW_NO_ENV_HINTS=1
 set +a
 
-function brew() {
+function brew {
     if [[ "$1" = 'help' ]] || [[ ${!#} = '--help' ]]; then
         command brew "$@" | $PAGER
     else
@@ -821,17 +821,17 @@ function brew() {
     fi
 }
 
-function brew-deps-all() {
+function brew-deps-all {
     brew deps --tree --install | $PAGER
 }
 
-function brew-all-deps() { brew-deps-all "$@" ;}
+function brew-all-deps { brew-deps-all "$@" ;}
 
-function brew-leaves() {
+function brew-leaves {
     brew-deps-all | command ggrep -E '^[:alpha]' | sort | uniq | $PAGER
 }
 
-function brew-leaf() {
+function brew-leaf {
     local LEAF_NUMBER
     if [[ $# -eq 0 ]]; then
         LEAF_NUMBER=1
@@ -846,7 +846,7 @@ function brew-leaf() {
     brew-leaves | head "-${LEAF_NUMBER}" | tail -1
 }
 
-function brew-next-leaf() {
+function brew-next-leaf {
     local LEAF_FILE=~/.brew-next-leaf
     
     local LEAF_NUM
@@ -863,18 +863,18 @@ function brew-next-leaf() {
     fi
 }
 function bnl()  { brew-next-leaf "$@" ;}
-function leaf() { brew-next-leaf "$@" ;}
+function leaf { brew-next-leaf "$@" ;}
 
 
-function bi() { brew install "$@" ;}
-function be() { brew edit "$@" ;}
-function bh() { brew home "$@" ;}
-function bl() { brew list -1 "$@" ;}
-function bo() { brew update; brew outdated ;}
-# function bo() { brew doctor; brew update && brew outdated ;}
-function bs() { brew search "$@" ;}
-function bser() { brew services "$@" ;}
-function bu() {
+function bi { brew install "$@" ;}
+function be { brew edit "$@" ;}
+function bh { brew home "$@" ;}
+function bl { brew list -1 "$@" ;}
+function bo { brew update; brew outdated ;}
+# function bo { brew doctor; brew update && brew outdated ;}
+function bs { brew search "$@" ;}
+function bser { brew services "$@" ;}
+function bu {
     brew update
     
     if [[ "$I_HAVE_ADMIN_POWERS" ]]; then
@@ -885,12 +885,12 @@ function bu() {
     fi
 }
 
-function buc() {
+function buc {
     (brew update && brew upgrade --formula) \
         && (brew cleanup; brew doctor)
 }
 
-function brew-lock() {
+function brew-lock {
     local HOMEBREW_LOCK_DIR USAGE
     HOMEBREW_LOCK_DIR="$HOMEBREW_ROOT/var/homebrew/locks"
     USAGE="Usage: brew-lock [--remove-all]"
@@ -910,7 +910,7 @@ function brew-lock() {
 
 # brew-n-deps PACKAGE_NAME - print the number of packages
 # that depend on PACKAGE_NAME
-function _brew-n-deps() {
+function _brew-n-deps {
     PACKAGE_NAME="$1"
     if ! brew ls --formula "$PACKAGE_NAME" >/dev/null 2>&1; then
         echo -1
@@ -922,7 +922,7 @@ function _brew-n-deps() {
 }
 
 # Just a verbose wrapper to _brew-n-deps, which see
-function brew-n-deps() {
+function brew-n-deps {
     PACKAGE_NAME="$1"
     N_DEPENDERS=$(_brew-n-deps "$PACKAGE_NAME")
     if [[ "$N_DEPENDERS" = -1 ]]; then
@@ -961,24 +961,24 @@ function mac-globalize-fonts {
         "/Library/Fonts/"
 }
 
-function mac-disable-font-smoothing() {
+function mac-disable-font-smoothing {
     defaults write -g AppleFontSmoothing -int 0
     defaults write CGFontRenderingFontSmoothingDisabled -INT 1
 }
 
-function mac-do-not-switch-to--desktop-when-switching-to-app() { 
+function mac-do-not-switch-to--desktop-when-switching-to-app { 
     sudo defaults write com.apple.dock workspaces-auto-swoosh -bool NO
     sudo killall Dock
 }
 
-function mac-enable-cmd-ctrl-click-to-drag-windows() {
+function mac-enable-cmd-ctrl-click-to-drag-windows {
     defaults write -g NSWindowShouldDragOnGesture -bool true
 }
 
 #### Settings for bat, a colorizing cat(1) that understands many file formats
 
 export BAT_THEME='Solarized (dark)'
-function bat() {
+function bat {
     command bat \
         --color always \
         --decorations='auto' \
@@ -989,7 +989,7 @@ function bat() {
 }
 
 # bat-head FILENAME NUMBER: use color bat to show a file's first n lines
-function bat-head() {
+function bat-head {
     local FILENAME="$1"
     local NUMBER="$2"
     
@@ -997,7 +997,7 @@ function bat-head() {
 }
 
 # bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub)
-function bbat () {
+function bbat  {
     local TMPFILE
     
     TMPFILE=$(gmktemp --suffix .html /tmp/bbat.XXXXXX) \
@@ -1006,7 +1006,7 @@ function bbat () {
 }
 
 # cdy ("CD sYmbolic link") - cd to the directory that a symlink points to (or, if it points to a non-directory file, cd to that file's parent dir).
-function cdy() {
+function cdy {
     local TARGET
     TARGET=$(readlink -- "$1")
 
@@ -1019,10 +1019,10 @@ function cdy() {
 }
 
 # Report symlinks as symlinks
-function file() { command file --no-dereference "$@" ;}
+function file { command file --no-dereference "$@" ;}
 
 # path - given a relative path, print its relative path. Does not dereference symlinks. Does not work on absolute paths; hence does not work for tilde expansion.
-function path() {
+function path {
     local REL_PATH ABS_PATH
     REL_PATH="$1"
     ABS_PATH="$(pwd)/$REL_PATH"
@@ -1035,31 +1035,31 @@ function path() {
 }
 
 # qp ("qdw-dotfiles Push")
-function qp() { cdq && git add . && git commit && git push && cd - ;}
+function qp { cdq && git add . && git commit && git push && cd - ;}
 
 #### ls settings
 
 export LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:'
 
-function lh() {
+function lh {
     command $MY_LS $LS_BASE_OPTIONS -t "$@" | head -5
 }
 
-function ls() {
+function ls {
     command $MY_LS $MY_LS_OPTIONS "$@" | $PAGER
 }
 
-function lsd() {
+function lsd {
     command $MY_LS $MY_LS_OPTIONS "$@" ~/d/ | $PAGER
 }
 
 #### diff settings
 
 
-function dcc() { colordiff -u "$@" | $PAGER ;}
+function dcc { colordiff -u "$@" | $PAGER ;}
 
 export PATH="/opt/homebrew/opt/diffutils/bin:$PATH"
-function diff() {
+function diff {
     local COMMON_DIFF_OPTIONS="-u --color=always"
     if [[ -f "/opt/homebrew/opt/diffutils/bin/diff" ]]; then
         # Color legend:
@@ -1088,7 +1088,7 @@ set +a
 
 export GIT_SHELL_PATH="$HOMEBREW_BIN/bash"
 
-function branch-name() {
+function branch-name {
     local PHRASE_STRING
     if [[ $# -eq 1 ]]; then
         PHRASE="$1"
@@ -1098,11 +1098,11 @@ function branch-name() {
     fi
 }
 
-function popb() {
+function popb {
     command popb --quiet "$@"
 }
 
-function pushb() {
+function pushb {
     local NEW_BRANCH
     
     if [[ $# -eq 1 ]] && { [[ "$1" = "-l" ]] || [[ "$1" = "--list" ]] }; then
@@ -1112,7 +1112,7 @@ function pushb() {
     fi
 }
 
-function strip-punctuation() {
+function strip-punctuation {
     local INPUT_STRING
 
     if [[ $# -eq 1 ]]; then
@@ -1125,7 +1125,7 @@ function strip-punctuation() {
 
 # kebab-case convert "A Phrase with mixed Case" to "a-phrase-with-mixed-case"
 # (useful for generating git branch names)
-function kebab-case() {
+function kebab-case {
     local INPUT_STRING
 
     if [[ $# -eq 1 ]]; then
@@ -1136,19 +1136,19 @@ function kebab-case() {
     fi   
 }
 
-function lisp-case() { kebab-case "$@" ;}
+function lisp-case { kebab-case "$@" ;}
 
 # gcd ("Git CD") - cd to a directory, relative to the root dir of this repo
 # For example, if you're in directory ~/src/my-project/javascript then
 # 'gcd python' will change the cwd to ~/src/my-project/python
-function gcd() {
+function gcd {
     check_args 0 1 "gcd [RELATIVE_DIR]"
     cd "$(git rev-parse --show-toplevel)/$1"
 }
 
-# function git-delete-this-branch() {
+# function git-delete-this-branch {
 #     OLD_BRANCH=$(git branch --show-current)
-#     # delete_it() {
+#     # delete_it {
 #     #     git branch -d "$OLD_BRANCH"
 #     # }
     
@@ -1170,7 +1170,7 @@ function gcd() {
 # }
 
 # gr (git repo) - print repo name (if your cwd is in a git working copy)
-function gr() {
+function gr {
     basename $(git rev-parse --show-toplevel)
 }
 
@@ -1191,7 +1191,7 @@ function git-backup {
 }
 
 
-function get-main-branch-name() {
+function get-main-branch-name {
     local MAIN_OR_MASTER
     
     MAIN_OR_MASTER="$(command git branch --remotes | command ggrep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
@@ -1200,7 +1200,7 @@ function get-main-branch-name() {
 
 
 # gb (Git Branch) - create a new branch based on the main one, and check it out
-function gb() {
+function gb {
     local NEW_BRANCH_NAME MAIN
 
     if [[ $# -eq 0 ]]; then
@@ -1219,7 +1219,7 @@ function gb() {
 }
 
 # Generate a 
-function gbb() {
+function gbb {
     echo "First create a JIRA ticket and copy its shortname (e.g., 'MYPROJ-1')"
     jira-create-ticket
 
@@ -1239,21 +1239,21 @@ function gbb() {
 # gb (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
 # command to create and switch to a branch.
 # Shadows the crappy Unix built-in calculator bc(1).
-function bc() {
+function bc {
     gb "$@"
 }
 
 # gbs (Git Branches) - list (local) git branches
-function gbs() { git branch ;}
+function gbs { git branch ;}
 
 # gco (Git CheckOut) - what it says on the tin
 function gco { git checkout "$@" ;}
 
 # gm (Git Main) - check out the main branch (depends on an alias in my ~/.gitconfig)
-function gm() { git main "$@" ;}
+function gm { git main "$@" ;}
 
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
-function gurl() {
+function gurl {
     local ORIG_DIR
     ORIG_DIR=$(pwd)
     gcd \
@@ -1263,7 +1263,7 @@ function gurl() {
 
 # branchify - munge a branch description into a branch name
 # (by translating spaces to dashes and uppercase to lowercase)
-function branchify() {
+function branchify {
     if [[ $# -ne 1 ]]; then
         echo "branchify: error: wrong number of arguments. Usage: branchify DESCRIPTIVE_STRING"
     else
@@ -1274,7 +1274,7 @@ function branchify() {
 ## GitHub-specific Git settings
 
 # branch BRANCH_NAME - display the GitHub web page for BRANCH_NAME
-function branch() {
+function branch {
     local BRANCH_NAME
     
     if [[ $# -eq 0 ]]; then
@@ -1288,16 +1288,16 @@ function branch() {
     gh browse --branch "$BRANCH_NAME"
 }
 
-function gists() {
+function gists {
     gh git list "$@"
 }
 
-function all_gists() {
+function all_gists {
     gists --limit -1
 }
 
 # gist - view gists or create a gist
-function gist() {
+function gist {
     local DESCRIPTION
     local FILENAME="$(mktemp "$HOME/tmp")"
 
@@ -1339,7 +1339,7 @@ function gist() {
 }
 
 # gtr (Git Team and Repo) - run this in any dir inside a working copy of a GitHub repo to show the team name plus repo name in GitHub notation, e.g., myorg/myrepo
-function gtr() {
+function gtr {
     local REPO_URL RETVAL
     REPO_URL="$(gu)"
     if [[ "$REPO_URL" =~ ^git[@]github.com[:](.*[/].*) ]]; then
@@ -1351,7 +1351,7 @@ function gtr() {
 }   
 
 # gline (Git Line) - open a file in GitHub's web UI, at a given line
-function gline() {
+function gline {
     local FILENAME_AND_LINE  USAGE  BRANCH
     USAGE="Usage: gline FILENAME:LINENO"
     BRANCH="$(gb)"
@@ -1369,7 +1369,7 @@ function gline() {
     fi
 }
 
-function lst() {
+function lst {
     local LAST_ARG_IS_THE_FILENAME
 
     if [[ $# -eq 0 ]]; then
@@ -1390,14 +1390,14 @@ function lst() {
     fi
 }
 
-function readme() {
+function readme {
     gh repo view
 }
 
-function gcm() { git commit -m "$@" ;}
-function gdo() { git diff origin HEAD ;}
+function gcm { git commit -m "$@" ;}
+function gdo { git diff origin HEAD ;}
 
-function gl() {
+function gl {
     local N_COMMITS
 
     if [[ $# -eq 0 ]]; then
@@ -1417,7 +1417,7 @@ function gn()  { git diff --name-only "$@" ;}
 function gs()  { git status "$@" ;}
 
 # gi ("git init") - go through the multi-command dance to create a local git repo
-function gi() {
+function gi {
     if git rev-parse --is-inside-work-tree; then
         echo "gi: error: $(pwd) is already under git control"
     else
@@ -1429,17 +1429,17 @@ function gi() {
 }
 
 # gcl (Git CLone) - quickly clone a repo belonging to my organization
-function gcl() {
+function gcl {
     REPO="$1"
     cd ~/src >/dev/null \
         && git clone "git@github.com:${GITHUB_ORG}/${REPO}"
     cd - >/dev/null
 }
 
-function clone() { gcl "$@" ;}
+function clone { gcl "$@" ;}
 
 # repos - multitool for listing/searching GitHub repositories 
-function repos() {
+function repos {
     PATTERN="$1"
     
     # With no argument, print all repos in my $GITHUB_ORG
@@ -1467,7 +1467,7 @@ function repos() {
 }
 
 # repo - open a named GitHub named repo in a web browser
-function repo() {
+function repo {
     REPO_NAME="$1"
     if [[ -z "$REPO_NAME" ]]; then
        gh repo view --web
@@ -1507,7 +1507,7 @@ function repo() {
 # PR (Pull Request) - manipulate GitHub pull requests
 
 # show my latest PR (and capture the PR number)
-function spr() {
+function spr {
     gh pr list --author @me --state open --limit 1 "$@"
 
     # local PR_NUMBER=$($LIST_COMMAND) # | awk '{print $1}') # | tee >(awk '{print $1}'))
@@ -1517,19 +1517,19 @@ function spr() {
 }
 
 
-function pr() {
-    list_my_prs() {
+function pr {
+    list_my_prs {
         gh pr list --author "$GITHUB_USERNAME" "$@"
     }
 
-    push_it() {
+    push_it {
         # Push to a remote branch (creating if necessary)
         local BRANCH
         BRANCH="$(git branch --show-current)"
         git push --set-upstream origin "$BRANCH" --quiet
     }
 
-    create_pr() {
+    create_pr {
         local GIT_FETCH_STDOUTERR=$(git fetch 2>&1)
         if [[ "$GIT_FETCH_STDOUTERR" ]]; then
             # If there's stuff to merge, cowardly bail
@@ -1550,7 +1550,7 @@ function pr() {
         fi
     }
     
-    main() {
+    main {
         local PR_NUMBER_REGEX='^[[:digit:]]+$'
         
         if [[ "$1" = "--list" ]]; then
@@ -1567,23 +1567,23 @@ function pr() {
     main "$@"
 }
 
-function prs() {
+function prs {
     pr --list
 }
 
 # purl ("Pull request URL") - print the URL of the latest pull request on this branch.
 # Also copy it to the clipboard.
-function purl() {
+function purl {
     gh pr view | command grep --color=never --only-matching 'https://.*' | tee >(pbcopy)
 }
 
-function pulls() {
+function pulls {
     open "https://github.com/pulls"
 }
 
 #### fd settings (fd is a faster and better replacement for find(1)
 
-function fdd() {
+function fdd {
     command fd \
         --exclude .git \
         --exclude .github \
@@ -1595,17 +1595,17 @@ function fdd() {
         "$@"
 }
 
-function fd() {
+function fd {
     fdd --color=always "$@" | $PAGER
 }
 
-function fdgrep() {
+function fdgrep {
     # check_args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
     local FILENAME_REGEX="$1"; shift    
     ( fdd --type f "$FILENAME_REGEX" -x $MY_GREP -H $GREP_OPTIONS $GREP_EXCLUDE_FLAGS $@ \; ) | $PAGER
 }
 
-function fdoccur() {
+function fdoccur {
     # check_args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
     local FILENAME_REGEX="$1"; shift
     fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
@@ -1613,7 +1613,7 @@ function fdoccur() {
 
 #### Kubernetes (and OpenShift) settings
 
-function oc() {
+function oc {
     if [[ "$1" = "login" ]] && [[ $# -eq 1 ]]; then
         local AUTH_URL
         AUTH_URL=$(command oc login | sed s'/.*\(https.*\)/\1/')
@@ -1626,18 +1626,18 @@ function oc() {
 }
 
 # Show all images in use in the current cluster; code ganked from https://kubernetes.io/docs/tasks/access-application-cluster/list-all-running-container-images/
-function kube-ls-images() { 
+function kube-ls-images { 
     kubectl get pods --all-namespaces \
                       -o jsonpath="{.items[*].spec.containers[*].image}" \
         | tr -s '[:space:]' '\n' | sort | uniq -c
 }
 
 # If I'm going to make the same typo all the time, I might as well autocorrect it
-function lube-aws() { kube-aws "$@" ;}
-function lube-ls-images() { kube-ls-images "$@" ;}
-function lubectl() { kubectl "$@" ;}
-function lubecfg() { kubecfg "$@" ;}
-function minilube() { minikube "$@" ;}
+function lube-aws { kube-aws "$@" ;}
+function lube-ls-images { kube-ls-images "$@" ;}
+function lubectl { kubectl "$@" ;}
+function lubecfg { kubecfg "$@" ;}
+function minilube { minikube "$@" ;}
 
 #### Perl settings
 
@@ -1647,14 +1647,14 @@ function minilube() { minikube "$@" ;}
 export PERL_MM_USE_DEFAULT=1
 
 # pb: because typing 'perlbrew' is too much work.
-function pb() {
+function pb {
     # Don't put this in PATH, because that would interfere with the system Perl.
     ~/perl5/perlbrew/bin/perlbrew "$@"
 }
 
 #### Playdate (handheld indie console) game dev settings
 
-function pd_encode() {
+function pd_encode {
     local INPUT OUTPUT
 
     if ! [[ $# -eq 1 ]] || [[ $# -eq 2 ]]; then
@@ -1669,7 +1669,7 @@ function pd_encode() {
 }
 
 #### Data risotto spatulae
-function csview() { command csview "$@" | $PAGER ;}
+function csview { command csview "$@" | $PAGER ;}
 
 #### PostgreSQL settings
 ####
@@ -1678,7 +1678,7 @@ function csview() { command csview "$@" | $PAGER ;}
 ####     ~/.pg_service
 ####     ~/.pgpass
 
-function pg() {
+function pg {
     local  VERSION  PROGRAM_NAME  BINARY_PATH  COMMAND
     
     if [[ "$1" ]]; then
@@ -1703,7 +1703,7 @@ function pg() {
 }
 
 declare -Ax pgpasses
-function qql() {
+function qql {
     local SERVICE
     
     if [[ $# -eq 0 ]]; then
@@ -1754,7 +1754,7 @@ function replication_role()
 #     # ^ prints all sections with section headings matching '[.*monolith.*]'
 # 
 # ser - display sections of my ~/.pg_service.conf, or the whole thing
-function ser() {
+function ser {
     local REGEX
     
     if [[ $# -eq 0 ]]; then
@@ -1771,7 +1771,7 @@ function ser() {
 
 ## PurpleAir air quality monitor settings
 
-function air() {
+function air {
     set -uo pipefail
     local RESPONSE_FILE
     RESPONSE_FILE=$(mktemp "$HOME/tmp/air.XXXX")
@@ -1807,7 +1807,7 @@ function air() {
 
 ## Coffee-bean-ordering settings
 
-function coffee() {
+function coffee {
     local URL="https://store.awakencafe.com/s/order?location=11e93a189ebfc0bcb7910a580a1c0333#6"
     # local URL="https://store.awakencafe.com/s/customer-accounts"
     open -a Firefox "$URL"
@@ -1815,11 +1815,11 @@ function coffee() {
 
 #### Aranet4 air quality monitoring settings
 
-function co2 () {
+function co2  {
     "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read "$MY_ARANET4" 2> /dev/null | jq ".co2"
 }
 
-function co2-verbose() {
+function co2-verbose {
     echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
 }
 
@@ -1832,10 +1832,10 @@ PYTHON_INTERPRETER_PATH="/usr/local/bin"
 PYTHON_PIPX_PATH=~/.local/bin
 set +a
 
-python() { python3 "$@" ;}
-pip() { pip3 "$@" ;}
+python { python3 "$@" ;}
+pip { pip3 "$@" ;}
 
-function va() {
+function va {
     local VENV_NAME
     if [[ $# -ne 1 ]]; then
         echo "va: error: wrong number of arguments. Usage: va VIRTUALENV_TO_ACTIVATE"
@@ -1846,7 +1846,7 @@ function va() {
     fi
 }
 
-function mkvirtualenv() {
+function mkvirtualenv {
     mkdir -p "$MY_VIRTUALENV_DIR"
     
     NEW_VIRTUALENV_NAME="$1"
@@ -1860,26 +1860,26 @@ function mkvirtualenv() {
     fi
 }
 
-function ve() { set -x; mkvirtualenv "$@"; set +x ;}
+function ve { set -x; mkvirtualenv "$@"; set +x ;}
 
 #### Tor settings
 
-function tor-curl() { curl --socks4a 127.0.0.1:9050 "$@" ;}
-function torcurl() { tor-curl "$@" ;}
+function tor-curl { curl --socks4a 127.0.0.1:9050 "$@" ;}
+function torcurl { tor-curl "$@" ;}
 
 #### TypeScript settings/Deno settings
 
 # (You can't do this with a shebang, hence the need for a function):
 # dr ("Deno Run") - run some code via the Deno runtime.
-function dr() { deno run --quiet "$@" ;}
+function dr { deno run --quiet "$@" ;}
 
 # dl ("Deno with Local permissions") - run some code in the Deno runtime, and allow the code to access the network and read the local filesystem, without prompting me for permission.
-function dl() { deno run --quiet --allow-net --allow-read "$@" ;}
+function dl { deno run --quiet --allow-net --allow-read "$@" ;}
 
-function dc() { deno eval --check "$@" ;}
+function dc { deno eval --check "$@" ;}
 
 # dcr - run Deno, but first do type-checking (no longer the default as of Deno v1.23)
-function dcr() { deno run --check "$@" ;}
+function dcr { deno run --check "$@" ;}
 
 #### Rust settings
 
@@ -1898,7 +1898,7 @@ if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
 fi
 
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
-function gemi() {
+function gemi {
     sudo gem install --remote \
                      --rdoc \
                      --ri \
@@ -1908,16 +1908,16 @@ function gemi() {
 #### Miscellaneous shell functions
 
 # Change this terminal's background to the hex triplet passed in.
-function bghex() {
+function bghex {
     # Example: 'bghex ff0000' to use a red background.
     printf '\e]11;%s\a' "#${1}"
 }
 
-function ips() { /sbin/ifconfig -a | grep 'inet ' | grep -v 'inet6 ' ;}
-function ipv6() { /sbin/ifconfig -a | grep 'inet6 ' ;}
+function ips { /sbin/ifconfig -a | grep 'inet ' | grep -v 'inet6 ' ;}
+function ipv6 { /sbin/ifconfig -a | grep 'inet6 ' ;}
 
 # flast - print the first and last lines of a file
-function flast() {
+function flast {
     local FILENAME
     FILENAME="$1"
 
@@ -1926,7 +1926,7 @@ function flast() {
 }
 
 # line N FILE - show line N of file FILE
-function line() {
+function line {
     local LINE_NUMBER FILENAME
     LINE_NUMBER="$1"
     FILENAME="$2"
@@ -1934,7 +1934,7 @@ function line() {
     head "-${LINE_NUMBER}" "$FILENAME" | tail -1
 }
 
-function mcd() {
+function mcd {
     local DIRNAME
     DIRNAME="$1"
     mkdir "$DIRNAME" \
@@ -1942,7 +1942,7 @@ function mcd() {
 }
 
 # mhost ("Map to Host(s)") - repeatedly execute a command on a list of hostnames (passing in each hostname as the command's last arg)
-function mhost() {
+function mhost {
     COMMAND="$1"; shift
     for NODE in "$@"; do
         echo "$NODE"
@@ -1954,7 +1954,7 @@ function mhost() {
 }
 
 # mshost ("Map Ssh [to] Host(s)") - execute an ssh command on a list of hosts, with paragraphized output
-function mshost() {
+function mshost {
     REMOTE_COMMAND="$1"; shift
     COMMAND="ssh $REMOTE_COMMAND"
     mhost "$COMMAND" "$@"
@@ -1963,7 +1963,7 @@ function mshost() {
 #### Process-related settings
 
 # Display all processes, in a style that I like. If an argument is given, interpret it as a grep regex, and display only those that match that regex.
-function p() {
+function p {
     local HEADER PROCS
     local PS_COMMAND="ps auxwww"
     
@@ -1981,7 +1981,7 @@ function p() {
 
 #### Process-related settings
 
-function pbc() { 
+function pbc { 
     local FILENAME
     FILENAME="$1"
     if [[ $FILENAME ]]; then
@@ -1994,9 +1994,9 @@ function pbc() {
 function pstree { command pstree -g 3 -u $USER "$@" | $PAGER ;}
 
 # Display my processes.
-function pu() { p $USER ;}
+function pu { p $USER ;}
 
-function _pq() {
+function _pq {
     # grep the list of processes, but don't show any output.
     # This is useful for non-interactive functions that just need
     # to test whether a process is running.
@@ -2006,9 +2006,9 @@ function _pq() {
 #### vim settings
 
 # vl ("Vim Less") - use vim as a colorizing pager
-# function vl() { "$HOMEBREW_ROOT/share/nvim/runtime/macros/less.sh" "$@" ;}
+# function vl { "$HOMEBREW_ROOT/share/nvim/runtime/macros/less.sh" "$@" ;}
 
-function vim() {
+function vim {
     nvim "$@"
 }
 
@@ -2018,24 +2018,24 @@ function vim() {
 ## where each file consists of one or more lines.
 ## Each file is treated as a set,
 ## and each line is treated as an element of that set.
-function set-intersection() {
+function set-intersection {
     if [[ $# -eq 2 ]]; then
         command grep -xF -f "$1" "$2"
     else
         echo "$0: error: wrong number of arguments ($#). Usage: $0 SET_FILE_1 SET_FILE_2"
     fi
 }
-function set-intersect() { intersection "$@" ;}
+function set-intersect { intersection "$@" ;}
 
 
-function set-difference() {
+function set-difference {
      cat "$@" | sort | uniq -u
 }
-function set-disjunctive-union() { set-difference "$@" ;}
+function set-disjunctive-union { set-difference "$@" ;}
 
 # [Broken] recursive version, for arbitrary numbers of sets
 #
-# function intersection() {
+# function intersection {
 #     if [[ $# -lt 2 ]]; then
 #         echo "$0: error: wrong number of arguments ($#). Usage: $0 FILE_1 FILE_2 [...]"
 #     else
@@ -2048,16 +2048,16 @@ function set-disjunctive-union() { set-difference "$@" ;}
 
 #### SSH settings
 
-function ssh-keygen() { command ssh-keygen -t ed25519 "$@" ;}
+function ssh-keygen { command ssh-keygen -t ed25519 "$@" ;}
 
-function ssh-add-all() {
+function ssh-add-all {
     for KEY in $(find ~/.ssh -maxdepth 1 -type f -name '*_ed25519'); do
         ssh-add "$KEY"
     done
 }
 
 # [FIXME: needs work] When I first ssh to a host, configure it by installing my public ssh keys, my favorite dotfiles, my favorite yum packages, et cetera.
-function quinnify_host() {
+function quinnify_host {
     local DOTFILES NODE PACKAGES
 
     # set -x
@@ -2111,7 +2111,7 @@ function quinnify_host() {
     # set +x
 }
 
-my_ssh() {
+my_ssh {
     NODE=$1
 
     if (! ssh "$NODE" test -e ~/.quinnified > /dev/null 2>&1); then
@@ -2122,34 +2122,34 @@ my_ssh() {
 }
 
 # aa graceful|start|... -  because typing 'sudo apache2ctl' is too much work.
-function aa() { sudo apache2ctl "$@" ;}
+function aa { sudo apache2ctl "$@" ;}
 
-function atom() { newsbeuter "$@" ;}
+function atom { newsbeuter "$@" ;}
 
 # cel FILE.el ("compile LISP") - byte-compile an emacs LISP file.
-function cel() { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
+function cel { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
 
 # d ("date") - give today's date in YYYY-MM-DD format.
-function d() { date +%Y-%m-%d ;}
+function d { date +%Y-%m-%d ;}
 
-function epoch2human() {
+function epoch2human {
     # check_args 1 1 "epoch2human EPOCH_SECONDS"
     local EPOCH_SECONDS="$1"
     date -d "@${EPOCH_SECONDS}"
 }
 
-function dos2unix() { perl -pe 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
+function dos2unix { perl -pe 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 
 # dream - run the Electric Sheep fractal generation daemon
-function dream() { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
+function dream { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
 
 # dfr ("df real") - show all mounted devices that are actually disks (see also mr).
-function dfr() {
+function dfr {
     df -h | grep ^/
 }
 
 # ff [PROFILE_NAME] - run Firefox with a profile. No args? Open the dialog box to list/create profiles.
-function ff() {
+function ff {
     FIREFOX_EXECUTABLE="/Applications/Firefox.app/Contents/MacOS/firefox-bin"
     if [[ $# -eq 1 ]]; then
         # Run with a specific profile, named in $1.
@@ -2161,54 +2161,54 @@ function ff() {
     fi
 }
 
-function ho() { grep "Host .*${1}" ~/.ssh/*conf* ;}
+function ho { grep "Host .*${1}" ~/.ssh/*conf* ;}
 
 # mr ("mount real") - show all mounted devices that are actually disks (see also dfr).
-function mr() { mount | grep ^/ ;}
+function mr { mount | grep ^/ ;}
 
 # lw Perl::Module, lw Perl/Module.pm ("library which") - show the path to Perl module in PERL5LIB.
-function lw() { perldoc -l "$1" ;}
+function lw { perldoc -l "$1" ;}
 
 # elw Perl::Module, elw Perl/Module.pm ("edit library which") - find a perl module in PER5LIB and open it in VISUAL. #FIXME: test behavior.
-# elw() { $VISUAL $(lw "$@") ;}
+# elw { $VISUAL $(lw "$@") ;}
 
 # (See http://wiki.github.com/bard/mozrepl/)
 # mz: Use mozrepl to connect to Firefox for some interactive debugging.
-function mz() { socat READLINE TCP4:localhost:4242 ;}
+function mz { socat READLINE TCP4:localhost:4242 ;}
 
 # rmds: remove a directory, including .DS_Store droppings left by OS X Finder. Fails if the directory contains anything besides .DS_Store.
-function rmds() {
+function rmds {
     rm -fi "$1/.DS_Store"
     rmdir "$1"
 }
 
 # Invoke strings(1) safely, because http://www.jwz.org/blog/2014/10/we-live-in-a-magical-future-where-strings-is-exploitable/
-function strings() { command strings -a "$@"  | $PAGER ;}
+function strings { command strings -a "$@"  | $PAGER ;}
 
 # para: print any paragraph contaning the desired string. A paragraph is defined as a collection of lines followed by an all-blank line (i.e., a newline).
-function para() {
+function para {
     STRING="$1"
     shift
     awk -v ORS="\n\n" -v RS='' "/$STRING/" "$@"
 }
 
-function conf() { para "$1" ~/.ssh/*.config | grep -e '^' -e "$1" ;}
+function conf { para "$1" ~/.ssh/*.config | grep -e '^' -e "$1" ;}
 
 # pi ("Perl @INC") - print @INC dirs, one per line, preceded by the path to Perl.
-function pi() {
+function pi {
     echo -n "perl = "; which perl
     echo
     perl -e 'print (join "\n", @INC); print "\n";'
 }
 
 # shn ("SSH hostname") - print the canonical hostname for a ~/.ssh/config alias.
-function shn() {
+function shn {
     grep -A 1 "$1" ~/.ssh/*config* | tail -1 | awk '{ print $3; }'
 }
 
 ## tmux
 
-function _tmux_is_new() {
+function _tmux_is_new {
     local LEADING_DIGIT_OF_VERSION_NUMBER
     LEADING_DIGIT_OF_VERSION_NUMBER="$(tmux -V | sed 's/^tmux[ ]\([0123456789]\).*/\1/')"
 
@@ -2223,7 +2223,7 @@ function _tmux_is_new() {
 }
 
 # ta $SESSION_NAME ("Tmux Attach") - attach to named session, creating if needed
-function ta() {
+function ta {
     local SESSION_NAME TMUX_CONF
     
     if [[ $# -ne 1 ]]; then
@@ -2246,7 +2246,7 @@ function ta() {
 }
 
 # tn ("Tmux New") - create a new tmux session
-function tn() {
+function tn {
     local SESSION_NAME TMUX_CONF
     
     if [[ $# -ne 1 ]]; then
@@ -2265,7 +2265,7 @@ function tn() {
 }
 
 # tl ("Tmux List") - list running tmux sessions.
-function tl() {
+function tl {
     if _tmux_is_new; then
         local TMUX_CONF=~/.tmux.new-versions.conf
     else
@@ -2275,30 +2275,30 @@ function tl() {
     tmux -f "$TMUX_CONF" list-sessions 2> /dev/null
 }
 
-function timestamp() { date +%Y%m%dT%H%M%S%z ;}
-function ts() { timestamp "$@" ;}
+function timestamp { date +%Y%m%dT%H%M%S%z ;}
+function ts { timestamp "$@" ;}
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
-function tor_wget() {
+function tor_wget {
     HTTP_PROXY=http://127.0.0.1:8118/ \
     http_proxy=$HTTP_PROXY \
       wget --mirror --convert-links --html-extension --domains "$1" "$2"
 }
 
 # tor_on: start proxying all this shell's HTTP traffic through Tor.
-function tor_on() { export HTTP_PROXY="http://127.0.0.1:8118/"; export http_proxy="$HTTP_PROXY" ;}
+function tor_on { export HTTP_PROXY="http://127.0.0.1:8118/"; export http_proxy="$HTTP_PROXY" ;}
 
 # tor_off: stop proxying this shell's HTTP traffic through Tor.
-function tor_off() { unset HTTP_PROXY http_proxy ;}
+function tor_off { unset HTTP_PROXY http_proxy ;}
 
 # unix2dos FILE1 ...: translate-in-place newlines to the DOS convention (CRLF).
-function unix2dos() { /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@" ;}
+function unix2dos { /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@" ;}
 
 # unrar_plural FILE1 ...: because unraring files one by one is tiresome.
-function unrar_plural() { for f in *rar; do unrar x -o+ "$f" .; done ;}
+function unrar_plural { for f in *rar; do unrar x -o+ "$f" .; done ;}
 
 # xb ("xbindkeys") - reload custom (xbindkeys) X11 keybindings.
-function xb() { killall --user "$USER" xbindkeys && xbindkeys ;}
+function xb { killall --user "$USER" xbindkeys && xbindkeys ;}
 
 # Make it so Ctrl-S and Ctrl-Q aren't interpreted as software flow control
 # characters, messing up your terminal (see http://catern.com/posts/terminal_quirks.html).
@@ -2309,30 +2309,30 @@ fi
 
 #### Perlbrew settings (this must come after the part in this file where PATH is set):
 
-function activate-perlbrew() { source ~/perl5/perlbrew/etc/bashrc ;}
-function perlbrew-activate() { activate-perlbrew ;}
+function activate-perlbrew { source ~/perl5/perlbrew/etc/bashrc ;}
+function perlbrew-activate { activate-perlbrew ;}
 
-function psql-tips() { links ~/src/psql-tips/html/psql_tips_all.html ;}
-function tips() { psql-tips "$@" ;}
-function mutt() { neomutt "$@" ;}
+function psql-tips { links ~/src/psql-tips/html/psql_tips_all.html ;}
+function tips { psql-tips "$@" ;}
+function mutt { neomutt "$@" ;}
 
 #### Game development settings
 
-function sd2lcompile() {
+function sd2lcompile {
     gcc -o "$@"  `sdl2-config --cflags --libs`
 }
-function sdd() { sdl2compile "$@" ;}
+function sdd { sdl2compile "$@" ;}
 
 #### Web settings
 
-function brow() { defaultbrowser "$@" ;}
-function brc() { brow "chrome" ;}
-function brs() { brow "safari" ;}
+function brow { defaultbrowser "$@" ;}
+function brc { brow "chrome" ;}
+function brs { brow "safari" ;}
 
 # Adapted from a function posted by user Chubler_XL, in a comment on
 # https://www.unix.com/shell-programming-and-scripting/277083-url-encoding-string-using-sed.html
 
-function urlencode() {
+function urlencode {
     # URL encode string and optionally store in shell variable
     #
     # usage: url_var <string> [var]
@@ -2355,7 +2355,7 @@ function urlencode() {
     fi
 }
 
-function gmail-search() {
+function gmail-search {
     local QUERY  BASE_URL
     BASE_URL="https://mail.google.com/mail/u/0/#search"
     
@@ -2368,7 +2368,7 @@ function gmail-search() {
     fi
 }
 
-function gmail() {
+function gmail {
     if [[ $# -eq 0 ]]; then
         open -u "https://mail.google.com/"
     elif [[ $# -eq 1 ]]; then
@@ -2378,7 +2378,7 @@ function gmail() {
     fi
 }
 
-function google() {
+function google {
     local BASE_URL="http://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q="
 
     if [[ $# -ne 1 ]]; then
@@ -2391,7 +2391,7 @@ function google() {
     fi
 }
 
-function goog() { google "$@" ;}
+function goog { google "$@" ;}
 
 #### Java settings
 
@@ -2405,15 +2405,15 @@ MY_MANPATH="$NODE_MANPATH:$MY_MANPATH"
 
 #### Jenkins settings
 
-function j() {
+function j {
     local  REPO  BRANCH  JENKINS_OUTPUT_FILENAME  JENKINS_OUTPUT_URL  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
     
     if [[ "$1" = "--no-sms" ]] || [[ "$JENKINS_NO_SMS" ]]; then
-        sms() {
+        sms {
             : # no-op
         }
     else
-        sms() {
+        sms {
             ~/...sms-me "$@"
         }
     fi
@@ -2467,7 +2467,7 @@ function j() {
     fi
 }
 
-function jthis() {
+function jthis {
     local REPO  BRANCH
     REPO="$(gr)"
     if [[ $? -eq 0 ]]; then
@@ -2480,7 +2480,7 @@ function jthis() {
     j
 }
 
-function jenkins-repo() {
+function jenkins-repo {
     local REPOFILE
     REPOFILE="/tmp/jenkins-repo"
 
@@ -2493,7 +2493,7 @@ function jenkins-repo() {
     fi
 }
 
-function jenkins-branch() {
+function jenkins-branch {
     local BRANCHFILE
     BRANCHFILE="/tmp/jenkins-branch"
 
@@ -2521,7 +2521,7 @@ function jenkins-branch() {
 # Thanks to Keri Savoca for documenting this URL format:
 # https://kerisavoca.medium.com/how-to-make-a-link-that-creates-a-new-issue-in-jira-54ff93c61e24
 
-function jira-create-ticket() {
+function jira-create-ticket {
     local  USAGE  ISSUE_TYPE  PROJECT_ID  ERROR_OCCURRED
 
     USAGE="jira-create-ticket [ISSUE_TYPE [PROJECT_ID]]
@@ -2529,7 +2529,7 @@ You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JI
     ISSUE_TYPE="$1"; if [[ ! "$ISSUE_TYPE" ]]; then ISSUE_TYPE="$JIRA_DEFAULT_ISSUE_TYPE"; fi
     PROJECT_ID="$2"; if [[ ! "$PROJECT_ID" ]]; then PROJECT_ID="$JIRA_DEFAULT_PROJECT_ID"; fi
     
-    err() {
+    err {
         ERROR_OCCURED=1
         echo "jira-create-ticket: error: $@"
     }
@@ -2543,14 +2543,14 @@ You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JI
     fi
 }
 
-function jc() {
+function jc {
     if [[ $# -ne 0 ]]; then
         echo "jc: warning: jc takes zero arguments; ignoring the $# passed"
     fi
     jira-create-ticket > /dev/null
 }
 
-function jira-url-for() {
+function jira-url-for {
     local TICKET_NUMBER
     
     if [[ $# -ne 1 ]]; then
@@ -2576,7 +2576,7 @@ function jira-url-for() {
     fi
 }
 
-function jira-open-existing-ticket() {
+function jira-open-existing-ticket {
     open "$(jira-url-for "$@")"
 }
 
@@ -2584,7 +2584,7 @@ function jira-open-existing-ticket() {
 # Output properly labeled emacs org-mode links for each named ticket.
 # 
 # FIXME: later, make this work with stdin if "-" is the filename.
-function jira-to-org() {
+function jira-to-org {
     local FILENAME
     
     if [[ $# -ne 1 ]]; then
@@ -2605,7 +2605,7 @@ function jira-browse-site {
     fi
 }
 
-function jira() {
+function jira {
     if [[ $# -eq 0 ]]; then
         jira-browse-site
     elif [[ $# -eq 1 ]]; then
@@ -2618,7 +2618,7 @@ function jira() {
     fi
 }
 
-function jql() {
+function jql {
     local QUERY JQL_BASE_URL FULL_URL
 
     if [[ -z "$JIRA_BASE_URL" ]]; then
@@ -2643,12 +2643,12 @@ function jql() {
 #### Music-related settings
 
 # zo (Zophar) - search for Nintendo Entertainment System music
-function zo() {
+function zo {
     open https://mail.zophar.net/music/nintendo-nes-nsf
 }
 
 # [DOESN'T WORK YET] mus (Music) - open an Apple Music URL in Music.app
-function mus() {
+function mus {
     if [[ $# -ne 1 ]]; then
         echo "mus: error: missing argument. Usage: mus URL"
     else
@@ -2658,7 +2658,7 @@ function mus() {
 
 #### YAML and JSON settings
 
-function yv() {
+function yv {
     if [[ $# -ne 1 ]]; then
         echo "yv: error: wrong number of arguments. Usage: yv YAML_KEY_NAME"
     else
@@ -2671,18 +2671,18 @@ function yv() {
     fi
 }
 
-function yvu() {
+function yvu {
     yv "$@" | sed "s/.*${KEY}:[ ]*//" | sort | uniq
 }
 
 # ys ("YAML Sort")" - take a file and sort its YAML keys alphabetically.
-function ys() {
+function ys {
     local FILE="$1"
     yq -P "sort_keys(..)" "$FILE"
 }
 
 # yd ("YAML Diff") - diff YAML files, sorting their keys first. Does not change the original files.
-function yd() {
+function yd {
     for FILE in "$1" "$2"; do
         ys "$FILE"
     done
@@ -2690,7 +2690,7 @@ function yd() {
     diff "$1" "$2"
 }
 
-function json2yaml() {
+function json2yaml {
     if [[ $# -eq 0 ]]; then
         echo "json2yaml: error: missing filename argument"
     else
@@ -2700,7 +2700,7 @@ function json2yaml() {
     fi
 }
     
-function yaml2json() {
+function yaml2json {
     if [[ $# -eq 0 ]]; then
         echo "yaml2json: error: missing filename argument"
     else
