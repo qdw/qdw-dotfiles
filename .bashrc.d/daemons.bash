@@ -1,11 +1,3 @@
-# rubygems documentation server
-# port 8080
-run_gem_server_idempotently() {
-    if (! ps auxwww | grep $USER | 'gem server' >/dev/null 2>&1); then
-        sudo /bin/bash -c 'gem server >/dev/null 2>&1 &'
-    fi
-}
-
 # gpg-agent(1)
 # Unix domain socket; no TCP/IP port
 # run_gpg_agent_idempotently() {
@@ -63,17 +55,6 @@ run_ssh_agent_idempotently() {
 #     fi
 # }
 
-# Subversion server. I used to have to run this for some clients.
-#
-# It uses one of two ports, depending on how you run it:
-# 3690 is the port for the custom Subversion protocol (which I used);
-# 80 is the port for the HTTP-based protocol.
-run_svn_idempotently() {
-    if ( ! pq svnserve); then
-        /usr/bin/svnserve -d -r ~/.subversion_repositories >/dev/null 2>&1
-    fi
-}
-
 # Tor
 # ports 9001 and 9003
 run_tor_idempotently() {
@@ -84,11 +65,3 @@ run_tor_idempotently() {
         /opt/local/bin/tor --quiet --runasdaemon 1
     fi
 }
-
-# Tracks (a Rails GTD app). This copy is ancient and bitrotten.
-# port 3000
-# run_tracks_idempotently() {
-#     if ( ! pq ~/tracks/script/server); then
-#         ~/tracks/script/server -e production & >/dev/null 2>&1
-#     fi
-# }

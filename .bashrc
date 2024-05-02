@@ -240,7 +240,7 @@ function gfd {
 # modifying the file in-place to remove those lines. If you specify
 # multiple files, it does this to all of them.
 function fip {
-    check_args 2 varargs
+    # check_args 2 varargs
     
     local REGEX="$1"
     shift
