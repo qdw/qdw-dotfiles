@@ -236,7 +236,23 @@ function gfd {
     fi
 }
 
-# count: recursively grep the specified dirs (or '.', if no dirs specified) for a pattern, then print the number of times that pattern occurs in each matching file. Don't show files with zero matches.
+# fip (Filter In Place) - filter lines matching regex from a file,
+# modifying the file in-place to remove those lines. If you specify
+# multiple files, it does this to all of them.
+function fip {
+    check_args 2 varargs
+    
+    local REGEX="$1"
+    shift
+    
+    for FILE in "$@"; do
+        grep -vE "$REGEX" "$FILE" | sponge "$FILE"
+    done
+}
+
+# count: recursively grep the specified dirs (or '.', if no dirs specified)
+# for a pattern, then print the number of times that pattern occurs
+# in each matching file. Don't show files with zero matches.
 function count { 
     command grep -Rc $GREP_EXCLUDE_FLAGS "$@" \
         | command grep -v ':0$' \
@@ -1602,7 +1618,8 @@ function fd {
 function fdgrep {
     # check_args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
     local FILENAME_REGEX="$1"; shift    
-    ( fdd --type f "$FILENAME_REGEX" -x $MY_GREP -H $GREP_OPTIONS $GREP_EXCLUDE_FLAGS $@ \; ) | $PAGER
+    ( fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I -H --color=never $GREP_EXCLUDE_FLAGS "$@" \; ) \
+        | $PAGER
 }
 
 function fdoccur {
