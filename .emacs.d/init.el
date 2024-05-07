@@ -1,10 +1,34 @@
-;; Emacs Lisp (.el) files get compiled to bytecode (.elc files).
-;; This code says to load the .el file if it is newer than its
-;; corresponding .elc file (which means that the .el file
-;; contains changes that haven't been compiled yet).
-(setq-default load-prefer-newer 't)
+;;;; No GUI, please, we're hackers
+
+(setq inhibit-startup-screen 't)
+(if (boundp 'menu-bar-mode) (menu-bar-mode -1))
+(if (boundp 'tool-bar-mode) (tool-bar-mode -1))
+(if (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
+
+;;;; Settings for GUI versus TUI
+
+(defvar current-favorite-font "Menlo-18")
+
+(defun initialize-ui ()
+  (cond ((display-graphic-p)
+	 (set-face-font 'default current-favorite-font)
+	 (blink-cursor-mode -1))
+	('t (xterm-mouse-mode 1))))
+
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (initialize-ui)))
+
+(initialize-ui)
+
+;;;; Load passwords and stuff (not committed to git)
 
 (load (expand-file-name "~/.emacs.d/secrets.el") 't)
+
+;;;; Load third-party libraries.
+;;;;
+;;;; I'm running emacs daemon, so just require all these modules at once;
+;;;; don't get clever with on-demand loading.
 
 (require 'ansi-color)
 (require 'blacken)
@@ -18,6 +42,7 @@
 (require 'org)
 (require 'osx-trash)
 (require 'package)
+(require 'recentf)
 (require 'ruby-mode)
 (require 'scroll-bar)
 (require 'sh-script)
@@ -26,11 +51,49 @@
 
 ;;;; Color settings
 
-(add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes"))
-(load-theme 'qdw-subatomic256-fork 't)
 (defalias 'colors 'list-colors-display)
 
+;; Interpret ANSI escape codes in this buffer,
+;; coloring the buffer text accordingly.
+(defun display-ansi-colors ()
+  (interactive)
+  (ansi-color-apply-on-region (point-min) (point-max)))
+
+(add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes"))
+(load-theme 'qdw-subatomic256-fork 't)
+
+;;;; Settings: other color themes, which I use seldom
+        
+
+;;; Dark-color-theme settings
+;; 
+;; T Rippedcasts: kind of orangey. Comes with iTerm2 and Terminal.app theme.
+;; (load-theme 'rippedcasts 't)
+;; 
+;; T Atom One Dark: decent; bright Default text is somewhat *too* bright.
+;; (load-theme atom-one-dark 't)
+
+
+;; Horrible dark theme settings
+;; 
+;;T  birds-of-paradise-plus: very loud red theme for use on production boxes
+;; (load-theme 'birds-of-paradise-plus 't)
+;;
+;;T  base16-greenscreen: green-phosphor nostalgia theme
+;; (load-theme 'base16-greenscreen 't)
+;;
+
+
+;;; Light-theme settings
+;; T Almost-Mono Cream
+;; (load-theme 'almost-mono-cream 't)
+
 ;;;; dired settings
+
+;; Automatically refresh the dired view when files are added/removed/renamed;
+;; don't make me type g
+(setq global-auto-revert-non-file-buffers 't)
+(setq auto-revert-verbose nil)
 
 (defun my-dired-find-file ()
   "In Dired, visit the file or directory on the cursor.
@@ -165,79 +228,13 @@ Test cases
              (expand-file-name "~/.emacs.d/open-file-in-macos-vscode.scpt")
              (shell-quote-argument buffer-file-name)
              (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
-
-
-;; (if (getenv "TMUX")
-    
-
-;;;; Alternative color theme settings
-        
-;;; Dark themes
-
-;;T  Selenized: medium-contrast white-on-green 256-color w/ bright font-lock
-;; (oad-theme 'solarized-selenized-dark 't)
-
-;; Less-favored themes
-
-;;T  Niflheim: high-contrast white-on-brown 256-color theme w/ muted font-lock
-;; (oad-theme 'niflheim 't)
-
-;;T  birds-of-paradise-plus: very loud red theme for use on production boxes
-;; (oad-theme 'birds-of-paradise-plus 't) ;; RED, loud, for prod box
-
-;;T  base16-greenscreen: green-phosphor nostalgia theme
-;; (oad-theme 'base16-greenscreen 't)
-
-;;T  Quinnokai: medium-contrast, dark >256-color theme. No good for terminals.
-;;   This is is my very slightly tweaked version of the third-party theme
-;; (oad-theme 'quinnokai 't)
-
-;;; Light themes
-
-;; (add-to-list 'load-path
-;;              (expand-file-name "~/.emacs.d/themes"))
-;; (load-theme 'almost-mono-cream 't)
-
-;; No matter what theme I chose above,
-;; make the cursor orange.
-(set-cursor-color "DarkOrange1")
-;; FIXME: do it this way instead? "You can also set the text cursor
-;; color, for all frames, by customizing the ‘cursor’ face."
-
-;;;; Other color settings
-
-;; Interpret ANSI escape codes in this buffer,
-;; coloring the buffer text accordingly.
-(defun display-ansi-colors ()
-  (interactive)
-  (ansi-color-apply-on-region (point-min) (point-max)))
         
 ;;;; GUI Emacs settings
 
-(defvar current-favorite-font "SF Mono-18")
+;; (defvar current-favorite-font "SF-18-Regular")
 ;; (defvar current-favorite-font "Hack-14-Regular")
 ;; (defvar current-favorite-font "JetBrains Mono-14")
 ;; (defvar current-favorite-font "Fira Code-16")
-
-(defun initialize-ui ()
-    (cond ((display-graphic-p)
-           ;; If running in a GUI frame, set the font explicitly
-           ;; (unnecessary when running in a terminal)
-           (set-face-font 'default current-favorite-font frame))
-           ;; ;; I often mistake Emacs windows for iTerm2 windows,
-           ;; ;; press Command-N, and then get annoyed when I get another Emacs window.
-           ;; ;; So just remap Command-N to open an iTerm2 window! FIXME: broken
-           ;; (global-set-key (kbd "s-n")
-           ;;   (lamdba () nil)))
-           (t 
-            ;; If running in a terminal-based frame,
-            ;; enable terminal mouse integration.
-            (xterm-mouse-mode 1))))
-
-(initialize-ui)
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (initialize-ui)))
 
 ;;;; macOS settings
 
@@ -349,10 +346,9 @@ This command does the reverse of `fill-region'."
  make-backup-files nil               ;; Don't leave myfilename~ droppings
  vc-follow-symlinks 't               ;; Follow links to git files w/o asking
  cursor-type 'box                    ;; Box cursor (line is too hard to see)
- column-number-mode nil         ;; Turn off col num display (distracting)
+ column-number-mode nil              ;; Turn off col num display (distracting)
  global-font-lock-mode 't            ;; Always do maximal syntax highlighting
 
- inhibit-startup-screen 't           ;; No GNU spam.
  visible-bell 't                     ;; Instead of beeping, flash screen
  display-fill-column-indicator-column 80
  
@@ -381,7 +377,6 @@ This command does the reverse of `fill-region'."
 (tool-bar-mode -1)   ;; Turn off toolbar.
 (menu-bar-mode -1)   ;; Turn off menubar.
 (scroll-bar-mode -1) ;; Turn off scrollbar.
-(blink-cursor-mode -1) ;; Use a solid cursor (blinking is too distracting).
 
 ;;;; Settings related to other editors
 
@@ -725,7 +720,12 @@ This command does the reverse of `fill-region'."
              "\r"
              'electric-newline-and-maybe-indent)))
 
-;;;; Lisp settings FIXME: use slime.el instead
+;;;; Lisp settings
+
+;; Automatically byte-compile stale Emacs Lisp files when I visit or save them.
+(setq-default load-prefer-newer 't)
+
+;; FIXME: use slime.el and paredit.el instead
 (setq lisp-indent-function 'common-lisp-indent-function)
 (add-hook 'lisp-mode-hook (lambda ()
                             (eldoc-mode +1)))
@@ -775,7 +775,9 @@ This command does the reverse of `fill-region'."
                 magit-insert-unpulled-from-pushremote
                 magit-insert-unpulled-from-upstream))
 
-;;;; TypeScript and JavaScript settings
+;;;; TypeScript, JavaScript, JSON settings
+
+(setq-default json-encoding-default-indentation "    ")
 
 (let ((desired-indent-level 2))
   (setq-default
@@ -818,7 +820,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(custom-safe-themes
-   '("6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
+   '("fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
@@ -841,7 +843,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode color-theme-sanityinc-solarized solarized-theme w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(atom-one-dark-theme magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 
 ;; FIXME: move these to my theme?
