@@ -1,3 +1,5 @@
+export CLICOLOR=1
+
 #### Bash debugging settings
 
 ## Uncomment this line to run shellcheck, a mediocre and pedantic static analysis tool,
@@ -236,6 +238,43 @@ function gfd {
     fi
 }
 
+function grep-settings {
+    # check_args 2 varargs
+    local REGEX="$1"
+    shift
+    
+    function file-ext-in {
+        local FILE
+        
+        for EXT in "$@"; do
+            if [[ "$FILE" =~ "[.]${EXT}$" ]]; then
+                return 0
+            fi
+        done
+
+        return 1
+    }
+        
+    
+    local COMMENT_PREFIX
+    for FILE in "$@"; do
+        if file-ext-in 'el' 'l' 's'; then
+            COMMENT_PREFIX=';;;; '
+        elif file-ext-in 'ts' 'js' 'c' 'cpp' 'cxx' 'c++'; then
+            COMMENT_PREFIX='//// '
+        elif file-ext-in 'bash' 'py' 'sh' 'pl'; then
+            COMMENT_PREFIX="#### "
+        else
+            complain "Unrecognized file extension for file '$FILE'"
+            return
+        fi
+    done
+
+    ggrep -i $GREP_EXCLUDE_FLAGS \
+          "^${COMMENT_PREFIX}.*(${REGEX}.*settings|settings.*${REGEX})" \
+        | $PAGER
+}
+
 # fip (Filter In Place) - filter lines matching regex from a file,
 # modifying the file in-place to remove those lines. If you specify
 # multiple files, it does this to all of them.
@@ -244,6 +283,12 @@ function fip {
     
     local REGEX="$1"
     shift
+    
+    # if [[ "$1" = "-"  ]]; then
+    #     local LINE
+    #     while true; do
+    #         LINE="$(read)"
+    #         if [[ "$LINE" = "" ]]; then
     
     for FILE in "$@"; do
         grep -vE "$REGEX" "$FILE" | sponge "$FILE"
@@ -276,7 +321,7 @@ function count_one_level {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur {
-    $MY_GREP $GREP_OPTIONS -l -m 1 $GREP_EXCLUDE_FLAGS | sort | $PAGER
+    $MY_GREP -l -m 1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
 }
 
 #### Bash settings
@@ -1714,9 +1759,12 @@ function pg {
     fi
     
     BINARY_PATH=$(echo $HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/$PROGRAM_NAME)
-
-    local ENV_VAR_COMMAND="export PGSERVICE=pg${VERSION}"
-    ($ENV_VAR_COMMAND; "$BINARY_PATH" "$@")
+    
+    # subshell
+    (
+        export PGSERVICE="pg${VERSION}"
+        "$BINARY_PATH" "$@"
+    )
 }
 
 declare -Ax pgpasses
