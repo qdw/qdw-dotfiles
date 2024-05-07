@@ -65,3 +65,5 @@
 	required = true
 [push]
 	autoSetupRemote = on
+[github]
+	user = qdw
