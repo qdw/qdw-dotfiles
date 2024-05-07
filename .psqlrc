@@ -12,7 +12,7 @@
 
 -- \set QUIET on
 \x auto
--- \pset null 🐙
+\pset null 🐙
 
 -- ANSI color escape codes don't play well with libedit, which macOS
 -- uses instead of libreadline; ditto Unicode chars.
