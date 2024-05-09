@@ -802,7 +802,7 @@ function update_terminal_cwd {
 #     printf '\e]7;%s\a' "$PWD_URL" > /dev/null
 # }
 
-#### Terminal settings
+#### Terminal emulator settings
 
 export TERM=xterm-256color # used by tmux
 
@@ -1455,8 +1455,32 @@ function readme {
     gh repo view
 }
 
+# gcl (Git CLone) - quickly clone a repo belonging to my organization
+function gcl {
+    REPO="$1"
+    cd ~/src >/dev/null \
+        && git clone "git@github.com:${GITHUB_ORG}/${REPO}"
+    cd - >/dev/null
+}
+
+function clone { gcl "$@" ;}
 function gcm { git commit -m "$@" ;}
 function gdo { git diff origin HEAD ;}
+function gn { git diff --name-only "$@" ;}
+function gs { git status "$@" ;}
+
+
+# gi ("git init") - go through the multi-command dance to create a local git repo
+function gi {
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "gi: error: $(pwd) is already under git control"
+    else
+        git init \
+            && git add . \
+            && git commit -a -m 'Initial commit' \
+            && git branch -m master main 2>/dev/null
+    fi
+}
 
 function gl {
     local N_COMMITS
@@ -1474,30 +1498,6 @@ function gl {
     git log -n "$N_COMMITS" "$@"
 }
 
-function gn()  { git diff --name-only "$@" ;}
-function gs()  { git status "$@" ;}
-
-# gi ("git init") - go through the multi-command dance to create a local git repo
-function gi {
-    if git rev-parse --is-inside-work-tree; then
-        echo "gi: error: $(pwd) is already under git control"
-    else
-        git init \
-            && git add . \
-            && git commit -a -m 'Initial commit' \
-            && git branch -m master main 2>/dev/null
-    fi
-}
-
-# gcl (Git CLone) - quickly clone a repo belonging to my organization
-function gcl {
-    REPO="$1"
-    cd ~/src >/dev/null \
-        && git clone "git@github.com:${GITHUB_ORG}/${REPO}"
-    cd - >/dev/null
-}
-
-function clone { gcl "$@" ;}
 
 # repos - multitool for listing/searching GitHub repositories 
 function repos {
