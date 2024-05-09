@@ -1,4 +1,4 @@
-;;;; No GUI, please, we're hackers
+;;;; Minimal-UI settings
 
 (setq inhibit-startup-screen 't)
 (if (boundp 'menu-bar-mode) (menu-bar-mode -1))
@@ -21,15 +21,14 @@
 
 (initialize-ui)
 
-;;;; Load passwords and stuff (not committed to git)
+;;;; Password settings (excluded from Git)
 
 (load (expand-file-name "~/.emacs.d/secrets.el") 't)
 
 ;;;; Load third-party libraries.
-;;;;
-;;;; I'm running emacs daemon, so just require all these modules at once;
-;;;; don't get clever with on-demand loading.
 
+;; I'm running emacs as a daemon, so just require all these modules at once;
+;; don't get clever with on-demand loading.
 (require 'ansi-color)
 (require 'blacken)
 (require 'dirtrack)
@@ -51,6 +50,8 @@
 
 ;;;; Color settings
 
+(load (expand-file-name "~/.emacs.d/themes/qdw-colors.el") 't)
+
 (defalias 'colors 'list-colors-display)
 
 ;; Interpret ANSI escape codes in this buffer,
@@ -63,7 +64,6 @@
 (load-theme 'qdw-subatomic256-fork 't)
 
 ;;;; Settings: other color themes, which I use seldom
-        
 
 ;;; Dark-color-theme settings
 ;; 
@@ -459,16 +459,18 @@ This command does the reverse of `fill-region'."
   ;; https://www.ditig.com/256-colors-cheat-sheet
 
   org-todo-keyword-faces
-  '(("GET_HELP" . "#ff00af")
+  '(
+    ("GET_HELP" . "#ff00af")
     ("NEXT_ACTION" . "#ff00af")
     ("AWAITING_RESPONSE" . "#ff00af")
-    ("QUESTION" . "#ffff00")
-    ("POSTPONED" . "#ffff00")
-    ("INFO" . "#ffff00")
+    ("QUESTION" . "#7b5dee")
+    ("POSTPONED" . "#7b5dee")
+    ("INFO" . "#7b5dee")
     ("PROJECT" . "#00afff")
     ("SUBPROJECT" . "#00afaf")
-    ("IN_PROGRESS" . "color-46"))  
-  )
+    ;; ("IN_PROGRESS" . "color-46")
+    ("IN_PROGRESS" . bright-green)
+    ))
 
 (add-to-list 'org-file-apps
              (cons "png" "open %s"))
@@ -820,7 +822,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(custom-safe-themes
-   '("fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
+   '("085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
@@ -843,7 +845,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(atom-one-dark-theme magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(dired-narrow atom-one-dark-theme magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 
 ;; FIXME: move these to my theme?
@@ -852,8 +854,8 @@ This command does the reverse of `fill-region'."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "color-247"))))
- '(org-date ((t (:foreground "color-33" :weight normal))))
+ '(ediff-odd-diff-B ((t (:extend t :background "black" :distant-foreground "white"))))
+ '(org-date ((t (:foreground "blue" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff")))))
 
  
