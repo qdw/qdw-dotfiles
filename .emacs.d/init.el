@@ -60,11 +60,18 @@
   (interactive)
   (ansi-color-apply-on-region (point-min) (point-max)))
 
-(add-to-list 'custom-theme-load-path (expand-file-name "~/.emacs.d/themes"))
+(add-to-list 'custom-theme-load-path
+	     (expand-file-name "~/.emacs.d/qdw-themes")
+             (expand-file-name "~/.emacs.d/site-themes"))
 
-;; My custom themes
-;; (load-theme 'tritium 't)
-(load-theme 'itermesque 't)
+;; Custom themes that I created
+
+;;; Day or night, 8-bit or 25-bit color
+(load-theme 'qdw-subatomic256-fork 't 't)
+
+;;; Daytime, 24-bit color
+;; (load-theme 'tritium 't 't)
+;; (load-theme 'itermesque 't 't)
 
 ;;;; Settings: other color themes, which I use seldom
 
