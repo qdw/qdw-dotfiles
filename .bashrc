@@ -121,8 +121,8 @@ function funcalias {
 MY_OS="$(uname -s)"
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
-# bw (Black and White): remove ANSI color (and other) sequences
-function bw {
+# baw (Black and White): remove ANSI color (and other) sequences
+function baw {
     local  INPUT_STRING
 
     function sed_it {
@@ -134,19 +134,17 @@ function bw {
     elif [[ $# -eq 1 ]]; then
         echo "$1" | tr -d '[:punct:]'
     else
-        complain "bw: error: too many arguments. Usage:
-    echo "some string" | bw
-    cat some_file | bw
-    bw FILENAME"
+        complain "baw: error: too many arguments. Usage:
+    echo "some string" | baw
+    cat some_file | baw
+    baw FILENAME"
     fi
 }
 
 #### cd settings
 
+function cds { cd ~/src ;}
 function cdq { cd ~/src/1/qdw-dotfiles ;}
-
-# cdld - cd to the enclosing directory of the target of a symlink
-function cdld { cd "$(dirname "$(readlink -f "$1")")" ;}
 
 # cdd - cd to the enclosing dir of a file/dir.
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
@@ -321,7 +319,7 @@ function count_one_level {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur {
-    $MY_GREP -l -m 1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
+    $MY_GREP -R --files-with-matches --max-count=1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
 }
 
 #### Bash settings
@@ -1459,7 +1457,7 @@ function readme {
 function gcl {
     REPO="$1"
     cd ~/src >/dev/null \
-        && git clone "git@github.com:${GITHUB_ORG}/${REPO}"
+        && git clone "git@github.com:${GITHUB_ORG}/${REPO}" "$@"
     cd - >/dev/null
 }
 
@@ -1673,6 +1671,18 @@ function fdoccur {
     fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
 }
 
+function file-types {
+    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
+        | uniq \
+        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+}
+
+function file-type-counts {
+    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
+        | uniq -c \
+        | sort --reverse --general-numeric-sort | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+}
+
 #### Kubernetes (and OpenShift) settings
 
 function oc {
@@ -1767,29 +1777,29 @@ function pg {
     )
 }
 
-declare -Ax pgpasses
-function qql {
-    local SERVICE
+# declare -Ax pgpasses
+# function qql {
+#     local SERVICE
     
-    if [[ $# -eq 0 ]]; then
-        echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
-            > /dev/stderr
-    else
-        SERVICE="$1"
-        shift
+#     if [[ $# -eq 0 ]]; then
+#         echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
+#             > /dev/stderr
+#     else
+#         SERVICE="$1"
+#         shift
         
-        if [[ -n ${pgpasses["$SERVICE"]} ]]; then
-            export PGPASSWORD=${pgpasses["$SERVICE"]}
-        else
-            read -sep "Enter the password for '$SERVICE': " PGPASSWORD
-            pgpasses["$SERVICE"]="$PGPASSWORD"
-            export PGPASSWORD
-        fi
+#         if [[ -n ${pgpasses["$SERVICE"]} ]]; then
+#             export PGPASSWORD=${pgpasses["$SERVICE"]}
+#         else
+#             read -sep "Enter the password for '$SERVICE': " PGPASSWORD
+#             pgpasses["$SERVICE"]="$PGPASSWORD"
+#             export PGPASSWORD
+#         fi
         
-        echo ${pgpasses}
-        PGSERVICE="$SERVICE" psql "$@"
-    fi
-}
+#         echo ${pgpasses}
+#         PGSERVICE="$SERVICE" psql "$@"
+#     fi
+# }
 
 # replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or psql prompt)
 function replication_role()
@@ -2782,7 +2792,7 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     PATHS_SET_AT="$(date)"
 
     ## executable PATH
-    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
     
     ## C settings/dynamic library path settings
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"

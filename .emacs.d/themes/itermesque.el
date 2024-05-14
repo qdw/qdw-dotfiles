@@ -1,4 +1,4 @@
-;;; Qdw-subatomic256-fork-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
+;;; itermesque-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
 
 ;; Copyright 2012 John Olsson
 
@@ -9,7 +9,7 @@
 ;; Version: 1.3
 
 ;; Futher modified by Quinn Weaver &lt;quinn.weaver@gmail.com&gt;
-;; https://github.com/qdw/qdw-subatomic256-fork-theme
+;; https://github.com/qdw/itermesque-theme
 
 ;; This file is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published
@@ -26,30 +26,68 @@
 
 ;; 
 
-(deftheme qdw-subatomic256-fork
-  "qdw-subatomic256-fork emacs theme")
+(deftheme itermesque
+  "itermesque emacs theme")
 
-(load (expand-file-name "~/.emacs.d/qdw-colors.el"))
+;; (defun 0x (color-name)
+;;   (letrec ((rgb (color-name-to-rgb color-name))
+;; 	   (hex (color-rgb-to-hex rgb)))
+;;     (message "equivalent exchange: %s" color-name)))
+					   
+
+  ;;; For terminals that support full 24-bit color
+(setq-default
+
+ background "002b36"
+
+ black "#373737"
+ bright-black "#706f6e"
+
+ ;; red "#ad5f01" ;; actually orange
+ red "#a04a20" ;; actually orange
+ bright-red red
+ 
+ ;; green "#007f06"
+ green "#2b7f46"
+ bright-green "7efe08"
+ 
+ yellow "#7b5dee"  ;; actually a blueish purple
+ ;; yellow "#7d4cb7" ;; actually a blueish purple
+ bright-yellow "#af5faf" ;; actually a reddish purple
+ 
+ blue "#6495ed"
+ bright-blue blue
+
+ ;; magenta "#af42c2"
+ magenta "#afafaf"
+ bright-magenta "#f66ce2"
+ 
+ cyan "#00808b"
+ bright-cyan "#008080"
+ 
+ white "#839496"
+ bright-white white
+ )
 
 (custom-theme-set-faces
-   'qdw-subatomic256-fork
+   'itermesque
 
-   ;; default stuff
+   ;;;; default stuff
 
    `(default
-      ((t (:background ,black :foreground ,white))))
+      ((t (:background ,background :foreground ,white))))
 
    `(fringe
      ((t (:background ,black))))
 
    `(vertical-border
-     ((t (:foreground ,black))))
+     ((t (:background ,black))))
 
    `(region
-     ((t (:background ,blue :foreground ,white))))
+     ((t (:background ,cyan :foreground ,black))))
 
    `(show-paren-match-face
-     ((t (:foreground ,bright-magenta :bold nil))))
+     ((t (:background ,bright-magenta :foreground ,black :bold nil))))
 
    `(show-paren-mismatch-face
      ((t (:foreground ,red :bold nil))))
@@ -83,17 +121,17 @@
    `(highlight-current-line-face
      ((t (:inherit hl-line))))
 
-   ;; `(powerline-active1
-   ;;   ((t (:background ,bright-black))))
+   `(powerline-active1
+     ((t (:background ,bright-black))))
 
-   ;; `(powerline-active2
-   ;;   ((t (:background ,bright-black :foreground ,white))))
+   `(powerline-active2
+     ((t (:background ,bright-black :foreground ,white))))
 
-   ;; `(powerline-inactive1
-   ;;   ((t (:background ,black :foreground ,white :foreground ,white))))
+   `(powerline-inactive1
+     ((t (:background ,black :foreground ,white :foreground ,white))))
 
-   ;; `(powerline-inactive2
-   ;;   ((t (:background ,black :foreground ,white))))
+   `(powerline-inactive2
+     ((t (:background ,black :foreground ,white))))
 
    `(escape-glyph
      ((t (:foreground ,bright-magenta))))
@@ -101,9 +139,9 @@
    `(link
      ((t (:foreground ,yellow :underline t))))
      
-   ;; ;; ANSI colors (used in shell-mode)
+   ;;;; ANSI colors (used in shell-mode)
    
-   `(ansi-color-black ((t (:background ,black :foreground ,black :underline nil))))
+   `(ansi-color-black ((t (:background: ,black :foreground ,black :underline nil))))
    `(ansi-color-bright-black ((t (:background ,bright-black :foreground ,bright-black :underline nil))))
    
    `(ansi-color-red ((t (:background ,red :foreground ,red :underline nil))))
@@ -136,23 +174,23 @@
      ((t (:foreground ,blue))))
 
    `(font-lock-warning-face
-     ((t ((:foreground ,red)))))
+     ((t ((:foreground ,bright-green)))))
 
    `(font-lock-builtin-face
-     ((t ((:foreground ,red)))))
+     ((t ((:foreground ,bright-yellow)))))
 
    `(font-lock-variable-name-face
-     ((t (:foreground ,blue))))
+     ((t (:foreground ,bright-blue))))
 
    `(font-lock-constant-face
      ;; ((t (:foreground ,white, :italic t))))
-     ((t (:foreground ,yellow, :italic t))))
+     ((t (:foreground ,bright-blue :italic t))))
 
    `(font-lock-type-face
-     ((t (:foreground ,yellow))))
+     ((t (:foreground ,bright-yellow))))
 
    `(font-lock-negation-char-face
-     ((t (:foreground ,red))))
+     ((t (:foreground ,bright-magenta))))
 
    `(font-lock-preprocessor-face
      ((t (:foreground ,bright-magenta))))
@@ -164,12 +202,12 @@
      ((t (:foreground ,green))))
 
    `(font-lock-comment-delimiter-face
-     ((t (:foreground , red))))
+     ((t (:foreground ,red))))
 
    `(font-lock-doc-face
-     ((t (:foreground ,bright-magenta :italic t))))
+     ((t (:foreground ,red))))
      
-   ;; flycheck/flymake
+   ;;;; flycheck/flymake
    
    `(flycheck-error
      ((t (:underline ,red))))
@@ -178,9 +216,9 @@
      ((t (:underline ,red))))
 
    `(flymake-warnline
-     ((t (:underline ,magenta))))
+     ((t (:underline ,bright-magenta))))
 
-   ;; eshell
+   ;;;; eshell
 
    `(eshell-ls-clutter
      ((t (:inherit font-lock-comment-face))))
@@ -221,18 +259,18 @@
    `(eshell-ls-special
      ((t (:foreground ,bright-magenta))))
 
-   ;; calendar
+   ;;;; calendar
 
    `(calendar-today-face
      ((t (:foreground ,bright-magenta :bold nil))))
 
    `(holiday-face
-     ((t (:foreground ,red))))
+     ((t (:foreground ,bright-green))))
 
    `(diary-face
-     ((t (:foreground ,bright-magenta))))
+     ((t (:foreground ,red))))
 
-   ;; erc
+   ;;;; erc
 
    `(erc-default-face
      ((t (:inherit default))))
@@ -282,21 +320,21 @@
    `(erc-pal-face
      ((t (:foreground ,bright-magenta))))
 
-   ;; highlight-symbol
+   ;;;; highlight-symbol
 
    `(highlight-symbol-face
      ((t (:background ,black))))
 
-   ;; diff
+   ;;;; diff
 
    `(diff-file-header
-     ((t (:background ,magenta :foreground ,blue))))
+     ((t (:background ,bright-magenta :foreground ,black))))
 
    `(diff-header
      ((t (:inherit default :foreground ,blue))))
 
    `(diff-indicator-changed
-     ((t (:foreground ,magenta))))
+     ((t (:foreground ,bright-magenta))))
 
    `(diff-changed
      ((t (:foreground ,red))))
@@ -313,9 +351,6 @@
    `(diff-added
      ((t (:foreground ,green))))
 
-   `(diff-added
-     ((t (:foreground ,cyan))))
-
    `(diff-hunk-header
      ((t (:foreground ,white))))
 
@@ -323,20 +358,20 @@
      ((t (:background ,magenta))))
    
    `(diff-refine-removed
-     ((t (:background ,magenta))))
+     ((t (:background ,bright-red))))
 
    `(diff-refine-added
-     ((t (:background ,blue))))
+     ((t (:background ,bright-green))))
      
-   ;; git
+   ;;;; git
    
    `(git-commit-summary
      ((t (:foreground ,white))))
 
-   ;; magit
+   ;;;; magit
    
-   `(magit-diff-hunk-heading-highglight
-     ((t (:background ,magenta))))
+   `(magit-diff-hunk-heading-highlight
+     ((t (:background ,bright-magenta))))
    
    `(magit-diff-context
      ((t (:foreground ,white))))
@@ -375,10 +410,10 @@
      ((t (:foreground ,blue))))
 
    `(magit-log-head-label-bisect-bad
-     ((t (:foreground ,red))))
+     ((t (:foreground ,bright-red))))
 
    `(magit-log-head-label-bisect-good
-     ((t (:foreground ,magenta))))
+     ((t (:foreground ,bright-green))))
 
    `(magit-log-head-label-default
      ((t (:foreground ,bright-magenta))))
@@ -407,14 +442,14 @@
    `(magit-whitespace-warning-face
      ((t (:inherit font-lock-warning))))
 
-   ;; compilation
+   ;;;; compilation
    `(compilation-info
      ((t (:inherit default))))
 
    `(compilation-warning
      ((t (:inherit font-lock-warning))))
 
-   ;; twittering-mode
+   ;;;; twittering-mode
    `(twittering-username-face
      ((t (:inherit font-lock-keyword-face))))
 
@@ -427,13 +462,13 @@
     `(twittering-timeline-footer-face
       ((t (:inherit twittering-timeline-header-face))))
 
-    ;; outline
+    ;;;; outline
     `(outline-1
       ((t (:foreground ,red))))
 
     `(outline-2
-      ((t (:foreground ,bright-magenta))))
-
+      ((t (:foreground ,magenta))))
+    
     `(outline-3
       ((t (:foreground ,cyan))))
 
@@ -447,12 +482,15 @@
       ((t (:foreground ,blue))))
 
     `(outline-7
-      ((t (:foreground ,bright-magenta))))
-
-    `(outline-8
       ((t (:foreground ,magenta))))
 
-    ;; org-mode
+    `(outline-8
+      ((t (:foreground ,bright-yellow))))
+
+    ;;;; org-mode
+    `(org-drawer
+      ((t (:inherit org-document-info-keyword))))
+  
     `(org-document-title
       ((t (:inherit org-document-info-keyword))))
 
@@ -508,7 +546,7 @@
       ((t (:foreground ,green))))
 
     `(org-todo
-      ((t (:foreground ,magenta))))
+      ((t (:foreground ,bright-magenta))))
 
     `(org-table
       ((t (:foreground ,white))))
@@ -520,7 +558,7 @@
       ((t (:foreground ,blue))))
 
     `(org-document-info
-      ((t (:foreground ,bright-magenta))))
+      ((t (:foreground ,blue))))
 
     `(org-block-begin-line
      ((t (:background ,black :foreground ,blue))))
@@ -558,7 +596,7 @@
     `(org-special-keyword
       ((t (:inherit font-lock-keyword))))
 
-    ;; dired+
+    ;;;; dired+
 
     `(diredp-compressed-file-suffix
       ((t (:foreground ,red))))
@@ -640,8 +678,8 @@
    'custom-theme-load-path
    (file-name-as-directory (file-name-directory load-file-name))))
 
-(provide-theme 'qdw-subatomic256-fork)
+(provide-theme 'itermesque)
 
 (set-cursor-color "DarkOrange1")
 
-;;; qdw-subatomic256-fork-theme.el ends here
+;;; itermesque-theme.el ends here
