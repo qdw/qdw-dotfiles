@@ -50,8 +50,6 @@
 
 ;;;; Color settings
 
-(load (expand-file-name "~/.emacs.d/themes/qdw-colors.el") 't)
-
 (defalias 'colors 'list-colors-display)
 
 ;; Interpret ANSI escape codes in this buffer,
