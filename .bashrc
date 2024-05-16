@@ -519,6 +519,11 @@ function bbat {
         && elinks "$TMPFILE"
 }
 
+function markdown2html {
+    pandoc "$1" -t html
+}
+function md2html { markdown2html "$@" ;}
+
 #### #FIXME settings: rewrite 'function bbat {...}' to use 'gh' and GLAMOUR_STYLE, which should make the output look nicer
 
 #### Linker settings
@@ -761,7 +766,7 @@ function emacs {
 export VISUAL="$EMACS_BINARY"
 export EDITOR="$VISUAL"
 export GIT_EDITOR="$EMACSCLIENT_BINARY"
-export PSQL_EDITOR="$EMACS_BINARY -nw"
+export PSQL_EDITOR="psql-editor"
 
 #### Permission settings
 
@@ -1115,7 +1120,6 @@ function lsd {
 }
 
 #### diff settings
-
 
 function dcc { colordiff -u "$@" | $PAGER ;}
 
@@ -1777,29 +1781,28 @@ function pg {
     )
 }
 
-# declare -Ax pgpasses
-# function qql {
-#     local SERVICE
+declare -Ax pgpasses
+function qql {
+    local SERVICE
     
-#     if [[ $# -eq 0 ]]; then
-#         echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
-#             > /dev/stderr
-#     else
-#         SERVICE="$1"
-#         shift
+    if [[ $# -eq 0 ]]; then
+        echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
+            > /dev/stderr
+    else
+        SERVICE="$1"
+        shift
         
-#         if [[ -n ${pgpasses["$SERVICE"]} ]]; then
-#             export PGPASSWORD=${pgpasses["$SERVICE"]}
-#         else
-#             read -sep "Enter the password for '$SERVICE': " PGPASSWORD
-#             pgpasses["$SERVICE"]="$PGPASSWORD"
-#             export PGPASSWORD
-#         fi
+        if [[ -n ${pgpasses["$SERVICE"]} ]]; then
+            PGPASSWORD=${pgpasses["$SERVICE"]}
+        else
+            PGPASSWORD="$(pql "$SERVICE")"
+            pgpasses["$SERVICE"]="$PGPASSWORD"
+        fi
         
-#         echo ${pgpasses}
-#         PGSERVICE="$SERVICE" psql "$@"
-#     fi
-# }
+        export PGPASSWORD
+        PGSERVICE="$SERVICE" psql "$@"
+    fi
+}
 
 # replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or psql prompt)
 function replication_role()
