@@ -7,13 +7,13 @@
 (cond
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
-   (setq-default
+   (setq
 
     black "#262626"
     bright-black "#383838"
 
     red "#af5f00" ;; actually orange
-    bright-red red
+    bright-red "#ff7f00" ;; bright orange; used for the cursor, inter alia
     
     green "#007f06"
     bright-green "#00ff00"
@@ -37,13 +37,13 @@
    ;;; For terminals that support only 256 colors
    ;;; (i.e., almost every terminal in use today)
   ('t 
-   (setq-default
+   (setq
     
     black "#262626"        ;; "Grey15"     == 235
     bright-black "#5f5f5f" ;; "Grey37"     ==  59
 
     red "#af5f00" ;; "DarkOrange3"         == 130
-    bright-red red
+    bright-red "#ff7f00" ;; "DarkOrange1"  == ???  ;; bright orange; used for the cursor, inter alia. This color has a name in Emacs but not in X11. In SGR 256-color space, it seems to correspond roughly to color-166(?)
 
     green "#008700"        ;; "Green4"     ==  28
     bright-green "#00ff00" ;; "Green1"     ==  46
@@ -67,7 +67,7 @@
 
 ;;; [Untested; might not work] For terminals that support only 16 colors
 
-;; (setq-default
+;; (setq
 ;;  black "#000000"        ;; "Black (SYSTEM)"  ==  0  == ANSI black
 ;;  bright-black           ;; "Grey (SYSTEM)"   == 8 == ANSI bright-black
 ;;  red "#800000"          ;; "Maroon (SYSTEM)" ==  1  == ANSI red
@@ -87,7 +87,7 @@
 
 ;;; [Untested; might not work] For terminals that support only 8 colors
 
-;; (setq-default
+;; (setq
 ;; black "#000000"        ;; "Black (SYSTEM)"   ==  0  == ANSI black
 ;; bright-black "#c0c0c0" ;; "Silver (SYSTEM)"  ==  7  == ANSI white
 ;; red "#800000"          ;; "Maroon (SYSTEM)"  ==  1  == ANSI red

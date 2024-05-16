@@ -1,4 +1,4 @@
-;;; tritium-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
+();;; tritium-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
 
 ;; Copyright 2012 John Olsson
 
@@ -35,6 +35,9 @@
    'tritium
 
    ;;;; default stuff
+   
+   `(cursor
+      ((t (:background ,bright-red))))
 
    `(default
       ((t (:background ,black :foreground ,white))))
@@ -136,7 +139,7 @@
      ((t (:foreground ,blue))))
 
    `(font-lock-warning-face
-     ((t ((:foreground ,bright-green)))))
+     ((t ((:foreground ,bright-magenta)))))
 
    `(font-lock-builtin-face
      ((t ((:foreground ,bright-yellow)))))
@@ -631,7 +634,6 @@
 
     `(diredp-ignored-file-name
       ((t (:foreground ,bright-black))))
-
    )
 
 ;;;###autoload
@@ -641,7 +643,5 @@
    (file-name-as-directory (file-name-directory load-file-name))))
 
 (provide-theme 'tritium)
-
-(set-cursor-color "DarkOrange1")
 
 ;;; tritium-theme.el ends here

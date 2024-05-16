@@ -36,9 +36,9 @@
 					   
 
   ;;; For terminals that support full 24-bit color
-(setq-default
+(setq
 
- background "002b36"
+ background "#002b36"
 
  black "#373737"
  bright-black "#706f6e"
