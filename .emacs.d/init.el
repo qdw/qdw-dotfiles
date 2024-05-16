@@ -48,6 +48,8 @@
 (require 'tool-bar)
 (require 'typescript-mode)
 
+;;;; ;;;; Color/theme settings
+
 ;;;; Color settings
 
 (defalias 'colors 'list-colors-display)
@@ -62,39 +64,31 @@
 	     (expand-file-name "~/.emacs.d/qdw-themes")
              (expand-file-name "~/.emacs.d/site-themes"))
 
-;; Custom themes that I created
+;;;; Custom themes that I created
 
-;;; Day or night, 8-bit or 25-bit color
-(load-theme 'qdw-subatomic256-fork 't 't)
-
-;;; Daytime, 24-bit color
-;; (load-theme 'tritium 't 't)
-;; (load-theme 'itermesque 't 't)
+(load-theme 'tritium 't)                  ;;; Day or night, 8-bit or 24-bit color
+;; (load-theme 'itermesque 't) ;; BROKEN  ;;; Daytime, 24-bit color
 
 ;;;; Settings: other color themes, which I use seldom
 
-;;; Dark-color-theme settings
-;; 
-;; T Rippedcasts: kind of orangey. Comes with iTerm2 and Terminal.app theme.
-;; (load-theme 'rippedcasts 't)
-;; 
-;; T Atom One Dark: decent; bright Default text is somewhat *too* bright.
-;; (load-theme atom-one-dark 't)
+;;;; Third-party themes
 
+;;;; Loud themes, for prod boxes
 
-;; Horrible dark theme settings
+;;; Loud dark themes
 ;; 
 ;;T  birds-of-paradise-plus: very loud red theme for use on production boxes
 ;; (load-theme 'birds-of-paradise-plus 't)
 ;;
 ;;T  base16-greenscreen: green-phosphor nostalgia theme
 ;; (load-theme 'base16-greenscreen 't)
-;;
 
-
-;;; Light-theme settings
+;;; Light themes, for use outdoors
 ;; T Almost-Mono Cream
 ;; (load-theme 'almost-mono-cream 't)
+
+;; Always use the same cursor color, regardless of the theme I use.
+(set-cursor-color "DarkOrange1")
 
 ;;;; dired settings
 
@@ -732,7 +726,44 @@ This command does the reverse of `fill-region'."
 ;;;; Lisp settings
 
 ;; Automatically byte-compile stale Emacs Lisp files when I visit or save them.
+
+(defun byte-compile-current-buffer-if-appropriate ()
+  "Byte-compile current buffer if it's a .el file under ~/.emacs.d, but not init.el."
+  (when
+      (and (string-prefix-p
+              (expand-file-name "~/.emacs.d/")
+              (file-truename buffer-file-name))
+           (string-suffix-p
+               ".el"
+               buffer-file-name)
+           (not (string-equal
+                 (file-name-nondirectory buffer-file-name)
+                 "init.el")))
+    (emacs-lisp-byte-compile)))
+
+(add-hook 'after-save-hook 'byte-compile-current-buffer-if-appropriate)
+
+;; If a .el file is newer than its .elc file, load the .el file.
+;; Applies only when you don't specify a filename extension explicitly.
+
 (setq-default load-prefer-newer 't)
+
+;; Make the contents of *scratch* persist across Emacs sessions
+
+(setq scratch-buffer-file (expand-file-name "~/tmp/scratch.el"))
+
+(defun save-scratch-buffer-to-file ()
+  (with-current-buffer "*scratch*"
+    (write-region (point-min) (point-max) scratch-buffer-file)))
+
+(defun load-scratch-buffer-from-file ()
+  (if (file-exists-p scratch-buffer-file)
+      (with-current-buffer "*scratch*"
+        (erase-buffer)
+        (insert-file-contents scratch-buffer-file))))
+
+(add-hook 'kill-emacs-hook 'save-scratch-buffer-to-file)
+(add-hook 'emacs-startup-hook 'load-scratch-buffer-from-file)
 
 ;; FIXME: use slime.el and paredit.el instead
 (setq lisp-indent-function 'common-lisp-indent-function)
@@ -829,7 +860,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(custom-safe-themes
-   '("c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
+   '("8e059e42d34e37de1c9d4134b89d4a41d11bf44ca88b70a738a8b2fa1d030900" "1843cbc8dd7232022cfcc54218864563000192e06188196c654443832c328047" "79a750a591511be62a78fcb2c3de2f422da7c4cd35e61571bc7cd8548e302a28" "5ccf92da2a1298b7c6fd8aac0e8641b8a0acd079d48df9718009feda3b0cdee8" "258f232c779de08cc48f0504805ba7f6f73bf4e380cd8c06541fab25c2686f89" "d0f9d3798ca38427957e3366ad49545c6f2748f0c838e615e3f24fa69e28b05e" "c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
@@ -852,7 +883,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(dired-narrow atom-one-dark-theme magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 
 ;; FIXME: somehow import these color var defs from my theme instead.
@@ -1103,3 +1134,10 @@ This command does the reverse of `fill-region'."
 ;;                         'dired-find-alternate-file
 (put 'downcase-region 'disabled nil)
 (put 'dired-find-alternate-file 'disabled nil)
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ediff-odd-diff-B ((t (:extend t :background "#0D2A34" :distant-foreground "#869496"))))
+ '(org-date ((t (:foreground "#6495ed" :weight normal)))))
