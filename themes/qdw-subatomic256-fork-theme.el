@@ -1,1 +1,0 @@
-../.emacs.d/themes/qdw-subatomic256-fork-theme.el

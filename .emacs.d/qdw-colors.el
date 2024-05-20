@@ -24,8 +24,8 @@
     blue "#6495ed"
     bright-blue blue
     
-    magenta "#f5b5ff"
-    bright-magenta "#af5faf"
+    magenta "#af5faf"
+    bright-magenta "#f5b5ff"
     
     cyan "#008080"
     bright-cyan cyan

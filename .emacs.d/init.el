@@ -39,6 +39,7 @@
 (require 'menu-bar)   
 (require 'origami)
 (require 'org)
+(require 'osx-plist)
 (require 'osx-trash)
 (require 'package)
 (require 'recentf)
@@ -62,7 +63,7 @@
 
 (add-to-list 'custom-theme-load-path
 	     (expand-file-name "~/.emacs.d/qdw-themes")
-             (expand-file-name "~/.emacs.d/site-themes"))
+             (expand-file-name "~/.emacs.d/third-party-themes"))
 
 ;;;; Custom themes that I created
 
@@ -421,7 +422,13 @@ This command does the reverse of `fill-region'."
                    (concat jiralib-url "/browse/" ticket-name)
                    ticket-name))
                    
+(setq jira-ticket-regexp-qdw "\\b[[:upper:]]\\{2,10\\}-[[:digit:]]-\\{2,\\9}")
 
+;; (defun isearch-forward-jira-ticket
+;;   (interactive ...
+
+;; (defun isearch-backward-jira-ticket
+;;   (interactive ...
 
 (defun org-insert-pr-link (repo pr-number)
   (interactive "MRepo: \nnPR number: ")
@@ -860,7 +867,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(custom-safe-themes
-   '("8e059e42d34e37de1c9d4134b89d4a41d11bf44ca88b70a738a8b2fa1d030900" "1843cbc8dd7232022cfcc54218864563000192e06188196c654443832c328047" "79a750a591511be62a78fcb2c3de2f422da7c4cd35e61571bc7cd8548e302a28" "5ccf92da2a1298b7c6fd8aac0e8641b8a0acd079d48df9718009feda3b0cdee8" "258f232c779de08cc48f0504805ba7f6f73bf4e380cd8c06541fab25c2686f89" "d0f9d3798ca38427957e3366ad49545c6f2748f0c838e615e3f24fa69e28b05e" "c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
+   '("291708e76bbdc185db5d3f154cb58a547ffdb2ab88b9ca68c8b67fd328ffaf60" "8e059e42d34e37de1c9d4134b89d4a41d11bf44ca88b70a738a8b2fa1d030900" "1843cbc8dd7232022cfcc54218864563000192e06188196c654443832c328047" "79a750a591511be62a78fcb2c3de2f422da7c4cd35e61571bc7cd8548e302a28" "5ccf92da2a1298b7c6fd8aac0e8641b8a0acd079d48df9718009feda3b0cdee8" "258f232c779de08cc48f0504805ba7f6f73bf4e380cd8c06541fab25c2686f89" "d0f9d3798ca38427957e3366ad49545c6f2748f0c838e615e3f24fa69e28b05e" "c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
@@ -883,7 +890,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
 
 ;; FIXME: somehow import these color var defs from my theme instead.
