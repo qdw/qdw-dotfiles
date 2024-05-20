@@ -763,10 +763,29 @@ function emacs {
     fi
 }
 
-export VISUAL="$EMACS_BINARY"
-export EDITOR="$VISUAL"
-export GIT_EDITOR="$EMACSCLIENT_BINARY"
-export PSQL_EDITOR="psql-editor"
+set -a
+  VISUAL="$EMACS_BINARY"
+  EDITOR="$VISUAL"
+  GIT_EDITOR="$EMACSCLIENT_BINARY"
+  if [[ "$INSIDE_EMACS" ]]; then
+      PSQL_EDITOR="emacs"
+  else
+      PSQL_EDITOR="command emacs -nw"
+  fi
+set +a
+
+# Broken
+# function psql_editor {
+#     if [[ "$INSIDE_EMACS" ]]; then
+#         echo was gonna run emacsclient qq "$@" qq
+#     elif which subl >/dev/null 2>&1; then
+#         subl --new-window "$@"
+#     else
+#         command emacs -nw "$@"
+#     fi
+# }
+# PSQL_EDITOR_FUNCTION_DEFINITION="$(command -V psql_editor | tail -n +2)"
+# export PSQL_EDITOR="bash -c '$PSQL_EDITOR_FUNCTION_DEFINITION; psql_editor'"
 
 #### Permission settings
 
@@ -1071,8 +1090,8 @@ function bbat  {
         && elinks "$TMPFILE"
 }
 
-# cdy ("CD sYmbolic link") - cd to the directory that a symlink points to (or, if it points to a non-directory file, cd to that file's parent dir).
-function cdy {
+# cdy ("CD Realname") - cd to the directory that a symlink points to (or, if it points to a non-directory file, cd to that file's parent dir).
+function cdr {
     local TARGET
     TARGET=$(readlink -- "$1")
 
@@ -1783,30 +1802,32 @@ function pg {
 
 declare -Ax pgpasses
 function qql {
-    local SERVICE
+    local SERVICE PASSWORD
     
     if [[ $# -eq 0 ]]; then
         echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
-            > /dev/stderr
+             > /dev/stderr
     else
-        SERVICE="$1"
-        shift
+        SERVICE="$1"; shift
         
         if [[ -n ${pgpasses["$SERVICE"]} ]]; then
-            PGPASSWORD=${pgpasses["$SERVICE"]}
+            PASSWORD=${pgpasses["$SERVICE"]}
         else
-            PGPASSWORD="$(pql "$SERVICE")"
-            pgpasses["$SERVICE"]="$PGPASSWORD"
+            PASSWORD="$(pql "$SERVICE")"
+            if [[ $? -ne 0 ]]; then
+                echo "pql couldn't retrieve the AWS secret for $SERVICE" > /dev/stderr
+                return
+            else
+                pgpasses["$SERVICE"]="$PASSWORD"
+            fi
         fi
-        
-        export PGPASSWORD
-        PGSERVICE="$SERVICE" psql "$@"
+
+        PGSERVICE="$SERVICE" PGPASSWORD="$PASSWORD" psql "$@"
     fi
 }
 
 # replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or psql prompt)
-function replication_role()
-{
+function replication_role {
     if ! which psql; then
         echo ''
     else

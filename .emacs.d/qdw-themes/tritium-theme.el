@@ -57,11 +57,15 @@
    `(show-paren-mismatch-face
      ((t (:foreground ,red :bold nil))))
 
+   ;; `(isearch
+   ;;   ((t (:background ,bright-magenta :foreground ,black :bold nil))))
    `(isearch
-     ((t (:background ,bright-magenta :foreground ,black :bold nil))))
+     ((t (:background ,bright-red :foreground ,black :bold nil))))
 
+   ;; `(lazy-highlight
+   ;;   ((t (:background ,magenta :foreground ,black :bold nil))))
    `(lazy-highlight
-     ((t (:background ,black :foreground ,red :bold nil))))
+     ((t (:background ,red :foreground ,black :bold nil))))
 
    `(query-replace
      ((t (:inherit lazy-highlight))))
