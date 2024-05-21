@@ -5,15 +5,42 @@
 (if (boundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
+;; I'm running emacs as a daemon, so just require all these modules at once;
+;; don't get clever with on-demand loading.
+(require 'ansi-color)
+(require 'blacken)
+(require 'dirtrack)
+(require 'dockerfile-mode)
+(require 'fd-dired)
+(require 'json)
+(require 'magit)
+(require 'menu-bar)   
+(require 'mouse)
+(require 'origami)
+(require 'org)
+(require 'osx-plist)
+(require 'osx-trash)
+(require 'package)
+(require 'recentf)
+(require 'ruby-mode)
+(require 'scroll-bar)
+(require 'sh-script)
+(require 'tool-bar)
+(require 'typescript-mode)
+
 ;;;; Settings for GUI versus TUI
 
 (defvar current-favorite-font "Menlo-18")
 
 (defun initialize-ui ()
-  (cond ((display-graphic-p)
-	 (set-face-font 'default current-favorite-font)
-	 (blink-cursor-mode -1))
-	('t (xterm-mouse-mode 1))))
+  (cond ((display-graphic-p) (set-face-font 'default current-favorite-font)
+	                     (blink-cursor-mode -1))
+	('t (xterm-mouse-mode 1)
+             (global-set-key [mouse-4] (lambda () (interactive) (scroll-down 1)))
+             (global-set-key [mouse-5] (lambda () (interactive) (scroll-up 1)))
+             (defun track-mouse (e))
+             (setq mouse-sel-mode 't))
+         ))
 
 (add-hook 'after-make-frame-functions
           (lambda (frame)
@@ -27,27 +54,6 @@
 
 ;;;; Load third-party libraries.
 
-;; I'm running emacs as a daemon, so just require all these modules at once;
-;; don't get clever with on-demand loading.
-(require 'ansi-color)
-(require 'blacken)
-(require 'dirtrack)
-(require 'dockerfile-mode)
-(require 'fd-dired)
-(require 'json)
-(require 'magit)
-(require 'menu-bar)   
-(require 'origami)
-(require 'org)
-(require 'osx-plist)
-(require 'osx-trash)
-(require 'package)
-(require 'recentf)
-(require 'ruby-mode)
-(require 'scroll-bar)
-(require 'sh-script)
-(require 'tool-bar)
-(require 'typescript-mode)
 
 ;;;; ;;;; Color/theme settings
 
