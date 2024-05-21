@@ -23,18 +23,25 @@
 	ignorecase = false
 
 [diff]
-	tool = git diff --patience
+	# tool = git diff --patience
+	tool = difftastic
 	color = auto
 	colorMoved = dimmed-zebra
 	# difft: semantic diff that understands various programming languages
 	#tool = difft #--background dark --color always --missing-as-empty --skip-unchanged
+	
+[difftool]
+	prompt = false
+	
+[difftool "difftastic"]
+        cmd = difft "$LOCAL" "$REMOTE"
+	
+[pager]
+	difftool = true
 
 [merge]
 	tool = emerge
 	renamelimit = 10500
-
-[pager]
-	#difftool = true
 
 [alias]
 	char-diff = diff --word-diff-regex=.
