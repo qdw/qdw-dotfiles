@@ -41,7 +41,7 @@ function setx {
 
 function complain {
     for STRING in "$@"; do
-        echo "$STRING" > /dev/stderr
+        echo "$STRING" >&2
     done
 }
 
@@ -207,7 +207,7 @@ done
 if [[ -e "$HOMEBREW_BIN/ggrep" ]]; then
     export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
 else
-    export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform' > /dev/stderr"
+    export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform' >&2"
 fi
 
 export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
@@ -458,7 +458,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     }
     
     MY_PROMPT_FUNCTION_DEFINITION=$(command -V my_prompt_function | tail -n +2)
-    export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
+    ## not for upstart_web export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
 fi
 
 #### Scheme Shell settings (keywords: Lisp, scsh)
@@ -747,7 +747,7 @@ function emacs {
         if [[ $# -gt 0 ]]; then
             "$EMACSCLIENT_BINARY" --no-wait "$@"
         else
-            echo "You're already in emacs, genius" > /dev/stderr
+            echo "You're already in emacs, genius" >&2
         fi
     else
         local DAEMON_STATUS
@@ -833,7 +833,7 @@ function strip_control_characters_from {
     if [[ $# -eq 1 ]]; then
         echo "$(tr -cd  "[:print:]"  "$STRING")"
     else
-        echo "strip_control_characters_from: error: wrong number of arguments. Usage: strip_control_characters_from STRING" > /dev/stderr
+        echo "strip_control_characters_from: error: wrong number of arguments. Usage: strip_control_characters_from STRING" >&2
     fi
 }
 
@@ -1370,7 +1370,7 @@ function branch {
     elif [[ $# -eq 1 ]]; then
         BRANCH_NAME="$1"
     else
-        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME]" > /dev/stderr
+        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME]" >&2
     fi
     
     gh browse --branch "$BRANCH_NAME"
@@ -1528,28 +1528,41 @@ function gl {
 
 # repos - multitool for listing/searching GitHub repositories 
 function repos {
-    PATTERN="$1"
-    
-    # With no argument, print all repos in my $GITHUB_ORG
-    if [[ ! "$PATTERN" ]]; then
-        PATTERN="." # match anything
+    local PATTERN VERBOSE
+
+    if [[ ! "$GITHUB_ORG" ]]; then
+        complain "repos: error: env var GITHUB_ORG is not set. Set it to your team name"
+        return
     fi
+        
+    if [[ $# -eq 0 ]]; then
+        PATTERN="." # match anything, i.e. print all repos in $GITHUB_ORG
+    else
+        PATTERN="$1"
+        VERBOSE="$2" # may be the empty string
+    fi
+    
+    function verbose-print {
+        if [[ "$VERBOSE" ]]; then
+            echo "$@" >&2
+        fi
+    }
     
     # Search in various places for repos matching PATTERN,
     # stopping at the first place where we find a match.
     set -o pipefail
     {
-        echo "    Searching $GITHUB_ORG repos";
-        gh repo list --limit 1000 "$GITHUB_ORG" | grep "$PATTERN"
+        verbose-print "searching $GITHUB_ORG repos"
+        gh repo list --limit 2000 "$GITHUB_ORG" | command grep -E "$PATTERN"
     } \
     || \
     {
-        echo "    Searching personal repos"
-        gh repo list --limit 1000 | grep "$PATTERN"
+        verbose-print "searching personal repos"
+        gh repo list --limit 2000 | command grep -E "$PATTERN"
     } \
     || \
     {
-        echo "    Opening a browser and searching all repos on github.com"
+        verbose-print "opening a browser and searching all repos on github.com"
         open "https://github.com/search?type=repositories&q=${PATTERN}"
     }
 }
@@ -1569,9 +1582,8 @@ function repo {
         if     ! gh repo view --web "$GITHUB_ORG/$REPO_NAME" >/dev/null 2>&1 \
             && ! gh repo view --web "$REPO_NAME" >/dev/null 2>&1; then
             
-            echo "Couldn't find a $GITHUB_ORG repo named '$REPO_NAME'"
-            echo "Searching for similarly-named repos"
-            repos "$REPO_NAME"
+            echo "repo: couldn't find a $GITHUB_ORG repo named '$REPO_NAME'; searching for similarly-named repos" >&2
+            repos "$REPO_NAME" true 1>&2 
         fi
     fi
 }
@@ -1786,7 +1798,7 @@ function pg {
         VERSION="$1"
         shift
     else
-        echo "pg: error: missing argument. Usage: pg VERSION [COMMAND] [ARG ...]" > /dev/stderr
+        echo "pg: error: missing argument. Usage: pg VERSION [COMMAND] [ARG ...]" >&2
         return
     fi
 
@@ -1812,7 +1824,7 @@ function qql {
     
     if [[ $# -eq 0 ]]; then
         echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
-             > /dev/stderr
+             >&2
     else
         SERVICE="$1"; shift
         
@@ -1821,7 +1833,7 @@ function qql {
         else
             PASSWORD="$(pql "$SERVICE")"
             if [[ $? -ne 0 ]]; then
-                echo "pql couldn't retrieve the AWS secret for $SERVICE" > /dev/stderr
+                echo "pql couldn't retrieve the AWS secret for $SERVICE" >&2
                 return
             else
                 pgpasses["$SERVICE"]="$PASSWORD"
@@ -1863,7 +1875,7 @@ function ser {
     local REGEX
     
     if [[ $# -eq 0 ]]; then
-        echo "ser: missing argument. Usage: ser [GREP_FLAG ...] REGEX" > /dev/stderr
+        echo "ser: missing argument. Usage: ser [GREP_FLAG ...] REGEX" >&2
     else
         REGEX="$1"
         shift
@@ -2594,7 +2606,7 @@ function jenkins-repo {
     elif [[ $# -eq 1 ]]; then
         echo "$1" > "$REPOFILE"
     else
-        echo "jenkins-repo: error: too many arguments" > /dev/stderr
+        echo "jenkins-repo: error: too many arguments" >&2
     fi
 }
 
@@ -2607,7 +2619,7 @@ function jenkins-branch {
     elif [[ $# -eq 1 ]]; then
         echo "$1" > "$BRANCHFILE"
     else
-        echo "jenkins-branch: error: too many arguments" > /dev/stderr
+        echo "jenkins-branch: error: too many arguments" >&2
     fi
 }
 
@@ -2693,7 +2705,7 @@ function jira-to-org {
     local FILENAME
     
     if [[ $# -ne 1 ]]; then
-        echo "jira-to-org: error: missing argument. Usage: jira-to-org FILE" > /dev/stderr
+        echo "jira-to-org: error: missing argument. Usage: jira-to-org FILE" >&2
     else
         FILENAME="$1"   
         for TICKET_NAME in $(awk 'NR % 2 == 1 {print $NF}'  "$FILENAME"); do
@@ -2723,7 +2735,7 @@ function jira {
     fi
 }
 
-function jql {
+function jql2url {
     local QUERY JQL_BASE_URL FULL_URL
 
     if [[ -z "$JIRA_BASE_URL" ]]; then
@@ -2741,14 +2753,32 @@ function jql {
                 
         URLENCODED_QUERY=$(urlencode "$QUERY") || return
         FULL_URL="${JQL_BASE_URL}${URLENCODED_QUERY}"
-        open "$FULL_URL"
+        echo "$FULL_URL"
     fi
+}
+
+function jql {
+    local QUERY
+    
+    if [[ $# -ne 1 ]]; then
+        complain "jql: error: wrong number of arguments. Usage: jql 'my query'"
+    else
+        open -u "$(jql2url "$QUERY")"
+    fi
+}
+
+function cjql {
+    local QUERY URL
+    QUERY="$1"; shift
+    URL="$(jql2url "$QUERY")"
+
+    curl -L "$URL" "$@"
 }
 
 #### Music-related settings
 
-# zo (Zophar) - search for Nintendo Entertainment System music
-function zo {
+# zophar - search for NES music
+function zophar {
     open https://mail.zophar.net/music/nintendo-nes-nsf
 }
 
