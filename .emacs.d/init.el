@@ -202,9 +202,17 @@ Test cases
     (message "Hex %s is %d" tempStr (string-to-number tempStr 16 ) )
     ))
 
+;;;; Settings for external programs
 
-;;;; Alternative-editor settings
-;;;; FIXME: abstract this repetitive code
+;; (defun shell-command-qdw (command)
+;;   "Run a shell command after sourcing ~/.bashrc."
+;;     (interactive "sShell command: ")
+;;       (start-process
+       
+;;              (concat "/opt/homebrew/bin/bash -c 'source ~/.bashrc; " command "'")))
+
+;;; Alternative-editor settings
+;;; FIXME: abstract this repetitive code
 
 ;; (defun open-in-other-editor (editor-path file-arg)
   
@@ -427,15 +435,13 @@ This command does the reverse of `fill-region'."
   (org-insert-link nil
                    (concat jiralib-url "/browse/" ticket-name)
                    ticket-name))
-                   
+
 (setq jira-ticket-regexp-qdw "\\b[[:upper:]]\\{2,10\\}-[[:digit:]]-\\{2,\\9}")
-
-;; (defun isearch-forward-jira-ticket
-;;   (interactive ...
-
-;; (defun isearch-backward-jira-ticket
-;;   (interactive ...
-
+                                      
+(defun qdw-isearch-forward-jira-ticket
+  (interactive)
+  (isearch-resume jira-ticket-regexp-qdw 't nil 't nil 't))
+    
 (defun org-insert-pr-link (repo pr-number)
   (interactive "MRepo: \nnPR number: ")
   (org-insert-link nil
@@ -1153,4 +1159,5 @@ This command does the reverse of `fill-region'."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(ediff-odd-diff-B ((t (:extend t :background "#0D2A34" :distant-foreground "#869496"))))
- '(org-date ((t (:foreground "#6495ed" :weight normal)))))
+ '(org-date ((t (:foreground "#6495ed" :weight normal))))
+ '(sh-quoted-exec ((t (:foreground "#f5b5ff" :weight normal)))))

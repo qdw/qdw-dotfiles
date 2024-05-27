@@ -9,7 +9,9 @@
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
 
-    black "#262626"
+    black "#262626"        ;; "Grey15"     == 235
+    ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
+
     bright-black "#383838"
 
     red "#af5f00" ;; actually orange
@@ -38,8 +40,11 @@
    ;;; (i.e., almost every terminal in use today)
   ('t 
    (setq
-    
+
     black "#262626"        ;; "Grey15"     == 235
+    ;; black "#000000"  ;; Use the terminal emulator's ANSI-black color.    
+    ;; black "color-16" ;; Use the terminal emulator's background color.
+
     bright-black "#5f5f5f" ;; "Grey37"     ==  59
 
     red "#af5f00" ;; "DarkOrange3"         == 130
