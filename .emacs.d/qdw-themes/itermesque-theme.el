@@ -29,53 +29,18 @@
 (deftheme itermesque
   "itermesque emacs theme")
 
-;; (defun 0x (color-name)
-;;   (letrec ((rgb (color-name-to-rgb color-name))
-;; 	   (hex (color-rgb-to-hex rgb)))
-;;     (message "equivalent exchange: %s" color-name)))
-					   
-
-  ;;; For terminals that support full 24-bit color
-(setq
-
- background "#002b36"
-
- black "#373737"
- bright-black "#706f6e"
-
- ;; red "#ad5f01" ;; actually orange
- red "#a04a20" ;; actually orange
- bright-red red
- 
- ;; green "#007f06"
- green "#2b7f46"
- bright-green "7efe08"
- 
- yellow "#7b5dee"  ;; actually a blueish purple
- ;; yellow "#7d4cb7" ;; actually a blueish purple
- bright-yellow "#af5faf" ;; actually a reddish purple
- 
- blue "#6495ed"
- bright-blue blue
-
- ;; magenta "#af42c2"
- magenta "#afafaf"
- bright-magenta "#f66ce2"
- 
- cyan "#00808b"
- bright-cyan "#008080"
- 
- white "#839496"
- bright-white white
- )
+(load (expand-file-name "~/.emacs.d/itermesque-colors.el"))
 
 (custom-theme-set-faces
    'itermesque
 
    ;;;; default stuff
+   
+   `(cursor
+      ((t (:background ,bright-red))))
 
    `(default
-      ((t (:background ,background :foreground ,white))))
+      ((t (:background ,black :foreground ,white))))
 
    `(fringe
      ((t (:background ,black))))
@@ -92,11 +57,15 @@
    `(show-paren-mismatch-face
      ((t (:foreground ,red :bold nil))))
 
+   ;; `(isearch
+   ;;   ((t (:background ,bright-magenta :foreground ,black :bold nil))))
    `(isearch
-     ((t (:background ,bright-magenta :foreground ,black :bold nil))))
+     ((t (:background ,bright-red :foreground ,black :bold nil))))
 
+   ;; `(lazy-highlight
+   ;;   ((t (:background ,magenta :foreground ,black :bold nil))))
    `(lazy-highlight
-     ((t (:background ,black :foreground ,red :bold nil))))
+     ((t (:background ,red :foreground ,black :bold nil))))
 
    `(query-replace
      ((t (:inherit lazy-highlight))))
@@ -141,7 +110,7 @@
      
    ;;;; ANSI colors (used in shell-mode)
    
-   `(ansi-color-black ((t (:background: ,black :foreground ,black :underline nil))))
+   `(ansi-color-black ((t (:background ,black :foreground ,black :underline nil))))
    `(ansi-color-bright-black ((t (:background ,bright-black :foreground ,bright-black :underline nil))))
    
    `(ansi-color-red ((t (:background ,red :foreground ,red :underline nil))))
@@ -174,7 +143,7 @@
      ((t (:foreground ,blue))))
 
    `(font-lock-warning-face
-     ((t ((:foreground ,bright-green)))))
+     ((t ((:foreground ,bright-magenta)))))
 
    `(font-lock-builtin-face
      ((t ((:foreground ,bright-yellow)))))
@@ -669,7 +638,6 @@
 
     `(diredp-ignored-file-name
       ((t (:foreground ,bright-black))))
-
    )
 
 ;;;###autoload
@@ -679,7 +647,5 @@
    (file-name-as-directory (file-name-directory load-file-name))))
 
 (provide-theme 'itermesque)
-
-(set-cursor-color "DarkOrange1")
 
 ;;; itermesque-theme.el ends here
