@@ -29,7 +29,8 @@
 (deftheme tritium
   "tritium emacs theme")
 
-(load (expand-file-name "~/.emacs.d/qdw-colors.el"))
+(when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
+  (load (expand-file-name "~/.emacs.d/qdw-colors.el")))
 
 (custom-theme-set-faces
    'tritium

@@ -70,6 +70,8 @@
     ))
 )
 
+(defvar *colors-loaded-p* 't)
+
 ;;; [Untested; might not work] For terminals that support only 16 colors
 
 ;; (setq
