@@ -24,7 +24,6 @@
 (require 'mouse)
 (require 'origami)
 (require 'org)
-(require 'osx-plist)
 (require 'osx-trash)
 (require 'package)
 (require 'recentf)
@@ -233,18 +232,14 @@ Get it from:  <http://hasseg.org/trash/>"
             dired-listing-switches "-aBhl --group-directories-first")))
    
   ;; Support org links like music: which open in Music.app
-  (org-link-set-parameters
-   "applescript"
-   :follow
-   (lambda (path)
-     (shell-command
-      (concat "open -a " (expand-file-name "~/bin/open-url-in-the-apple-music-app.scpt")))))
-              
-
-      
-      a
-      "open -a /path/to/your/applescript.app " path)))
-            
+  ;; (org-link-set-parameters
+  ;;  "applescript"
+  ;;  :follow
+  ;;  (lambda (path)
+  ;;    (shell-command
+  ;;     (concat "open -a " (expand-file-name "~/bin/open-url-in-the-apple-music-app.scpt")))))
+  ;;     "open -a /path/to/your/applescript.app " path))
+  )
 
 ;;;; Human-language settings (including English)
 
