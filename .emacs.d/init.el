@@ -17,7 +17,7 @@
 (require 'fd-dired)
 ;; (require 'frame)
 ;; (require 'frame-cmds)
-(require 'jiralib2)
+;; (require 'jiralib2)
 (require 'json)
 (require 'magit)
 (require 'menu-bar)
