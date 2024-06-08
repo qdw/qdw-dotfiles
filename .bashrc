@@ -1922,6 +1922,11 @@ function air {
     set +uo pipefail
 }
 
+## Ballet-slippers-ordering settings
+function ballet-flats {
+    open -u "https://www.discountdance.com/dancewear/Split-Sole-Vesta-Canvas-Ballet-Shoe/p/VESTA"
+}
+
 ## Coffee-bean-ordering settings
 
 function coffee {
