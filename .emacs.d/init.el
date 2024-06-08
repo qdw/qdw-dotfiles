@@ -7,14 +7,20 @@
 
 ;; I'm running emacs as a daemon, so just require all these modules at once;
 ;; don't get clever with on-demand loading.
+
+(add-to-list 'load-path (expand-file-name "~/.site.lisp.d"))
+
 (require 'ansi-color)
 (require 'blacken)
 (require 'dirtrack)
 (require 'dockerfile-mode)
 (require 'fd-dired)
+;; (require 'frame)
+;; (require 'frame-cmds)
+(require 'jiralib2)
 (require 'json)
 (require 'magit)
-(require 'menu-bar)   
+(require 'menu-bar)
 (require 'mouse)
 (require 'origami)
 (require 'org)
@@ -48,54 +54,15 @@
 
 (initialize-ui)
 
+;;;; Settings to dynamically resize windows based on language conventions
+
+;; (defun set-frame-width (n)
+;;   "Set the selected frame's width."
+;;   (adjust-window-trailing-edge (selected-frame) (- n (frame-width)) 't))
+
 ;;;; Password settings (excluded from Git)
 
 (load (expand-file-name "~/.emacs.d/secrets.el") 't)
-
-;;;; Load third-party libraries.
-
-
-;;;; ;;;; Color/theme settings
-
-;;;; Color settings
-
-(defalias 'colors 'list-colors-display)
-
-;; Interpret ANSI escape codes in this buffer,
-;; coloring the buffer text accordingly.
-(defun display-ansi-colors ()
-  (interactive)
-  (ansi-color-apply-on-region (point-min) (point-max)))
-
-(add-to-list 'custom-theme-load-path
-	     (expand-file-name "~/.emacs.d/qdw-themes")
-             (expand-file-name "~/.emacs.d/third-party-themes"))
-
-;;;; Custom themes that I created
-
-(load-theme 'tritium 't)                  ;;; Day or night, 8-bit or 24-bit color
-;; (load-theme 'itermesque 't) ;; BROKEN  ;;; Daytime, 24-bit color
-
-;;;; Settings: other color themes, which I use seldom
-
-;;;; Third-party themes
-
-;;;; Loud themes, for prod boxes
-
-;;; Loud dark themes
-;; 
-;;T  birds-of-paradise-plus: very loud red theme for use on production boxes
-;; (load-theme 'birds-of-paradise-plus 't)
-;;
-;;T  base16-greenscreen: green-phosphor nostalgia theme
-;; (load-theme 'base16-greenscreen 't)
-
-;;; Light themes, for use outdoors
-;; T Almost-Mono Cream
-;; (load-theme 'almost-mono-cream 't)
-
-;; Always use the same cursor color, regardless of the theme I use.
-(set-cursor-color "DarkOrange1")
 
 ;;;; dired settings
 
@@ -115,20 +82,6 @@ If the file is a regular file, use `dired-find-file' to open it in a new buffer.
       (dired-find-file))))
 
 (define-key dired-mode-map (kbd "RET") 'my-dired-find-file)
-            
-(defun system-move-file-to-trash (path)
-  "Moves file at PATH to the macOS Trash according to `move-file-to-trash' convention.
-
-Relies on the command-line utility 'trash' to be installed.
-Get it from:  <http://hasseg.org/trash/>"
-  (shell-command (concat "trash -vF \"" path "\""
-                         "| sed -e 's/^/Trashed: /'")
-                 nil ;; Name of output buffer
-                 "*Trash Error Buffer*"))
-                 
-;; (defun trash (path)
-;;   (interactive "f")
-;;   (system-move-file-to-trash path))
 
 ;; Settings (incl. dired settings) to open files in external apps
 
@@ -254,8 +207,22 @@ Test cases
 ;; (defvar current-favorite-font "Fira Code-16")
 
 ;;;; macOS settings
-
 (when (string= system-type "darwin")
+
+  ;; When I delete files in dired, send them to the macOS Trash
+  (osx-trash-setup)
+  (setq-default delete-by-moving-to-trash 't)
+
+  (defun system-move-file-to-trash (path)
+    "Moves file at PATH to the macOS Trash according to `move-file-to-trash' convention.
+
+Relies on the command-line utility 'trash' to be installed.
+Get it from:  <http://hasseg.org/trash/>"
+    (shell-command (concat "trash -vF \"" path "\""
+                           "| sed -e 's/^/Trashed: /'")
+                   nil ;; Name of output buffer
+                   "*Trash Error Buffer*"))
+
 
   ;; In macOS, the bundled BSD ls doesn't play well with Emacs,
   ;; so use Homebrewed GNU ls instead
@@ -264,10 +231,20 @@ Test cases
       (setq insert-directory-program gnu-ls
             dired-use-ls-dired t
             dired-listing-switches "-aBhl --group-directories-first")))
+   
+  ;; Support org links like music: which open in Music.app
+  (org-link-set-parameters
+   "applescript"
+   :follow
+   (lambda (path)
+     (shell-command
+      (concat "open -a " (expand-file-name "~/bin/open-url-in-the-apple-music-app.scpt")))))
+              
+
+      
+      a
+      "open -a /path/to/your/applescript.app " path)))
             
-  ;; When I delete files in dired, send them to the macOS Trash
-  (osx-trash-setup)
-  (setq-default delete-by-moving-to-trash 't))
 
 ;;;; Human-language settings (including English)
 
@@ -337,21 +314,24 @@ This command does the reverse of `fill-region'."
 ;;;; Basic comfort
 
 (setq-default
- ;;;; Settings for use with macOS
+ ;;; Settings for use with macOS
+
  read-file-name-completion-ignore-case nil ;; Consider filenames case-sensitive
 
  prefer-coding-system 'utf-8         ;; Iff file contains non-ASCII chars
  large-file-warning-threshold 100000000 ;; Warn when opening large files
  require-final-newline 't            ;; Make, e.g., 'wc -l' work right
 
- ;; Natural-language settings
+ ;;; Natural-language settings
+
  auto-fill-mode nil                  ;; Don't automatically hard-break lines
  word-wrap nil
  colon-double-space nil              ;; Single-space: always
  sentence-end-double-space nil       ;; Single-space. Always
  delete-selection-mode +1            ;; Overwrite selection when I type
 
- ;;;; Auto-indentation settings
+ ;;; Auto-indentation settings
+
  indent-tabs-mode nil                ;; Indent using spaces, not tabs
  cperl-indent-level 4
  elisp-indent-level 2
@@ -414,7 +394,7 @@ This command does the reverse of `fill-region'."
 
 ;;;; org-mode settings
 
-(setq-default ;; for yet more org-mode settings, see ~/.emacs.d/site-lisp.el
+(setq-default
   org-agenda-restore-windows-after-quit 't
   org-startup-folded 't
   org-cycle-separator-lines -2
@@ -436,11 +416,12 @@ This command does the reverse of `fill-region'."
                    (concat jiralib-url "/browse/" ticket-name)
                    ticket-name))
 
+;; This regexp is correct...
 (setq jira-ticket-regexp-qdw "\\b[[:upper:]]\\{2,10\\}-[[:digit:]]-\\{2,\\9}")
-                                      
-(defun qdw-isearch-forward-jira-ticket
-  (interactive)
-  (isearch-resume jira-ticket-regexp-qdw 't nil 't nil 't))
+;; ... but this function is broken                              
+;; (defun qdw-isearch-forward-jira-ticket
+;;   (interactive)
+;;   (isearch-resume jira-ticket-regexp-qdw 't nil 't nil 't))
     
 (defun org-insert-pr-link (repo pr-number)
   (interactive "MRepo: \nnPR number: ")
@@ -584,12 +565,57 @@ This command does the reverse of `fill-region'."
             (keymap-set org-mode-map "C-c ]" 'org-table-move-column-right)
             ))
 
-;;;; Help
+;;;; Color/theme settings
 
-(define-key 'help-command (kbd "C-l") 'find-library)  ;; Look up Emacs Lisp lib.
-(define-key 'help-command (kbd "C-f") 'find-function) ;; Look up Emacs func src.
-(define-key 'help-command (kbd "C-k") 'find-function-on-key) ;; " " macro src.
-(define-key 'help-command (kbd "C-v") 'find-variable) ;; " " variable definition
+(defalias 'colors 'list-colors-display)
+
+;; Interpret ANSI escape codes in this buffer,
+;; coloring the buffer text accordingly.
+(defun display-ansi-colors ()
+  (interactive)
+  (ansi-color-apply-on-region (point-min) (point-max)))
+
+(add-to-list 'custom-theme-load-path
+	     (expand-file-name "~/.emacs.d/qdw-themes")
+             (expand-file-name "~/.emacs.d/third-party-themes"))
+
+(load-theme 'tritium 't)             
+
+;;;; My custom color theme settings
+
+;; tritium, a versatile, dim dark theme by qdw
+;; - Looks good under a variety of indoor lighting conditions (or in the dark)
+;; - Stays readable if red-shifted Flux.app or Night Shift
+;; - Auto-detects how many colors your terminal supports
+;;   - And adapts colors accordingly
+;;     - Supported color spaces:
+;;       - 24-bit true color  (millions of colors)
+;;       -  8-bit xterm color (256 colors)
+;;       -  4-bit ANSI color   (16 colors)
+
+
+;;;; Third-party color theme settings ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;; Loud themes, for prod boxes
+;; T  birds-of-paradise-plus: very loud red theme for use on production boxes
+;; (load-theme 'birds-of-paradise-plus 't)
+;;
+;;; Light themes, for use outdoors
+;; T  almost-mono: light theme, okay for using outdoors, I guess?
+;; (load-theme 'almost-mono-cream 't)
+;;
+;;; Dark themes
+;; T  base16-greenscreen: green-phosphor nostalgia theme
+;; (load-theme 'base16-greenscreen 't)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Always use the same cursor color, no matter what theme I use.
+(set-cursor-color "DarkOrange1")
+
+;;;; Settings specific to this machine
+
+(load (expand-file-name "~/.site.elisp.d/site-lisp.el") 't)
 
 ;;;; Viewport management
 
@@ -708,6 +734,11 @@ This command does the reverse of `fill-region'."
 (global-set-key "\r" 'my-enter)
 
 ;; (setq-default blacken-skip-string-normalization 't)
+
+(add-hook 'python-mode-hook
+          (lambda ()
+            (set-window-width 100)))
+
 (add-hook 'python-mode-hook
           (lambda ()
             (local-set-key "\r" 'electric-newline-and-maybe-indent)
@@ -715,6 +746,8 @@ This command does the reverse of `fill-region'."
             ;; except on third-party code.
             (unless (string-match (expand-file-name "~/src-3") buffer-file-name)
                     (blacken-mode))))
+                    
+
 
 ;;;; Generic coding settings (not language-specific)
 
@@ -879,7 +912,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(custom-safe-themes
-   '("291708e76bbdc185db5d3f154cb58a547ffdb2ab88b9ca68c8b67fd328ffaf60" "8e059e42d34e37de1c9d4134b89d4a41d11bf44ca88b70a738a8b2fa1d030900" "1843cbc8dd7232022cfcc54218864563000192e06188196c654443832c328047" "79a750a591511be62a78fcb2c3de2f422da7c4cd35e61571bc7cd8548e302a28" "5ccf92da2a1298b7c6fd8aac0e8641b8a0acd079d48df9718009feda3b0cdee8" "258f232c779de08cc48f0504805ba7f6f73bf4e380cd8c06541fab25c2686f89" "d0f9d3798ca38427957e3366ad49545c6f2748f0c838e615e3f24fa69e28b05e" "c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
+   '("f4833b553e92b4668afac5f351e68e14a0f90678bacfaf21bd4a19e1e4adc665" "39bcbc8fd33b1932683c3b05aab9ac9c59beec7f7fc211f6db775e9cad1702da" "291708e76bbdc185db5d3f154cb58a547ffdb2ab88b9ca68c8b67fd328ffaf60" "8e059e42d34e37de1c9d4134b89d4a41d11bf44ca88b70a738a8b2fa1d030900" "1843cbc8dd7232022cfcc54218864563000192e06188196c654443832c328047" "79a750a591511be62a78fcb2c3de2f422da7c4cd35e61571bc7cd8548e302a28" "5ccf92da2a1298b7c6fd8aac0e8641b8a0acd079d48df9718009feda3b0cdee8" "258f232c779de08cc48f0504805ba7f6f73bf4e380cd8c06541fab25c2686f89" "d0f9d3798ca38427957e3366ad49545c6f2748f0c838e615e3f24fa69e28b05e" "c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
@@ -902,21 +935,8 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(jiralib2 osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
-
-;; FIXME: somehow import these color var defs from my theme instead.
-(let ((blue "#6495ed")
-     (black "#0D2A34")
-     (white "#869496"))
-  (custom-set-faces
-   ;; custom-set-faces was added by Custom.
-   ;; If you edit it by hand, you could mess it up, so be careful.
-   ;; Your init file should contain only one such instance.
-   ;; If there is more than one, they won't work right.
-   `(ediff-odd-diff-B ((t (:extend t :background ,black :distant-foreground ,white))))
-   `(org-date ((t (:foreground ,blue :weight normal))))))
-
  
 (put 'narrow-to-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
@@ -1045,7 +1065,6 @@ This command does the reverse of `fill-region'."
 ;;        (( sgs "\\(?:" )  ;; regexp code to start a "shy" (non-capturing) group
 ;;         ( cgs "\\("   )  ;; regexp code to start a capturing group
 ;;         ( ge "\\)"    )  ;; regexp code to end any group (shy or capturing)
-        
 ;;         ( path-start-regexp
 ;;           (concat
 ;;            sgs "[^ ]*[ ]" ge "?"  ;; Optional: a single string terminated by space
@@ -1090,11 +1109,7 @@ This command does the reverse of `fill-region'."
 ;;                        FIXME: since my organization uses Okta with 2FA, I probably need to use a diffferent authentication mechanism - maybe I can make a bearer token?
 ;;                        (auth-file . "~/.jenkins.authinfo.gpg")))
 
-;; Load Emacs settings specific to this organization
-;; (may override any of the settings above)
-(load (expand-file-name "~/.emacs.d/site-lisp.el") 't)
-
-;;;; Editor MACroS settings
+;;;; Editor MACroS
 
 (add-hook 'org-mode-hook (lambda () (local-set-key (kbd "C-c j") 'org-insert-jira-link)))
 (define-key 'help-command (kbd "C-f") 'find-function) ;; Look up Emacs func src.
@@ -1113,12 +1128,20 @@ This command does the reverse of `fill-region'."
 (global-set-key (kbd "C-c c") 'comment-region)
 (global-set-key (kbd "C-c i") 'indent-region)
 (global-set-key (kbd "C-c l") 'display-line-numbers-mode)
-(global-set-key (kbd "C-c C-o") 'rotate-windows)
+(global-set-key (kbd "C-c o") 'rotate-windows)
 (global-set-key (kbd "C-c u") 'uncomment-region)
 (global-set-key (kbd "C-c v") 'vscode)
 (global-set-key (kbd "C-h 1") 'describe-face)
 (global-set-key (kbd "M-o") 'other-window-reverse)
 (global-set-key (kbd "M-5") 'query-replace-regexp)
+
+;;;; Help settings
+
+(define-key 'help-command (kbd "C-l") 'find-library)  ;; Look up Emacs Lisp lib.
+(define-key 'help-command (kbd "C-f") 'find-function) ;; Look up Emacs func src.
+(define-key 'help-command (kbd "C-k") 'find-function-on-key) ;; " " macro src.
+(define-key 'help-command (kbd "C-v") 'find-variable) ;; " " variable definition
+
 
 (defalias 'pos 'goto-char)
 
