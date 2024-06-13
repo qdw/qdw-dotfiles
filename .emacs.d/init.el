@@ -271,6 +271,16 @@ This command does the reverse of `fill-region'."
 
 ;;;; Shell settings
 
+;;; When running shell commands, source my ~/.bashrc first,
+;;; so that my many custom shell functions are available,
+;;; as they would be in a terminal emulator session.
+;; (global-unset-key (kbd "M-!"))
+(defun login-shell-command (command-string)
+  (interactive "MShell command: ")
+  (shell-command (concat "source ~/.bashrc && " command-string)))
+  
+(global-set-key (kbd "M-!") 'login-shell-command)
+
 (when
   (getenv "HOMEBREW_BIN")
   (setq explicit-shell-file-name (concat (getenv "HOMEBREW_BIN") "/bash")))    
