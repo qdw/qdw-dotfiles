@@ -89,9 +89,10 @@
     bright-cyan cyan
 
     white "#949494"          ;; "Grey58" == 246
-    bright-white white
-    ))
-  )
+    bright-white white))
+    
+  (defvar *colors-loaded-p* 't)))
+
 ;;; [Untested; might not work] For terminals that support only 16 colors
 ;;
 ;; (setq
@@ -132,8 +133,6 @@
 ;; white bright-black
 ;; bright-white white
 ;; )
-
-(defvar *colors-loaded-p* 't))
 
 (deftheme tritium
   "tritium emacs theme")
@@ -181,12 +180,11 @@
      ((t (:inherit show-paren-mismatch-face :underline t))))
    
    `(mode-line
-     ((t (:foreground ,white :background ,bright-black ))))
+     ((t (:foreground ,bright-white :background ,bright-black ))))
    
    `(minibuffer-prompt
      ;; ((t (:foreground ,bright-magenta))))
      ((t (:foreground ,yellow))))
-
      
    `(header-line
      ((t (:background ,black :foreground ,white :foreground ,white))))
