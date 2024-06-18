@@ -725,6 +725,7 @@ function se {
         
 	# Give it time to start up and load my ~/.emacs.d/init.el
         sleep 4
+        emacs
     fi
 }
 
@@ -1606,16 +1607,10 @@ function repo {
 #
 # PR (Pull Request) - manipulate GitHub pull requests
 
-# show my latest PR (and capture the PR number)
-function spr {
-    gh pr list --author @me --state open --limit 1 "$@"
-
-    # local PR_NUMBER=$($LIST_COMMAND) # | awk '{print $1}') # | tee >(awk '{print $1}'))
-    # echo ">'$PR_NUMBER'<"
-    # $LIST_COMMAND
-    # gh pr view "$PR_NUMBER" --json url --jq '.url' | tee >(tr -d '\n' | pbcopy)
+# prl ("Pull Request: Latest"): open my most recent PR from this repo, in a web browser
+function prl {
+    open -u "$(gh pr list --json url --jq '.[0].url')"
 }
-
 
 function pr {
     function list_my_prs {
