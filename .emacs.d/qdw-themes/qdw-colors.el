@@ -7,11 +7,11 @@
 (cond
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
-   (setq
+   (setqu
 
     ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
-    ;; black "#262626" ;; "Grey15"     == 235
-    black "#1c1c1c" ;; "Grey11"
+    black "#262626" ;; "Grey15"     == 235
+    ;; black "#1c1c1c" ;; "Grey11" (nah, too light)
 
     bright-black "#383838"
 
@@ -40,7 +40,7 @@
    ;;; For terminals that support only 256 colors
    ;;; (i.e., almost every terminal in use today)
   ('t 
-   (setq
+   (setqu
 
     black "#1c1c1c"        ;; "Grey15"     == 235
     ;; black "#000000"  ;; Use the terminal emulator's ANSI-black color.    
@@ -75,7 +75,7 @@
 
 ;;; [Untested; might not work] For terminals that support only 16 colors
 
-;; (setq
+;; (setqu
 ;;  black "#000000"        ;; "Black (SYSTEM)"  ==  0  == ANSI black
 ;;  bright-black           ;; "Grey (SYSTEM)"   == 8 == ANSI bright-black
 ;;  red "#800000"          ;; "Maroon (SYSTEM)" ==  1  == ANSI red
@@ -95,7 +95,7 @@
 
 ;;; [Untested; might not work] For terminals that support only 8 colors
 
-;; (setq
+;; (setqu
 ;; black "#000000"        ;; "Black (SYSTEM)"   ==  0  == ANSI black
 ;; bright-black "#c0c0c0" ;; "Silver (SYSTEM)"  ==  7  == ANSI white
 ;; red "#800000"          ;; "Maroon (SYSTEM)"  ==  1  == ANSI red

@@ -3,19 +3,10 @@
 ;; 	   (hex (color-rgb-to-hex rgb)))
 ;;     (message "equivalent exchange: %s" color-name)))
 
-(defmacro my-setq (&rest args)
-  "Like setq, but it calls defvar under the hood"
-  (let (forms)
-    (while args
-      (let ((var (pop args))
-            (val (pop args)))
-        (push `(defvar ,var ,val) forms)))
-    `(progn ,@(nreverse forms))))
-
 (cond
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
-   (my-setq
+   (setqu
 
     white "#010101"
     bright-white black
@@ -79,8 +70,7 @@
 (defvar *colors-loaded-p* 't)
 
 ;;; [Untested; might not work] For terminals that support only 16 colors
-
-;; (setq
+;; (setqu
 ;;  black "#000000"        ;; "Black (SYSTEM)"  ==  0  == ANSI black
 ;;  bright-black           ;; "Grey (SYSTEM)"   == 8 == ANSI bright-black
 ;;  red "#800000"          ;; "Maroon (SYSTEM)" ==  1  == ANSI red
@@ -98,11 +88,11 @@
 ;;  bright-white white
 ;;  )
 
-;;; [Untested; might not work] For terminals that support only 8 colors
 
-;; (setq
+;;; [Untested; might not work] For terminals that support only 8 colors
+;; (setqu
 ;; black "#000000"        ;; "Black (SYSTEM)"   ==  0  == ANSI black
-;; bright-black "#c0c0c0" ;; "Silver (SYSTEM)"  ==  7  == ANSI white
+;; bright-black black ;; "Silver (SYSTEM)"  ==  7  == ANSI white
 ;; red "#800000"          ;; "Maroon (SYSTEM)"  ==  1  == ANSI red
 ;; bright-red red
 ;; green "#008000"        ;; "Green (SYSTEM)"   ==  2  == ANSI green
@@ -112,9 +102,9 @@
 ;; blue "#000080"         ;; "Navy (SYSTEM)"    ==  4  == ANSI blue
 ;; bright-blue blue
 ;; magenta "#800080"      ;; "Fuchsia (SYSTEM)" == 13  == ANSI bright-magenta
-;; bright-magenta         ;; "Red (SYSTEM)"     == 9  == ANSI bright-red
+;; bright-magenta magenta        ;; "Red (SYSTEM)"     == 9  == ANSI bright-red
 ;; cyan "#008080"         ;; "Teal (SYSTEM)"   ==   6  == ANSI cyan
 ;; bright-cyan cyan
-;; white bright-black
+;; white "#111111"
 ;; bright-white white
 ;; )

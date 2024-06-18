@@ -1,4 +1,4 @@
-();;; tritium-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
+;;; tritium-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
 
 ;; Copyright 2012 John Olsson
 
@@ -26,13 +26,18 @@
 
 ;;
 
-(when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
+
+;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
+
+
   (cond
+  
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
-
-    black "#262626"        ;; "Grey15"     == 235
+    black "#212121"
+    ;; black "#1c1c1c"
+    ;; black "#262626"        ;; "Grey15"     == 235
     ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
 
     bright-black "#383838"
@@ -59,8 +64,8 @@
     bright-white white
     ))
   
-   ;;; For terminals that support only 256 colors
-   ;;; (i.e., almost every terminal in use today)
+  ;;; For terminals that support only 256 colors
+  ;;; (i.e., almost every other terminal in use today)
   ('t 
    (setq
 
@@ -91,7 +96,10 @@
     white "#949494"          ;; "Grey58" == 246
     bright-white white))
     
-  (defvar *colors-loaded-p* 't)))
+  ) ;; cond
+;; ) ;; when
+    
+(defvar *colors-loaded-p* 't)
 
 ;;; [Untested; might not work] For terminals that support only 16 colors
 ;;
