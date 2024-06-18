@@ -1608,8 +1608,13 @@ function repo {
 # PR (Pull Request) - manipulate GitHub pull requests
 
 # prl ("Pull Request: Latest"): open my most recent PR from this repo, in a web browser
-function prl {
-    open -u "$(gh pr list --json url --jq '.[0].url')"
+function prl {    
+    local URL="$(gh pr list --author "$GITHUB_USERNAME" --json url --jq '.[0].url')"
+    if [[ -z "$URL" ]]; then
+        complain "Looks like you don't have any PRs open in this repo"
+    else
+        open -u "$URL"
+    fi
 }
 
 function pr {
