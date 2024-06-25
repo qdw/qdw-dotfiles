@@ -247,6 +247,11 @@
    `(ansi-color-white ((t (:background ,white :foreground ,white :underline nil))))
    `(ansi-color-bright-white ((t (:background ,bright-white :foreground ,bright-white :underline nil))))
    
+   ;;;; customize
+
+   `(widget-field
+     ((t (:foreground ,black :background ,bright-red))))
+   
    ;;;; font lock
 
    `(font-lock-keyword-face
@@ -545,6 +550,7 @@
       ((t (:inherit twittering-timeline-header-face))))
 
     ;;;; outline
+
     `(outline-1
       ((t (:foreground ,red))))
 
@@ -570,6 +576,7 @@
       ((t (:foreground ,bright-yellow))))
 
     ;;;; org-mode
+
     `(org-drawer
       ((t (:inherit org-document-info-keyword))))
   
@@ -610,20 +617,18 @@
       ((t (:inherit outline-8))))
 
     `(org-hide
-      ((t (:foreground ,black))))   ;
+      ((t (:foreground ,black))))
 
     `(org-link
       ((t (:inherit link))))
 
     `(org-checkbox
-      ;; ((t (:background ,black :foreground ,white
-      ;;   	       :box (:line-width 1 :style released-button)))))
-
       ((t (:background ,black :foreground ,white
     		       :box (:line-width 1 :style released-button)))))
 
     `(org-done
       ((t (:foreground ,green))))
+    
     `(org-headline-done
       ((t (:foreground ,green))))
 
