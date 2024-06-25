@@ -2,9 +2,7 @@ export CLICOLOR=1
 
 #### Bash debugging settings
 
-## Uncomment this line to run shellcheck, a mediocre and pedantic static analysis tool,
-## on my Bash config files.
-
+## Uncomment the following line to run shellcheck, a mediocre and pedantic static analysis tool, on my Bash config files.
 # shellcheck shell=bash
 
 ## Uncomment the following lines if you want to time each command in this file.
@@ -45,6 +43,12 @@ function complain {
     done
 }
 
+# function word_wrap {
+#     local STRING
+#     if [[ $# -eq 1 ]]; then
+#         STRING="$1"
+#         ...
+
 function check_args {
     local FUNCTION="${FUNCNAME[1]}"
     
@@ -59,8 +63,9 @@ function check_args {
         fi
         
         complain "check_args: error: $FUNCTION passed the wrong number of arguments to check_args itself" \
-                 "$FUNCTION called check_args with $# $ARGUMENTS_INFLECTED, but it requires" \
-                 "at least 3. Usage:" \
+                 "($FUNCTION called check_args with $# $ARGUMENTS_INFLECTED, but it requires" \
+                 "at least 3.)" \
+                 "Usage: " \
                  "checks_args MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING [ACTUAL_ARGUMENT_PASSED ...]"
         return 1
     else
@@ -2299,6 +2304,10 @@ function rmds {
     rm -fi "$1/.DS_Store"
     rmdir "$1"
 }
+
+function rot13 {
+    echo "$1" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+}        
 
 # Invoke strings(1) safely, because http://www.jwz.org/blog/2014/10/we-live-in-a-magical-future-where-strings-is-exploitable/
 function strings { command strings -a "$@"  | $PAGER ;}
