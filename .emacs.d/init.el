@@ -1240,6 +1240,16 @@ This command does the reverse of `fill-region'."
 ;;                         'dired-find-alternate-file
 (put 'downcase-region 'disabled nil)
 (put 'dired-find-alternate-file 'disabled nil)
+
+;;;; Usenet settings
+
+(setq gnus-select-method '(nntp "news.eternal-september.org")
+      gnus-thread-hide-subtree 't
+      gnus-newsgroup-maximum-articles nil
+      gnus-secondary-select-methods '((nntp "news.sonic.net")))
+
+;;;; Settings written by the Custom system
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
