@@ -207,6 +207,52 @@ for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail; do
     fi
 done
 
+#### fd settings (fd is a faster and better replacement for find(1)
+
+function fdd {
+    command fd \
+        --exclude .git \
+        --exclude .github \
+        --exclude node_modules \
+        --full-path \
+        --hidden \
+        --no-ignore-vcs \
+        --follow \
+        "$@"
+}
+
+function fd {
+    fdd --color=always "$@" | $PAGER
+}
+
+function fdgrep {
+    # check_args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    local FILENAME_REGEX="$1"; shift    
+    ( fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I -H --color=always $GREP_EXCLUDE_FLAGS "$@" \; ) \
+        | $PAGER
+}
+
+# Grep TypeScript files only
+function tsgrep { fdgrep "[.]ts$" "$@" ;}
+
+function fdoccur {
+    # check_args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    local FILENAME_REGEX="$1"; shift
+    fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
+}
+
+function file-types {
+    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
+        | uniq \
+        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+}
+
+function file-type-counts {
+    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
+        | uniq -c \
+        | sort --reverse --general-numeric-sort | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+}
+
 #### grep settings
 
 if [[ -e "$HOMEBREW_BIN/ggrep" ]]; then
@@ -1686,49 +1732,6 @@ function pulls {
     open "https://github.com/pulls"
 }
 
-#### fd settings (fd is a faster and better replacement for find(1)
-
-function fdd {
-    command fd \
-        --exclude .git \
-        --exclude .github \
-        --exclude node_modules \
-        --full-path \
-        --hidden \
-        --no-ignore-vcs \
-        --follow \
-        "$@"
-}
-
-function fd {
-    fdd --color=always "$@" | $PAGER
-}
-
-function fdgrep {
-    # check_args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"; shift    
-    ( fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I -H --color=never $GREP_EXCLUDE_FLAGS "$@" \; ) \
-        | $PAGER
-}
-
-function fdoccur {
-    # check_args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"; shift
-    fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
-}
-
-function file-types {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq \
-        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
-}
-
-function file-type-counts {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq -c \
-        | sort --reverse --general-numeric-sort | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
-}
-
 #### Kubernetes (and OpenShift) settings
 
 function oc {
@@ -1983,11 +1986,12 @@ function mkvirtualenv {
     else
         NEW_VIRTUALENV_PATH="$MY_VIRTUALENV_DIR/$NEW_VIRTUALENV_NAME"
         python3 -m venv "$NEW_VIRTUALENV_PATH" \
-            && va "$NEW_VIRTUALENV_NAME"
+            && va "$NEW_VIRTUALENV_NAME" \
+            && pip install --upgrade pip
     fi
 }
 
-function ve { set -x; mkvirtualenv "$@"; set +x ;}
+function ve { mkvirtualenv "$@" ;}
 
 #### Tor settings
 
@@ -2141,33 +2145,62 @@ function vl { "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@" ;}
 ## where each file consists of one or more lines.
 ## Each file is treated as a set,
 ## and each line is treated as an element of that set.
-function set-intersection {
-    if [[ $# -eq 2 ]]; then
-        command grep -xF -f "$1" "$2"
-    else
-        echo "$0: error: wrong number of arguments ($#). Usage: $0 SET_FILE_1 SET_FILE_2"
-    fi
-}
-function set-intersect { intersection "$@" ;}
 
+## Totally broken: gives wrong results and fails to match OP
 
-function set-difference {
-     cat "$@" | sort | uniq -u
-}
-function set-disjunctive-union { set-difference "$@" ;}
-
-# [Broken] recursive version, for arbitrary numbers of sets
-#
-# function intersection {
-#     if [[ $# -lt 2 ]]; then
-#         echo "$0: error: wrong number of arguments ($#). Usage: $0 FILE_1 FILE_2 [...]"
+# function set-op {
+#     local OP="$1"
+#     shift
+    
+#     if [[ $# -ne 2 ]]; then
+#         echo "set-op: error: expected 2 arguments but got $#"
 #     else
-#         while [[ $# -gt 2]]; do
-#             intersection $(intersection "$1" "$2" "$@")
-#         done
+#         case OP in
+#             union | +)
+#                 sort -u "$1" "$2" ;;
+#             intersection | intersect | isect | ^)
+#                 comm -12 <(sort "$1") <(sort "$2") ;;
+#             difference | diff | subtraction | subtract | minus | -)
+#                 comm -23 <(sort "$1") <(sort "$2") ;;
+#             membership | in | E)
+#                 grep -Fxq "$1" "$2" ;;
+#             *)
+#                 complain "unsupported set operation '$OP'"
+#                 return 255 ;;
+#         esac
+#     fi
+# }            
+
+# function set-intersection {
+#     if [[ $# -eq 2 ]]; then
+#         comm -12 "$1" "$2"
+#     else
+#         complain "set-intersection: error: wrong number of arguments (got $#, expected 2)"
 #     fi
 # }
 
+
+# function set-difference {
+#     if [[ $# -eq 2 ]]; then
+#         comm -23 "$1" "$2"
+#     else
+#         complain "set-difference: error: wrong number of arguments (got $#, expected 2)"
+#     fi
+# }
+
+# function set-disjunctive-union { set-difference "$@" ;}
+
+
+# function set-union {
+#     if [[ $# -eq 2 ]]; then
+#         cat "$1" "$2" | sort | uniq
+#     else
+#         complain "set-union: error: wrong number of arguments (got $#, expected 2)"
+#     fi
+# }
+
+# function set-equals {
+    
 
 #### SSH settings
 
