@@ -190,6 +190,11 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     done
 fi
 
+# Prompt before overwriting files.
+function mv {
+    command mv -i "$@"
+}
+
 if [[ "$MY_OS" = "Darwin" ]] && [[ -f "$HOMEBREW_BIN/trash" ]]; then
     function rm {
         trash "$@"
@@ -809,8 +814,7 @@ function emacs {
         if [[ $DAEMON_STATUS -eq 0 ]]; then
             "$EMACSCLIENT_BINARY" --tty "$@"
         else
-            echo "error: the emacs daemon is not running. Start it as follows:"
-            print-instructions-for-starting-the-emacs-daemon
+	    se
         fi
     fi
 }
