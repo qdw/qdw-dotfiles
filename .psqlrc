@@ -10,7 +10,7 @@
 
 -- Appearance
 
--- \set QUIET on
+\set QUIET on
 \x auto
 \pset null 🐙
 
