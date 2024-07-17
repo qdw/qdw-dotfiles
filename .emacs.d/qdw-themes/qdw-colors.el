@@ -5,37 +5,39 @@
 					   
 
 (cond
-  ;;; For terminals that support full 24-bit color
-  ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
-   (setqu
 
-    ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
-    black "#262626" ;; "Grey15"     == 235
-    ;; black "#1c1c1c" ;; "Grey11" (nah, too light)
+ ;;; For terminals that support full 24-bit color
+ ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
+  (setqu
+   black "#212121"
+   ;; black "#1c1c1c"
+   ;; black "#262626"        ;; "Grey15"     == 235
+   ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
 
-    bright-black "#383838"
+   bright-black "#383838"
 
-    red "#af5f00" ;; actually orange
-    bright-red "#ff7f00" ;; bright orange; used for the cursor, inter alia
+   red "#af5f00" ;; actually orange
+   bright-red "#ff7f00" ;; bright orange; used for the cursor, inter alia
     
-    green "#007f06"
-    bright-green "#00ff00"
-    
-    yellow "#9164ff" ;; actually purple
-    bright-yellow yellow
-    
-    blue "#6495ed"
-    bright-blue blue
-    
-    magenta "#af5faf"
-    bright-magenta "#f5b5ff"
-    
-    cyan "#008080"
-    bright-cyan cyan
-    
-    white "#91908f"
-    bright-white white
-    ))
+   green "#007f06"
+   bright-green "#00ff00"
+   
+   yellow "#9164ff" ;; actually purple
+   bright-yellow yellow
+   
+   blue "#6495ed"
+   bright-blue blue
+   
+   magenta "#af5faf"
+   bright-magenta "#f5b5ff"
+   
+   cyan "#008080"
+   bright-cyan cyan
+   
+   white "#91908f"
+   bright-white white
+   ))
+
   
    ;;; For terminals that support only 256 colors
    ;;; (i.e., almost every terminal in use today)
