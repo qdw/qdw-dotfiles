@@ -1,7 +1,6 @@
 ;;; tritium-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
 
 ;; Copyright 2012 John Olsson
-
 ;; Author: John Olsson &lt;john@cryon.se&gt;
 
 ;; Modified by: Chris Corbyn &lt;chris@w3style.co.uk&gt;
@@ -26,9 +25,7 @@
 
 ;;
 
-
 ;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
-
 
   (cond
   

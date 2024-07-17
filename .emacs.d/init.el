@@ -1,16 +1,18 @@
-;;;; Minimal-UI settings
+;;;; Settings to remove UI cruft
 
 (setq inhibit-startup-screen 't)
 (if (boundp 'menu-bar-mode) (menu-bar-mode -1))
 (if (boundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
-;; Prevent all uses of bold typefaces.
+;;;; Settings to... use bold type never.
 
 (mapc
  (lambda (face)
    (set-face-attribute face nil :weight 'normal))
  (face-list))
+ 
+;;;; Dependency/library settings
 
 ;; I'm running emacs as a daemon,
 ;; so just require all these modules at once;
@@ -40,6 +42,7 @@
 (require 'sh-script)
 (require 'tool-bar)
 (require 'typescript-mode)
+(require 'whitespace)
 
 ;;;; Settings for GUI Emacs versus terminal Emacs
 
@@ -83,6 +86,23 @@
     `(progn ,@(nreverse forms))))
 
 (load (expand-file-name "~/.emacs.d/qdw-themes/qdw-colors.el"))
+
+;;;; Spaces-versus-tabs settings
+
+;; Experimental: highlight tabs used as indentation in coding,
+;; since I prefer spaces... but not in the PostgreSQL source code,
+;; and not in Go, because tabs are the convention there.
+;;
+;; (set-face-attribute 'whitespace-tab nil
+;;                     :background red
+;;                     :foreground black)                    
+;;
+;; (setq-default whitespace-style '(tabs))
+;; (add-hook 'after-change-major-mode-hook
+;;           (let ((pth (file-truename buffer-file-name)))
+;;             (unless (or (string-prefix-p "~/src-3/postgres/" pth)
+;;                         (string-suffix-p ".go" pth))
+;;               (whitespace-mode))))
 
 ;;;; Color/theme settings
 
@@ -366,6 +386,8 @@ This command does the reverse of `fill-region'."
 ;; (package-install-selected-packages)
 
 ;;;; Basic comfort
+
+
 
 (setq-default
  ;;; Settings for use with macOS
@@ -869,43 +891,6 @@ This command does the reverse of `fill-region'."
    (face-spec-set 'font-lock-variable-name-face
                   '((t (:foreground red))))))
 
-;;;;;;;; Experimental area {{
-
-;; Exception to the usual rule of always using spaces for indentation:
-;; .gitconfig files require tabs and break if you spaces.
-;;
-;; FIXME: doesn't work, for some reason.
-;; (add-hook 'conf-mode-hook
-;;           (lambda ()
-;;             (when (eq (buffer-name) ".gitconfig")
-;;               (setq indent-tabs-mode 't
-;;            99))))
-
-
-;;;; Settings for displaying the list of currently open buffers
-;; https://www.gnu.org/software/emacs/manual/html_node/elisp/The-Zen-of-Buffer-Display.html
-
-;; (defun display-buffer-in-new-window-qdw (buffer)
-;;   "Display BUFFER in a new window."
-;;   (let ((window (split-window-below)))
-;;     (set-window-buffer window buffer)
-;;     window))
-
-;; (defun list-buffers-qdw (&optional arg)
-;;   "Display a list of names of existing buffers.
-;;    The list is displayed in a buffer named `*Buffer List*'.
-;;    Note that buffers with names starting with spaces are omitted.
-;;    Non-null optional arg means show buffer `*Buffer List*',
-;;    even if it is empty. See also `buffer-menu'."
-;;   (interactive "P")
-;;   (let ((
-;;          display-buffer-overriding-action
-;;          ('display-buffer . display-buffer-in-new-window-qdw)
-;;        ))
-;;     (list-buffers arg)))
-
-;; (keymap-global-set "C-x C-b" 'list-buffers-qdw)
-
 ;;;; Lyrics-downloading settings
 
 (defun munge-song-or-band-name (string)
@@ -917,8 +902,6 @@ This command does the reverse of `fill-region'."
 
 (setq lyrics-fetcher-format-file-name-method
       'munge-song-or-band-name)
-
-;; #FIXME: low-priority: customize whitespace-style
 
 ;; ;; sketch
 ;; (defun macos-open (file-name)
@@ -1152,6 +1135,52 @@ This command does the reverse of `fill-region'."
           (lambda ()
             (local-set-key (kbd "RET") 'python-auto-indent-qdw)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Experimental area                                           ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; Binary-file-viewing settings
+
+(defun use-hexl-mode-if-binary-p ()
+  "If the current buffer is a binary file, switch to `hexl-mode'."
+    (when (string-match-p "\0" (buffer-string))
+        (hexl-mode)))
+       
+(add-hook 'find-file-hook 'use-hexl-mode-if-binary-p)
+
+
+;;;; Settings for showing tabs
+;;;;
+;;;; I indent using spaces, so highlight any tab characters in files
+;;;; I open, with exceptions for languages and projects where tabs
+;;;; are the convention.
+
+
+
+;;;; Settings for displaying the list of currently open buffers; see https://www.gnu.org/software/emacs/manual/html_node/elisp/The-Zen-of-Buffer-Display.html
+
+;; (defun display-buffer-in-new-window-qdw (buffer)
+;;   "Display BUFFER in a new window."
+;;   (let ((window (split-window-below)))
+;;     (set-window-buffer window buffer)
+;;     window))
+;;
+;; (defun list-buffers-qdw (&optional arg)
+;;   "Display a list of names of existing buffers.
+;;    The list is displayed in a buffer named `*Buffer List*'.
+;;    Note that buffers with names starting with spaces are omitted.
+;;    Non-null optional arg means show buffer `*Buffer List*',
+;;    even if it is empty. See also `buffer-menu'."
+;;   (interactive "P")
+;;   (let ((
+;;          display-buffer-overriding-action
+;;          ('display-buffer . display-buffer-in-new-window-qdw)
+;;        ))
+;;     (list-buffers arg)))
+;;
+;; (keymap-global-set "C-x C-b" 'list-buffers-qdw)           
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;                                                             ;;;;
