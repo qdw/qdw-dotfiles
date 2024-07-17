@@ -264,7 +264,7 @@ fi
 export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
 
 export GREP_COLORS="fn=01;36"
-GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json"
+GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__"
 GREP_OPTIONS="-I --color=always"
 
 function grep {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
