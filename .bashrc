@@ -776,7 +776,11 @@ set +a
 ### Emacs daemon settings
 
 function emacs-daemon-pid {
-    pgrep -U "$USER" -fi "Emacs --bg-daemon"
+    pgrep -U "$USER" -fi "$@" "Emacs --bg-daemon"
+}
+
+function pe {
+    emacs-daemon-pid -l
 }
 
 function the-emacs-daemon-is-running {
@@ -795,6 +799,33 @@ function ke {
     fi
 }
 
+# If we're in a terminal session, start an emacsclient session inside that terminal
+# (first starting the Emacs server, if it's not already running).
+#
+# This looks just like a normal terminal emacs session, but starts faster
+# (and can see buffers from other emacsclient sessions, but whatever).
+function emacs {
+    # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
+    # I directly type "emacs my-file", then...
+    if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
+        # If I'm inside an Emacs interactive-shell-mode buffer,
+        # then edit my-file in the same same Emacs window.
+        if [[ $# -gt 0 ]]; then
+            "$EMACSCLIENT_BINARY" --no-wait "$@"
+        else
+            echo "You're already in emacs, genius" >&2
+        fi
+    else
+        local DAEMON_STATUS
+        DAEMON_STATUS=$(the-emacs-daemon-is-running)
+        if the-emacs-daemon-is-running; then
+            "$EMACSCLIENT_BINARY" --tty "$@"
+        else
+            se "$@"
+        fi
+    fi
+}
+
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se {
     if the-emacs-daemon-is-running; then
@@ -805,7 +836,7 @@ function se {
         
 	# Give it time to start up and load my ~/.emacs.d/init.el
         sleep 4
-        emacs
+        emacs "$@"
     fi
 }
 
