@@ -1,3 +1,4 @@
+umask 0022
 export CLICOLOR=1
 
 #### Bash debugging settings
@@ -121,10 +122,30 @@ function funcalias {
     fi
 }
 
-#### Basic settings
-
 MY_OS="$(uname -s)"
-MY_VIRTUALENV_DIR=~/.virtualenvs--python3
+function on_macos {
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+#### Clipboard settings
+
+if on_macos; then
+    function pbc { 
+        local FILENAME
+        FILENAME="$1"
+        if [[ $FILENAME ]]; then
+            pbcopy < "$FILENAME"
+        else
+            echo "pbc: error: missing argument. Usage: pbc FILENAME"
+        fi
+    }
+fi
+
+#### Color settings
 
 # baw (Black and White): remove ANSI color (and other) sequences
 function baw {
@@ -143,6 +164,30 @@ function baw {
     echo "some string" | baw
     cat some_file | baw
     baw FILENAME"
+    fi
+}
+
+# Take a hex triplet, and print it in the indicated color.
+# Requires a terminal that supports (ANSI SGR) 24-bit color,
+# a.k.a. true color
+function hex() {
+    if [[ $# -ne 1 ]]; then
+        complain "Wrong number of arguments. Usage: hex RRGGBB"
+        return 1
+    else
+        # Extract the RGB values from the hex color code
+        local hex=${1#"#"}
+        local r=$(printf '0x%0.2s' "$hex")
+        local g=$(printf '0x%0.2s' "${hex#??}")
+        local b=$(printf '0x%0.2s' "${hex#????}")
+        
+        # Convert the hex values to decimal
+        local R=$(printf '%d' "$r")
+        local G=$(printf '%d' "$g")
+        local B=$(printf '%d' "$b")
+    
+        # Print the string in the specified color
+        printf "\e[38;2;%d;%d;%dm%s\e[0m\n" "$R" "$G" "$B" "$hex"
     fi
 }
 
@@ -526,6 +571,7 @@ if [[ -d "/opt/scsh" ]]; then
 fi    
 
 #### Pager settings
+
 set -a
 if [[ "$INSIDE_EMACS" ]]; then
     # Emacs shell-mode is a dumb terminal, so use special pager settings there.
@@ -720,64 +766,42 @@ function get-secret {
 }
 function secret { get-secret "$@" ;}
 
-#### Editor settings
-#### Emacs settings
+#### Editor settings: Emacs Emacs Emacs Emacs Emacs (and more Emacs)
 
 set -a
 EMACS_BINARY="$HOMEBREW_BIN/emacs"
 EMACSCLIENT_BINARY="$HOMEBREW_BIN/emacsclient"
-EMACS_VARIANT="emacs-plus@29"
 set +a
 
 ### Emacs daemon settings
 
-function pe { 
-    command ps auxwww \
-        | command grep "$USER" \
-        | command grep -vF grep \
-	| command grep -vE "gnupg|gpg" \
-        | command grep -E "emacs.*--(daemon|bg-daemon|fg-daemon)"
+function emacs-daemon-pid {
+    pgrep -U "$USER" -fi "Emacs --bg-daemon"
 }
 
 function the-emacs-daemon-is-running {
-    pe > /dev/null
-    echo $?
-}
-
-function print-instructions-for-starting-the-emacs-daemon {
-    # if [[ "$MY_OS" = "Darwin" ]]; then
-    #     echo "brew services start "$EMACS_VARIANT""
-    # elif [[ "$MY_OS" =~ Linux ]]; then
-        echo "command emacs --bg-daemon"
-    # else
-    #     echo "error: edit your ~/.bashrc and add support for OS '$MY_OS' to function print-instructions-for-starting-the-emacs-daemon"
-    # fi
+    emacs-daemon-pid > /dev/null
+    return $?
 }
 
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke {
-    # if [[ "$MY_OS" = "Darwin" ]]; then
-    #     brew services stop "$EMACS_VARIANT"
-    # else
-        local EMACS_DAEMON_PID
-        EMACS_DAEMON_PID="$(ps auxwww | command grep -v grep | command grep -E 'emacs.*daemon' | awk '{print $2}')"
-        kill "$EMACS_DAEMON_PID"
-    # fi
+    local PID="$(emacs-daemon-pid)"
+    if [[ -n "$PID" ]]; then
+        kill "$PID"
+    else
+        complain "It doesn't look like the emacs daemon is running"
+        return 1
+    fi
 }
 
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se {
-    local DAEMON_STATUS
-    DAEMON_STATUS="$(the-emacs-daemon-is-running)"
-    if [[ "$DAEMON_STATUS" -eq 0 ]]; then
-        echo "Looks like the emacs daemon is already running"
-        return
+    if the-emacs-daemon-is-running; then
+        complain "Looks like the emacs daemon is already running"
+        return 1
     else
-        # if [[ "$MY_OS" = "Darwin" ]]; then
-        #     brew services start "$EMACS_VARIANT"
-        # else
-            command emacs --bg-daemon
-        # fi
+        command emacs --bg-daemon
         
 	# Give it time to start up and load my ~/.emacs.d/init.el
         sleep 4
@@ -786,66 +810,19 @@ function se {
 }
 
 # re (Restart Emacs-daemon): stop it, then start it.
-function re {
-    ke && se
-}
-
-# If we're in a terminal session, start an emacsclient session inside that terminal
-# (first starting the Emacs server, if it's not already running).
-# 
-# This looks just like a normal terminal emacs session, but starts faster
-# (and can see buffers from other emacsclient sessions, but whatever).
-function emacs {
-    # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
-    # I directly type "emacs my-file", then...
-    if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
-        # If I'm inside an Emacs interactive-shell-mode buffer,
-        # then edit my-file in the same same Emacs window.
-        if [[ $# -gt 0 ]]; then
-            "$EMACSCLIENT_BINARY" --no-wait "$@"
-        else
-            echo "You're already in emacs, genius" >&2
-        fi
-    else
-        local DAEMON_STATUS
-        DAEMON_STATUS=$(the-emacs-daemon-is-running)
-        # echo "[DEBUG] in bash function emacs(), a call to bash function the-emacs-daemon-is-running() yielded output '$DAEMON_STATUS'"
-
-        if [[ $DAEMON_STATUS -eq 0 ]]; then
-            "$EMACSCLIENT_BINARY" --tty "$@"
-        else
-	    se
-        fi
-    fi
-}
+function re { ke && se ;}
 
 set -a
-  VISUAL="$EMACS_BINARY"
-  EDITOR="$VISUAL"
-  GIT_EDITOR="$EMACSCLIENT_BINARY"
-  if [[ "$INSIDE_EMACS" ]]; then
-      PSQL_EDITOR="emacs"
-  else
-      PSQL_EDITOR="command emacs -nw"
-  fi
+if [[ "$INSIDE_EMACS" ]]; then
+    EDITOR_FUNCTION="emacs"
+else
+    EDITOR_FUNCTION="command emacs -nw"
+fi
+EDITOR="$VISUAL"
+GIT_EDITOR="$EDITOR_FUNCTION"
+PSQL_EDITOR="$EDITOR_FUNCTION"
+VISUAL="$EMACS_BINARY"
 set +a
-
-# Broken
-# function psql_editor {
-#     if [[ "$INSIDE_EMACS" ]]; then
-#         echo was gonna run emacsclient qq "$@" qq
-#     elif which subl >/dev/null 2>&1; then
-#         subl --new-window "$@"
-#     else
-#         command emacs -nw "$@"
-#     fi
-# }
-# PSQL_EDITOR_FUNCTION_DEFINITION="$(command -V psql_editor | tail -n +2)"
-# export PSQL_EDITOR="bash -c '$PSQL_EDITOR_FUNCTION_DEFINITION; psql_editor'"
-
-#### Permission settings
-
-umask 0022
 
 # (This function depends on the third-party newtab() function;
 # see ~/.bashrc.d/third-party.bash)
@@ -1118,7 +1095,7 @@ function mac-enable-cmd-ctrl-click-to-drag-windows {
 
 #### Settings for bat, a colorizing cat(1) that understands many file formats
 
-export BAT_THEME='Solarized (dark)'
+export BAT_THEME='base16'
 function bat {
     command bat \
         --color always \
@@ -1205,19 +1182,45 @@ function lsd {
 function dcc { colordiff -u "$@" | $PAGER ;}
 
 export PATH="/opt/homebrew/opt/diffutils/bin:$PATH"
+# function diff {
+#     local COMMON_DIFF_OPTIONS="-u --color=always"
+#     if [[ -f "/opt/homebrew/opt/diffutils/bin/diff" ]]; then
+#         # Color legend:
+#         # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
+#         # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
+#         # hd - header        (35 is SGR magenta, which shows as magenta in my term)
+#         # ln - line numbers  (34 is SGR blue, which shows as light pink in my term)
+#         # rs - undocumented, but the default seems fine
+#         command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
+#     else
+#         command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
+#     fi
+# }
+
 function diff {
-    local COMMON_DIFF_OPTIONS="-u --color=always"
-    if [[ -f "/opt/homebrew/opt/diffutils/bin/diff" ]]; then
-        # Color legend:
-        # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
-        # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
-        # hd - header        (35 is SGR magenta, which shows as magenta in my term)
-        # ln - line numbers  (34 is SGR blue, which shows as light pink in my term)
-        # rs - undocumented, but the default seems fine
-        command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
-    else
-        command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
-    fi
+    ####### Git diff ##############################
+    
+    git diff --no-index "$@"
+    
+    ####### Other diff tools ######################
+    # local COMMON_DIFF_OPTIONS="-u --color=always"
+    # 
+    ####### GNU diff ##############################
+    # 
+    # Color legend:
+    # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
+    # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
+    # hd - header        (35 is SGR magenta, which shows as magenta in my term)
+    # ln - line numbers  (34 is SGR blue, which shows as light pink in my term)
+    # rs - undocumented, but the default seems fine
+    # 
+    # command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
+    # 
+    ####### macOS diff ############################
+    #
+    # command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
+    #
+    ###############################################
 }
 
 #### FTP settings
@@ -1355,8 +1358,8 @@ function gb {
             && git co --quiet "$MAIN" \
             && git pull --ff-only --quiet \
             && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
-                | command grep -v -E 'remote:' \
-            && git push --set-upstream origin # --quiet
+                | command grep -v -E 'remote:' #\
+            #&& git push --set-upstream origin # --quiet
     else
         echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
     fi
@@ -1389,9 +1392,6 @@ function bc {
 
 # gbs (Git Branches) - list (local) git branches
 function gbs { git branch ;}
-
-# gco (Git CheckOut) - what it says on the tin
-function gco { git checkout "$@" ;}
 
 # gm (Git Main) - check out the main branch (depends on an alias in my ~/.gitconfig)
 function gm { git main "$@" ;}
@@ -1947,17 +1947,9 @@ function coffee {
     open -a Firefox "$URL"
 }
 
-#### Aranet4 air quality monitoring settings
-
-function co2  {
-    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read "$MY_ARANET4" 2> /dev/null | jq ".co2"
-}
-
-function co2-verbose {
-    echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
-}
-
 #### Python settings
+
+MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
 # Homebrew stable Python version
 
@@ -1996,6 +1988,16 @@ function mkvirtualenv {
 }
 
 function ve { mkvirtualenv "$@" ;}
+
+#### Aranet4 air quality monitoring settings
+
+function co2  {
+    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read "$MY_ARANET4" 2> /dev/null | jq ".co2"
+}
+
+function co2-verbose {
+    echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
+}
 
 #### Tor settings
 
@@ -2095,9 +2097,13 @@ function mshost {
     mhost "$COMMAND" "$@"
 }
 
-#### Process-related settings
+#### Process settings
 
-# Display all processes, in a style that I like. If an argument is given, interpret it as a grep regex, and display only those that match that regex.
+# Display all processes, in a style that I like. If an argument is
+# given, interpret it as a grep regex, and display only those that
+# match that regex. Yeah, I know I could do this with pgrep, but it
+# wouldn't give me all the output-format flexibility that I get from
+# using ps itself.
 function p {
     local HEADER PROCS
     local PS_COMMAND="ps auxwww"
@@ -2105,38 +2111,28 @@ function p {
     if [[ $# -eq 0 ]]; then
         $PS_COMMAND | $PAGER
     else
-        HEADER=$($PS_COMMAND | head -1)
-        PROCS=$($PS_COMMAND | command grep -v grep | grep "$@")
+        HEADER="$($PS_COMMAND | head -1)"
+
+        set -o pipefail
+        PROCS="$($PS_COMMAND | command grep -v grep | grep "$@")"
+        RC=$?
+        set +o pipefail
+        
         if [[ -n "$PROCS" ]]; then
             echo "$HEADER"
             echo "$PROCS"
         fi
+
+        return $RC
     fi
 }
 
-#### Process-related settings
-
-function pbc { 
-    local FILENAME
-    FILENAME="$1"
-    if [[ $FILENAME ]]; then
-        pbcopy < "$FILENAME"
-    else
-        echo "pbc: error: missing argument. Usage: pbc FILENAME"
-    fi
+function pstree {
+    command pstree -g 3 -u $USER "$@" | $PAGER
 }
 
-function pstree { command pstree -g 3 -u $USER "$@" | $PAGER ;}
-
-# Display my processes.
-function pu { p $USER ;}
-
-function _pq {
-    # grep the list of processes, but don't show any output.
-    # This is useful for non-interactive functions that just need
-    # to test whether a process is running.
-    p auxww | grep -q $1 | grep -qv grep
-}
+# Display only processes that belong to me.
+function pu { p "$USER" ;}
 
 #### vim settings
 
