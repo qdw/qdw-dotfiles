@@ -11,7 +11,35 @@
  (lambda (face)
    (set-face-attribute face nil :weight 'normal))
  (face-list))
- 
+
+;;;; Settings for GUI Emacs versus terminal Emacs
+
+(defun initialize-ui ()
+  (cond ((display-graphic-p)
+         (set-face-font 'default "Menlo-18")
+         ;; Other fonts that are okay, sort of, I guess
+                              ;; "SF-18-Regular")
+                              ;; "Hack-14-Regular")
+                              ;; "JetBrains Mono-14")
+                              ;; "Fira Code-16")
+
+	 (blink-cursor-mode -1))
+
+        ('t
+         (xterm-mouse-mode 1)
+         (global-set-key [mouse-4]
+                         (lambda () (interactive) (scroll-down 1)))
+         (global-set-key [mouse-5]
+                         (lambda () (interactive) (scroll-up 1)))
+         (defun track-mouse (e))
+         (setq mouse-sel-mode 't))))
+
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (initialize-ui)))
+
+(initialize-ui)
+  
 ;;;; Dependency/library settings
 
 ;; I'm running emacs as a daemon,
@@ -43,34 +71,11 @@
 (require 'tool-bar)
 (require 'typescript-mode)
 (require 'whitespace)
+(require 'yaml-mode)
 
-;;;; Settings for GUI Emacs versus terminal Emacs
+;;;; Settings specific to this machine
 
-(defun initialize-ui ()
-  (cond ((display-graphic-p)
-         (set-face-font 'default "Menlo-18")
-         ;; Other fonts that are okay, sort of, I guess
-                              ;; "SF-18-Regular")
-                              ;; "Hack-14-Regular")
-                              ;; "JetBrains Mono-14")
-                              ;; "Fira Code-16")
-
-	 (blink-cursor-mode -1))
-
-        ('t
-         (xterm-mouse-mode 1)
-         (global-set-key [mouse-4]
-                         (lambda () (interactive) (scroll-down 1)))
-         (global-set-key [mouse-5]
-                         (lambda () (interactive) (scroll-up 1)))
-         (defun track-mouse (e))
-         (setq mouse-sel-mode 't))))
-
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (initialize-ui)))
-
-(initialize-ui)
+(load (expand-file-name "~/.site.elisp.d/site-lisp.el") 't)
 
 ;;;; Color settings
 
@@ -179,10 +184,6 @@
 
 ;; Always use the same cursor color, no matter what theme I use.
 (set-cursor-color "DarkOrange1")
-
-;;;; Settings specific to this machine
-
-(load (expand-file-name "~/.site.elisp.d/site-lisp.el") 't)
 
 ;;;; Password settings (excluded from Git)
 
@@ -481,13 +482,6 @@ This command does the reverse of `fill-region'."
                          (expand-file-name "~/personal.org")
                          ))
 
-(defun org-insert-slack-link (channel-name)
-  (interactive "MSlack channel (without the '#'): ")
-  (org-insert-link
-    nil
-    (concat "https://" slack-team "slack.com/channels/#" channel-name)
-    (concat "#" channel-name)))
-
 (defun org-insert-jira-link (ticket-name)
   (interactive "MTicket name (e.g. DATAPLAT-000): ")
   (org-insert-link nil
@@ -502,7 +496,7 @@ This command does the reverse of `fill-region'."
 ;;   (interactive)
 ;;   (isearch-resume jira-ticket-regexp-qdw 't nil 't nil 't))
     
-(defun org-insert-pr-link (repo pr-number)
+(defun org-insert-pr-link-qdw (repo pr-number)
   "Insert a link to a GitHub pull request.
   REPO is the name of the repository,
   and PR-NUMBER is, well, what it sounds like."
@@ -620,12 +614,6 @@ This command does the reverse of `fill-region'."
     nil
     (concat "https://" slack-team "slack.com/channels/#" channel-name)
     (concat "#" channel-name)))
-
-(defun org-insert-jira-link-qdw (ticket-name)
-  (interactive "MTicket name (e.g. DATAPLAT-000): ")
-  (org-insert-link nil
-                   (concat jiralib-url "/browse/" ticket-name)
-                   ticket-name))
 
 (defun org-insert-pr-link-qdw (repo pr-number)
   (interactive "MRepo: \nnPR number: ")
@@ -753,15 +741,16 @@ This command does the reverse of `fill-region'."
   (unless (string-equal major-mode "mhtml-mode")
           (indent-relative-maybe)))
 
-(defun python-auto-indent-qdw ()
-  (local-set-key "\r" 'electric-newline-and-maybe-indent)
+;; Broken
+;; (defun python-auto-indent-qdw ()
+;;   (local-set-key "\r" 'electric-newline-and-maybe-indent)
   
-  ;; Run the Blacken real-time Python code auto-formatter,
-  ;; except on third-party code.
-  (unless (string-match
-           (expand-file-name "~/src-3")
-           buffer-file-name)
-    (blacken-mode)))
+;;   ;; Run the Blacken real-time Python code auto-formatter,
+;;   ;; except on third-party code.
+;;   (unless (string-match
+;;            (expand-file-name "~/src-3")
+;;            buffer-file-name)
+;;     (blacken-mode)))
 
 ;;;; Generic coding settings (not language-specific)
 
@@ -1107,6 +1096,10 @@ This command does the reverse of `fill-region'."
 (keymap-global-set "M-o"     'other-window-reverse)
 
 
+(keymap-set c-mode-map "C-c {" 'beginning-of-defun)
+(keymap-set c-mode-map "C-c }" 'end-of-defun)
+
+
 (define-key 'help-command (kbd "C-f") 'find-function)
 (define-key 'help-command (kbd "C-k") 'find-function-on-key)
 (define-key 'help-command (kbd "C-l") 'find-library)
@@ -1131,9 +1124,9 @@ This command does the reverse of `fill-region'."
 
 
 ;; python-mode doesn't yet use the new *-mode-map pattern, so...
-(add-hook 'python-mode-hook
-          (lambda ()
-            (local-set-key (kbd "RET") 'python-auto-indent-qdw)))
+;; (add-hook 'python-mode-hook
+;;           (lambda ()
+;;             (local-set-key (kbd "RET") 'python-auto-indent-qdw)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1189,7 +1182,7 @@ This command does the reverse of `fill-region'."
 ;;;;                                                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;;; customize'd faces
+;;;; customize faces
 
 (put 'downcase-region 'disabled nil)
 (put 'dired-find-alternate-file 'disabled nil)
@@ -1203,7 +1196,7 @@ This command does the reverse of `fill-region'."
  '(org-date ((t (:foreground "#6495ed" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff" :weight normal)))))
 
-;;;; other customize'd settings
+;;;; customize other settings
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1237,7 +1230,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
  
 (put 'narrow-to-region 'disabled nil)
