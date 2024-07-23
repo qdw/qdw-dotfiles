@@ -1,7 +1,6 @@
 ;;; tritium-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
 
 ;; Copyright 2012 John Olsson
-
 ;; Author: John Olsson &lt;john@cryon.se&gt;
 
 ;; Modified by: Chris Corbyn &lt;chris@w3style.co.uk&gt;
@@ -26,17 +25,15 @@
 
 ;;
 
-
 ;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
-
 
   (cond
   
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
-    black "#212121"
-    ;; black "#1c1c1c"
+    ;; black "#212121"
+    black "#1c1c1c"
     ;; black "#262626"        ;; "Grey15"     == 235
     ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
 
@@ -49,7 +46,7 @@
     bright-green "#00ff00"
     
     yellow "#9164ff" ;; actually purple
-    bright-yellow yellow
+    bright-yellow "#8968cd" ;; actually lavender
     
     blue "#6495ed"
     bright-blue blue
@@ -60,8 +57,8 @@
     cyan "#008080"
     bright-cyan cyan
     
-    white "#91908f"
-    bright-white white
+    white "#878787"
+    bright-white "#aaaaaa"
     ))
   
   ;;; For terminals that support only 256 colors
@@ -98,7 +95,7 @@
     
   ) ;; cond
 ;; ) ;; when
-    
+
 (defvar *colors-loaded-p* 't)
 
 ;;; [Untested; might not work] For terminals that support only 16 colors
@@ -187,9 +184,6 @@
    `(trailing-whitespace
      ((t (:inherit show-paren-mismatch-face :underline t))))
    
-   `(mode-line
-     ((t (:foreground ,bright-white :background ,bright-black ))))
-   
    `(minibuffer-prompt
      ;; ((t (:foreground ,bright-magenta))))
      ((t (:foreground ,yellow))))
@@ -251,7 +245,27 @@
 
    `(widget-field
      ((t (:foreground ,black :background ,bright-red))))
+     
+   ;;;; window dressing (including the mode-line)
    
+   ;; When you're in display-line-numbers-mode,
+   ;; this is the face in which line numbers
+   ;; are displayed to the left of your code
+   `(line-number
+     ((t (:foreground ,bright-black))))
+     
+   `(diredp-mode-line-marked
+      ((t (:foreground ,blue))))
+
+   `(diredp-mode-line-flagged
+     ((t (:foreground ,yellow))))
+     
+   `(mode-line
+     ((t (:foreground ,bright-yellow :background ,bright-black))))
+
+   `(mode-line-inactive
+     ((t (:foreground ,white :background ,bright-black))))
+     
    ;;;; font lock
 
    `(font-lock-keyword-face
@@ -265,7 +279,7 @@
 
    `(font-lock-builtin-face
      ((t ((:foreground ,bright-yellow)))))
-
+     
    `(font-lock-variable-name-face
      ((t (:foreground ,bright-blue))))
 
@@ -274,7 +288,7 @@
      ((t (:foreground ,bright-blue :italic t))))
 
    `(font-lock-type-face
-     ((t (:foreground ,bright-yellow))))
+     ((t (:foreground ,magenta))))
 
    `(font-lock-negation-char-face
      ((t (:foreground ,bright-magenta))))
@@ -747,12 +761,6 @@
 
     `(diredp-flag-mark-line
       ((t (:background ,black))))
-
-    `(diredp-mode-line-marked
-      ((t (:foreground ,blue))))
-
-    `(diredp-mode-line-flagged
-      ((t (:foreground ,yellow))))
 
     `(diredp-ignored-file-name
       ((t (:foreground ,bright-black))))
