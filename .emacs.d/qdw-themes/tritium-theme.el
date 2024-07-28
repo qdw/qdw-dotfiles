@@ -1,4 +1,6 @@
-;;; tritium-theme.el --- Fork of subatomic-theme for terminals that support only 256 colors (for example, macOS Terminal.app).
+;;; tritium-theme.el --- Fork of the original subatomic-theme
+;;; for terminals that support only 256 colors
+;;; (for example, macOS Terminal.app).
 
 ;; Copyright 2012 John Olsson
 ;; Author: John Olsson &lt;john@cryon.se&gt;
@@ -21,9 +23,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this file.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
-
-;;
+;; along with this file.  If not, see http://www.gnu.org/licenses/
 
 ;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
 
@@ -32,112 +32,94 @@
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
-    ;; black "#212121"
-    black "#1c1c1c"
-    ;; black "#262626"        ;; "Grey15"     == 235
-    ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
-
-    bright-black "#383838"
-
-    red "#af5f00" ;; actually orange
-    bright-red "#ff7f00" ;; bright orange; used for the cursor, inter alia
-    
-    green "#007f06"
-    bright-green "#00ff00"
-    
-    yellow "#9164ff" ;; actually purple
-    bright-yellow "#8968cd" ;; actually lavender
-    
-    blue "#6495ed"
-    bright-blue blue
-    
-    magenta "#af5faf"
-    bright-magenta "#f5b5ff"
-    
-    cyan "#008080"
-    bright-cyan cyan
-    
-    white "#878787"
-    bright-white "#aaaaaa"
+        ;; black "#212121"
+           black  "#1c1c1c"  ;;      Terminal emulator's ANSI black
+        ;; black  "#262626"  ;;      Grey15
+        ;; black  "#000000"  ;; 
+    bright-black  "#383838"
+             red  "#af5f00"  ;;      actually orange
+      bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
+   ;; dark-green  "#007f06"  ;;      dark green
+        ;; green  "#99c794"  ;;      green as seen in Sublime Text
+        ;; green  "#3b8560"  ;;      green as iTerm2's default ANSI green
+           green  "#3b8560"
+    bright-green  "#00ff00"
+          yellow  "#9164ff"  ;;      actually purple
+   bright-yellow  "#8968cd"  ;;      actually lavender
+            blue  "#6495ed"
+     bright-blue  blue
+      ;; magenta  "#af5faf"
+;;bright-magenta  "#f5b5ff"
+            cyan  "#008080"
+     bright-cyan  cyan
+           white  "#878787"
+    bright-white  "#aaaaaa"
     ))
   
   ;;; For terminals that support only 256 colors
   ;;; (i.e., almost every other terminal in use today)
-  ('t 
+   ('t 
    (setq
 
-    black "#262626"        ;; "Grey15"     == 235
-    ;; black "#000000"  ;; Use the terminal emulator's ANSI-black color.    
-    ;; black "color-16" ;; Use the terminal emulator's background color.
+           black  "#262626"  ;; 235  Grey15
+        ;; black  "#000000"  ;;  16  Terminal emulator's ANSI black
+        ;; black  "color-16" ;;   0  Terminal emulator's background
+    bright-black  "#5f5f5f"  ;;  59  Grey37
+             red  "#af5f00"  ;; 130  DarkOrange3
+      bright-red  "#ff7f00"  ;;  xx  DarkOrange1  ;; no X11 name
+           green  "#008700"  ;;  28  Green4
+    bright-green  "#00ff00"  ;;  46  Green1
+          yellow  "#875fff"  ;;  99  SlateBlue1   ;; actually purple
+   bright-yellow  yellow     ;;  99  SlateBlue1   ;; actually purple
+            blue  "#00afff"  ;;  39  DeepSkyBlue1
+     bright-blue  blue       ;;  39  DeepSkyBlue1
+         magenta  "#af00af"  ;; 127  Magenta3
+  bright-magenta  "#ff87ff"  ;; 213  Orchid1
+            cyan  "#00af87"  ;;  36  DarkCyan
+     bright-cyan  cyan       ;;  36  DarkCyan
+           white  "#949494"  ;; 246  Grey58
+    bright-white  white      ;; 246  Grey58
+    ))
+ 
+  ;;; Incomplete: for terminals that support only 16 colors
+;; ((condition-1)
+;; (setq
 
-    bright-black "#5f5f5f" ;; "Grey37"     ==  59
+;;         black  "#000000"  ;;   0  ANSI black
+;;  bright-black  ???        ;;   ?  ANSI bright-black
+;;           red  "#800000"  ;;   1  ANSI red
+;;    bright-red  red             1  ANSI red
+;;         green  "#008000"  ;;   2  ANSI green
+;;  bright-green  "#00ff00"  ;;   2  ANSI green
+;;        yellow  "#800080"  ;;   5  ANSI magenta
+;; bright-yellow  "#800080"  ;;   5  ANSI magenta
+;;          blue  "#800080"  ;;   4  ANSI blue
+;;   bright-blue  blue       ;;   4  ANSI blue
+;;       magenta  "#800080"  ;;   5  ANSI magenta
+;; bright-magenta "#800080"  ;;   5  ANSI magenta
+;;          cyan  "#008080"  ;;   6  ANSI cyan
+;;   bright-cyan  bright-black    ?  ANSI bright-black
+;;         white  ????       ;;   ?
+;;  bright-white  white      ;;   ?
+;;  ))
 
-    red "#af5f00" ;; "DarkOrange3"         == 130
-    bright-red "#ff7f00" ;; "DarkOrange1"  == ???  ;; bright orange; used for the cursor, inter alia. This color has a name in Emacs but not in X11. In SGR 256-color space, it seems to correspond roughly to color-166(?)
+  ;;; Incomplete: for terminals that support only 8 colors
+;; ((condition-2)
+;; (setq
+;;         black  "#000000"  ;;   0  ANSI black
+;;           red  "#800000"  ;;   1  ANSI red
+;;         green  "#008000"  ;;   2  ANSI green
+;;        yellow  "#800080"  ;;   5  ANSI magenta
+;;          blue  "#800080"  ;;   4  ANSI blue
+;;       magenta  "#800080"  ;;   5  ANSI magenta
+;;          cyan  "#008080"  ;;   6  ANSI cyan
+;;         white  ????       ;;   ?
+;;  ))
 
-    green "#008700"        ;; "Green4"     ==  28
-    bright-green "#00ff00" ;; "Green1"     ==  46
-    
-    yellow "#875fff"       ;; "SlateBlue1" == 99 ;; in Emacs, this displays as purple, despite the X11 name
-    bright-yellow yellow
-
-    blue "#00afff" ;; "DeepSkyBlue1"   ==  39
-    bright-blue blue
-
-    magenta "#af00af"        ;; "Magenta3" == 127
-    bright-magenta "#ff87ff" ;; "Orchid1"  == 213
-    
-    cyan "#00af87"           ;; "DarkCyan" ==  36
-    bright-cyan cyan
-
-    white "#949494"          ;; "Grey58" == 246
-    bright-white white))
-    
-  ) ;; cond
+) ;; cond
 ;; ) ;; when
 
 (defvar *colors-loaded-p* 't)
-
-;;; [Untested; might not work] For terminals that support only 16 colors
-;;
-;; (setq
-;;  black "#000000"        ;; "Black (SYSTEM)"  ==  0  == ANSI black
-;;  bright-black           ;; "Grey (SYSTEM)"   == 8 == ANSI bright-black
-;;  red "#800000"          ;; "Maroon (SYSTEM)" ==  1  == ANSI red
-;;  bright-red red
-;;  green "#008000"        ;; "Green (SYSTEM)"  ==  2  == ANSI green
-;;  bright-green "#00ff00" ;; "Lime"            == 10 == ANSI bright-green
-;;  yellow "#800080"       ;; "Purple (SYSTEM)" ==  5  == ANSI magenta
-;;  blue "#000080"         ;; "Navy (SYSTEM)"   ==  4  == ANSI blue
-;;  bright-blue blue
-;;  magenta "#800080"      ;; "Purple (SYSTEM)" ==  5  == ANSI magenta
-;;  bright-magenta "Aqua"
-;;  cyan "#008080"         ;; "Teal (SYSTEM)"   ==  6  == ANSI cyan
-;;  bright-cyan cyan
-;;  white bright-black
-;;  bright-white white
-;;  )
-
-;;; [Untested; might not work] For terminals that support only 8 colors
-;;
-;; (setq
-;; black "#000000"        ;; "Black (SYSTEM)"   ==  0  == ANSI black
-;; bright-black "#c0c0c0" ;; "Silver (SYSTEM)"  ==  7  == ANSI white
-;; red "#800000"          ;; "Maroon (SYSTEM)"  ==  1  == ANSI red
-;; bright-red red
-;; green "#008000"        ;; "Green (SYSTEM)"   ==  2  == ANSI green
-;; bright-green green
-;; yellow "#800080"       ;; "Purple (SYSTEM)"  ==  5  == ANSI magenta
-;; bright-yellow yellow
-;; blue "#000080"         ;; "Navy (SYSTEM)"    ==  4  == ANSI blue
-;; bright-blue blue
-;; magenta "#800080"      ;; "Fuchsia (SYSTEM)" == 13  == ANSI bright-magenta
-;; bright-magenta         ;; "Red (SYSTEM)"     == 9  == ANSI bright-red
-;; cyan "#008080"         ;; "Teal (SYSTEM)"   ==   6  == ANSI cyan
-;; bright-cyan cyan
-;; white bright-black
-;; bright-white white
-;; )
 
 (deftheme tritium
   "tritium emacs theme")
@@ -182,7 +164,7 @@
      ((t (:inherit lazy-highlight))))
 
    `(trailing-whitespace
-     ((t (:inherit show-paren-mismatch-face :underline t))))
+     ((t (:inherit show-paren-mismatch-face :underline nil))))
    
    `(minibuffer-prompt
      ;; ((t (:foreground ,bright-magenta))))
@@ -520,7 +502,8 @@
      ((t (:foreground ,bright-magenta))))
 
    `(magit-log-head-label-local
-     ((t (:inherit magit-log-head-label-default :foreground ,bright-magenta))))
+     ((t (:inherit magit-log-head-label-default
+          :foreground ,bright-magenta))))
 
    `(magit-log-head-label-patches
      ((t (:inherit magit-log-head-label-default))))
@@ -544,9 +527,16 @@
      ((t (:inherit font-lock-warning))))
 
    ;;;; compilation
+
+   `(compilation-error
+     ((t (:foreground ,green :underline nil))))
+      
    `(compilation-info
      ((t (:inherit default))))
 
+   `(compilation-line-number
+     ((t (:inherit font-lock-keyword-face :underline nil))))
+     
    `(compilation-warning
      ((t (:inherit font-lock-warning))))
 

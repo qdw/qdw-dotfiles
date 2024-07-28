@@ -2718,10 +2718,6 @@ function music {
 }
 
 function am {
-    if [[ $1 = "ls" ]]; then
-        shift
-        $@ = "list"
-    
     ~/src-3/music-cli/src/am.sh
 }
 

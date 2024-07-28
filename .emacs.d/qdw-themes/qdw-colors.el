@@ -115,3 +115,22 @@
 ;; white bright-black
 ;; bright-white white
 ;; )
+
+(defun list-colors-qdw ()
+  (interactive)
+  (message "black: %s" black)
+  (message "bright-black: %s" bright-black)
+  (message "red: %s" red)
+  (message "bright-red: %s" bright-red)
+  (message "green: %s" green)
+  (message "bright-green: %s" bright-green)
+  (message "yellow: %s" yellow)
+  (message "bright-yellow: %s" bright-yellow)
+  (message "blue: %s" blue)
+  (message "bright-blue: %s" blue)
+  (message "magenta: %s" magenta)
+  (message "bright-magenta: %s" magenta)
+  (message "cyan: %s" cyan)
+  (message "bright-cyan: %s" bright-cyan)
+  (message "white: %s" white)
+  (message "bright-white: %s" bright-white))

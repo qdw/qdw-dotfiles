@@ -50,6 +50,8 @@
 
 (require 'ansi-color)
 (require 'blacken)
+(require 'comint)
+(require 'compile)
 (require 'devil)
 (require 'dirtrack)
 (require 'dockerfile-mode)
@@ -81,9 +83,9 @@
 ;;;; Color settings
 
 (defmacro setqu (&rest args)
-  "Set multiple variables globally, overriding them
-  if they are already set. This function's syntax
-  is the same as that of setq, but it calls defvar under the hood"
+  "Set multiple variables globally, overriding them if they are
+already set. This function's syntax is the same as that of setq,
+but it calls defvar under the hood."
   (let (forms)
     (while args
       (let ((var (pop args))
@@ -130,7 +132,7 @@
     (when(string-equal buffer-path tritium-path)
       (reload-tritium))))
   
-(add-hook 'after-save-hook 'reload-tritium-theme-on-save)
+(add-hook 'after-save-hook #'reload-tritium-theme-on-save)
 
 (defun re-theme ()
   "Load a file that defines the 16 4-bit ANSI colors;
@@ -211,10 +213,17 @@ use `dired-find-file' to open it in a new buffer."
 
 ;;;; Alternative-editor settings
 
-;; experimental attempt to abstract the repetitive code below
-
-(defun get-lineno ()
+(defun get-lineno-qdw ()
   (+ (if (bolp) 1 0) (count-lines 1 (point))))
+
+(defun open-in-app-qdw (&rest args)
+  (letrec ((app (or (car args) "/usr/bin/open"))
+           (other-args (or (cdr args) '()))
+           (command-as-list (cons app (cons buffer-file-name other-args)))
+           (command-as-string (mapconcat 'shell-quote-argument
+                                         command-as-list
+                                         " ")))
+    (async-shell-command command-as-string)))
 
 (defun alt-ed (editor-executable &rest)
   (save-window-excursion
@@ -225,12 +234,14 @@ use `dired-find-file' to open it in a new buffer."
            (list editor-executable
                  buffer-file-name
                  rest
-                 (get-lineno)))))))
+                 (get-lineno-qdw)))))))
 
 (defun subl ()
   (interactive)
   (alt-ed "/opt/homebrew/bin/subl"
           "--background"))
+          
+
           
 (defun lineno ()
   (+ (if (bolp) 1 0)
@@ -389,8 +400,6 @@ This command does the reverse of `fill-region'."
 
 ;;;; Basic comfort
 
-
-
 (setq-default
  ;;; Settings for use with macOS
 
@@ -434,8 +443,6 @@ This command does the reverse of `fill-region'."
  
  ; The first day of the week is Monday.
  calendar-week-start-day 1
-
- isearch-allow-scroll 'unlimited
  
  ; If I have a region selected, then make command like query-replace
  ; operate on that region only
@@ -455,8 +462,6 @@ This command does the reverse of `fill-region'."
  ; Instead of beeping, flash screen
  visible-bell 't
  
- ;; Make isearch case-sensitive by default.
- case-fold-search 't
  )
 
 ;; Customized visual bell
@@ -472,6 +477,41 @@ This command does the reverse of `fill-region'."
 (menu-bar-mode -1)   ;; Turn off menubar.
 (scroll-bar-mode -1) ;; Turn off scrollbar.
 
+;;;; Search/compile/shell-command output buffer settings
+
+(defun disable-underline-qdw (orig-fun &rest args)
+  "Advice around `compile` to temporarily disable underlining (it looks bad)."
+  (let ((original-underline-face (face-attribute 'underline :underline)))
+    (unwind-protect
+      (progn
+          ;; Call the original compile function
+          (apply orig-fun args)
+          ;; Change the 'underline' face in the compilation buffer
+          (with-current-buffer "*compilation*"
+            (set-face-attribute 'underline nil :underline nil)))
+      ;; Restore the original 'underline' face
+      (set-face-attribute 'underline nil :underline original-underline-face))))
+
+(advice-add 'compile :around #'disable-underline-qdw)
+
+(setq-default
+ ;; Make isearch case-sensitive by default.
+ case-fold-search 't
+
+ isearch-allow-scroll 'unlimited)
+  
+(defun gr ()
+  (interactive)
+  (let ((command-string (read-string "Shell command: " "grep -HnE --color=always"))
+        (original-underline-face (face-attribute 'underline :underline)))
+    (unwind-protect
+      (progn
+        ;; Momentarily disable underlining; it looks bad in compilation-mode
+        (set-face-attribute 'underline nil :underline t)
+        (compile (concat command-string " " buffer-file-name)
+                 't)))
+    (set-face-attribute 'underline nil :underline original-underline-face)))
+
 ;;;; org-mode settings
 
 (setq-default
@@ -483,7 +523,7 @@ This command does the reverse of `fill-region'."
                          (expand-file-name "~/personal.org")
                          ))
 
-(defun org-insert-jira-link (ticket-name)
+(defun org-insert-jira-link-qdw (ticket-name)
   (interactive "MTicket name (e.g. DATAPLAT-000): ")
   (org-insert-link nil
                    (concat jiralib-url "/browse/" ticket-name)
@@ -727,7 +767,7 @@ This command does the reverse of `fill-region'."
 
 ;; Automatically make file executable if it starts with a #!
 (add-hook 'after-save-hook
-          'executable-make-buffer-file-executable-if-script-p)
+          #'executable-make-buffer-file-executable-if-script-p)
 
 ;; Globally enable dumb-jump, an it-just-works way to jump
 ;; from functions' invocations to their definitions of those
@@ -753,16 +793,16 @@ This command does the reverse of `fill-region'."
 ;;            buffer-file-name)
 ;;     (blacken-mode)))
 
-;;;; Generic coding settings (not language-specific)
+;;;; Coding: generic settings (not language-specific)
+
+;; Disable auto indentation so that I can paste stuff while preserving
+;; the indentation of the original.
+
+(defun set-paste ()
+  (electric-indent-mode -1))
 
 ;; Code-folding
 
-(require 'origami)
-(add-hook 'origami-mode-hook
-          (lambda ()
-            (define-key origami-mode-map
-                        (kbd "C-c C-f")
-                        'origami-toggle-node)))
 (global-origami-mode)
 
 ;;;; Settings for writing shell scripts
@@ -789,9 +829,9 @@ This command does the reverse of `fill-region'."
         (erase-buffer)
         (insert-file-contents scratch-buffer-file))))
 
-(add-hook 'kill-emacs-hook 'save-scratch-buffer-to-file)
-(add-hook 'emacs-startup-hook 'load-scratch-buffer-from-file)
-(setq lisp-indent-function 'common-lisp-indent-function)
+(add-hook 'kill-emacs-hook #'save-scratch-buffer-to-file)
+(add-hook 'emacs-startup-hook #'load-scratch-buffer-from-file)
+(setq lisp-indent-function #'common-lisp-indent-function)
 (add-hook 'lisp-mode-hook (lambda ()
                             (paredit-mode +1)
                             (eldoc-mode +1)))
@@ -871,7 +911,7 @@ This command does the reverse of `fill-region'."
         company-tooltip-align-annotations t)
   (tide-hl-identifier-mode +1))
 
-(add-hook 'typescript-mode-hook 'configure-typescript)
+(add-hook 'typescript-mode-hook #'configure-typescript)
 
 ;;;; YAML settings
 
@@ -890,71 +930,7 @@ This command does the reverse of `fill-region'."
    "-"
    string))
 
-(setq lyrics-fetcher-format-file-name-method
-      'munge-song-or-band-name)
-
-;; ;; sketch
-;; (defun macos-open (file-name)
-;;   (async-shell-command
-;;    (shell-quote
-;;     (concat "/usr/bin/open " (expand-file-name file-name)))))
-
-;; ;; sketch
-;; (defun macos-tell-app-to-open (app file-name)
-;;   (run-applescript
-;;    (concat
-;;     "tell application "
-;;     (shell-quote app)
-;;     " to open "
-;;     (shell-quote file-name))))
-
-;; ;; sketch
-;; (defun run-applescript (string)
-;;   (async-shell-command
-;;     (format "osascript -e '%s'"
-;;             (shell-quote-argument string))))
-
-;; sketch
-;; (let ((orig-action
-;;        (assoc ":follow" (assoc "file" org-link-parameters)))
-;;       (case-fold-search
-;;        't))
-;;   (org-link-set-parameters
-;;    "file"
-;;    :follow
-;;    (lambda (file-name arg)
-;;      (if (string-match-p ".sid" file-name)
-;;        (async-shell-command
-;;         (run-applescript "
-;;           on run argv
-;;               tell application \"Cog\" to open item 1 of argv
-;;           end run"))
-;;        (orig-action file-name)))))
-
-;; ;; Broken; no-op
-;; (defun org-recursively-mark-as-done ()
-;;   (interactive)
-;;   (org-map-entries
-;;     (let ((state (nth 2 (org-heading-components))))
-;;       (when (cl-position state org-todo-keywords)
-;;         (org-todo "DONE")))))
-
-
-;; N.G.
-;;
-;; (defun my-cd (dir)
-;;   "tell a running shell-mode session to cd to `dir'"
-;;   (if (not dir)
-;;       (error "No dir argument specified")
-;;       (let ((shell-buffer (get-buffer "*shell*"))
-;;             (shell-process (get-process "shell")))
-;;         (if (and shell-buffer shell-process)
-;;             (with-current-buffer shell-buffer
-;;               (comint-send-input (concat "cd " dir)))
-;;               (shell-process-cd dir)
-;;             (error "my-cd failed somehow")))))
-;; (my-cd "/Applications")
-
+(setq lyrics-fetcher-format-file-name-method 'munge-song-or-band-name)
 
 (defun prefix (string)
   (interactive "MPrefix: ")
@@ -1082,20 +1058,21 @@ This command does the reverse of `fill-region'."
 (keymap-global-set "C-c !"   'async-shell-command)
 (keymap-global-set "C-c %"   'query-replace-regexp)
 (keymap-global-set "C-c :"   'eval-expression)
+(keymap-global-set "C-h 1"   'describe-face)
 (keymap-global-set "C-c C-f" 'multi-occur-in-matching-buffers)
 (keymap-global-set "C-c C-s" 'isearch-forward-regexp)
 (keymap-global-set "C-c c"   'comment-region)
+(keymap-global-set "C-c f"   'origami-toggle-node)
+(keymap-global-set "C-c g"   'gr)
 (keymap-global-set "C-c i"   'indent-region)
 (keymap-global-set "C-c l"   'display-line-numbers-mode)
 (keymap-global-set "C-c o"   'rotate-windows)
 (keymap-global-set "C-c u"   'uncomment-region)
 (keymap-global-set "C-c v"   'vscode)
-(keymap-global-set "C-h 1"   'describe-face)
 (keymap-global-set "M-!" 'login-shell-command)
 (keymap-global-set "M-(" 'eval-expression)
 (keymap-global-set "M-5"     'query-replace-regexp)
 (keymap-global-set "M-o"     'other-window-reverse)
-
 
 (keymap-set c-mode-map "C-c {" 'beginning-of-defun)
 (keymap-set c-mode-map "C-c }" 'end-of-defun)
@@ -1107,13 +1084,13 @@ This command does the reverse of `fill-region'."
 (define-key 'help-command (kbd "C-v") 'find-variable)
 
 
-
+(keymap-set org-mode-map "C-c RET" 'org-open-at-point)
 (keymap-set org-mode-map "C-c >"
                           'org-insert-subheading-respect-content-qdw)
 (keymap-set org-mode-map "C-c [" 'org-table-move-column-left)
 (keymap-set org-mode-map "C-c ]" 'org-table-move-column-right)
 (keymap-set org-mode-map "C-c s" 'org-insert-slack-link)
-(keymap-set org-mode-map "C-c j" 'org-insert-jira-link)
+(keymap-set org-mode-map "C-c j" 'org-insert-jira-link-qdw)
 (keymap-set org-mode-map "C-c (" 'org-promote-subtree)
 (keymap-set org-mode-map "C-c )" 'org-demote-subtree)
 (keymap-set org-mode-map "C-c [" 'org-table-move-column-left)
@@ -1135,6 +1112,70 @@ This command does the reverse of `fill-region'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; (defun open-org-link-to-local-file-at-point-qdw ())
+
+;; ;; sketch
+;; (defun macos-open (file-name)
+;;   (async-shell-command
+;;    (shell-quote
+;;     (concat "/usr/bin/open " (expand-file-name file-name)))))
+
+;; ;; sketch
+;; (defun macos-tell-app-to-open (app file-name)
+;;   (run-applescript
+;;    (concat
+;;     "tell application "
+;;     (shell-quote app)
+;;     " to open "
+;;     (shell-quote file-name))))
+
+;; ;; sketch
+;; (defun run-applescript (string)
+;;   (async-shell-command
+;;     (format "osascript -e '%s'"
+;;             (shell-quote-argument string))))
+
+;; sketch
+;; (let ((orig-action
+;;        (assoc ":follow" (assoc "file" org-link-parameters)))
+;;       (case-fold-search
+;;        't))
+;;   (org-link-set-parameters
+;;    "file"
+;;    :follow
+;;    (lambda (file-name arg)
+;;      (if (string-match-p ".sid" file-name)
+;;        (async-shell-command
+;;         (run-applescript "
+;;           on run argv
+;;               tell application \"Cog\" to open item 1 of argv
+;;           end run"))
+;;        (orig-action file-name)))))
+
+;; ;; Broken; no-op
+;; (defun org-recursively-mark-as-done ()
+;;   (interactive)
+;;   (org-map-entries
+;;     (let ((state (nth 2 (org-heading-components))))
+;;       (when (cl-position state org-todo-keywords)
+;;         (org-todo "DONE")))))
+
+
+;; N.G.
+;;
+;; (defun my-cd (dir)
+;;   "tell a running shell-mode session to cd to `dir'"
+;;   (if (not dir)
+;;       (error "No dir argument specified")
+;;       (let ((shell-buffer (get-buffer "*shell*"))
+;;             (shell-process (get-process "shell")))
+;;         (if (and shell-buffer shell-process)
+;;             (with-current-buffer shell-buffer
+;;               (comint-send-input (concat "cd " dir)))
+;;               (shell-process-cd dir)
+;;             (error "my-cd failed somehow")))))
+;; (my-cd "/Applications")
+
 ;;;; Binary-file-viewing settings
 
 (defun use-hexl-mode-if-binary-p ()
@@ -1142,8 +1183,7 @@ This command does the reverse of `fill-region'."
     (when (string-match-p "\0" (buffer-string))
         (hexl-mode)))
        
-(add-hook 'find-file-hook 'use-hexl-mode-if-binary-p)
-
+(add-hook 'find-file-hook #'use-hexl-mode-if-binary-p)
 
 ;;;; Settings for showing tabs
 ;;;;
@@ -1204,6 +1244,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(ediff-odd-diff-B ((t (:extend t :background "#0D2A34" :distant-foreground "#869496"))))
  '(org-date ((t (:foreground "#6495ed" :weight normal))))
+ '(italic ((t (:underline t :slant normal :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff" :weight normal)))))
 
 ;;;; customize other settings
@@ -1239,6 +1280,7 @@ This command does the reverse of `fill-region'."
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
    '(devil tron-legacy-theme jiralib2 osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode slack jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump yaml-mode terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   ;; '(ack yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
  
 (put 'narrow-to-region 'disabled nil)
