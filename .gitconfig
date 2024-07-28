@@ -53,6 +53,7 @@
 	ff = pull --ff-only
 	last = "!function _last() { local MY_COMMIT; if [[ -z \"$1\" ]] || [[ \"$1\" = \"--\" ]]; then MY_COMMIT=\"HEAD\"; else MY_COMMIT=\"$(shift)\"; fi; echo \"MY_COMMIT: $MY_COMMIT\"; git diff \"$MY_COMMIT^\" \"$MY_COMMIT\" ;}; _last "
 	main = "!sh -c 'git checkout `/Users/quinn.weaver/.gitconfig-helper--get-main-branch-name`'"
+	mm = commit --allow-empty-message -m ''
 	no = diff --name-only
 	nol = "!function _nol() { git last "$@" --name-only ;}; _nol "
 	coml = "!function _nol() { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
