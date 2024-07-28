@@ -2717,27 +2717,18 @@ function music {
     am "$@"
 }
 
-# function am {
-#     if [[ $1 = "ls" ]]; then
-#         shift
-#         $@ = "list"
+function am {
+    if [[ $1 = "ls" ]]; then
+        shift
+        $@ = "list"
     
-#     ~/src-3/music-cli/src/am.sh
-# }
+    ~/src-3/music-cli/src/am.sh
+}
 
 # zophar - search for NES music
 function zophar {
     open https://mail.zophar.net/music/nintendo-nes-nsf
 }
-
-# # [DOESN'T WORK YET] mus (Music) - open an Apple Music URL in Music.app
-# function mus {
-#     if [[ $# -ne 1 ]]; then
-#         echo "mus: error: missing argument. Usage: mus URL"
-#     else
-#         osascript ~/bin/open-url-in-the-apple-music-app.scpt "$URL"
-#     fi
-# }
 
 #### YAML and JSON settings
 
