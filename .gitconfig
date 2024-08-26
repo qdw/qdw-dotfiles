@@ -9,8 +9,8 @@
 	
 [color "diff"]
 	meta = magenta
-	old = red
-	new = cyan
+	old = brightred
+	new = green
 	oldMoved = blue
 	newMoved = yellow
 	oldMovedAlternative = green
@@ -44,6 +44,7 @@
 	renamelimit = 10500
 
 [alias]
+	added = diff --diff-filter=A
 	char-diff = diff --word-diff-regex=.
 	ch = "!function _ch() { git diff \"${1}^\" \"${1}\" ;}; _ch "
 	co = checkout

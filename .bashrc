@@ -1333,6 +1333,11 @@ set +a
 
 ## General Git settings (not specific to GitHub)
 
+BREW_GIT_D="/opt/homebrew/bin"
+if [[ -d "$BREW_GIT_D" ]]; then
+    export PATH="$BREW_GIT_D:$PATH"
+fi
+
 export GIT_SHELL_PATH="$HOMEBREW_BIN/bash"
 
 function branch-name {
