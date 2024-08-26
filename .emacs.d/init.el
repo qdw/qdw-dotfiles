@@ -52,6 +52,7 @@
 (require 'blacken)
 (require 'comint)
 (require 'compile)
+(require 'devil)
 (require 'dirtrack)
 (require 'dockerfile-mode)
 (require 'fd-dired)
@@ -1306,8 +1307,8 @@ This command does the reverse of `fill-region'."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(ediff-odd-diff-B ((t (:extend t :background "#0D2A34" :distant-foreground "#869496"))))
- '(org-date ((t (:foreground "#6495ed" :weight normal))))
  '(italic ((t (:underline t :slant normal :weight normal))))
+ '(org-date ((t (:foreground "#6495ed" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff" :weight normal)))))
 
 ;;;; customize other settings
@@ -1342,7 +1343,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(ack yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist dired-narrow magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil esxml go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
  
 (put 'narrow-to-region 'disabled nil)
