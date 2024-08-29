@@ -76,10 +76,6 @@
 (require 'whitespace)
 (require 'yaml-mode)
 
-;;;; Settings specific to this machine
-
-(load (expand-file-name "~/.site.elisp.d/site-lisp.el") 't)
-
 ;;;; Color settings
 
 (defmacro setqu (&rest args)
@@ -93,7 +89,7 @@ but it calls defvar under the hood."
         (push `(defvar ,var ,val) forms)))
     `(progn ,@(nreverse forms))))
 
-(load (expand-file-name "~/.emacs.d/qdw-themes/qdw-colors.el"))
+;; (load (expand-file-name "~/.emacs.d/qdw-themes/qdw-colors.el"))
 
 ;;;; Spaces-versus-tabs settings
 

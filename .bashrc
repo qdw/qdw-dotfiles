@@ -158,6 +158,66 @@ fi
 #         STRING="$1"
 #         ...
 
+## ANSI SGR 4-bit color codes
+
+ ANSI='\033['
+ CYAN='36m'
+RESET='\033[0m'
+
+BRIGHT_CYAN='96m'
+
+function cyan {
+    check_args 0 0 "cyan"
+    echo -e "$ANSI$CYAN=cyan=$RESET"
+}
+
+function color {
+    # check_args 2 2 "color STRING_TO_DISPLAY COLOR_NAME_IN_ALL_CAPS"
+    local STRING="$1"
+    local COLORNAME="$2"
+    local COLORCODE
+    
+    case "$COLORNAME" in
+        black)
+            COLORCODE="30m";;
+        red)
+            COLORCODE="31m";;
+        green)
+            COLORCODE="32m";;
+        yellow)
+            COLORCODE="33m";;
+        blue)
+            COLORCODE="34m";;
+        magenta)
+            COLORCODE="35m";;
+        cyan)
+            COLORCODE="36m";;
+        white)
+            COLORCODE="37m";;
+        brightblack|bblack|Bblack)
+            COLORCODE="90?m";;
+        brightred|bred|Bred)
+            COLORCODE="91m";;
+        brightgreen|bgreen|Bgreen)
+            COLORCODE="92m";;
+        brightyellow|byellow|Byellow)
+            COLORCODE="93m";;
+        brightblue|bblue|Bblue)
+            COLORCODE="94m";;
+        brightmagenta|bmagenta|Bmagenta)
+            COLORCODE="95m";;
+        brightcyan|bcyan|Bcyan)
+            COLORCODE="96m";;
+        brightwhite|bwhite|Bwhite)
+            COLORCODE="97m";;
+        *)
+            complain "Unsupport color name $COLORNAME"
+            return 1;;
+    esac
+        
+    echo -e "${ANSI}${COLORCODE}${STRING}${RESET}"
+}
+
 # bw (Black and White): remove ANSI color (and other) sequences
 function bw {
     local  INPUT_STRING
@@ -467,6 +527,11 @@ function grbash {
     fi
 }
 
+# fun - show the source code of a bash function, with syntax highlighting
+function fun {
+    type "$1" | bat --language bash
+}
+
 #### Bash history settings
 
 set -a
@@ -700,7 +765,7 @@ function iam {
         echo
         echo 'iam --hostname "$host" --port "$port" --region "$region" --username "$user" --profile "$profile"'
     else
-        aws rds generate-db-auth-token "$@"
+        aws rds generate-db-auth-token "$@" | tee >(pbcopy)
     fi
 }
 

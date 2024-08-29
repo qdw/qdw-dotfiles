@@ -325,11 +325,11 @@
   },
   "HotKey Window Dock Click Action" : 0,
   "Ansi 1 Color" : {
-    "Red Component" : 0.72494047880172729,
-    "Color Space" : "P3",
-    "Blue Component" : 0.17080527544021606,
+    "Red Component" : 0.67976748943328857,
+    "Color Space" : "sRGB",
+    "Blue Component" : 0.0069113117642700672,
     "Alpha Component" : 1,
-    "Green Component" : 0.37702631950378418
+    "Green Component" : 0.37332317233085632
   },
   "Default Bookmark" : "No",
   "Disable Smcup Rmcup" : true,

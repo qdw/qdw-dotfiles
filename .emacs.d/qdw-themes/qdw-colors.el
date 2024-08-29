@@ -9,7 +9,7 @@
  ;;; For terminals that support full 24-bit color
  ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
   (setqu
-   black "#212121"
+   black "#141414"
    ;; black "#1c1c1c"
    ;; black "#262626"        ;; "Grey15"     == 235
    ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
@@ -18,6 +18,7 @@
 
    red "#af5f00" ;; actually orange
    bright-red "#ff7f00" ;; bright orange; used for the cursor, inter alia
+   ansi-bright-red "#973030"
     
    green "#007f06"
    bright-green "#00ff00"
@@ -44,7 +45,7 @@
   ('t 
    (setqu
 
-    black "#1c1c1c"        ;; "Grey15"     == 235
+    black "#141414"        ;; "Grey15"     == 235
     ;; black "#000000"  ;; Use the terminal emulator's ANSI-black color.    
     ;; black "color-16" ;; Use the terminal emulator's background color.
 
@@ -52,6 +53,7 @@
 
     red "#af5f00" ;; "DarkOrange3"         == 130
     bright-red "#ff7f00" ;; "DarkOrange1"  == ???  ;; bright orange; used for the cursor, inter alia. This color has a name in Emacs but not in X11. In SGR 256-color space, it seems to correspond roughly to color-166(?)
+    ansi-bright-red "#cd2626" ;; "firebrick3"
 
     green "#008700"        ;; "Green4"     ==  28
     bright-green "#00ff00" ;; "Green1"     ==  46

@@ -25,31 +25,32 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this file.  If not, see http://www.gnu.org/licenses/
 
-;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
 
-  (cond
+
+;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
+(cond
   
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
-        ;; black "#212121"
-           black  "#1c1c1c"  ;;      Terminal emulator's ANSI black
-        ;; black  "#262626"  ;;      Grey15
-        ;; black  "#000000"  ;; 
+        ;; black  "#1c1c1c"  ;;      Terminal emulator's ANSI black
+           black  "#141414"  ;;      Grey15
     bright-black  "#383838"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
+ ansi-bright-red  "#be4c4c"
    ;; dark-green  "#007f06"  ;;      dark green
         ;; green  "#99c794"  ;;      green as seen in Sublime Text
         ;; green  "#3b8560"  ;;      green as iTerm2's default ANSI green
            green  "#3b8560"
     bright-green  "#00ff00"
+ansi-bright-green "#228b22"
           yellow  "#9164ff"  ;;      actually purple
    bright-yellow  "#8968cd"  ;;      actually lavender
             blue  "#6495ed"
      bright-blue  blue
-      ;; magenta  "#af5faf"
-;;bright-magenta  "#f5b5ff"
+         magenta  "#af5faf"
+  bright-magenta  "#f5b5ff"
             cyan  "#008080"
      bright-cyan  cyan
            white  "#878787"
@@ -60,60 +61,71 @@
   ;;; (i.e., almost every other terminal in use today)
    ('t 
    (setq
-
-           black  "#262626"  ;; 235  Grey15
-        ;; black  "#000000"  ;;  16  Terminal emulator's ANSI black
-        ;; black  "color-16" ;;   0  Terminal emulator's background
-    bright-black  "#5f5f5f"  ;;  59  Grey37
-             red  "#af5f00"  ;; 130  DarkOrange3
-      bright-red  "#ff7f00"  ;;  xx  DarkOrange1  ;; no X11 name
-           green  "#008700"  ;;  28  Green4
-    bright-green  "#00ff00"  ;;  46  Green1
-          yellow  "#875fff"  ;;  99  SlateBlue1   ;; actually purple
-   bright-yellow  yellow     ;;  99  SlateBlue1   ;; actually purple
-            blue  "#00afff"  ;;  39  DeepSkyBlue1
-     bright-blue  blue       ;;  39  DeepSkyBlue1
-         magenta  "#af00af"  ;; 127  Magenta3
-  bright-magenta  "#ff87ff"  ;; 213  Orchid1
-            cyan  "#00af87"  ;;  36  DarkCyan
-     bright-cyan  cyan       ;;  36  DarkCyan
-           white  "#949494"  ;; 246  Grey58
-    bright-white  white      ;; 246  Grey58
-    ))
+             black  "#141414"  ;; 235  Grey15
+          ;; black  "#000000"  ;;  16  Terminal emulator's ANSI black
+          ;; black  "color-16" ;;   0  Terminal emulator's background
+      bright-black  "#5f5f5f"  ;;  59  Grey37
+               red  "#af5f00"  ;; 130  DarkOrange3
+        bright-red  "#ff7f00"  ;;  xx  DarkOrange1  ;; no X11 name
+   ansi-bright-red  "#cd2626" ;; "firebrick3"
+             green  "#008700"  ;;  28  Green4
+      bright-green  "#00ff00"  ;;  46  Green1
+ ansi-bright-green  "#00cd00"  ;;  34  Green3
+            yellow  "#875fff"  ;;  99  SlateBlue1   ;; actually purple
+     bright-yellow  yellow     ;;  99  SlateBlue1   ;; actually purple
+              blue  "#00afff"  ;;  39  DeepSkyBlue1
+       bright-blue  blue       ;;  39  DeepSkyBlue1
+           magenta  "#af00af"  ;; 127  Magenta3
+    bright-magenta  "#ff87ff"  ;; 213  Orchid1
+              cyan  "#00af87"  ;;  36  DarkCyan
+       bright-cyan  cyan       ;;  36  DarkCyan
+             white  "#949494"  ;; 246  Grey58
+      bright-white  white      ;; 246  Grey58
+      ))
  
   ;;; Incomplete: for terminals that support only 16 colors
 ;; ((condition-1)
 ;; (setq
-
-;;         black  "#000000"  ;;   0  ANSI black
-;;  bright-black  ???        ;;   ?  ANSI bright-black
-;;           red  "#800000"  ;;   1  ANSI red
-;;    bright-red  red             1  ANSI red
-;;         green  "#008000"  ;;   2  ANSI green
-;;  bright-green  "#00ff00"  ;;   2  ANSI green
-;;        yellow  "#800080"  ;;   5  ANSI magenta
-;; bright-yellow  "#800080"  ;;   5  ANSI magenta
-;;          blue  "#800080"  ;;   4  ANSI blue
-;;   bright-blue  blue       ;;   4  ANSI blue
-;;       magenta  "#800080"  ;;   5  ANSI magenta
-;; bright-magenta "#800080"  ;;   5  ANSI magenta
-;;          cyan  "#008080"  ;;   6  ANSI cyan
-;;   bright-cyan  bright-black    ?  ANSI bright-black
-;;         white  ????       ;;   ?
-;;  bright-white  white      ;;   ?
+;;           black  "#000000"  ;;   0  ANSI black
+;;    bright-black  ???        ;;   ?  ANSI bright-black
+;;             red  "#800000"  ;;   1  ANSI red
+;;      bright-red  red             1  ANSI red
+;; ansi-bright-red  red
+;;           green  "#008000"  ;;   2  ANSI green
+;;    bright-green  "#00ff00"  ;;   2  ANSI green
+;; ansi-bright-green green
+;;          yellow  "#800080"  ;;   5  ANSI magenta
+;;   bright-yellow  "#800080"  ;;   5  ANSI magenta
+;;            blue  "#800080"  ;;   4  ANSI blue
+;;     bright-blue  blue       ;;   4  ANSI blue
+;;         magenta  "#800080"  ;;   5  ANSI magenta
+;;  bright-magenta  "#800080"  ;;   5  ANSI magenta
+;;            cyan  "#008080"  ;;   6  ANSI cyan
+;;     bright-cyan  bright-black    ?  ANSI bright-black
+;;           white  ????       ;;   ?
+;;    bright-white  white      ;;   ?
 ;;  ))
 
   ;;; Incomplete: for terminals that support only 8 colors
 ;; ((condition-2)
 ;; (setq
-;;         black  "#000000"  ;;   0  ANSI black
-;;           red  "#800000"  ;;   1  ANSI red
-;;         green  "#008000"  ;;   2  ANSI green
-;;        yellow  "#800080"  ;;   5  ANSI magenta
-;;          blue  "#800080"  ;;   4  ANSI blue
-;;       magenta  "#800080"  ;;   5  ANSI magenta
-;;          cyan  "#008080"  ;;   6  ANSI cyan
-;;         white  ????       ;;   ?
+;;           black  "#000000"  ;;   0  ANSI black
+;;     bright-black white
+;;             red  "#800000"  ;;   1  ANSI red
+;;      bright-red  red
+;; ansi-bright-red  red
+;;           green  "#008000"  ;;   2  ANSI green
+;;    bright-green  green
+;;          yellow  "#800080"  ;;   5  ANSI magenta
+;;   bright-yellow  yellow
+;;            blue  "#800080"  ;;   4  ANSI blue
+;;     bright-blue  blue
+;;         magenta  "#800080"  ;;   5  ANSI magenta
+;;  bright-magenta  magenta
+;;            cyan  "#008080"  ;;   6  ANSI cyan
+;;     bright-cyan cyan
+;;           white  ????       ;;   ?
+;;    bright-white  white
 ;;  ))
 
 ) ;; cond
@@ -203,10 +215,10 @@
    `(ansi-color-bright-black ((t (:background ,bright-black :foreground ,bright-black :underline nil))))
    
    `(ansi-color-red ((t (:background ,red :foreground ,red :underline nil))))
-   `(ansi-color-bright-red ((t (:background ,bright-red :foreground ,bright-red :underline nil))))
+   `(ansi-color-bright-red ((t (:background ,ansi-bright-red :foreground ,ansi-bright-red :underline nil))))
    
    `(ansi-color-green ((t (:background ,green :foreground ,green :underline nil))))
-   `(ansi-color-bright-green ((t (:background ,bright-green :foreground ,bright-green :underline nil))))
+   `(ansi-color-bright-green ((t (:background ,ansi-bright-green :foreground ,ansi-bright-green :underline nil))))
    
    `(ansi-color-yellow ((t (:background ,yellow :foreground ,yellow :underline nil))))
    `(ansi-color-bright-yellow ((t (:background ,bright-yellow :foreground ,bright-yellow :underline nil))))
@@ -279,7 +291,7 @@
      ((t (:foreground ,bright-magenta))))
 
    `(font-lock-comment-face
-     ((t (:foreground , red))))
+     ((t (:foreground ,red))))
 
    `(font-lock-string-face
      ((t (:foreground ,green))))
