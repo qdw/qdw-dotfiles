@@ -2103,17 +2103,20 @@ function air {
     set +uo pipefail
 }
 
-## Ballet-slippers-ordering settings
-function ballet-flats {
-    open -u "https://www.discountdance.com/dancewear/Split-Sole-Vesta-Canvas-Ballet-Shoe/p/VESTA"
-}
-
-## Coffee-bean-ordering settings
-
-function coffee {
-    local URL="https://store.awakencafe.com/s/order?location=11e93a189ebfc0bcb7910a580a1c0333#6"
-    # local URL="https://store.awakencafe.com/s/customer-accounts"
-    open -a Firefox "$URL"
+function buy {
+    # check_args 1 1 "buy PRODUCT_NAME"
+    local PRODUCT_NAME="$1"
+    local URL_FILE="$HOME/.site.bash.d/buy/$PRODUCT_NAME"
+    local URL="$(cat "$URL_FILE")"
+    CAT_EXIT_STATUS=$?
+    if [[ $CAT_EXIT_STATUS -ne 0 ]]; then
+        return $CAT_EXIT_STATUS
+    elif [[ -z "$URL" ]]; then
+        complain "'$URL_FILE' is empty"
+        return 254
+    else
+        open -a Firefox "$URL"
+    fi
 }
 
 #### Python settings
