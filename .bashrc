@@ -2104,12 +2104,15 @@ function air {
 }
 
 function buy {
+    local URL_DIR="$HOME/.site.bash.d/buy"
     # check_args 1 1 "buy PRODUCT_NAME"
     local PRODUCT_NAME="$1"
     local URL_FILE="$HOME/.site.bash.d/buy/$PRODUCT_NAME"
     local URL="$(cat "$URL_FILE")"
     CAT_EXIT_STATUS=$?
     if [[ $CAT_EXIT_STATUS -ne 0 ]]; then
+        echo "Supported things-to-buy:" > /dev/stderr
+        ls "$URL_DIR" > /dev/stderr 2>&1
         return $CAT_EXIT_STATUS
     elif [[ -z "$URL" ]]; then
         complain "'$URL_FILE' is empty"
