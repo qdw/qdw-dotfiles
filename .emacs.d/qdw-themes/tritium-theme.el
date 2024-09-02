@@ -162,13 +162,9 @@ ansi-bright-green "#228b22"
    `(show-paren-mismatch-face
      ((t (:foreground ,red :bold nil))))
 
-   ;; `(isearch
-   ;;   ((t (:background ,bright-magenta :foreground ,black :bold nil))))
    `(isearch
-     ((t (:background ,bright-red :foreground ,black :bold nil))))
+     ((t (:background ,bright-magenta :foreground ,black :bold nil))))
 
-   ;; `(lazy-highlight
-   ;;   ((t (:background ,magenta :foreground ,black :bold nil))))
    `(lazy-highlight
      ((t (:background ,red :foreground ,black :bold nil))))
 
@@ -278,8 +274,7 @@ ansi-bright-green "#228b22"
      ((t (:foreground ,bright-blue))))
 
    `(font-lock-constant-face
-     ;; ((t (:foreground ,white, :italic t))))
-     ((t (:foreground ,bright-blue :italic t))))
+     ((t (:foreground ,bright-yellow))))
 
    `(font-lock-type-face
      ((t (:foreground ,magenta))))

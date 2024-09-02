@@ -57,7 +57,7 @@
 (require 'dockerfile-mode)
 (require 'fd-dired)
 (require 'json)
-(require 'lyrics-fetcher)
+;; (require 'lyrics-fetcher)
 (require 'magit)
 ;; (require magithub)
 (require 'menu-bar)
