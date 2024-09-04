@@ -294,7 +294,7 @@ if [[ ! "$PATHS_SET_AT" ]]; then
             MY_MANPATH="$HDIR/manpages"            
             
             # man pages for software installed using brew
-            MY_MANPATH="$HDIR/share/man"            
+            MY_MANPATH="$HDIR/share/man:$MY_MANPATH"
             PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
             # Fix a problem with the nmap formula
@@ -2737,7 +2737,7 @@ export JPATH="/usr/local/opt/openjdk/bin"
 #### JavaScript settings
 
 export NODE_PATH="/opt/node/bin"
-export NODE_MANPATH="/opt/node/share/man:/opt/node/lib/node_modules/npm/man/"
+export NODE_MANPATH="/opt/node/share/man:/opt/node/lib/node_modules/npm/man"
 MY_MANPATH="$NODE_MANPATH:$MY_MANPATH"
 
 #### Jenkins settings
@@ -2939,8 +2939,8 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     # Same goes for a single trailing colon.
     PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
-    ## man page path settings
-    MANPATH="$MY_MANPATH:$MANPATH"
+    ## man page path settings    
+    MANPATH="$MY_MANPATH"
 
     ## dynamic library path settings
     LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
