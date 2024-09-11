@@ -25,7 +25,24 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this file.  If not, see http://www.gnu.org/licenses/
 
-
+(defvar black)
+(defvar bright-black)
+(defvar red)
+(defvar bright-red)
+(defvar ansi-bright-red)
+(defvar green)
+(defvar bright-green)
+(defvar ansi-bright-green)
+(defvar yellow)
+(defvar bright-yellow)
+(defvar blue)
+(defvar bright-blue)
+(defvar magenta)
+(defvar bright-magenta)
+(defvar cyan)
+(defvar bright-cyan)
+(defvar white)
+(defvar bright-white)
 
 ;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
 (cond
@@ -46,13 +63,13 @@
     bright-green  "#00ff00"
 ansi-bright-green "#228b22"
           yellow  "#9164ff"  ;;      actually purple
-   bright-yellow  "#8968cd"  ;;      actually lavender
-            blue  "#6495ed"
-     bright-blue  blue
+   bright-yellow  "#9164ff"
+            blue  "#4682b4"
+     bright-blue  "#6495ed"
          magenta  "#af5faf"
   bright-magenta  "#f5b5ff"
-            cyan  "#008080"
-     bright-cyan  cyan
+            cyan  "#327678"
+     bright-cyan  "#46a4a8"
            white  "#878787"
     bright-white  "#aaaaaa"
     ))
@@ -258,44 +275,65 @@ ansi-bright-green "#228b22"
      
    ;;;; font lock
 
-   `(font-lock-keyword-face
-     ((t (:foreground ,yellow))))
-
-   `(font-lock-function-name-face
-     ((t (:foreground ,blue))))
-
-   `(font-lock-warning-face
-     ((t ((:foreground ,bright-magenta)))))
-
    `(font-lock-builtin-face
-     ((t ((:foreground ,bright-yellow)))))
+     ((t ((:foreground ,bright-blue)))))
+
+   `(font-lock-comment-delimiter-face
+     ((t (:foreground ,red))))
      
-   `(font-lock-variable-name-face
-     ((t (:foreground ,bright-blue))))
+   `(font-lock-comment-face
+     ((t (:foreground ,red))))
 
    `(font-lock-constant-face
-     ((t (:foreground ,bright-yellow))))
+     ((t (:foreground ,yellow))))
 
-   `(font-lock-type-face
+   `(font-lock-delimiter-face
+     ((t (:foreground ,bright-cyan))))
+     
+   `(font-lock-doc-face
      ((t (:foreground ,magenta))))
+
+   `(font-lock-doc-markup-face
+     ((t (:foreground ,bright-cyan))))
+     
+   `(font-lock-function-name-face
+     ((t (:foreground ,bright-blue))))
+
+   `(font-lock-function-call-face
+     ((t (:foreground ,bright-blue))))   
+     
+   `(font-lock-keyword-face
+     ((t (:foreground ,yellow))))
 
    `(font-lock-negation-char-face
      ((t (:foreground ,bright-magenta))))
 
    `(font-lock-preprocessor-face
-     ((t (:foreground ,bright-magenta))))
+     ((t (:foreground ,bright-green))))
+     
+   `(font-lock-property-face
+     ((t (:foreground ,bright-cyan))))     
 
-   `(font-lock-comment-face
-     ((t (:foreground ,red))))
-
-   `(font-lock-string-face
+   `(font-lock-property-use-face
      ((t (:foreground ,green))))
 
-   `(font-lock-comment-delimiter-face
-     ((t (:foreground ,red))))
+   `(font-lock-punctuation-face
+     ((t (:foreground ,yellow))))
+     
+   `(font-lock-string-face
+     ((t (:foreground ,blue))))
 
-   `(font-lock-doc-face
-     ((t (:foreground ,red))))
+   `(font-lock-type-face
+     ((t (:foreground ,bright-blue))))
+
+   `(font-lock-variable-name-face
+     ((t (:foreground ,green))))
+
+   `(font-lock-variable-use-face
+     ((t (:foreground ,magenta))))
+
+   `(font-lock-warning-face
+     ((t ((:foreground ,bright-magenta :underline (:style wave :color bright-red))))))
      
    ;;;; flycheck/flymake
    
@@ -761,7 +799,8 @@ ansi-bright-green "#228b22"
 
     `(diredp-ignored-file-name
       ((t (:foreground ,bright-black))))
-   )
+
+    ) ;; custom-theme-set-faces
 
 ;;;###autoload
 (when load-file-name
