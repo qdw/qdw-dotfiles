@@ -2012,7 +2012,7 @@ function qql {
         if [[ -n ${pgpasses["$SERVICE"]} ]]; then
             PASSWORD=${pgpasses["$SERVICE"]}
         else
-            PASSWORD="$(pql "$SERVICE")"
+            PASSWORD="$("$MY_VIRTUALENV_DIR//qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")"
             if [[ $? -ne 0 ]]; then
                 echo "pql couldn't retrieve the AWS secret for $SERVICE" >&2
                 return
@@ -2522,10 +2522,19 @@ function strings { command strings -a "$@"  | $PAGER ;}
 
 # para: print any paragraph contaning the desired string. A paragraph is defined as a collection of lines followed by an all-blank line (i.e., a newline).
 function para {
-    STRING="$1"
-    shift
+    STRING="$1"; shift
     awk -v ORS="\n\n" -v RS='' "/$STRING/" "$@"
 }
+
+# Same thing, with line numbers, and a line with only whitespace also
+# marks a paragraph boundary
+function paraln {
+    # check args 1 varargs
+    local REGEX="$1"; shift
+    # awk "/$REGEX/ {print NR \": \" \$0; f=1} f && NF {print NR \": \" \$0} /^$/ {f=0}" \
+    awk "/$REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
+}
+
 
 function conf { para "$1" ~/.ssh/*.config | grep -e '^' -e "$1" ;}
 
