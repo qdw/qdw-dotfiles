@@ -1313,7 +1313,7 @@ if [[ -f "$HOMEBREW_DIFF" ]]; then
     # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
     # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
     # hd - header        (35 is SGR magenta, which shows as magenta in my term)
-    # ln - line numbers  (34 is SGR blue, which shows as light pink in my term)
+    # ln - line numbers  (34 is SGR blue, which shows as blue in my term)
     # rs - undocumented, but the default seems fine
     # 
     MY_GNU_DIFF_OPTIONS='--palette="ad=36:de=31:hd=35:ln=34:rs=0"'
@@ -1368,7 +1368,7 @@ function diff-git {
     # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
     # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
     # hd - header        (35 is SGR magenta, which shows as magenta in my term)
-    # ln - line numbers  (34 is SGR blue, which shows as light pink in my term)
+    # ln - line numbers  (34 is SGR blue, which shows as blue in my term)
     # rs - undocumented, but the default seems fine
     # 
     # command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
@@ -2864,9 +2864,31 @@ function am {
     ~/src-3/music-cli/src/am.sh
 }
 
-# zophar - search for NES music
+# zophar - search for video game music (BGM)
 function zophar {
-    open https://mail.zophar.net/music/nintendo-nes-nsf
+    local URL
+    local NES_URL="https://mail.zophar.net/music/nintendo-nes-nsf"
+    
+    if [[ $# -eq 0 ]]; then
+        # default: NES
+        URL="$NES_URL"
+    else
+        local CONSOLE="$1"
+        case "$CONSOLE" in
+            NES|nes)
+                URL="$NES_URL";;
+            SNES|snes)
+                URL="https://www.zophar.net/music/nintendo-snes-spc";;
+            PS2|PlayStation)
+                URL="https://www.zophar.net/music/playstation2-psf2";;
+            PSP)
+                URL="https://www.zophar.net/music/playstation-portable-psp";;
+            *)
+                complain "Console '$1' is unsupported"; return 1;;
+        esac
+        
+        open -u "$URL"
+    fi
 }
 
 #### YAML and JSON settings
