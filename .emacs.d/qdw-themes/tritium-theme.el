@@ -63,13 +63,15 @@
     bright-green  "#00ff00"
 ansi-bright-green "#228b22"
           yellow  "#9164ff"  ;;      actually purple
-   bright-yellow  "#9164ff"
-            blue  "#4682b4"
-     bright-blue  "#6495ed"
+   bright-yellow  "#6b56c8"
+            blue  "#6495ed"
+     ;; bright-blue  "#176bbf"
+     ;; bright-blue "#1d71ec"
+     bright-blue  "#6d60ff"
          magenta  "#af5faf"
   bright-magenta  "#f5b5ff"
-            cyan  "#327678"
-     bright-cyan  "#46a4a8"
+            cyan  "#028080"
+     bright-cyan  "#48d1cc"
            white  "#878787"
     bright-white  "#aaaaaa"
     ))
@@ -276,16 +278,16 @@ ansi-bright-green "#228b22"
    ;;;; font lock
 
    `(font-lock-builtin-face
-     ((t ((:foreground ,bright-blue)))))
+     ((t ((:foreground ,blue)))))
 
    `(font-lock-comment-delimiter-face
-     ((t (:foreground ,red))))
+     ((t (:foreground ,cyan))))
      
    `(font-lock-comment-face
      ((t (:foreground ,red))))
 
    `(font-lock-constant-face
-     ((t (:foreground ,yellow))))
+     ((t (:foreground ,bright-red))))
 
    `(font-lock-delimiter-face
      ((t (:foreground ,bright-cyan))))
@@ -297,16 +299,13 @@ ansi-bright-green "#228b22"
      ((t (:foreground ,bright-cyan))))
      
    `(font-lock-function-name-face
-     ((t (:foreground ,bright-blue))))
+     ((t (:foreground ,blue))))
 
    `(font-lock-function-call-face
-     ((t (:foreground ,bright-blue))))   
+     ((t (:foreground ,blue))))   
      
    `(font-lock-keyword-face
      ((t (:foreground ,yellow))))
-
-   `(font-lock-negation-char-face
-     ((t (:foreground ,bright-magenta))))
 
    `(font-lock-preprocessor-face
      ((t (:foreground ,bright-green))))
@@ -320,11 +319,14 @@ ansi-bright-green "#228b22"
    `(font-lock-punctuation-face
      ((t (:foreground ,yellow))))
      
+   ;; `(font-lock-string-face
+   ;;   ((t (:foreground ,white))))
+
    `(font-lock-string-face
-     ((t (:foreground ,blue))))
+     ((t (:foreground ,bright-blue))))
 
    `(font-lock-type-face
-     ((t (:foreground ,bright-blue))))
+     ((t (:foreground ,blue))))
 
    `(font-lock-variable-name-face
      ((t (:foreground ,green))))
