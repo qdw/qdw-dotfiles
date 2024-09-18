@@ -29,10 +29,8 @@
 (defvar bright-black)
 (defvar red)
 (defvar bright-red)
-(defvar ansi-bright-red)
 (defvar green)
 (defvar bright-green)
-(defvar ansi-bright-green)
 (defvar yellow)
 (defvar bright-yellow)
 (defvar blue)
@@ -52,18 +50,16 @@
    (setq
         ;; black  "#1c1c1c"  ;;      Terminal emulator's ANSI black
            black  "#141414"  ;;      Grey15
-    bright-black  "#383838"
+    bright-black  "#424242"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
- ansi-bright-red  "#be4c4c"
    ;; dark-green  "#007f06"  ;;      dark green
         ;; green  "#99c794"  ;;      green as seen in Sublime Text
         ;; green  "#3b8560"  ;;      green as iTerm2's default ANSI green
            green  "#3b8560"
     bright-green  "#00ff00"
-ansi-bright-green "#228b22"
           yellow  "#9164ff"  ;;      actually purple
-   bright-yellow  "#6b56c8"
+   bright-yellow  "#b8860b"  ;;      darkgoldenrod
             blue  "#6495ed"
      ;; bright-blue  "#176bbf"
      ;; bright-blue "#1d71ec"
@@ -86,10 +82,8 @@ ansi-bright-green "#228b22"
       bright-black  "#5f5f5f"  ;;  59  Grey37
                red  "#af5f00"  ;; 130  DarkOrange3
         bright-red  "#ff7f00"  ;;  xx  DarkOrange1  ;; no X11 name
-   ansi-bright-red  "#cd2626" ;; "firebrick3"
              green  "#008700"  ;;  28  Green4
       bright-green  "#00ff00"  ;;  46  Green1
- ansi-bright-green  "#00cd00"  ;;  34  Green3
             yellow  "#875fff"  ;;  99  SlateBlue1   ;; actually purple
      bright-yellow  yellow     ;;  99  SlateBlue1   ;; actually purple
               blue  "#00afff"  ;;  39  DeepSkyBlue1
@@ -109,10 +103,8 @@ ansi-bright-green "#228b22"
 ;;    bright-black  ???        ;;   ?  ANSI bright-black
 ;;             red  "#800000"  ;;   1  ANSI red
 ;;      bright-red  red             1  ANSI red
-;; ansi-bright-red  red
 ;;           green  "#008000"  ;;   2  ANSI green
 ;;    bright-green  "#00ff00"  ;;   2  ANSI green
-;; ansi-bright-green green
 ;;          yellow  "#800080"  ;;   5  ANSI magenta
 ;;   bright-yellow  "#800080"  ;;   5  ANSI magenta
 ;;            blue  "#800080"  ;;   4  ANSI blue
@@ -132,7 +124,6 @@ ansi-bright-green "#228b22"
 ;;     bright-black white
 ;;             red  "#800000"  ;;   1  ANSI red
 ;;      bright-red  red
-;; ansi-bright-red  red
 ;;           green  "#008000"  ;;   2  ANSI green
 ;;    bright-green  green
 ;;          yellow  "#800080"  ;;   5  ANSI magenta
@@ -230,10 +221,10 @@ ansi-bright-green "#228b22"
    `(ansi-color-bright-black ((t (:background ,bright-black :foreground ,bright-black :underline nil))))
    
    `(ansi-color-red ((t (:background ,red :foreground ,red :underline nil))))
-   `(ansi-color-bright-red ((t (:background ,ansi-bright-red :foreground ,ansi-bright-red :underline nil))))
+   `(ansi-color-bright-red ((t (:background ,bright-red :foreground ,bright-red :underline nil))))
    
    `(ansi-color-green ((t (:background ,green :foreground ,green :underline nil))))
-   `(ansi-color-bright-green ((t (:background ,ansi-bright-green :foreground ,ansi-bright-green :underline nil))))
+   `(ansi-color-bright-green ((t (:background ,bright-green :foreground ,bright-green :underline nil))))
    
    `(ansi-color-yellow ((t (:background ,yellow :foreground ,yellow :underline nil))))
    `(ansi-color-bright-yellow ((t (:background ,bright-yellow :foreground ,bright-yellow :underline nil))))
@@ -270,7 +261,7 @@ ansi-bright-green "#228b22"
      ((t (:foreground ,yellow))))
      
    `(mode-line
-     ((t (:foreground ,bright-yellow :background ,bright-black))))
+     ((t (:foreground ,yellow :background ,bright-black))))
 
    `(mode-line-inactive
      ((t (:foreground ,white :background ,bright-black))))
@@ -624,7 +615,7 @@ ansi-bright-green "#228b22"
       ((t (:foreground ,magenta))))
 
     `(outline-8
-      ((t (:foreground ,bright-yellow))))
+      ((t (:foreground ,yellow))))
 
     ;;;; org-mode
 
