@@ -353,6 +353,12 @@ function fdgrep {
         | $PAGER
 }
 
+# Recursively search the current working directory for files that don't
+# end in a single newline, and print their names
+function newlineless {
+    fd -t f -x bash -c 'tail -c 1 "$1" | ggrep -qvE "^$" && echo "$1"' _ {} \;
+}
+
 # Grep TypeScript files only
 function tsgrep { fdgrep "[.]ts$" "$@" ;}
 
@@ -1039,8 +1045,8 @@ fi
 
 # Color the shell prompt ANSI blue (to distinguish commands from output).
 
-#export PS1="\\[\\e[34;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
-export PS1="\\[\\e[34;1m\\]\\w\\$\\[\\e[0m\\] "
+#export PS1="\\[\\e[33;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
+export PS1="\\[\\e[33;1m\\]\\w\\$\\[\\e[0m\\] "
 export DEFAULT_PS1="$PS1"
 
 # macOS: suppress nag message about Bash being deprecated in favor of zsh
@@ -1564,6 +1570,20 @@ function bc {
 
 # gbs (Git Branches) - list (local) git branches
 function gbs { git branch ;}
+
+# For any subdirs of . that are git working copies,
+# show my local branches.
+function gbss {
+    local ORIG_DIR="$(pwd)"
+    for DIR in $(fdd --max-depth 1 --type d); do
+        if [[ -d "${DIR}.git" ]] && cd "$DIR" >/dev/null; then
+             echo "$(color "$DIR" "blue")"
+             gbs
+             echo
+        fi
+        cd "$ORIG_DIR" >/dev/null    
+    done
+}
 
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
 function gurl {
@@ -2455,7 +2475,8 @@ function my_ssh {
 # aa graceful|start|... -  because typing 'sudo apache2ctl' is too much work.
 function aa { sudo apache2ctl "$@" ;}
 
-function atom { newsbeuter "$@" ;}
+function atom { newsboat "$@" ;}
+function news { cast-text "$@" ;}
 
 # cel FILE.el ("compile LISP") - byte-compile an emacs LISP file.
 function cel { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
