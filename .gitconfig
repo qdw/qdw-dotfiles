@@ -9,16 +9,16 @@
 	
 [color "diff"]
 	meta = magenta
-	old = brightred
-	new = green
-	oldMoved = blue
-	newMoved = yellow
-	oldMovedAlternative = green
-	newMovedAlternative = cyan
+	old = "#ac4d4d"
+	new = "#3b8560"
+	oldMoved = brightblack
+	newMoved = brightblue
+	oldMovedAlternative = cyan
+	newMovedAlternative = brightcyan
 
 [color "blame"]
 	highlightRecent = "22,6.months.ago,28,3.months.ago,34,6.weeks.ago,40,3.weeks.ago,47,10.days.ago,120"
-
+	
 [core]
 	excludesfile = ~/.gitignore
 	ignorecase = false
@@ -49,6 +49,7 @@
 	ch = "!function _ch() { git diff \"${1}^\" \"${1}\" ;}; _ch "
 	co = checkout
 	comp = diff --compact-summary
+	delete-remote-branch = push origin --delete
 	dr = "!git diff  \"origin/$(git branch --show-current)\"  \"$(git branch --show-current)\"  "
 	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
