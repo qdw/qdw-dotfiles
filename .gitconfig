@@ -46,22 +46,23 @@
 [alias]
 	added = diff --diff-filter=A
 	char-diff = diff --word-diff-regex=.
-	ch = "!function _ch() { git diff \"${1}^\" \"${1}\" ;}; _ch "
+	ch = "!function _ch { git diff \"${1}^\" \"${1}\" ;}; _ch "
 	co = checkout
 	comp = diff --compact-summary
 	delete-remote-branch = push origin --delete
 	dr = "!git diff  \"origin/$(git branch --show-current)\"  \"$(git branch --show-current)\"  "
 	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
-	last = "!function _last() { local MY_COMMIT; if [[ -z \"$1\" ]] || [[ \"$1\" = \"--\" ]]; then MY_COMMIT=\"HEAD\"; else MY_COMMIT=\"$(shift)\"; fi; echo \"MY_COMMIT: $MY_COMMIT\"; git diff \"$MY_COMMIT^\" \"$MY_COMMIT\" ;}; _last "
+	last = "!function _last { local MY_COMMIT; if [[ -z \"$1\" ]] || [[ \"$1\" = \"--\" ]]; then MY_COMMIT=\"HEAD\"; else MY_COMMIT=\"$(shift)\"; fi; echo \"MY_COMMIT: $MY_COMMIT\"; git diff \"$MY_COMMIT^\" \"$MY_COMMIT\" ;}; _last "
 	main = "!sh -c 'git checkout `/Users/quinn.weaver/.gitconfig-helper--get-main-branch-name`'"
 	mm = commit --allow-empty-message -m ''
 	no = diff --name-only
-	nol = "!function _nol() { git last "$@" --name-only ;}; _nol "
-	coml = "!function _nol() { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
+	nol = "!function _nol { git last "$@" --name-only ;}; _nol "
+	coml = "!function _nol { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
 	report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	s = status
+	tg = "!function _tg { git tag | sort -g ;}; _tg"
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit
 	branch = branch --quiet
 
