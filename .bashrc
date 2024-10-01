@@ -2034,6 +2034,34 @@ function pg {
 }
 
 declare -Ax pgpasses
+
+function pql {
+    local SERVICE  PASSWORD
+    if [[ $# -ne 1 ]]; then
+        complain "pql: error: missing argument. Usage: pql pg_service.conf-stanza-name | psql --clear-cache"
+        return 1
+    else
+        if [[ "$1" = "--clear-cache" ]]; then
+            unset pgpasses
+            return
+        else
+            SERVICE="$1";
+            if [[ -n ${pgpasses["$SERVICE"]} ]]; then
+                PASSWORD=${pgpasses["$SERVICE"]}
+            else
+                PASSWORD="$("$MY_VIRTUALENV_DIR/qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")";
+                if [[ $? -ne 0 ]]; then
+                    complain "pql couldn't retrieve the AWS secret for $SERVICE" 1>&2;
+                    return 2
+                fi
+            fi
+
+            pgpasses["$SERVICE"]="$PASSWORD"
+            echo "$PASSWORD"
+        fi
+    fi
+}
+
 function qql {
     local SERVICE PASSWORD
     
