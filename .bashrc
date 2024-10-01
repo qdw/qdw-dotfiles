@@ -1251,17 +1251,31 @@ function bbat  {
         && elinks "$TMPFILE"
 }
 
-# cdy ("CD Realname") - cd to the directory that a symlink points to (or, if it points to a non-directory file, cd to that file's parent dir).
+# cdr ("CD Realname") - cd to the directory that a symlink points to
 function cdr {
-    local TARGET
-    TARGET=$(readlink -- "$1")
-
-    if [[ -d "$TARGET" ]]; then
-        cd "$TARGET"
-    else
-        PARENT=$(echo "$TARGET" | sed 's/\(.*\)[/].*/\1/')
-        cd "$PARENT"
-    fi
+    # check_args 1 1
+    local TARGET="$1"
+    local DEPTH=0
+    local MAX_DEPTH=9
+    while true; do
+        if [[ $DEPTH -ge $((MAX_DEPTH - 1)) ]]; then
+            complain "Giving up after following $MAX_DEPTH levels of symlinks"
+            complain "(do you have a circular reference?)"
+            return 1
+        elif [[ -L "$TARGET" ]]; then
+            if [[ ! -e "$TARGET" ]]; then
+                complain "Broken symlink '$TARGET'"
+                return 2
+            else
+                TARGET="$(realpath "$TARGET")"
+                DEPTH=$((DEPTH + 1))
+                continue
+            fi
+        else
+            cd "$TARGET"
+            return
+        fi
+    done
 }
 
 # Report symlinks as symlinks
