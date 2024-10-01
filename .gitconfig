@@ -53,7 +53,7 @@
 	dr = "!git diff  \"origin/$(git branch --show-current)\"  \"$(git branch --show-current)\"  "
 	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
-	last = "!function _last { local MY_COMMIT; if [[ -z \"$1\" ]] || [[ \"$1\" = \"--\" ]]; then MY_COMMIT=\"HEAD\"; else MY_COMMIT=\"$(shift)\"; fi; echo \"MY_COMMIT: $MY_COMMIT\"; git diff \"$MY_COMMIT^\" \"$MY_COMMIT\" ;}; _last "
+	last = "!f() { git diff ${1:-HEAD}^ ${1:-HEAD}; }; f"
 	main = "!sh -c 'git checkout `/Users/quinn.weaver/.gitconfig-helper--get-main-branch-name`'"
 	mm = commit --allow-empty-message -m ''
 	no = diff --name-only
