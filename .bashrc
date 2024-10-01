@@ -1263,11 +1263,11 @@ function cdr {
             complain "(do you have a circular reference?)"
             return 1
         elif [[ -L "$TARGET" ]]; then
-            if [[ ! -e "$TARGET" ]]; then
-                complain "Broken symlink '$TARGET'"
-                return 2
+            TARGET="$(realpath "$TARGET")"
+            REALPATH_EXIT_STATUS=$?
+            if [[ $REALPATH_EXIT_STATUS -ne 0 ]]; then
+                return $REALPATH_EXIT_STATUS
             else
-                TARGET="$(realpath "$TARGET")"
                 DEPTH=$((DEPTH + 1))
                 continue
             fi
