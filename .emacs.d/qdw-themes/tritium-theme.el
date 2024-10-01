@@ -50,7 +50,7 @@
    (setq
         ;; black  "#1c1c1c"  ;;      Terminal emulator's ANSI black
            black  "#141414"  ;;      Grey15
-    bright-black  "#424242"
+    bright-black  "#575757"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
    ;; dark-green  "#007f06"  ;;      dark green
