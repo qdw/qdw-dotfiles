@@ -1,3 +1,7 @@
+;;;; Read employer-specific settings (if present)
+
+(load-file (expand-file-name "~/.emacs.d/upstart.el")))
+
 ;;;; Settings to remove UI cruft
 
 (setq inhibit-startup-screen 't)
@@ -127,7 +131,7 @@ but it calls defvar under the hood."
                                         ("base0E" . "bright-cyan")
                                         ("base0F" . "bright-white")))                             
         
-        (letrec ((tinted-name (car base16name-tritiumname))
+        (let* ((tinted-name (car base16name-tritiumname))
                  (tritium-name (cdr base16name-tritiumname))
                  (hex (symbol-value (intern tritium-name))))
           (insert (concat tinted-name ": \"" hex "\"\n"))))
@@ -257,10 +261,10 @@ use `dired-find-file' to open it in a new buffer."
   (+ (if (bolp) 1 0) (count-lines 1 (point))))
 
 (defun open-in-app-qdw (&rest args)
-  (letrec ((app (or (car args) "/usr/bin/open"))
-           (other-args (or (cdr args) '()))
-           (command-as-list (cons app (cons buffer-file-name other-args)))
-           (command-as-string (mapconcat 'shell-quote-argument
+  (let* ((app (or (car args) "/usr/bin/open"))
+         (other-args (or (cdr args) '()))
+         (command-as-list (cons app (cons buffer-file-name other-args)))
+         (command-as-string (mapconcat 'shell-quote-argument
                                          command-as-list
                                          " ")))
     (async-shell-command command-as-string)))
@@ -563,11 +567,24 @@ This command does the reverse of `fill-region'."
                          (expand-file-name "~/personal.org")
                          ))
 
-(defun org-insert-jira-link-qdw (ticket-name)
-  (interactive "MTicket name (e.g. DATAPLAT-000): ")
-  (org-insert-link nil
-                   (concat jiralib-url "/browse/" ticket-name)
-                   ticket-name))
+(defun org-insert-jira-link-qdw ()
+  (interactive)
+  (letrec ((pre-filled-text (if (boundp 'jira-default-project-qdw)
+                                (concat jira-default-project-qdw "-")
+                                ""))
+           (ticket-name (read-string
+                         "Ticket name (e.g. MYPROJ-000): "
+                         pre-filled-text
+                         nil
+                         nil
+                         nil)))
+    (message (format "jira-default-project-qdw: %s\npre-filled-text: %s"
+                     jira-default-project-qdw
+                     pre-filled-text))
+
+    (org-insert-link nil
+                     (concat jiralib-url "/browse/" ticket-name)
+                     ticket-name)))
 
 ;; This regexp is correct...
 (setq jira-ticket-regexp-qdw
@@ -772,7 +789,7 @@ This command does the reverse of `fill-region'."
 
 (defun open-current-line-in-github-web-ui-qdw ()
   (interactive)
-  (letrec
+  (let*
     ((filename
       (file-name-nondirectory (buffer-file-name)))
      (line
@@ -1102,7 +1119,7 @@ This command does the reverse of `fill-region'."
 ;;  'shell-mode-hook
 ;;  (lambda ()
 ;;    (shell-dirtrack-mode -1)
-;;    (letrec
+;;    (let*
 ;;        (( sgs "\\(?:" )  ;; start a "shy" (non-capturing) group
 ;;         ( cgs "\\("   )  ;; start a capturing group
 ;;         ( ge "\\)"    )  ;; end any group (shy or capturing)

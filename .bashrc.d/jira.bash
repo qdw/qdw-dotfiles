@@ -73,9 +73,9 @@ function jira-url-for-ticket {
     local TICKET_NUMBER
     
     if [[ $# -ne 1 ]]; then
-        echo "jira-open-existing-ticket: error: wrong number of arguments. Usage: jira-open-existing-ticket TICKET_NUMBER"
+        echo "jira-url-for-ticket: error: wrong number of arguments. Usage: jira-url-for-ticket TICKET_NUMBER"
     elif [[ -z "$JIRA_BASE_URL" ]]; then
-        echo "jira-open-existing-ticket: error: you must set the JIRA_BASE_URL environment variable"
+        echo "jira-url-for-ticket: error: you must set the JIRA_BASE_URL environment variable"
     else
     
         TICKET_NUMBER="$1"
@@ -84,7 +84,7 @@ function jira-url-for-ticket {
         # the default project (e.g., "DATAPLAT-")
         if [[ "$TICKET_NUMBER" =~ ^[[:digit:]]+ ]]; then
             if [[ -z "$JIRA_DEFAULT_PROJECT" ]]; then
-                echo "jira-open-existing-ticket: error: numeric ticket ID given but JIRA_DEFAULT_PROCESS not set"
+                echo "jira-url-for-ticket: error: numeric ticket ID given but JIRA_DEFAULT_PROCESS not set"
                 return
             else
                 TICKET_NUMBER="${JIRA_DEFAULT_PROJECT}-${TICKET_NUMBER}"
@@ -93,6 +93,10 @@ function jira-url-for-ticket {
 
         echo "${JIRA_BASE_URL}/browse/${TICKET_NUMBER}"
     fi
+}
+
+function jira-open-existing-ticket {
+    open -u "$(jira-url-for-ticket "$@")"
 }
 
 function ticket {
