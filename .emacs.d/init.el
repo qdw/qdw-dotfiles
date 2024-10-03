@@ -109,6 +109,19 @@ but it calls defvar under the hood."
                               'face `(:foreground ,bright-hex-string)))))
         (display-buffer buffer))))
 
+(defun tritium-show-test-pattern-brights-last ()
+  (interactive)
+  (let ((buffer (get-buffer-create "*tritium colors*")))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (dolist (brightness '("" "bright-"))
+        (dolist (color '("black" "red" "green" "yellow" "blue" "magenta" "cyan" "white"))
+          (let* ((color-name (concat brightness color))
+                 (hex-string (symbol-value (intern color-name))))
+            (insert (propertize (concat hex-string "  " color-name "\n")
+                                'face `(:foreground ,hex-string)))))))
+    (display-buffer buffer)))
+                                
 (defun tritium-generate-tinted-theme-yaml ()
   (interactive)
   (let ((buffer (get-buffer-create "*tritium.yaml")))
@@ -164,7 +177,7 @@ but it calls defvar under the hood."
   (interactive)
   (load-theme 'tritium 't 't))
 
-(defun reload-tritium-theme-on-save ()
+(defun reload-and-display-tritium-theme-colors-on-save ()
   (let
     ((buffer-path
       (file-truename buffer-file-name))
@@ -173,10 +186,11 @@ but it calls defvar under the hood."
       (file-truename
        (expand-file-name "~/.emacs.d/qdw-themes/tritium-theme.el"))))
 
-    (when(string-equal buffer-path tritium-path)
-      (reload-tritium))))
+    (when (string-equal buffer-path tritium-path)
+      (reload-tritium)
+      (tritium-show-test-pattern-brights-last))))
   
-(add-hook 'after-save-hook #'reload-tritium-theme-on-save)
+(add-hook 'after-save-hook #'reload-and-display-tritium-theme-colors-on-save)
 
 (defun re-theme ()
   "Load a file that defines the 16 4-bit ANSI colors;

@@ -53,21 +53,20 @@
     bright-black  "#575757"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
-   ;; dark-green  "#007f06"  ;;      dark green
-        ;; green  "#99c794"  ;;      green as seen in Sublime Text
-        ;; green  "#3b8560"  ;;      green as iTerm2's default ANSI green
            green  "#3b8560"
-    bright-green  "#00ff00"
+    bright-green  "#00a700"  ;; bright green
+ ;; bright-green  "#00ff00"  ;; brightest possible green
           yellow  "#9164ff"  ;;      actually purple
-   bright-yellow  "#b8860b"  ;;      darkgoldenrod
+;; bright-yellow  "#ceb80c"  ;; less-bright yellow
+   bright-yellow  "#b5b500"  ;; bright yellow   
+;; bright-yellow  "#ffff00"  ;; brightest possible yellow
             blue  "#6495ed"
-     ;; bright-blue  "#176bbf"
-     ;; bright-blue "#1d71ec"
-     bright-blue  "#6d60ff"
+;;   bright-blue  "#6e4eb5"
+     bright-blue  "#6161ff"
          magenta  "#af5faf"
-  bright-magenta  "#f5b5ff"
+  bright-magenta  "#d8a0d0"
             cyan  "#028080"
-     bright-cyan  "#48d1cc"
+     bright-cyan  "#4bbfc4"
            white  "#878787"
     bright-white  "#aaaaaa"
     ))
@@ -310,17 +309,14 @@
    `(font-lock-punctuation-face
      ((t (:foreground ,yellow))))
      
-   ;; `(font-lock-string-face
-   ;;   ((t (:foreground ,white))))
-
    `(font-lock-string-face
-     ((t (:foreground ,bright-blue))))
+     ((t (:foreground ,green))))
 
    `(font-lock-type-face
-     ((t (:foreground ,blue))))
+     ((t (:foreground ,magenta))))
 
    `(font-lock-variable-name-face
-     ((t (:foreground ,green))))
+     ((t (:foreground ,blue))))
 
    `(font-lock-variable-use-face
      ((t (:foreground ,magenta))))
