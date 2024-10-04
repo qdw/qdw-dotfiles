@@ -2166,21 +2166,38 @@ function air {
 }
 
 function buy {
+    # check_args 0 1 "buy [PRODUCT_NAME]"
+    local URL
     local URL_DIR="$HOME/.site.bash.d/buy"
-    # check_args 1 1 "buy PRODUCT_NAME"
-    local PRODUCT_NAME="$1"
-    local URL_FILE="$HOME/.site.bash.d/buy/$PRODUCT_NAME"
-    local URL="$(cat "$URL_FILE")"
-    CAT_EXIT_STATUS=$?
-    if [[ $CAT_EXIT_STATUS -ne 0 ]]; then
-        echo "Supported things-to-buy:" > /dev/stderr
-        ls "$URL_DIR" > /dev/stderr 2>&1
-        return $CAT_EXIT_STATUS
-    elif [[ -z "$URL" ]]; then
-        complain "'$URL_FILE' is empty"
-        return 254
-    else
-        open -a Firefox "$URL"
+    function list-things-you-can-buy {
+        local OUTPUT_DEVICE="$1"
+        echo "Things you can buy:" > "$OUTPUT_DEVICE"
+        echo > "$OUTPUT_DEVICE"
+        command ls -1 --color=never "$URL_DIR" > "$OUTPUT_DEVICE"
+    }
+    
+    if [[ $# -eq 0 ]]; then
+        list-things-you-can-buy /dev/stdout
+    elif [[ $# -eq 1 ]]; then
+        local PRODUCT_NAME="$1"
+        local URL_FILE="$HOME/.site.bash.d/buy/$PRODUCT_NAME"
+        if [[ ! -e "$URL_FILE" ]]; then
+            complain "Don't know how to buy '$PRODUCT_NAME'"
+            complain "(no such file '$URL_FILE')"
+            list-things-you-can-buy /dev/stderr
+            return 1
+        else
+            local URL="$(cat "$URL_FILE")"
+            CAT_EXIT_STATUS=$?
+            if [[ $CAT_EXIT_STATUS -ne 0 ]]; then
+                return $CAT_EXIT_STATUS
+            elif [[ -z "$URL" ]]; then
+                complain "'$URL_FILE' is empty"
+                return 254
+            else
+                open -a Firefox "$URL"
+            fi
+        fi
     fi
 }
 
