@@ -1,6 +1,9 @@
 ;;;; Read employer-specific settings (if present)
 
-(load-file (expand-file-name "~/.emacs.d/upstart.el")))
+(condition-case
+    nil
+    (load-file (expand-file-name "~/.emacs.d/upstart.el"))
+    (error nil))
 
 ;;;; Settings to remove UI cruft
 
