@@ -1,45 +1,33 @@
-;;;; Read employer-specific settings (if present)
-
+;;;; Machine-specific settings (catch exception if no such file)
 (condition-case
     nil
-    (load-file (expand-file-name "~/.emacs.d/upstart.el"))
+    (load-file (expand-file-name "~/.emacs.d/site/site.el"))
     (error nil))
 
-;;;; Settings to remove UI cruft
+;;;; Window-chrome settings
 
 (setq inhibit-startup-screen 't)
 (if (boundp 'menu-bar-mode) (menu-bar-mode -1))
 (if (boundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
-;;;; Settings to... use bold type never.
-
-(mapc
- (lambda (face)
-   (set-face-attribute face nil :weight 'normal))
- (face-list))
-
 ;;;; Settings for GUI Emacs versus terminal Emacs
 
 (defun initialize-ui ()
-  (cond ((display-graphic-p)
-         (set-face-font 'default "Menlo-18")
-         ;; Other fonts that are okay, sort of, I guess
-                              ;; "SF-18-Regular")
-                              ;; "Hack-14-Regular")
-                              ;; "JetBrains Mono-14")
-                              ;; "Fira Code-16")
-
-	 (blink-cursor-mode -1))
-
-        ('t
-         (xterm-mouse-mode 1)
-         (global-set-key [mouse-4]
-                         (lambda () (interactive) (scroll-down 1)))
-         (global-set-key [mouse-5]
-                         (lambda () (interactive) (scroll-up 1)))
-         (defun track-mouse (e))
-         (setq mouse-sel-mode 't))))
+  (interactive)
+  (cond
+    ((display-graphic-p)
+     (set-face-font 'default "Menlo-17")
+     (blink-cursor-mode -1))
+       
+    ('t
+     (xterm-mouse-mode 1)
+     (global-set-key [mouse-4]
+                     (lambda () (interactive) (scroll-down 1)))
+     (global-set-key [mouse-5]
+                     (lambda () (interactive) (scroll-up 1)))
+     (defun track-mouse (e))
+     (setq mouse-sel-mode 't))))
 
 (add-hook 'after-make-frame-functions
           (lambda (frame)
@@ -52,7 +40,11 @@
 ;; I'm running emacs as a daemon,
 ;; so just require all these modules at once;
 ;; don't get clever with on-demand loading.
+
+;; Unpacked third-party libraries that I've downloaded
 (add-to-list 'load-path (expand-file-name "~/.site.lisp.d"))
+
+
 (setq-default load-prefer-newer 't)
 
 (require 'ansi-color)
@@ -152,27 +144,6 @@ but it calls defvar under the hood."
                  (hex (symbol-value (intern tritium-name))))
           (insert (concat tinted-name ": \"" hex "\"\n"))))
       (display-buffer buffer))))
-        
-;; (load (expand-file-name "~/.emacs.d/qdw-themes/qdw-colors.el"))
-
-;;;; Spaces-versus-tabs settings
-
-;; Experimental: highlight tabs used as indentation in coding,
-;; since I prefer spaces... but not in the PostgreSQL source code,
-;; and not in Go, because tabs are the convention there.
-;;
-;; (set-face-attribute 'whitespace-tab nil
-;;                     :background red
-;;                     :foreground black)                    
-;;
-;; (setq-default whitespace-style '(tabs))
-;; (add-hook 'after-change-major-mode-hook
-;;           (let ((pth (file-truename buffer-file-name)))
-;;             (unless (or (string-prefix-p "~/src-3/postgres/" pth)
-;;                         (string-suffix-p ".go" pth))
-;;               (whitespace-mode))))
-
-;;;; Color/theme settings
 
 (defalias 'colors 'list-colors-display)
     
@@ -214,9 +185,13 @@ but it calls defvar under the hood."
 	     (expand-file-name "~/.emacs.d/qdw-themes")
              (expand-file-name "~/.emacs.d/third-party-themes"))
 
-(load-theme 'tritium 't)             
+(load-theme 'tritium 't)
 
-;;;; Some color themes I like
+;; Disable bold type passim.
+(mapc
+ (lambda (face)
+   (set-face-attribute face nil :weight 'normal))
+ (face-list))
 
 ;; tritium, a versatile, dim dark theme by qdw
 ;; - Looks good under a variety of indoor lighting conditions
@@ -653,16 +628,16 @@ This command does the reverse of `fill-region'."
 
   ;; #FIXME: set these in tritium-theme.el?
   org-todo-keyword-faces
-  '(
-    ("GET_HELP" . "#ff00af")
-    ("NEXT_ACTION" . "#ff00af")
-    ("AWAITING_RESPONSE" . "#ff00af")
-    ("QUESTION" . "#7b5dee")
-    ("POSTPONED" . "#7b5dee")
-    ("INFO" . "#7b5dee")
-    ("PROJECT" . "#00afff")
-    ("SUBPROJECT" . "#00afaf")
-    ("IN_PROGRESS" . "#00ff00")
+  `(
+    ("GET_HELP" . ,bright-yellow)
+    ("NEXT_ACTION" . ,bright-green)
+    ("AWAITING_RESPONSE" . ,bright-magenta)
+    ("QUESTION" . ,magenta)
+    ("POSTPONED" . ,yellow)
+    ("INFO" . ,yellow)
+    ("PROJECT" . ,blue)
+    ("SUBPROJECT" . ,bright-cyan)
+    ("IN_PROGRESS" . ,bright-red)
     ))
 
 ;; Hide the PROPERTIES section if folded;
@@ -1012,69 +987,6 @@ This command does the reverse of `fill-region'."
 (setq lyrics-fetcher-format-file-name-method
       'munge-song-or-band-name)
 
-;; ;; sketch
-;; (defun macos-open (file-name)
-;;   (async-shell-command
-;;    (shell-quote
-;;     (concat "/usr/bin/open " (expand-file-name file-name)))))
-
-;; ;; sketch
-;; (defun macos-tell-app-to-open (app file-name)
-;;   (run-applescript
-;;    (concat
-;;     "tell application "
-;;     (shell-quote app)
-;;     " to open "
-;;     (shell-quote file-name))))
-
-;; ;; sketch
-;; (defun run-applescript (string)
-;;   (async-shell-command
-;;     (format "osascript -e '%s'"
-;;             (shell-quote-argument string))))
-
-;; sketch
-;; (let ((orig-action
-;;        (assoc ":follow" (assoc "file" org-link-parameters)))
-;;       (case-fold-search
-;;        't))
-;;   (org-link-set-parameters
-;;    "file"
-;;    :follow
-;;    (lambda (file-name arg)
-;;      (if (string-match-p ".sid" file-name)
-;;        (async-shell-command
-;;         (run-applescript "
-;;           on run argv
-;;               tell application \"Cog\" to open item 1 of argv
-;;           end run"))
-;;        (orig-action file-name)))))
-
-;; ;; Broken; no-op
-;; (defun org-recursively-mark-as-done ()
-;;   (interactive)
-;;   (org-map-entries
-;;     (let ((state (nth 2 (org-heading-components))))
-;;       (when (cl-position state org-todo-keywords)
-;;         (org-todo "DONE")))))
-
-
-;; N.G.
-;;
-;; (defun my-cd (dir)
-;;   "tell a running shell-mode session to cd to `dir'"
-;;   (if (not dir)
-;;       (error "No dir argument specified")
-;;       (let ((shell-buffer (get-buffer "*shell*"))
-;;             (shell-process (get-process "shell")))
-;;         (if (and shell-buffer shell-process)
-;;             (with-current-buffer shell-buffer
-;;               (comint-send-input (concat "cd " dir)))
-;;               (shell-process-cd dir)
-;;             (error "my-cd failed somehow")))))
-;; (my-cd "/Applications")
-
-
 (defun prefix (string)
   (interactive "MPrefix: ")
   (query-replace-regexp "^" string))
@@ -1249,11 +1161,128 @@ This command does the reverse of `fill-region'."
 ;;           (lambda ()
 ;;             (local-set-key (kbd "RET") 'python-auto-indent-qdw)))
 
+
+;;;; Binary-file-viewing settings
+
+(defun use-hexl-mode-if-binary-p ()
+  "If the current buffer is a binary file, switch to `hexl-mode'."
+    (when (string-match-p "\0" (buffer-string))
+        (hexl-mode)))
+       
+(add-hook 'find-file-hook #'use-hexl-mode-if-binary-p)
+
+;;;; Usenet settings
+
+(setq gnus-select-method '(nntp "news.eternal-september.org")
+      gnus-secondary-select-methods '((nntp "news.sonic.net"))
+      gnus-newsgroup-maximum-articles nil
+      gnus-thread-hide-subtree 't)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                                                             ;;;;
 ;;;; Experimental area                                           ;;;;
+;;;;                                                             ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; ;; sketch
+;; (defun macos-open (file-name)
+;;   (async-shell-command
+;;    (shell-quote
+;;     (concat "/usr/bin/open " (expand-file-name file-name)))))
+
+;; ;; sketch
+;; (defun macos-tell-app-to-open (app file-name)
+;;   (run-applescript
+;;    (concat
+;;     "tell application "
+;;     (shell-quote app)
+;;     " to open "
+;;     (shell-quote file-name))))
+
+;; ;; sketch
+;; (defun run-applescript (string)
+;;   (async-shell-command
+;;     (format "osascript -e '%s'"
+;;             (shell-quote-argument string))))
+
+;; sketch
+;; (let ((orig-action
+;;        (assoc ":follow" (assoc "file" org-link-parameters)))
+;;       (case-fold-search
+;;        't))
+;;   (org-link-set-parameters
+;;    "file"
+;;    :follow
+;;    (lambda (file-name arg)
+;;      (if (string-match-p ".sid" file-name)
+;;        (async-shell-command
+;;         (run-applescript "
+;;           on run argv
+;;               tell application \"Cog\" to open item 1 of argv
+;;           end run"))
+;;        (orig-action file-name)))))
+
+;; ;; Broken; no-op
+;; (defun org-recursively-mark-as-done ()
+;;   (interactive)
+;;   (org-map-entries
+;;     (let ((state (nth 2 (org-heading-components))))
+;;       (when (cl-position state org-todo-keywords)
+;;         (org-todo "DONE")))))
+
+
+;; N.G.
+;;
+;; (defun my-cd (dir)
+;;   "tell a running shell-mode session to cd to `dir'"
+;;   (if (not dir)
+;;       (error "No dir argument specified")
+;;       (let ((shell-buffer (get-buffer "*shell*"))
+;;             (shell-process (get-process "shell")))
+;;         (if (and shell-buffer shell-process)
+;;             (with-current-buffer shell-buffer
+;;               (comint-send-input (concat "cd " dir)))
+;;               (shell-process-cd dir)
+;;             (error "my-cd failed somehow")))))
+;; (my-cd "/Applications")
+
+;;;; Settings for displaying the list of currently open buffers; see https://www.gnu.org/software/emacs/manual/html_node/elisp/The-Zen-of-Buffer-Display.html
+
+;; (defun display-buffer-in-new-window-qdw (buffer)
+;;   "Display BUFFER in a new window."
+;;   (let ((window (split-window-below)))
+;;     (set-window-buffer window buffer)
+;;     window))
+;;
+;; (defun list-buffers-qdw (&optional arg)
+;;   "Display a list of names of existing buffers.
+;;    The list is displayed in a buffer named `*Buffer List*'.
+;;    Note that buffers with names starting with spaces are omitted.
+;;    Non-null optional arg means show buffer `*Buffer List*',
+;;    even if it is empty. See also `buffer-menu'."
+;;   (interactive "P")
+;;   (let ((
+;;          display-buffer-overriding-action
+;;          ('display-buffer . display-buffer-in-new-window-qdw)
+;;        ))
+;;     (list-buffers arg)))
+;;
+;; (keymap-global-set "C-x C-b" 'list-buffers-qdw)
+
+;; Prominently highlight any tabs used for indentation in source code,
+;; (but not in the PostgreSQL source code or in Go, because
+;; tabs are the convention there).
+;;
+;; (set-face-attribute 'whitespace-tab nil
+;;                     :background red
+;;                     :foreground black)                    
+;;
+;; (setq-default whitespace-style '(tabs))
+;; (add-hook 'after-change-major-mode-hook
+;;           (let ((pth (file-truename buffer-file-name)))
+;;             (unless (or (string-prefix-p "~/src-3/postgres/" pth)
+;;                         (string-suffix-p ".go" pth))
+;;               (whitespace-mode))))
 
 ;; (defun open-org-link-to-local-file-at-point-qdw ())
 
@@ -1319,66 +1348,17 @@ This command does the reverse of `fill-region'."
 ;;             (error "my-cd failed somehow")))))
 ;; (my-cd "/Applications")
 
-;;;; Binary-file-viewing settings
-
-(defun use-hexl-mode-if-binary-p ()
-  "If the current buffer is a binary file, switch to `hexl-mode'."
-    (when (string-match-p "\0" (buffer-string))
-        (hexl-mode)))
-       
-(add-hook 'find-file-hook #'use-hexl-mode-if-binary-p)
-
-;;;; Settings for showing tabs
-;;;;
-;;;; I indent using spaces, so highlight any tab characters in files
-;;;; I open, with exceptions for languages and projects where tabs
-;;;; are the convention.
-
-
-
-;;;; Settings for displaying the list of currently open buffers; see https://www.gnu.org/software/emacs/manual/html_node/elisp/The-Zen-of-Buffer-Display.html
-
-;; (defun display-buffer-in-new-window-qdw (buffer)
-;;   "Display BUFFER in a new window."
-;;   (let ((window (split-window-below)))
-;;     (set-window-buffer window buffer)
-;;     window))
-;;
-;; (defun list-buffers-qdw (&optional arg)
-;;   "Display a list of names of existing buffers.
-;;    The list is displayed in a buffer named `*Buffer List*'.
-;;    Note that buffers with names starting with spaces are omitted.
-;;    Non-null optional arg means show buffer `*Buffer List*',
-;;    even if it is empty. See also `buffer-menu'."
-;;   (interactive "P")
-;;   (let ((
-;;          display-buffer-overriding-action
-;;          ('display-buffer . display-buffer-in-new-window-qdw)
-;;        ))
-;;     (list-buffers arg)))
-;;
-;; (keymap-global-set "C-x C-b" 'list-buffers-qdw)           
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                                                             ;;;;
-;;;; Don't change stuff below this comment; it's programatically ;;;;
-;;;; maintained.                                                 ;;;;
-;;;;                                                             ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;                                                              ;;;;
+;;;; Don't change stuff below this comment; it's programmatically ;;;;
+;;;; maintained by the Customize system.                          ;;;;
+;;;;                                                              ;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;; customize faces
 
 (put 'downcase-region 'disabled nil)
 (put 'dired-find-alternate-file 'disabled nil)
-
-;;;; Usenet settings
-
-(setq gnus-select-method '(nntp "news.eternal-september.org")
-      gnus-thread-hide-subtree 't
-      gnus-newsgroup-maximum-articles nil
-      gnus-secondary-select-methods '((nntp "news.sonic.net")))
-
-;;;; Settings written by the Custom system
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
