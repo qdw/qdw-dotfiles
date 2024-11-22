@@ -53,6 +53,7 @@
 	dr = "!git diff  \"origin/$(git branch --show-current)\"  \"$(git branch --show-current)\"  "
 	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
+	ignored = "!ig() { /bin/echo -n \"$1\" 'is'; git check-ignore --quiet \"$1\"; if [[ $? = 1 ]]; then /bin/echo -n ' not'; fi; /bin/echo ' ignored by git'; }; ig"
 	last = "!f() { git diff ${1:-HEAD}^ ${1:-HEAD}; }; f"
 	main = "!sh -c 'git checkout `/Users/quinn.weaver/.gitconfig-helper--get-main-branch-name`'"
 	mm = commit --allow-empty-message -m ''
@@ -64,6 +65,7 @@
 	s = status
 	tg = "!function _tg { git tag | sort -g ;}; _tg"
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit
+	try = "!f() { git add . && git commit --allow-empty-message -m '' && git push; }; f"
 	branch = branch --quiet
 
 [init]
@@ -74,7 +76,9 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+
 [push]
 	autoSetupRemote = on
+
 [github]
 	user = qdw

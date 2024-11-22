@@ -142,7 +142,7 @@ if on-macos; then
     function pbc { 
         local FILENAME
         FILENAME="$1"
-        if [[ $FILENAME ]]; then
+        if [[ "$FILENAME" ]]; then
             pbcopy < "$FILENAME"
         else
             echo "pbc: error: missing argument. Usage: pbc FILENAME"
@@ -157,6 +157,15 @@ fi
 #     if [[ $# -eq 1 ]]; then
 #         STRING="$1"
 #         ...
+
+function okl {
+    local RGB="$1"
+    if [[ -n "$RGB" ]]; then
+        complain "Sorry, RGB -> Oklch conversion isn't implemented yet. Try 'okl'"
+    else
+        open -u "https://oklch.com/"
+    fi
+}
 
 ## ANSI SGR 4-bit color codes
 
@@ -1043,10 +1052,10 @@ elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
     PS1_LOGO=$'\uF8FF' # Apple logo
 fi
 
-# Color the shell prompt ANSI blue (to distinguish commands from output).
+# Color the shell prompt ANSI magenta (to distinguish commands from output).
 
-#export PS1="\\[\\e[33;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
-export PS1="\\[\\e[33;1m\\]\\w\\$\\[\\e[0m\\] "
+#export PS1="\\[\\e[35;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
+export PS1="\\[\\e[35;1m\\]\\w\\$\\[\\e[0m\\] "
 export DEFAULT_PS1="$PS1"
 
 # macOS: suppress nag message about Bash being deprecated in favor of zsh
@@ -1621,6 +1630,10 @@ function branchify {
 ## GitHub-specific Git settings
 
 # branch BRANCH_NAME - display the GitHub web page for BRANCH_NAME
+function all_gists {
+    gists --limit -1
+}
+
 function branch {
     local BRANCH_NAME
     
@@ -1637,10 +1650,6 @@ function branch {
 
 function gists {
     gh git list "$@"
-}
-
-function all_gists {
-    gists --limit -1
 }
 
 # gist - view gists or create a gist
@@ -1735,6 +1744,10 @@ function lst {
 
         git diff "$@" HEAD^ HEAD -- "$LAST_ARG_IS_THE_FILENAME"
     fi
+}
+
+function try {
+    command git try "$@"
 }
 
 function readme {
@@ -2240,8 +2253,11 @@ function mkvirtualenv {
             && pip install --upgrade pip
     fi
 }
-
 function ve { mkvirtualenv "$@" ;}
+
+function venvs {
+    ls "$MY_VIRTUALENV_DIR/"
+}
 
 #### Aranet4 air quality monitoring settings
 
@@ -2556,7 +2572,13 @@ function dream { /System/Library/Frameworks/ScreenSaver.framework/Resources/Scre
 
 # dfr ("df real") - show all mounted devices that are actually disks (see also mr).
 function dfr {
-    df -h | grep ^/
+    df -h | head -1
+
+    if [[ "$MY_OS" = "Darwin" ]]; then
+        df -h | command grep -E '/System/Volumes/Data$'
+    else
+        df -h | command grep ^/
+    fi
 }
 
 # ff [PROFILE_NAME] - run Firefox with a profile. No args? Open the dialog box to list/create profiles.
@@ -2575,7 +2597,10 @@ function ff {
 function ho { grep "Host .*${1}" ~/.ssh/*conf* ;}
 
 # mr ("mount real") - show all mounted devices that are actually disks (see also dfr).
-function mr { mount | grep ^/ ;}
+function mr {
+    mount | head -1
+    mount | command grep ^/
+}
 
 # lw Perl::Module, lw Perl/Module.pm ("library which") - show the path to Perl module in PERL5LIB.
 function lw { perldoc -l "$1" ;}
@@ -3051,7 +3076,7 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
     ## man page path settings    
-    MANPATH="$MY_MANPATH"
+    MANPATH="$MANPATH:$MY_MANPATH"
 
     ## dynamic library path settings
     LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
