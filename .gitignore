@@ -44,6 +44,7 @@ desktop
 *.sw?
 
 # Cruft-filenames idiosyncratic to me
+bad-*
 cuts--*
 example-*
 gitignore.d
