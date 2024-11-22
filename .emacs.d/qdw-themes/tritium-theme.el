@@ -48,8 +48,9 @@
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
-        ;; black  "#1c1c1c"  ;;      Terminal emulator's ANSI black
+           ;; black  "#000000" ;; Terminal emulator's ANSI black
            black  "#141414"  ;;      Grey15
+           ;; black  "#111111" ;; darker
     bright-black  "#575757"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
@@ -260,10 +261,10 @@
      ((t (:foreground ,yellow))))
      
    `(mode-line
-     ((t (:foreground ,yellow :background ,bright-black))))
+     ((t (:foreground ,blue :background ,black))))
 
    `(mode-line-inactive
-     ((t (:foreground ,white :background ,bright-black))))
+     ((t (:foreground ,bright-blue :background ,black))))
      
    ;;;; font lock
 
