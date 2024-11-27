@@ -470,7 +470,7 @@ set +a
 function grep {
     $MY_GREP \
         $GREP_OPTIONS \
-        $$GREP_COLOR_FLAGS \
+        $GREP_COLOR_FLAGS \
         $GREP_EXCLUDE_FLAGS "$@" | $PAGER
 }
 
