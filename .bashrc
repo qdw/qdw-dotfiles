@@ -116,6 +116,20 @@ function funcalias {
     fi
 }
 
+function installed {
+    # check_args 1 1 "installed COMMAND_NAME"
+    local COMMAND="$1"
+    if command -p "$COMMAND" > /dev/null 2>&1 \
+            || [[ -x "$HOMEBREW_BIN/$COMMAND" ]]
+    then
+        return 0
+    else
+        return 1
+    fi
+}    
+
+#### OS-specific settings
+
 MY_OS="$(uname -s)"
 function on_macos {
     if [[ "$MY_OS" = "Darwin" ]]; then
@@ -125,9 +139,17 @@ function on_macos {
     fi
 }
 
-#### OS-specific settings
-
 MY_OS="$(uname -s)"
+
+function on-linux {
+    local LINUX="Linux"
+    if [[ "$MY_OS" =~ $LINUX ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 function on-macos {
     if [[ "$MY_OS" = "Darwin" ]]; then
         return 0
@@ -139,9 +161,8 @@ function on-macos {
 ## Clipboard settings
 
 if on-macos; then
-    function pbc { 
-        local FILENAME
-        FILENAME="$1"
+    function pbc {
+        local FILENAME="$1"
         if [[ "$FILENAME" ]]; then
             pbcopy < "$FILENAME"
         else
@@ -315,8 +336,19 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     done
 fi
 
-# Prompt before overwriting files.
+# Prompt before overwriting files,
+# but skip this check if the destination is an empty dir
+# (since there is nothing to overwrite, and skipping
+# the check speeds things up a lot).
 function mv {
+    local LAST_ARG="${!#}"
+    if [[ -d "$LAST_ARG" ]]; then
+        local LISTING="$(command ls "$LAST_ARG" 2>&1)"
+        if [[ $? -eq 0 ]] && [[ -z "$LISTING" ]]; then
+            command mv "$@"; return
+        fi
+    fi
+                
     command mv -i "$@"
 }
 
@@ -355,11 +387,24 @@ function fd {
     fdd --color=always "$@" | $PAGER
 }
 
+function gfd {
+    local GFD_REGEX USAGE
+    USAGE="Usage: gfd GFD_REGEX"
+    
+    if [[ $# -eq 0 ]]; then
+	echo "gfd: error: missing argument. $USAGE"
+    elif [[ $# -eq 1 ]]; then
+	GFD_REGEX="$1"
+	(fd "$GFD_REGEX"; g "$GFD_REGEX";) | $PAGER
+    else
+        echo "gfd: error: wrong number of arguments. $USAGE"
+    fi
+}
+
 function fdgrep {
     # check_args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
     local FILENAME_REGEX="$1"; shift    
-    ( fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I -H --color=always $GREP_EXCLUDE_FLAGS "$@" \; ) \
-        | $PAGER
+    (fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@" \;)
 }
 
 # Recursively search the current working directory for files that don't
@@ -391,57 +436,51 @@ function file-type-counts {
 
 #### grep settings
 
-if [[ -e "$HOMEBREW_BIN/ggrep" ]]; then
-    export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
+set -a
+
+# Prefer ripgrep if installed.
+if installed "rg"; then
+    MY_GREP="rg"
+    GREP_OPTIONS="--color=always --no-line-number"
+    GREP_RECURSE="--no-heading --follow --no-one-file-system"
+    GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
+    GREP_COLOR_FLAGS="--colors match:fg:red"
+
+# If ripgrep is not installed, assume GNU grep.
 else
-    export MY_GREP="egrep" MY_FGREP="fgrep" MY_PGREP="echo 'Perl-compatible grep syntax is not available on this platform' >&2"
-fi
-
-export MY_GREP="ggrep -E" MY_FGREP="ggrep -F" MY_PGREP="ggrep -P"
-
-## Skip binary files.
-
-GREP_OPTIONS="$GREP_OPTIONS -I"
-
-## Color my grep output.
-## This choice of colors matches Emacs compilation-mode's colors.
-
-GREP_OPTIONS="$GREP_OPTIONS --color=always"
-
-GREEN="32"
-YELLOW="33"
-
-FILENAME_COLOR="fn=${GREEN}"
-LINE_NUMBER_COLOR="ln=${YELLOW}"
-export GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
-
-## Skip metadata files, Emacs droppings, et cetera
-
-GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__"
-
-function grep {  $MY_GREP    $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
-function fgrep { $MY_FGREP   $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" | $PAGER ;}
-function g {     $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS --exclude '*.js' "$@" | $PAGER ;}
-function gbr {   $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-function ge {    $MY_GREP -R $GREP_OPTIONS $GREP_EXCLUDE_FLAGS "$@" ~/.emacs.d ;}
-
-function gfd {
-    local REGEX USAGE
-    USAGE="Usage: gfd REGEX"
-    
-    if [[ $# -eq 0 ]]; then
-	echo "gfd: error: missing argument. $USAGE"
-    elif [[ $# -eq 1 ]]; then
-	REGEX="$1"
-	(g "$REGEX"; fd "$REGEX")
+    if on-macos && installed "ggrep"; then
+        MY_GREP="ggrep"
     else
-        echo "gfd: error: wrong number of arguments. $USAGE"
+        MY_GREP="grep"
     fi
+    
+    GREP_OPTIONS="-I --color=always"
+    GREP_RECURSE="-R"
+    GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
+    
+    GREEN="32"
+    YELLOW="33"
+    local FILENAME_COLOR="fn=${GREEN}"
+    local LINE_NUMBER_COLOR="ln=${YELLOW}"
+    export GREP_COLOR_FLAGS=""
+    export GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
+fi
+set +a
+
+function grep {
+    $MY_GREP \
+        $GREP_OPTIONS \
+        $$GREP_COLOR_FLAGS \
+        $GREP_EXCLUDE_FLAGS "$@" | $PAGER
 }
+
+function g { grep "$GREP_RECURSE" "$@" ;}
+function gbr { g "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+function ge { g "$@" ~/.emacs.d ;}
 
 function grep-settings {
     # check_args 2 varargs
-    local REGEX="$1"
+    local GREP_SETTINGS_REGEX="$1"
     shift
     
     function file-ext-in {
@@ -455,7 +494,6 @@ function grep-settings {
 
         return 1
     }
-        
     
     local COMMENT_PREFIX
     for FILE in "$@"; do
@@ -471,9 +509,8 @@ function grep-settings {
         fi
     done
 
-    ggrep -i $GREP_EXCLUDE_FLAGS \
-          "^${COMMENT_PREFIX}.*(${REGEX}.*settings|settings.*${REGEX})" \
-        | $PAGER
+    grep -i \
+        "^${COMMENT_PREFIX}.*(${GREP_SETTINGS_REGEX}.*settings|settings.*${GREP_SETTINGS_REGEX})"
 }
 
 # fip (Filter In Place) - filter lines matching regex from a file,
@@ -482,7 +519,7 @@ function grep-settings {
 function fip {
     # check_args 2 varargs
     
-    local REGEX="$1"
+    local FIP_REGEX="$1"
     shift
     
     # if [[ "$1" = "-"  ]]; then
@@ -492,7 +529,7 @@ function fip {
     #         if [[ "$LINE" = "" ]]; then
     
     for FILE in "$@"; do
-        grep -vE "$REGEX" "$FILE" | sponge "$FILE"
+        grep -vE "$FIP_REGEX" "$FILE" | sponge "$FILE"
     done
 }
 
@@ -536,7 +573,7 @@ function source-if-exists {
 # grbash - grep my Bash config files
 function grbash {
     if [[ $# -ne 1 ]]; then
-        echo "grbash: error: wrong number of arguments. Usage: grbash REGEX"
+        echo "grbash: error: wrong number of arguments. Usage: grbash GRBASH_REGEX [GREP_OPTION ...]"
     else
         grep -R "$@" ~/.bashrc ~/.bashrc.d ~/.bash_profile ~/.bash_login ~/.bash_logout ~/.site.bash.d
     fi
@@ -1052,10 +1089,8 @@ elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
     PS1_LOGO=$'\uF8FF' # Apple logo
 fi
 
-# Color the shell prompt ANSI magenta (to distinguish commands from output).
-
-#export PS1="\\[\\e[35;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
-export PS1="\\[\\e[35;1m\\]\\w\\$\\[\\e[0m\\] "
+#export PS1="\\[\\e[33;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
+export PS1="\\[\\e[33;1m\\]\\w\\$\\[\\e[0m\\] "
 export DEFAULT_PS1="$PS1"
 
 # macOS: suppress nag message about Bash being deprecated in favor of zsh
@@ -2128,15 +2163,15 @@ function replication_role {
 # 
 # ser - display sections of my ~/.pg_service.conf, or the whole thing
 function ser {
-    local REGEX
+    local SER_REGEX
     
     if [[ $# -eq 0 ]]; then
-        echo "ser: missing argument. Usage: ser [GREP_FLAG ...] REGEX" >&2
+        echo "ser: missing argument. Usage: ser [GREP_FLAG ...] SER_REGEX" >&2
     else
-        REGEX="$1"
+        SER_REGEX="$1"
         shift
 
-        command grep -E $@ "^[[].*$REGEX.*[]]" ~/.pg_service.conf
+        command grep -E $@ "^[[].*$SER_REGEX.*[]]" ~/.pg_service.conf
     fi
 }
 
@@ -2375,7 +2410,8 @@ function mshost {
 # wouldn't give me all the output-format flexibility that I get from
 # using ps itself.
 function p {
-    local HEADER PROCS
+    local HEADER
+    local PROCS
     local PS_COMMAND="ps auxwww"
     
     if [[ $# -eq 0 ]]; then
@@ -2384,7 +2420,7 @@ function p {
         HEADER="$($PS_COMMAND | head -1)"
 
         set -o pipefail
-        PROCS="$($PS_COMMAND | command grep -v grep | grep "$@")"
+        PROCS="$($PS_COMMAND | command grep -v grep | command grep --color=always "$@")" | $PAGER
         RC=$?
         set +o pipefail
         
@@ -2635,9 +2671,9 @@ function para {
 # marks a paragraph boundary
 function paraln {
     # check args 1 varargs
-    local REGEX="$1"; shift
-    # awk "/$REGEX/ {print NR \": \" \$0; f=1} f && NF {print NR \": \" \$0} /^$/ {f=0}" \
-    awk "/$REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
+    local PARALN_REGEX="$1"; shift
+    # awk "/$PARALN_REGEX/ {print NR \": \" \$0; f=1} f && NF {print NR \": \" \$0} /^$/ {f=0}" \
+    awk "/$PARALN_REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$PARALN_REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
 }
 
 
