@@ -1,4 +1,5 @@
 ;;;; Machine-specific settings (catch exception if no such file)
+
 (condition-case
     nil
     (load-file (expand-file-name "~/.emacs.d/site/site.el"))
@@ -55,6 +56,7 @@
 (require 'dirtrack)
 (require 'dockerfile-mode)
 (require 'fd-dired)
+(require 'flycheck)
 (require 'json)
 ;; (require 'lyrics-fetcher)
 (require 'magit)
@@ -70,10 +72,15 @@
 (require 'ruby-mode)
 (require 'scroll-bar)
 (require 'sh-script)
+(require 'tide)
 (require 'tool-bar)
 (require 'typescript-mode)
 (require 'whitespace)
 (require 'yaml-mode)
+
+;;;; Password settings (excluded from Git)
+
+(load (expand-file-name "~/.emacs.d/secrets.el") 't)
 
 ;;;; Utility functions used in this file
 
@@ -91,6 +98,14 @@ but it calls defvar under the hood."
 (defun string-in (str ls)
   "Return 't if any member of a ls matches string; else return nil"
   (seq-some (lambda (s) (string= str s)) ls))
+  
+;;;; .ignore settings
+;;;; This file is formatted exactly like .gitignore,
+;;;; and is honored by fd, rg, and maybe others?
+(add-to-list 'auto-mode-alist
+             '("\\.ignore\\'" . gitignore-mode))
+   
+
 
 ;;;; Color settings
 
@@ -189,9 +204,13 @@ but it calls defvar under the hood."
   (interactive)
   (ansi-color-apply-on-region (point-min) (point-max)))
 
-(add-to-list 'custom-theme-load-path
-	     (expand-file-name "~/.emacs.d/qdw-themes")
-             (expand-file-name "~/.emacs.d/third-party-themes"))
+(mapc
+ (lambda (file-name)
+   (add-to-list 'custom-theme-load-path (expand-file-name file-name)))
+
+ '("~/.emacs.d/qdw-themes"
+   "~/src/1/emacs-mariana-theme"
+   "~/.emacs.d/third-party-themes"))
 
 ;; (load-theme 'tritium 't)
 (load-theme 'mariana 't)
@@ -232,10 +251,6 @@ but it calls defvar under the hood."
 
 ;; Always use the same cursor color, no matter what theme I use.
 (set-cursor-color "DarkOrange1")
-
-;;;; Password settings (excluded from Git)
-
-(load (expand-file-name "~/.emacs.d/secrets.el") 't)
 
 ;;;; dired settings
 
@@ -318,8 +333,8 @@ use `dired-find-file' to open it in a new buffer."
     (async-shell-command
      (format
       "%S %S %d"
-      (expand-file-name"~/.emacs.d/open-file-in-macos-vscode.scpt")
-      (shell-quote-argument buffer-file-name)
+      (expand-file-name "~/.emacs.d/open-file-in-macos-vscode.scpt")
+      (shell-quote-argument (expand-file-name buffer-file-name))
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
 (defun vscode ()
@@ -586,6 +601,17 @@ This command does the reverse of `fill-region'."
     (org-insert-link nil
                      (concat jiralib-url "/browse/" ticket-name)
                      ticket-name)))
+                     
+(defun org-linkify-buffer-qdw ()
+  "Make each line in the buffer into an org-mode style link
+by enclosing it in [[double square brackets]]. This works
+for files of local paths produced by running, e.g., fd,
+which is its intended use."
+  (interactive)
+  (goto-char (point-min))
+  (replace-regexp "^" "[[")
+  (goto-char (point-min))
+  (replace-regexp "$" "]]"))
 
 ;; This regexp is correct...
 (setq jira-ticket-regexp-qdw
@@ -636,18 +662,19 @@ This command does the reverse of `fill-region'."
   ;; https://www.ditig.com/256-colors-cheat-sheet
 
   ;; #FIXME: set these in tritium-theme.el?
-  org-todo-keyword-faces
-  `(
-    ("GET_HELP" . ,bright-red)
-    ("NEXT_ACTION" . ,bright-red)
-    ("AWAITING_RESPONSE" . ,bright-magenta)
-    ("QUESTION" . ,magenta)
-    ("POSTPONED" . ,yellow)
-    ("INFO" . ,yellow)
-    ("PROJECT" . ,blue)
-    ("SUBPROJECT" . ,bright-cyan)
-    ("IN_PROGRESS" . ,bright-green)
-    ))
+  ;; org-todo-keyword-faces
+  ;; `(
+  ;;   ("GET_HELP" . ,bright-red)
+  ;;   ("NEXT_ACTION" . ,bright-red)
+  ;;   ("AWAITING_RESPONSE" . ,bright-magenta)
+  ;;   ("QUESTION" . ,magenta)
+  ;;   ("POSTPONED" . ,yellow)
+  ;;   ("INFO" . ,yellow)
+  ;;   ("PROJECT" . ,blue)
+  ;;   ("SUBPROJECT" . ,bright-cyan)
+  ;;   ("IN_PROGRESS" . ,bright-green)
+  ;;   )
+  )
 
 ;; Hide the PROPERTIES section if folded;
 ;; pasted from https://stackoverflow.com/a/17492723
@@ -958,8 +985,9 @@ This command does the reverse of `fill-region'."
 
 (setq-default
  json-encoding-default-indentation "  "
- tide-import-js (list (expand-file-name "~/src-3/aws-cdk")
-                      (expand-file-name "~/src/infra-cdk-library")))
+ tide-import-js (list (expand-file-name "~/aws")
+                      (expand-file-name "~/upstart")))
+                      
 
 (let ((desired-indent-level 2))
   (setq-default
@@ -1127,11 +1155,12 @@ This command does the reverse of `fill-region'."
 (keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
 (keymap-set org-mode-map "C-c RET" 'org-insert-subheading)
 
-
+(keymap-global-set "C-c ." 'find-file-at-point)
 (keymap-global-set "C-c !"   'async-shell-command)
 (keymap-global-set "C-c %"   'query-replace-regexp)
 (keymap-global-set "C-c :"   'eval-expression)
 (keymap-global-set "C-h 1"   'describe-face)
+
 (keymap-global-set "C-c C-f" 'multi-occur-in-matching-buffers)
 (keymap-global-set "C-c C-s" 'isearch-forward-regexp)
 (keymap-global-set "C-c c"   'comment-region)
@@ -1397,7 +1426,7 @@ This command does the reverse of `fill-region'."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(custom-safe-themes
-   '("0bdcd500d4360751824f33090f8cffd5828d38a6abc01bf4e42a7006cb6beb5c" "b9efba60244721cc1f2ad7c576f09136d2016cd0436a32e7a581331644e29fce" "8f281cfe198d9b9f954885793bd76960b920d4d6e3018fbb6e373938024cd34f" "5cdfad2a7cedfdc084b2b544bb0447bcfc4cd1bfe8f0c0735674c8dbad0e717c" "6c1ad5cc5017676e109163a955bebdbf3cc201858eb153fd56aeba33ec52b68e" "5ffe5be170a405b04e403d157630a6c9d292b5d58a1e9d7366c4c4118df423aa" "71296b6a2d13efb96e131c1643d84eca23075098d843a2ae51e3fa7f899091a5" "9e72d49cdd4e9534aa2411ee90b17def8e3a600c023691bb2fd4caa9b60e0e59" "a90c4c4188050ad506e82dcb6c7db564f7b4e386dbdae86d8f4508b530193a0c" "a8faa272156975eb3fa10425688739df436694603d028ec174aff859ec24cba3" "3af3dd88dea749cf2a0e131184ed75db59f66b904e85c525895bbed025330421" "dc941924c343007e6f3fa3eb716ae9b3ed76c6bdd9e6cf0614aee4a03a4adc32" "e7487e37246f7b70ae36b59023e7e6460d2b5df4f13184de8d1dee2b9d3b0ef4" "53be810e291161e33ace3015935f560ebf4a6d0737eb2d6af1a7ca796ce05e74" "1bc996dc2dc10c530bcbfa1bc6af987d68acd4a2f69f1e041444e61a42920a13" "7e9d636453ff18f1032d6e926c2777b684360fc6fd896a276402afefa403876a" "0d26cb1d6d92f5f1c9c2d2167915b8f5a21b244334a6d7ed0e785742b8349ac8" "3ff156dcf0c581089a0de0c22c6d30f07f104008abe569e12a1f97d51a38d5ef" "c5890693563e2a0be4bf6e2f3045a9b7bd8c057bfc8d9a8a9f7118e5e87634e3" "d3b10ba17cb48c09cd15058192a9a62012b4ca255ad04f15465ebc6851dbc457" "7cc12de7fca1f48ce8f3d85f71fc71adb3b8f7ef248d0cdba44b94e067d93cf8" "56df7d8343ba86c443f18ec0192a495753de3afea4622a6ac920f4b7e31256e9" "6dd8d36d24895e21527fda4f951054450e21e2d7367ea1f12c523decf600c66d" "9e8d46e15c6c3deb4fcb17bc47e300c0899913289ae770e50eb32aa4aa65336a" "82caf1187ff6e99aa59a94e8e449a6fc7a396714b768436444cb7809040a1efe" "21334be100120f874d9a1105d3c492da0bc2002aa6ea8f2bdd70a476b1a73ea1" "004d4c8d94fb22fe26ee805e7666e86dea6ac772ed83cb63108327918f4f1d05" "3e4f3a3f4dc285e9499d92d96170703b4cc7b1e7241f3dde9d37b1d6e7acf175" "4f2c625c7cbd7c2716d5718a82afb7a1767521eba8f71ed436e16523638f5c9c" "65facdd8128d5e4da12424b373b8ad10403c64316f07c97fd3ba27f1620250c2" "dd421f76ead86e704fce0d9e6586b1815263f521f1b409d4add7533a8eb16a3e" "e1f0530e6d48b92de6bfb6690212b616da78975e0c22f490bf799e4b9cec1837" "febc930c89f9b6f5f2e206e8d4ae7dbd85f3c0f5ff86ff55f743515d9d062c4f" "beda5f79b80bbd70ef600e852a33c4eb50d897b22d51bdecf04b83c33928c77c" "6b292056832c15d659dd715361e4bfa3e6d624f43cc2106af3555a523776c8d9" "97b889a8d50c8df11cb0343332dbfc99c18286f40651e0c3e4e69d79dad67807" "f5a7e07642decb17b03483af7c44e93353d2b128de403bf301651954c628c0ab" "f7f63c4f14c5eb79b6c26c308e6ad625ff91c649f39e57f198f1fb13ba2eb9a2" "f4833b553e92b4668afac5f351e68e14a0f90678bacfaf21bd4a19e1e4adc665" "39bcbc8fd33b1932683c3b05aab9ac9c59beec7f7fc211f6db775e9cad1702da" "291708e76bbdc185db5d3f154cb58a547ffdb2ab88b9ca68c8b67fd328ffaf60" "8e059e42d34e37de1c9d4134b89d4a41d11bf44ca88b70a738a8b2fa1d030900" "1843cbc8dd7232022cfcc54218864563000192e06188196c654443832c328047" "79a750a591511be62a78fcb2c3de2f422da7c4cd35e61571bc7cd8548e302a28" "5ccf92da2a1298b7c6fd8aac0e8641b8a0acd079d48df9718009feda3b0cdee8" "258f232c779de08cc48f0504805ba7f6f73bf4e380cd8c06541fab25c2686f89" "d0f9d3798ca38427957e3366ad49545c6f2748f0c838e615e3f24fa69e28b05e" "c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
+   '("a26fbb706f481c628e73a38a02a8eb21498c22dd940872b2401906fdb82187e1" "f8ec58082a50dd0bf9468caac7f8b1bf3d09e2e2c4e4ba4d64033a4f5cadfd0e" "4ec15c7fe761dadc66d8a3916cf3af097a18927549e22386e23516cb400b3d59" "b817e1509af252856a5ba6343f319032bfdd03273a20e7b2f723ef165e5ebeca" "0bdcd500d4360751824f33090f8cffd5828d38a6abc01bf4e42a7006cb6beb5c" "b9efba60244721cc1f2ad7c576f09136d2016cd0436a32e7a581331644e29fce" "8f281cfe198d9b9f954885793bd76960b920d4d6e3018fbb6e373938024cd34f" "5cdfad2a7cedfdc084b2b544bb0447bcfc4cd1bfe8f0c0735674c8dbad0e717c" "6c1ad5cc5017676e109163a955bebdbf3cc201858eb153fd56aeba33ec52b68e" "5ffe5be170a405b04e403d157630a6c9d292b5d58a1e9d7366c4c4118df423aa" "71296b6a2d13efb96e131c1643d84eca23075098d843a2ae51e3fa7f899091a5" "9e72d49cdd4e9534aa2411ee90b17def8e3a600c023691bb2fd4caa9b60e0e59" "a90c4c4188050ad506e82dcb6c7db564f7b4e386dbdae86d8f4508b530193a0c" "a8faa272156975eb3fa10425688739df436694603d028ec174aff859ec24cba3" "3af3dd88dea749cf2a0e131184ed75db59f66b904e85c525895bbed025330421" "dc941924c343007e6f3fa3eb716ae9b3ed76c6bdd9e6cf0614aee4a03a4adc32" "e7487e37246f7b70ae36b59023e7e6460d2b5df4f13184de8d1dee2b9d3b0ef4" "53be810e291161e33ace3015935f560ebf4a6d0737eb2d6af1a7ca796ce05e74" "1bc996dc2dc10c530bcbfa1bc6af987d68acd4a2f69f1e041444e61a42920a13" "7e9d636453ff18f1032d6e926c2777b684360fc6fd896a276402afefa403876a" "0d26cb1d6d92f5f1c9c2d2167915b8f5a21b244334a6d7ed0e785742b8349ac8" "3ff156dcf0c581089a0de0c22c6d30f07f104008abe569e12a1f97d51a38d5ef" "c5890693563e2a0be4bf6e2f3045a9b7bd8c057bfc8d9a8a9f7118e5e87634e3" "d3b10ba17cb48c09cd15058192a9a62012b4ca255ad04f15465ebc6851dbc457" "7cc12de7fca1f48ce8f3d85f71fc71adb3b8f7ef248d0cdba44b94e067d93cf8" "56df7d8343ba86c443f18ec0192a495753de3afea4622a6ac920f4b7e31256e9" "6dd8d36d24895e21527fda4f951054450e21e2d7367ea1f12c523decf600c66d" "9e8d46e15c6c3deb4fcb17bc47e300c0899913289ae770e50eb32aa4aa65336a" "82caf1187ff6e99aa59a94e8e449a6fc7a396714b768436444cb7809040a1efe" "21334be100120f874d9a1105d3c492da0bc2002aa6ea8f2bdd70a476b1a73ea1" "004d4c8d94fb22fe26ee805e7666e86dea6ac772ed83cb63108327918f4f1d05" "3e4f3a3f4dc285e9499d92d96170703b4cc7b1e7241f3dde9d37b1d6e7acf175" "4f2c625c7cbd7c2716d5718a82afb7a1767521eba8f71ed436e16523638f5c9c" "65facdd8128d5e4da12424b373b8ad10403c64316f07c97fd3ba27f1620250c2" "dd421f76ead86e704fce0d9e6586b1815263f521f1b409d4add7533a8eb16a3e" "e1f0530e6d48b92de6bfb6690212b616da78975e0c22f490bf799e4b9cec1837" "febc930c89f9b6f5f2e206e8d4ae7dbd85f3c0f5ff86ff55f743515d9d062c4f" "beda5f79b80bbd70ef600e852a33c4eb50d897b22d51bdecf04b83c33928c77c" "6b292056832c15d659dd715361e4bfa3e6d624f43cc2106af3555a523776c8d9" "97b889a8d50c8df11cb0343332dbfc99c18286f40651e0c3e4e69d79dad67807" "f5a7e07642decb17b03483af7c44e93353d2b128de403bf301651954c628c0ab" "f7f63c4f14c5eb79b6c26c308e6ad625ff91c649f39e57f198f1fb13ba2eb9a2" "f4833b553e92b4668afac5f351e68e14a0f90678bacfaf21bd4a19e1e4adc665" "39bcbc8fd33b1932683c3b05aab9ac9c59beec7f7fc211f6db775e9cad1702da" "291708e76bbdc185db5d3f154cb58a547ffdb2ab88b9ca68c8b67fd328ffaf60" "8e059e42d34e37de1c9d4134b89d4a41d11bf44ca88b70a738a8b2fa1d030900" "1843cbc8dd7232022cfcc54218864563000192e06188196c654443832c328047" "79a750a591511be62a78fcb2c3de2f422da7c4cd35e61571bc7cd8548e302a28" "5ccf92da2a1298b7c6fd8aac0e8641b8a0acd079d48df9718009feda3b0cdee8" "258f232c779de08cc48f0504805ba7f6f73bf4e380cd8c06541fab25c2686f89" "d0f9d3798ca38427957e3366ad49545c6f2748f0c838e615e3f24fa69e28b05e" "c1e8a0552f2019fd3e94dc38f50a2b89bed4cde151b5e3a944741003c76628e4" "51db76da37f3d91d9e910bde0fef9068d1b41a9adc1962c348b26eabc3cfe972" "0e21b836943cd76aaac05a5a18ffbae5aee1db741e56b8cc52d05ab88157f930" "085fa2189b97d6ce38d33b5a4854d0beaedc777834c48bb75e597151b7345ad2" "2cb34817f716ebaf37ab3f13e2e878177d6bb7182984d4126b356453f5d2e00c" "f34e811a660f850e88b399d072b106d44c15bfe0480045770b11fa7cc48d45d0" "a7a3dbf87e468bc7043d5d3b3b53a970ab3f98782aeafed6ad41b9cffd762543" "0338ac530ffe4fa47cb9d56548419bdfd2ec8c075dcf8d641425c2d847bf9ed6" "ec1992a1a643d37c880a7492922de4093cf9a5ebfe83dd4b68f9cc2e38497875" "fd0840d2cb2adf126ecd57d36cb7238900606099c9307537be0de9e6bac24e84" "fe5091a6867f070c7e9d70aaa30d05c105f3812ab451ff8d9d1197c44e7bd28d" "a67b6cb65db241e033b6aed5eeaf0805a1b62e598cedc605c71d003a1d5c00c6" "6ec75322239539171cefbce7e47c30627e6ba5e92d6dadfae119df94175e4293" "9ac8bcd9d4d22bbd087bbf9fb2db592a6f622a0774959e62a7fabb9b732ae347" "7d02d3cd33991c55773076e9f51caeb54efa1ca94bc140f431d446d175a0850b" "833ddce3314a4e28411edf3c6efde468f6f2616fc31e17a62587d6a9255f4633" "e989d10979a9bd3230077945a8169cf6988cbc7ca7ca95fc7dfe373d573eea85" "b099685963c251fb3ed5dd60237bda3390a11372221dfc9d168aa54e7b1c252e" "80d5a22931c15756b00fb258b80c93b8bc5096bb698dadfb6155ef3550e1c8fb" default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
@@ -1420,7 +1449,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(elisp-slime-nav slime slime-repl-ansi-color tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
  
 (put 'narrow-to-region 'disabled nil)
