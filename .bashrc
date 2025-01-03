@@ -3,37 +3,23 @@ export CLICOLOR=1
 
 #### Bash debugging settings
 
-# setx - run this function interactively to turn off the many
-# prompt-related commands that automatically run every time I enter a
-# command, then turn on tracing. This makes the trace much more
-# uncluttered.
+# Uncomment this to enable various hackish debugging statements in this file.
+# export MY_DEBUG=true
 
+# Run this function interactively to enable tracing *without*
+# the many prompt-related commands that automatically run every time I enter a
+# command. This makes the trace much more uncluttered and readable.
 function setx {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
     set -x
 }
 
-# # On error, print filename and line number.
-# trap 'echo "Error in ${BASH_SOURCE[0]} on line $LINENO"' ERR
+if [[ $MY_DEBUG ]]; then
+    setx
+fi
 
-# Enable timing. You will also need to add 'time ' before every command
-# that you want to time.
-# set -xT
-# export TIMEFORMAT='    real %3R'; export PS4=''
-# -OR-
-# export TIMEFORMAT='%3R'
-
-# # Convenience function for seeing which dotfiles are making startup slow.
-# # Invoke like time(1)
-# function time_source {
-#     echo -n "$1:  "
-#     time source "$1"
-#     echo
-# }
-#
-
-#### Settings related to my little Bash metaprogramming library
+#### Bash metaprogramming library "settings"
 
 function complain {
     for STRING in "$@"; do
@@ -62,6 +48,7 @@ function check-args {
     else
         # The caller passed the correct number of args to check-args itself.
         # Now check whether the caller's caller called the caller properly.
+        
         local MIN_ARGS="$1"; shift
         local MAX_ARGS="$1"; shift
         local USAGE="$1"; shift
@@ -76,11 +63,9 @@ function check-args {
             complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARAGS_CLAUSE} required)." \
                      "usage: $USAGE"
             return 1
-
-            
         elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
-            complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed). Usage:" \
-                     "    $USAGE"
+            complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
+                     "usage: $USAGE"
             return 2
         else
             return 0
@@ -575,12 +560,26 @@ function occur {
 
 #### Bash settings
 
-export SOURCE_COMMAND_PREFIX=""
 function source-if-exists {
-    # check-args 1 1
+    check-args 1 1 "source-if-exists FILE" "$@"
     local FILE="$1"
     if [[ -f "$FILE" ]]; then
-        $SOURCE_COMMAND_PREFIX source "$FILE"
+        my-source "$FILE"
+    fi
+}
+
+function my-source {
+    check-args 1 1 "my-source FILE" "$@"
+    local FILE="$1"
+
+    if [[ $MY_DEBUG ]]; then
+        SECONDS=0
+    fi
+
+    source "$FILE"
+    
+    if [[ $MY_DEBUG ]]; then
+        echo "sourced '$FILE' in $SECONDS seconds"
     fi
 }
 
@@ -639,7 +638,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     function comp {
         function sc {
             for FILENAME in "$@"; do
-                source "$BASH_COMPLETION_DIR/${FILENAME}"
+                my-source "$BASH_COMPLETION_DIR/${FILENAME}"
             done
         }
 
@@ -649,7 +648,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
                 ;;
                 
             brew)
-                source "$HOMEBREW_ROOT/completions/bash/brew"
+                my-source "$HOMEBREW_ROOT/completions/bash/brew"
                 ;;
             
             docker)
@@ -665,7 +664,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
                 ;;
         
             git)
-                source "$HOMEBREW_ROOT/share/gitprompt.sh"    
+                my-source "$HOMEBREW_ROOT/share/gitprompt.sh"    
                 sc "gh" \
                    "git-completion.bash"
                 ;;
@@ -704,9 +703,9 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
               && ( ! "$GIT_COMPLETION_ACTIVATED" \
                        || \
                      "$INSIDE_EMACS" ) ]]; then
-            source "$HOMEBREW_ROOT/share/gitprompt.sh"
-            source "$BASH_COMPLETION_DIR/gh"
-            source "$BASH_COMPLETION_DIR/git-completion.bash"
+            my-source "$HOMEBREW_ROOT/share/gitprompt.sh"
+            my-source "$BASH_COMPLETION_DIR/gh"
+            my-source "$BASH_COMPLETION_DIR/git-completion.bash"
             export GIT_COMPLETION_ACTIVATED=1
         fi
     }
@@ -1077,7 +1076,7 @@ function activate-iTerm2-integration {
     # It would slow down shell startup considerably if I automatically
     # sourced this code, so I've separated it into a function that you
     # can call explicitly when you want it.
-    source ~/.iterm2_shell_integration.bash
+    my-source ~/.iterm2_shell_integration.bash
 }
 
 ## Bash prompt settings
@@ -2299,7 +2298,7 @@ function va {
         echo "va: error: wrong number of arguments. Usage: va VIRTUALENV_TO_ACTIVATE"
     else
         VENV_NAME="$1"
-        source "$MY_VIRTUALENV_DIR/$VENV_NAME/bin/activate"
+        my-source "$MY_VIRTUALENV_DIR/$VENV_NAME/bin/activate"
         pip install --upgrade pip
     fi
 }
@@ -2824,7 +2823,7 @@ fi
 
 #### Perlbrew settings (this must come after the part in this file where PATH is set):
 
-function activate-perlbrew { source ~/perl5/perlbrew/etc/bashrc ;}
+function activate-perlbrew { my-source ~/perl5/perlbrew/etc/bashrc ;}
 function perlbrew-activate { activate-perlbrew ;}
 
 function psql-tips { links ~/src/psql-tips/html/psql_tips_all.html ;}
@@ -3023,7 +3022,7 @@ function jenkins-branch {
 
 #### Jira settings, regrettably
 
-source ~/.bashrc.d/jira.bash
+my-source ~/.bashrc.d/jira.bash
 
 #### Music-related settings
 
@@ -3118,7 +3117,7 @@ function yaml2json {
 
 #### path settings (global)
 
-if [[ ! "$PATHS_SET_AT" ]]; then
+if [[ -z "$PATHS_SET_AT" ]]; then
     set -a
     PATHS_SET_AT="$(date)"
 
@@ -3151,9 +3150,8 @@ if [[ ! "$PATHS_SET_AT" ]]; then
 
     ## golang path
     GOPATH="$HOME/go"
-    
+
     set +a
 fi
 
 source-if-exists ~/.site.bash.d/postamble.bash
-[[ -e ~/.umt/umt-profile ]] && source ~/.umt/umt-profile
