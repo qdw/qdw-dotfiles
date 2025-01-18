@@ -50,3 +50,7 @@ example-*
 gitignore.d
 project.org
 jenkins_output.*
+
+**/assets/**
+**/docs/**
+**/__snapshots__/**

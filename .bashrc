@@ -3,40 +3,23 @@ export CLICOLOR=1
 
 #### Bash debugging settings
 
-## Uncomment the following line to run shellcheck, a mediocre and pedantic static analysis tool, on my Bash config files.
-# shellcheck shell=bash
+# Uncomment this to enable various hackish debugging statements in this file.
+# export MY_DEBUG=true
 
-## Uncomment the following lines if you want to time each command in this file.
-## You will also need to add 'time ' before every command in this file,
-## because Bash doesn't have a good builtin time-tracing function.
-# export TIMEFORMAT='    real %3R'; export PS4=''
-# set -xT
-
-# Uncomment if you want to *stop* timing how long each command in this
-# file takes to run.
-# set +xT
-
-## Also useful for timing:
-
-# TIMEFORMAT='%3R'
-# function time_source {
-#     echo -n "$1:  "
-#     time source "$1"
-#     echo
-# }
-
-# setx - run this function interactively to turn off the many
-# prompt-related commands that automatically run every time I enter a
-# command, then turn on tracing. This makes the trace much more
-# uncluttered.
-
+# Run this function interactively to enable tracing *without*
+# the many prompt-related commands that automatically run every time I enter a
+# command. This makes the trace much more uncluttered and readable.
 function setx {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
     set -x
 }
 
-#### Settings related to my little Bash metaprogramming library
+if [[ $MY_DEBUG ]]; then
+    setx
+fi
+
+#### Bash metaprogramming library "settings"
 
 function complain {
     for STRING in "$@"; do
@@ -44,11 +27,12 @@ function complain {
     done
 }
 
-function check_args {
+function check-args {
     local FUNCTION="${FUNCNAME[1]}"
     
     if [[ $# -lt 3 ]]; then
-        # Wrong number of args to check_args itself. Print an informative error message.
+        # Wrong number of args to check-args itself.
+        # Print an error and return.
 
         local ARGUMENTS_INFLECTED
         if [[ $# -eq 1 ]]; then
@@ -56,36 +40,33 @@ function check_args {
         else
             ARGUMENTS_INFLECTED="argument"
         fi
-        
-        complain "check_args: error: $FUNCTION passed the wrong number of arguments to check_args itself" \
-                 "($FUNCTION called check_args with $# $ARGUMENTS_INFLECTED, but it requires" \
+        complain "check-args: error: $FUNCTION passed the wrong number of arguments to check-args itself" \
+                 "($FUNCTION called check-args with $# $ARGUMENTS_INFLECTED, but it requires" \
                  "at least 3.)" \
-                 "Usage: " \
-                 "checks_args MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING [ACTUAL_ARGUMENT_PASSED ...]"
-        return 1
+                 "usage: checks_args MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
+        return 250
     else
-        # Happy path: the caller passed the correct number of args to check_args itself.
-        # Check whether the caller's caller called the caller properly.
+        # The caller passed the correct number of args to check-args itself.
+        # Now check whether the caller's caller called the caller properly.
+        
         local MIN_ARGS="$1"; shift
         local MAX_ARGS="$1"; shift
         local USAGE="$1"; shift
         local ARGC=$#
         if ((ARGC < MIN_ARGS)); then
-            
-            local VARCLAUSE
+            local VARAGS_CLAUSE
             if [[ "$MAX_ARGS" = "varargs" ]]; then
-                VARCLAUSE=" or more"
+                VARAGS_CLAUSE=" or more"
             else
-                VARCLAUSE=""
+                VARAGS_CLAUSE=""
             fi
-            
-            complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARCLAUSE} required). Usage:" \
-                     "$USAGE"
-            return 2
+            complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARAGS_CLAUSE} required)." \
+                     "usage: $USAGE"
+            return 1
         elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
-            complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed). Usage:" \
-                     "$USAGE"
-            return 3
+            complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
+                     "usage: $USAGE"
+            return 2
         else
             return 0
         fi
@@ -93,7 +74,7 @@ function check_args {
 }
 
 function filter {
-    check_args 1 varargs "filter FUNCTION_NAME [FUNCTION_ARGUMENT ...]"
+    check-args 1 varargs "filter FUNCTION_NAME [FUNCTION_ARGUMENT ...]"
 
     local FUNCTION_NAME="$1"
     shift    
@@ -117,7 +98,7 @@ function funcalias {
 }
 
 function installed {
-    # check_args 1 1 "installed COMMAND_NAME"
+    # check-args 1 1 "installed COMMAND_NAME"
     local COMMAND="$1"
     if command -p "$COMMAND" > /dev/null 2>&1 \
             || [[ -x "$HOMEBREW_BIN/$COMMAND" ]]
@@ -197,12 +178,12 @@ RESET='\033[0m'
 BRIGHT_CYAN='96m'
 
 function cyan {
-    check_args 0 0 "cyan"
+    check-args 0 0 "cyan"
     echo -e "$ANSI$CYAN=cyan=$RESET"
 }
 
 function color {
-    # check_args 2 2 "color STRING_TO_DISPLAY COLOR_NAME_IN_ALL_CAPS"
+    # check-args 2 2 "color STRING_TO_DISPLAY COLOR_NAME_IN_ALL_CAPS"
     local STRING="$1"
     local COLORNAME="$2"
     local COLORCODE
@@ -248,8 +229,8 @@ function color {
     echo -e "${ANSI}${COLORCODE}${STRING}${RESET}"
 }
 
-# bw (Black and White): remove ANSI color (and other) sequences
-function bw {
+# bnw (Black 'n' White): remove ANSI color (and other) sequences
+function bnw {
     local  INPUT_STRING
 
     function sed_it {
@@ -261,10 +242,10 @@ function bw {
     elif [[ $# -eq 1 ]]; then
         echo "$1" | tr -d '[:punct:]'
     else
-        complain "baw: error: too many arguments. Usage:
-    echo "some string" | baw
-    cat some_file | baw
-    baw FILENAME"
+        complain "bnw: error: too many arguments. Usage:
+    echo "some string" | bnw
+    cat some_file | bnw
+    bnw FILENAME"
     fi
 }
 
@@ -402,7 +383,7 @@ function gfd {
 }
 
 function fdgrep {
-    # check_args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    # check-args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
     local FILENAME_REGEX="$1"; shift    
     (fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@" \;)
 }
@@ -417,7 +398,7 @@ function newlineless {
 function tsgrep { fdgrep "[.]ts$" "$@" ;}
 
 function fdoccur {
-    # check_args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    # check-args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
     local FILENAME_REGEX="$1"; shift
     fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
 }
@@ -441,7 +422,7 @@ set -a
 # Prefer ripgrep if installed.
 if installed "rg"; then
     MY_GREP="rg"
-    GREP_OPTIONS="--color=always --no-line-number"
+    MY_GREP_OPTIONS="--color=always --no-line-number"
     GREP_RECURSE="--no-heading --follow --no-one-file-system"
     GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
     GREP_COLOR_FLAGS="--colors match:fg:red"
@@ -454,9 +435,9 @@ else
         MY_GREP="grep"
     fi
     
-    GREP_OPTIONS="-I --color=always"
+    MY_GREP_OPTIONS="-I --color=always"
     GREP_RECURSE="-R"
-    GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.gitignore --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
+    GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
     
     GREEN="32"
     YELLOW="33"
@@ -468,18 +449,33 @@ fi
 set +a
 
 function grep {
+    # When using rg as my grep implementation, I often type -R out of habit,
+    # but rg has no -R flag (and it's recursive by default).
+    # So, if I try to pass that flag to rg, just remove it.
+    local ARGS=()
+    if [[ "$MY_GREP" = "rg" ]]; then
+        for ARG in "$@"; do
+            # FIXME: rewrite this properly, using Bash's builtin getopts
+            if [[ "$ARG" != "-R" ]]; then
+                ARGS+=("$ARG")
+            fi
+        done
+    else
+        ARGS=$@
+    fi
+
     $MY_GREP \
-        $GREP_OPTIONS \
+        $MY_GREP_OPTIONS \
         $GREP_COLOR_FLAGS \
-        $GREP_EXCLUDE_FLAGS "$@" | $PAGER
+        $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
 }
 
-function g { grep "$GREP_RECURSE" "$@" ;}
+function g { grep $GREP_RECURSE "$@" ;}
 function gbr { g "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
 function ge { g "$@" ~/.emacs.d ;}
 
 function grep-settings {
-    # check_args 2 varargs
+    # check-args 2 varargs
     local GREP_SETTINGS_REGEX="$1"
     shift
     
@@ -517,7 +513,7 @@ function grep-settings {
 # modifying the file in-place to remove those lines. If you specify
 # multiple files, it does this to all of them.
 function fip {
-    # check_args 2 varargs
+    # check-args 2 varargs
     
     local FIP_REGEX="$1"
     shift
@@ -559,14 +555,31 @@ function count_one_level {
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur {
-    $MY_GREP -R --files-with-matches --max-count=1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
+    $MY_GREP $GREP_RECURSE --files-with-matches --max-count=1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
 }
 
 #### Bash settings
 
 function source-if-exists {
-    if [[ $# -eq 1 ]] && [[ -f "$1" ]]; then
-        source "$1"
+    check-args 1 1 "source-if-exists FILE" "$@"
+    local FILE="$1"
+    if [[ -f "$FILE" ]]; then
+        my-source "$FILE"
+    fi
+}
+
+function my-source {
+    check-args 1 1 "my-source FILE" "$@"
+    local FILE="$1"
+
+    if [[ $MY_DEBUG ]]; then
+        SECONDS=0
+    fi
+
+    source "$FILE"
+    
+    if [[ $MY_DEBUG ]]; then
+        echo "sourced '$FILE' in $SECONDS seconds"
     fi
 }
 
@@ -577,11 +590,6 @@ function grbash {
     else
         grep -R "$@" ~/.bashrc ~/.bashrc.d ~/.bash_profile ~/.bash_login ~/.bash_logout ~/.site.bash.d
     fi
-}
-
-# fun - show the source code of a bash function, with syntax highlighting
-function fun {
-    type "$1" | bat --language bash
 }
 
 #### Bash history settings
@@ -630,7 +638,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     function comp {
         function sc {
             for FILENAME in "$@"; do
-                source "$BASH_COMPLETION_DIR/${FILENAME}"
+                my-source "$BASH_COMPLETION_DIR/${FILENAME}"
             done
         }
 
@@ -640,7 +648,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
                 ;;
                 
             brew)
-                source "$HOMEBREW_ROOT/completions/bash/brew"
+                my-source "$HOMEBREW_ROOT/completions/bash/brew"
                 ;;
             
             docker)
@@ -656,7 +664,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
                 ;;
         
             git)
-                source "$HOMEBREW_ROOT/share/gitprompt.sh"    
+                my-source "$HOMEBREW_ROOT/share/gitprompt.sh"    
                 sc "gh" \
                    "git-completion.bash"
                 ;;
@@ -695,9 +703,9 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
               && ( ! "$GIT_COMPLETION_ACTIVATED" \
                        || \
                      "$INSIDE_EMACS" ) ]]; then
-            source "$HOMEBREW_ROOT/share/gitprompt.sh"
-            source "$BASH_COMPLETION_DIR/gh"
-            source "$BASH_COMPLETION_DIR/git-completion.bash"
+            my-source "$HOMEBREW_ROOT/share/gitprompt.sh"
+            my-source "$BASH_COMPLETION_DIR/gh"
+            my-source "$BASH_COMPLETION_DIR/git-completion.bash"
             export GIT_COMPLETION_ACTIVATED=1
         fi
     }
@@ -986,7 +994,10 @@ function se {
 }
 
 # re (Restart Emacs-daemon): stop it, then start it.
-function re { ke && se ;}
+function re {
+    ke
+    se
+}
 
 set -a
 if [[ "$INSIDE_EMACS" ]]; then
@@ -1065,7 +1076,7 @@ function activate-iTerm2-integration {
     # It would slow down shell startup considerably if I automatically
     # sourced this code, so I've separated it into a function that you
     # can call explicitly when you want it.
-    source ~/.iterm2_shell_integration.bash
+    my-source ~/.iterm2_shell_integration.bash
 }
 
 ## Bash prompt settings
@@ -1278,6 +1289,18 @@ function bat {
       | $PAGER
 }
 
+# type - show the source code of a bash function, with syntax highlighting
+function type {
+    check-args 1 1 "type SOME_COMMAND_NAME" "$@" || return 1
+    local COMMAND="$1"
+    local FIRST_LINE="$(command type "$COMMAND" | head -1)"
+    if [[ "$FIRST_LINE" = "$COMMAND is a function" ]]; then
+        command type "$COMMAND" | tail -n +2 | bat --language bash
+    else
+        echo "$FIRST_LINE"
+    fi
+}
+
 # bat-head FILENAME NUMBER: use color bat to show a file's first n lines
 function bat-head {
     local FILENAME="$1"
@@ -1297,7 +1320,7 @@ function bbat  {
 
 # cdr ("CD Realname") - cd to the directory that a symlink points to
 function cdr {
-    # check_args 1 1
+    # check-args 1 1
     local TARGET="$1"
     local DEPTH=0
     local MAX_DEPTH=9
@@ -1525,7 +1548,7 @@ function lisp-case { kebab-case "$@" ;}
 # For example, if you're in directory ~/src/my-project/javascript then
 # 'gcd python' will change the cwd to ~/src/my-project/python
 function gcd {
-    check_args 0 1 "gcd [RELATIVE_DIR]"
+    check-args 0 1 "gcd [RELATIVE_DIR]"
     cd "$(git rev-parse --show-toplevel)/$1"
 }
 
@@ -1579,51 +1602,6 @@ function get-main-branch-name {
     
     MAIN_OR_MASTER="$(command git branch --remotes | command ggrep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
     echo "$MAIN_OR_MASTER"
-}
-
-
-# gb (Git Branch) - create a new branch based on the main one, and check it out
-function gb {
-    local NEW_BRANCH_NAME MAIN
-
-    if [[ $# -eq 0 ]]; then
-        git branch --show-current
-    elif [[ $# -eq 1 ]]; then
-        NEW_BRANCH_NAME="$1"
-        MAIN=$(get-main-branch-name) \
-            && git co --quiet "$MAIN" \
-            && git pull --ff-only --quiet \
-            && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
-                | command grep -v -E 'remote:' #\
-            #&& git push --set-upstream origin # --quiet
-    else
-        echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
-    fi
-}
-
-# Generate a 
-function gbb {
-    echo "First create a JIRA ticket and copy its shortname (e.g., 'MYPROJ-1')"
-    jira-create-ticket
-
-    echo "Now paste in the shortname:"
-    read SHORTNAME
-    
-    echo "Now paste in a brief description in English"
-    read DESCRIPTION
-    DESC="$(branchify "$DESCRIPTION")"
-    
-    NEW_BRANCH_NAME="$GITHUB_USERNAME/$SHORTNAME/$DESC"
-    
-    echo "New branch is '$NEW_BRANCH_NAME'"    
-    # gb "$NEW_BRANCH_NAME"
-}   
-
-# gb (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
-# command to create and switch to a branch.
-# Shadows the crappy Unix built-in calculator bc(1).
-function bc {
-    gb "$@"
 }
 
 # gbs (Git Branches) - list (local) git branches
@@ -1685,6 +1663,52 @@ function branch {
 
 function gists {
     gh git list "$@"
+}
+
+# gb (Git Branch) - create a new branch based on the main one, and check it out
+function gb {
+    local NEW_BRANCH_NAME MAIN
+
+    if [[ $# -eq 0 ]]; then
+        git branch --show-current
+    elif [[ $# -eq 1 ]]; then
+        NEW_BRANCH_NAME="$1"
+        MAIN=$(get-main-branch-name) \
+            && git co --quiet "$MAIN" \
+            && git pull --ff-only --quiet \
+            && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
+                | command grep -v -E 'remote:' #\
+            #&& git push --set-upstream origin # --quiet
+    else
+        echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
+    fi
+}
+
+# Generate a 
+function gbb {
+    local SHORTNAME
+
+    echo "First create a JIRA ticket and copy its shortname (e.g., 'MYPROJ-1')"
+    jira-create-ticket
+
+    echo "Now paste in the shortname:"
+    read SHORTNAME
+    
+    echo "Now paste in a brief description in English"
+    read DESCRIPTION
+    DESC="$(branchify "$DESCRIPTION")"
+    
+    NEW_BRANCH_NAME="$GITHUB_USERNAME/$SHORTNAME/$DESC"
+    
+    echo "New branch is '$NEW_BRANCH_NAME'"    
+    # gb "$NEW_BRANCH_NAME"
+}   
+
+# gb (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
+# command to create and switch to a branch.
+# Shadows the crappy Unix built-in calculator bc(1).
+function bc {
+    gb "$@"
 }
 
 # gist - view gists or create a gist
@@ -1798,11 +1822,16 @@ function gcl {
 }
 
 function clone { gcl "$@" ;}
-function gcm { git commit -m "$@" ;}
 function gdo { git diff origin HEAD ;}
 function gn { git diff --name-only "$@" ;}
 function gs { git status "$@" ;}
 
+function mma {
+    git add . \
+        && git commit --allow-empty-message -m "" \
+        && git push \
+        && prl
+}
 
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi {
@@ -2214,7 +2243,7 @@ function air {
 }
 
 function buy {
-    # check_args 0 1 "buy [PRODUCT_NAME]"
+    # check-args 0 1 "buy [PRODUCT_NAME]"
     local URL
     local URL_DIR="$HOME/.site.bash.d/buy"
     function list-things-you-can-buy {
@@ -2269,7 +2298,7 @@ function va {
         echo "va: error: wrong number of arguments. Usage: va VIRTUALENV_TO_ACTIVATE"
     else
         VENV_NAME="$1"
-        source "$MY_VIRTUALENV_DIR/$VENV_NAME/bin/activate"
+        my-source "$MY_VIRTUALENV_DIR/$VENV_NAME/bin/activate"
         pip install --upgrade pip
     fi
 }
@@ -2596,7 +2625,7 @@ function cel { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
 function d { date +%Y-%m-%d ;}
 
 function epoch2human {
-    # check_args 1 1 "epoch2human EPOCH_SECONDS"
+    # check-args 1 1 "epoch2human EPOCH_SECONDS"
     local EPOCH_SECONDS="$1"
     date -d "@${EPOCH_SECONDS}"
 }
@@ -2794,7 +2823,7 @@ fi
 
 #### Perlbrew settings (this must come after the part in this file where PATH is set):
 
-function activate-perlbrew { source ~/perl5/perlbrew/etc/bashrc ;}
+function activate-perlbrew { my-source ~/perl5/perlbrew/etc/bashrc ;}
 function perlbrew-activate { activate-perlbrew ;}
 
 function psql-tips { links ~/src/psql-tips/html/psql_tips_all.html ;}
@@ -2993,7 +3022,7 @@ function jenkins-branch {
 
 #### Jira settings, regrettably
 
-source ~/.bashrc.d/jira.bash
+my-source ~/.bashrc.d/jira.bash
 
 #### Music-related settings
 
@@ -3088,7 +3117,7 @@ function yaml2json {
 
 #### path settings (global)
 
-if [[ ! "$PATHS_SET_AT" ]]; then
+if [[ -z "$PATHS_SET_AT" ]]; then
     set -a
     PATHS_SET_AT="$(date)"
 
@@ -3121,9 +3150,8 @@ if [[ ! "$PATHS_SET_AT" ]]; then
 
     ## golang path
     GOPATH="$HOME/go"
-    
+
     set +a
 fi
 
 source-if-exists ~/.site.bash.d/postamble.bash
-[[ -e ~/.umt/umt-profile ]] && source ~/.umt/umt-profile

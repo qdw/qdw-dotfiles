@@ -1,4 +1,5 @@
 ;;;; Machine-specific settings (catch exception if no such file)
+
 (condition-case
     nil
     (load-file (expand-file-name "~/.emacs.d/site/site.el"))
@@ -55,6 +56,7 @@
 (require 'dirtrack)
 (require 'dockerfile-mode)
 (require 'fd-dired)
+(require 'flycheck)
 (require 'json)
 ;; (require 'lyrics-fetcher)
 (require 'magit)
@@ -71,10 +73,15 @@
 (require 'ruby-mode)
 (require 'scroll-bar)
 (require 'sh-script)
+(require 'tide)
 (require 'tool-bar)
 (require 'typescript-mode)
 (require 'whitespace)
 (require 'yaml-mode)
+
+;;;; Password settings (excluded from Git)
+
+(load (expand-file-name "~/.emacs.d/secrets.el") 't)
 
 ;;;; Utility functions used in this file
 
@@ -92,6 +99,14 @@ but it calls defvar under the hood."
 (defun string-in (str ls)
   "Return 't if any member of a ls matches string; else return nil"
   (seq-some (lambda (s) (string= str s)) ls))
+  
+;;;; .ignore settings
+;;;; This file is formatted exactly like .gitignore,
+;;;; and is honored by fd, rg, and maybe others?
+(add-to-list 'auto-mode-alist
+             '("\\.ignore\\'" . gitignore-mode))
+   
+
 
 ;;;; Color settings
 
@@ -215,9 +230,13 @@ but it calls defvar under the hood."
   (interactive)
   (ansi-color-apply-on-region (point-min) (point-max)))
 
-(add-to-list 'custom-theme-load-path
-	     (expand-file-name "~/.emacs.d/qdw-themes")
-             (expand-file-name "~/.emacs.d/third-party-themes"))
+(mapc
+ (lambda (file-name)
+   (add-to-list 'custom-theme-load-path (expand-file-name file-name)))
+
+ '("~/.emacs.d/qdw-themes"
+   "~/src/1/emacs-mariana-theme"
+   "~/.emacs.d/third-party-themes"))
 
 (load-theme 'tritium 't)
 ;; (load-theme 'mariana 't)
@@ -258,10 +277,6 @@ but it calls defvar under the hood."
 
 ;; Always use the same cursor color, no matter what theme I use.
 (set-cursor-color "DarkOrange1")
-
-;;;; Password settings (excluded from Git)
-
-(load (expand-file-name "~/.emacs.d/secrets.el") 't)
 
 ;;;; dired settings
 
@@ -344,8 +359,8 @@ use `dired-find-file' to open it in a new buffer."
     (async-shell-command
      (format
       "%S %S %d"
-      (expand-file-name"~/.emacs.d/open-file-in-macos-vscode.scpt")
-      (shell-quote-argument buffer-file-name)
+      (expand-file-name "~/.emacs.d/open-file-in-macos-vscode.scpt")
+      (shell-quote-argument (expand-file-name buffer-file-name))
       (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
 
 (defun vscode ()
@@ -612,6 +627,17 @@ This command does the reverse of `fill-region'."
     (org-insert-link nil
                      (concat jiralib-url "/browse/" ticket-name)
                      ticket-name)))
+                     
+(defun org-linkify-buffer-qdw ()
+  "Make each line in the buffer into an org-mode style link
+by enclosing it in [[double square brackets]]. This works
+for files of local paths produced by running, e.g., fd,
+which is its intended use."
+  (interactive)
+  (goto-char (point-min))
+  (replace-regexp "^" "[[")
+  (goto-char (point-min))
+  (replace-regexp "$" "]]"))
 
 ;; This regexp is correct...
 (setq jira-ticket-regexp-qdw
@@ -979,8 +1005,9 @@ This command does the reverse of `fill-region'."
 
 (setq-default
  json-encoding-default-indentation "  "
- tide-import-js (list (expand-file-name "~/src-3/aws-cdk")
-                      (expand-file-name "~/src/infra-cdk-library")))
+ tide-import-js (list (expand-file-name "~/aws")
+                      (expand-file-name "~/upstart")))
+                      
 
 (let ((desired-indent-level 2))
   (setq-default
@@ -1148,11 +1175,12 @@ This command does the reverse of `fill-region'."
 (keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
 (keymap-set org-mode-map "C-c RET" 'org-insert-subheading)
 
-
+(keymap-global-set "C-c ." 'find-file-at-point)
 (keymap-global-set "C-c !"   'async-shell-command)
 (keymap-global-set "C-c %"   'query-replace-regexp)
 (keymap-global-set "C-c :"   'eval-expression)
 (keymap-global-set "C-h 1"   'describe-face)
+
 (keymap-global-set "C-c C-f" 'multi-occur-in-matching-buffers)
 (keymap-global-set "C-c C-s" 'isearch-forward-regexp)
 (keymap-global-set "C-c c"   'comment-region)
@@ -1441,7 +1469,7 @@ This command does the reverse of `fill-region'."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(restclient tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(elisp-slime-nav restclient tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(sh-indent-statement-after-and nil))
  
 (put 'narrow-to-region 'disabled nil)
