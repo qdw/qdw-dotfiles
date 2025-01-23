@@ -714,13 +714,25 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     ## not for upstart_web export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
 fi
 
-#### Scheme Shell settings (keywords: Lisp, scsh)
+#### Scheme Shell settings
 
 if [[ -d "/opt/scsh" ]]; then
     SCSH_PATH="/opt/scsh/bin"
     LATEST_SCSH_VERSION="$(ls /opt/scsh/lib | sort --general-numeric-sort | tail -1)"
     SCSH_LDFLAGS="-L/opt/scsh/lib/scsh-${LATEST_SCSH_VERSION}"
-fi    
+fi
+
+#### Unicode-related settings
+
+function zero-width-joiner {
+    echo -en '\u200D' | pbcopy
+}
+function zwj {
+    zero-width-joiner "$@"
+}
+function nbsp {
+    zero-width-joiner "$@"
+}
 
 #### Pager settings
 
@@ -827,6 +839,12 @@ function iam {
     else
         aws rds generate-db-auth-token "$@" | tee >(pbcopy)
     fi
+}
+
+# Print a list of IAM instances in the current account (each double-quoted)
+function instances {
+    aws rds describe-db-instances \
+        | jq '.DBInstances[] | .DBInstanceIdentifier'
 }
 
 # tags - show CDK tags for a project
@@ -1289,15 +1307,16 @@ function bat {
       | $PAGER
 }
 
-# type - show the source code of a bash function, with syntax highlighting
-function type {
-    check-args 1 1 "type SOME_COMMAND_NAME" "$@" || return 1
-    local COMMAND="$1"
-    local FIRST_LINE="$(command type "$COMMAND" | head -1)"
-    if [[ "$FIRST_LINE" = "$COMMAND is a function" ]]; then
-        command type "$COMMAND" | tail -n +2 | bat --language bash
+# func - show the source code of a bash function, with syntax highlighting
+function func {
+    # check-args 1 1 "type SOME_FUNCTION_NAME" "$@"
+    local FUNCTION_NAME="$1"
+    local FIRST_LINE="$(command type "$FUNCTION_NAME" | head -1)"
+    if [[ "$FIRST_LINE" = "$FUNCTION_NAME is a function" ]]; then
+        command type "$FUNCTION_NAME" | tail -n +2 | bat --language bash
     else
-        echo "$FIRST_LINE"
+        echo "$FUNCTION_NAME is not defined as a function" > /dev/stderr
+        return 1
     fi
 }
 
@@ -1310,7 +1329,7 @@ function bat-head {
 }
 
 # bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub)
-function bbat  {
+function bbat {
     local TMPFILE
     
     TMPFILE=$(gmktemp --suffix .html /tmp/bbat.XXXXXX) \
@@ -1665,6 +1684,22 @@ function gists {
     gh git list "$@"
 }
 
+function team {
+    # check_args 1 1
+    local TEAM_NAME="$1"
+    open -u "https://github.com/orgs/$GITHUB_ORG/teams/$TEAM_NAME"
+}
+
+function owner_echo {
+    local OWNER="$(head -1 CODEOWNERS | sed 's/^[*] [@]//')"
+    echo "$OWNER"
+}
+
+function owner {
+    local TEAM_NAME="$(owner_echo | sed s"|^$GITHUB_ORG[/]||")"
+    team "$TEAM_NAME"
+}
+
 # gb (Git Branch) - create a new branch based on the main one, and check it out
 function gb {
     local NEW_BRANCH_NAME MAIN
@@ -1826,12 +1861,12 @@ function gdo { git diff origin HEAD ;}
 function gn { git diff --name-only "$@" ;}
 function gs { git status "$@" ;}
 
-function mma {
-    git add . \
-        && git commit --allow-empty-message -m "" \
-        && git push \
-        && prl
-}
+# function mma {
+#     git add . \
+#         && git commit --allow-empty-message -m "" \
+#         && git push \
+#         && prl
+# }
 
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi {
@@ -2192,15 +2227,13 @@ function replication_role {
 # 
 # ser - display sections of my ~/.pg_service.conf, or the whole thing
 function ser {
-    local SER_REGEX
-    
-    if [[ $# -eq 0 ]]; then
-        echo "ser: missing argument. Usage: ser [GREP_FLAG ...] SER_REGEX" >&2
-    else
-        SER_REGEX="$1"
-        shift
+    local COLORIZE="bat --language ini"
 
-        command grep -E $@ "^[[].*$SER_REGEX.*[]]" ~/.pg_service.conf
+    if [[ $# -eq 0 ]]; then
+        $COLORIZE ~/.pg_service.conf
+    else
+        local SERVICE_NAME_SUBSTRING="$1"
+        para "$SERVICE_NAME_SUBSTRING" ~/.pg_service.conf | $COLORIZE
     fi
 }
 
@@ -2438,29 +2471,29 @@ function mshost {
 # match that regex. Yeah, I know I could do this with pgrep, but it
 # wouldn't give me all the output-format flexibility that I get from
 # using ps itself.
-function p {
-    local HEADER
-    local PROCS
-    local PS_COMMAND="ps auxwww"
+# function p {
+#     local HEADER
+#     local PROCS
+#     local PS_COMMAND="ps auxwwwww"
     
-    if [[ $# -eq 0 ]]; then
-        $PS_COMMAND | $PAGER
-    else
-        HEADER="$($PS_COMMAND | head -1)"
+#     if [[ $# -eq 0 ]]; then
+#         $PS_COMMAND | $PAGER
+#     else
+#         HEADER="$($PS_COMMAND | head -1)"
 
-        set -o pipefail
-        PROCS="$($PS_COMMAND | command grep -v grep | command grep --color=always "$@")" | $PAGER
-        RC=$?
-        set +o pipefail
+#         set -o pipefail
+#         PROCS="$($PS_COMMAND | command grep -v grep | command grep --color=always "$@")" | $PAGER
+#         RC=$?
+#         set +o pipefail
         
-        if [[ -n "$PROCS" ]]; then
-            echo "$HEADER"
-            echo "$PROCS"
-        fi
+#         if [[ -n "$PROCS" ]]; then
+#             echo "$HEADER"
+#             echo "$PROCS"
+#         fi
 
-        return $RC
-    fi
-}
+#         return $RC
+#     fi
+# }
 
 function pstree {
     command pstree -g 3 -u $USER "$@" | $PAGER
@@ -2535,6 +2568,21 @@ function vl { "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@" ;}
 # }
 
 # function set-equals {
+
+#### Slack settings
+
+function slack-channel {
+    # check_args 1 1 "slack-channel CHANNEL_NAME # (with or without the leading '#'; doesn't matter)"
+
+    # Remove leading '#' if present
+    local CHANNEL_NAME="${1/##/}"
+    
+    if on_macos; then
+        macos-open-slack-channel.bash "$CHANNEL_NAME"
+    else
+        open "https://${SLACK_TEAM}.slack.com/channels/${CHANNEL_NAME}"
+    fi
+}
     
 
 #### SSH settings
@@ -2705,8 +2753,7 @@ function paraln {
     awk "/$PARALN_REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$PARALN_REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
 }
 
-
-function conf { para "$1" ~/.ssh/*.config | grep -e '^' -e "$1" ;}
+function sshconf { para "$1" ~/.ssh/*.config | grep -e '^' -e "$1" ;}
 
 # pi ("Perl @INC") - print @INC dirs, one per line, preceded by the path to Perl.
 function pi {
@@ -3122,7 +3169,7 @@ if [[ -z "$PATHS_SET_AT" ]]; then
     PATHS_SET_AT="$(date)"
 
     ## executable PATH
-    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
     
     ## C settings/dynamic library path settings
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
