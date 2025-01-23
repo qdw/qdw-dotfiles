@@ -57,6 +57,8 @@
 (require 'dockerfile-mode)
 (require 'fd-dired)
 (require 'flycheck)
+(require 'helm)
+(require 'helm-swoop)
 (require 'json)
 ;; (require 'lyrics-fetcher)
 (require 'magit)
@@ -280,12 +282,6 @@ but it calls defvar under the hood."
 
 ;;;; dired settings
 
-;; Automatically refresh the dired view
-;; when files are added/removed/renamed;
-;; don't make me type g
-(setq global-auto-revert-non-file-buffers 't)
-(setq auto-revert-verbose nil)
-
 (defun dired-find-file-qdw ()
   "In Dired, visit the file or directory on the cursor.
 If the file is a directory, use `dired-find-alternate-file'
@@ -298,6 +294,12 @@ use `dired-find-file' to open it in a new buffer."
       (dired-find-file))))
 
 ;;;; Alternative-editor settings
+
+;; If a file is open in Emacs and another editor saves the file,
+;; update the one in Emacs. Also do this for dired.
+(setq auto-revert-verbose nil)
+(if (not global-auto-revert-mode)
+    (global-auto-revert-mode 't))
 
 (defun get-lineno-qdw ()
   (+ (if (bolp) 1 0) (count-lines 1 (point))))
@@ -580,13 +582,22 @@ This command does the reverse of `fill-region'."
 
 (advice-add 'compile :around #'disable-underline-qdw)
 
+;;;; Search settings
+
 (setq-default
  ;; Make isearch case-sensitive by default.
  case-fold-search 't
 
  isearch-allow-scroll 'unlimited)
+ 
+(defun search-in-buffers (regexp)
+  (interactive "sSearch for regexp: ")
+   (multi-occur-in-matching-buffers
+     "."
+     regexp
+     nil))
   
-(defun gr ()
+(defun g ()
   (interactive)
   (let ((command-string (read-string "Shell command: " "grep -HnE --color=always"))
         (original-underline-face (face-attribute 'underline :underline)))
@@ -758,7 +769,7 @@ which is its intended use."
   (interactive "MSlack channel (without the '#'): ")
   (org-insert-link
     nil
-    (concat "https://" slack-team "slack.com/channels/#" channel-name)
+    (concat "https://" slack-team ".slack.com/channels/#" channel-name)
     (concat "#" channel-name)))
 
 (defun org-insert-pr-link-qdw (repo pr-number)
@@ -1175,7 +1186,10 @@ which is its intended use."
 (keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
 (keymap-set org-mode-map "C-c RET" 'org-insert-subheading)
 
-(keymap-global-set "C-c ." 'find-file-at-point)
+(keymap-global-set "C-c /"   'helm-multi-swoop-all)
+(keymap-global-set "C-c \\"   'helm-swoop-back-to-last-point)
+
+(keymap-global-set "C-c ."   'find-file-at-point)
 (keymap-global-set "C-c !"   'async-shell-command)
 (keymap-global-set "C-c %"   'query-replace-regexp)
 (keymap-global-set "C-c :"   'eval-expression)
@@ -1433,6 +1447,7 @@ which is its intended use."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(ediff-odd-diff-B ((t (:extend t :background "#0D2A34" :distant-foreground "#869496"))))
+ '(flycheck-error ((t (:weight normal))))
  '(italic ((t (:underline t :slant normal :weight normal))))
  '(org-date ((t (:foreground "#6495ed" :weight normal))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff" :weight normal)))))
@@ -1469,7 +1484,8 @@ which is its intended use."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(elisp-slime-nav restclient tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(helm helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+ '(safe-local-variable-values '((eval display-ansi-colors)))
  '(sh-indent-statement-after-and nil))
  
 (put 'narrow-to-region 'disabled nil)
