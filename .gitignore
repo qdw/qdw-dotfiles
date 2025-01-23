@@ -45,7 +45,8 @@ desktop
 
 # Cruft-filenames idiosyncratic to me
 bad-*
-cuts--*
+cuts*
+simplified-*
 example-*
 gitignore.d
 project.org
