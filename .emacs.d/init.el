@@ -1,3 +1,9 @@
+;;;; Edit this file
+
+(defun ini ()
+  (interactive)
+  (find-file user-init-file))
+
 ;;;; Machine-specific settings (catch exception if no such file)
 
 (condition-case
