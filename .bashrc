@@ -808,12 +808,8 @@ function ldd-app {
 }
 
 function ldd {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        if [[ "$1" =~ ^[[:upper:]] ]] || [[ "$1" =~ [.]app$ ]]; then
-            ldd-app "$@" | $PAGER
-        else
-            otool -L "$@" | $PAGER
-        fi
+    if on-macos; then
+        otool -L "$@" | $PAGER
     else
         command ldd "$@"
     fi
