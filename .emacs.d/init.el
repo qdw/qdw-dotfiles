@@ -71,7 +71,7 @@
 (require 'package)
 (require 'paredit)
 (require 'recentf)
-(require 'restclient)
+;; (require 'restclient)
 (require 'ruby-mode)
 (require 'scroll-bar)
 (require 'sh-script)
@@ -240,8 +240,8 @@ but it calls defvar under the hood."
    "~/src/1/emacs-mariana-theme"
    "~/.emacs.d/third-party-themes"))
 
-(load-theme 'tritium 't)
-;; (load-theme 'mariana 't)
+;; (load-theme 'tritium 't)
+(load-theme 'mariana 't)
 
 ;; Disable bold type passim.
 (mapc
