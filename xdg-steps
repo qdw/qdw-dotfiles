@@ -1,0 +1,23 @@
+#!/bin/bash
+
+exit
+
+source ~/.bashrc
+export D=~/src/1/qdw-dotfiles
+
+cdq && git mv .emacs.d .config/emacs
+if cd ~/.config/emacs; then
+    for SYMLINK in fd-dired.el \
+                   init.el \
+                   init_bash.sh \
+                   open-file-in-macos-vscode.scpt \
+                   open-url-in-apple-music-app.scpt \
+                   qdw-themes \
+                   upstart.el
+    do
+        ln -sf ~/"src/1/qdw-dotfiles/.config/emacs/$SYMLINK" "$SYMLINK"
+    done
+fi
+
+cd -
+rm init.el
