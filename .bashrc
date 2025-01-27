@@ -1964,6 +1964,21 @@ function repo {
     fi
 }
 
+function actions {
+    local REPO_URL="$(gurl)"
+    REPO_FOUND=$?
+    if [[ $REPO_FOUND -ne 0 ]]; then
+        return $REPO_FOUND
+    else
+        HTTPS_REPO_URL="$(echo "$REPO_URL" | sed -e 's|:|/|' -e 's|git[@]|https://|' -e 's|[.]git$||')"
+        open -u "$HTTPS_REPO_URL/actions"
+    fi
+}
+
+function act {
+    actions "$@"
+}
+
 # PR (Pull Request) - manipulate GitHub pull requests
 # Depends on the official GitHub CLI tool, 'gh'.
 # Usage:
