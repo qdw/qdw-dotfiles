@@ -1,3 +1,5 @@
+;;;; Themes that I created or forked
+
 (defvar qdw-themes '("amber" "amber-without-bold" "mariana" "tritium"))
 
 (mapc
@@ -7,7 +9,11 @@
    "~/src/1/emacs-mariana-theme"
    "~/.emacs.d/third-party-themes"))
 
-;;;; Color settings
+;;;; My current choice of theme-to-actually-use
+
+(load-theme 'tritium 't)
+
+;;;; Theme-related utility functions
 
 (defun if-file-is-theme-reload-theme ()
   (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
