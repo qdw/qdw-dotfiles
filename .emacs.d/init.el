@@ -30,17 +30,6 @@
 
 (initialize-ui)
 
-;; Disable bold type passim.
-
-(mapc
- (lambda (face)
-   (set-face-attribute face nil :weight 'normal))
- (face-list))
- 
-;; Always use the same cursor color, no matter what theme I use.
-
-(set-cursor-color "DarkOrange1")
-
 ;;;; Dependency/library settings
 
 ;; Unpacked third-party libraries that I've downloaded
@@ -89,7 +78,7 @@
   (interactive)
   (find-file user-init-file))
 
-;;;; Machine-specific settings
+;;;; Color-theme settings (plus site-specific settings)
 
 (defun load-if-present-qdw (file-name)
   "Load FILE-NAME if it exists, and do nothing otherwise."
@@ -100,7 +89,22 @@
 (load-if-present-qdw "site.el")
 (when (not (boundp 'my-chosen-theme))
       (setq-default my-chosen-theme "tritium"))
-(load-file "my-themes.el")
+(load-file (expand-file-name "my-themes.el" user-emacs-directory))
+
+;; Disable bold type passim.
+
+(mapc
+ (lambda (face)
+   (set-face-attribute face nil :weight 'normal))
+ (face-list))
+ 
+;; Always use the same cursor color, no matter what theme I use.
+
+(set-cursor-color "DarkOrange1")
+
+;;;; Machine-specific settings
+
+(load-if-present-qdw "site.el")
 
 (load-if-present-qdw "secrets.el")
 
@@ -124,6 +128,7 @@ but it calls defvar under the hood."
 ;;;; .ignore settings
 ;;;; This file is formatted exactly like .gitignore,
 ;;;; and is honored by fd, rg, and maybe others?
+
 (add-to-list 'auto-mode-alist
              '("\\.ignore\\'" . gitignore-mode))
    
