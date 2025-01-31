@@ -144,91 +144,61 @@ use `dired-find-file' to open it in a new buffer."
 
 ;; If a file is open in Emacs and another editor saves the file,
 ;; update the one in Emacs. Also do this for dired.
-(setq auto-revert-verbose nil)
-(if (not global-auto-revert-mode)
-    (global-auto-revert-mode 't))
+(setq-default auto-revert-verbose nil)
+(when (not global-auto-revert-mode)
+      (global-auto-revert-mode 't))
 
-(defun get-lineno-qdw ()
-  (+ (if (bolp) 1 0) (count-lines 1 (point))))
-
-(defun open-in-app-qdw (&rest args)
-  (let* ((app (or (car args) "/usr/bin/open"))
-         (other-args (or (cdr args) '()))
-         (command-as-list (cons app (cons buffer-file-name other-args)))
-         (command-as-string (mapconcat 'shell-quote-argument
-                                         command-as-list
-                                         " ")))
-    (async-shell-command command-as-string)))
-
-(defun alt-ed (editor-executable &rest args)
-  (save-window-excursion
-    (async-shell-command
-     (concat
-      (map (lambda (str)
-             (shell-quote-argument))
-           (apply 'list
-                  editor-executable
-                  buffer-file-name
-                  args
-                  (get-lineno-qdw)))))))
-
-(defun subl ()
+(defun alt-editor (program &rest program-args)
   (interactive)
-  (alt-ed "/opt/homebrew/bin/subl"
-          "--background"))
-          
-
-          
-(defun lineno ()
-  (+ (if (bolp) 1 0)
-     (count-lines 1 (point))))
-
-;; the repetitive code
-          
-(defun sublime ()
-  (interactive)
-  (save-window-excursion
-    (async-shell-command
-     (format
-      "/opt/homebrew/bin/subl --background %S:%d"
-      (shell-quote-argument buffer-file-name)))))
+  (letrec ((progname (file-name-nondirectory program))
+           (procname (concat "emacs-" progname)))
+    ;; (message (mapconcat 'identity
+    (apply 'start-process procname nil program program-args)))
 
 (defun gvim ()
   (interactive)
-  (save-window-excursion
-    (async-shell-command
-     (format
-      ;; "gvim %S +%d"
-      "open -g -a MacVim.app '%S +1'"
-      (shell-quote-argument buffer-file-name)
-      (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
+  (alt-editor
+    "/opt/homebrew/opt/macvim/bin/mvim"
+    (format "+call cursor(%d, %d)"
+            (line-number-at-pos)
+            (+ 1 (current-column)))
+    (buffer-file-name)))
+    
+(defalias 'mvim 'gvim)
+        
+(defun file-line-column-colon-separated ()
+  (interactive)
+  (format "%s:%d:%d"
+          (buffer-file-name)
+          (line-number-at-pos)
+          (+ 1 (current-column))))
+
+(defun subl ()
+  (interactive)
+    (alt-editor
+     "/opt/homebrew/bin/subl"
+     (file-line-column-colon-separated)))
 
 (defun vscode ()
   (interactive)
-  (save-window-excursion
-    (async-shell-command
-     (format
-      "%S %S %d"
-      (expand-file-name "~/.emacs.d/open-file-in-macos-vscode.scpt")
-      (shell-quote-argument (expand-file-name buffer-file-name))
-      (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
+  (alt-editor
+   "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
+   "--goto" (file-line-column-colon-separated)))
 
-(defun vscode ()
-  (interactive)
-  (save-window-excursion
-    (async-shell-command
-     (format
-      "%S %S %d"
-      (expand-file-name "~/.emacs.d/open-file-in-macos-vscode.scpt")
-      (shell-quote-argument buffer-file-name)
-      (+ (if (bolp) 1 0) (count-lines 1 (point)))))))
-               
+;; (defun open-colon-separated (editor-file-name &optional args)
+;;   (interactive)
+;;   (when buffer-file-name
+;;     (let ((command
+;;            (cons editor-file-name args)))
+;;       (alt-editor command
+;;        editor-file-name ))))
+  
+
 ;;;; GUI Emacs settings
 
 ;;;; macOS settings
 
 (when (string= system-type "darwin")
-
   ;; Open PNGs with the system PNG viewer, not in Emacs
   ;; (org-mode only).
   (add-to-list 'org-file-apps
@@ -754,17 +724,6 @@ which is its intended use."
           (while (re-search-forward "-" end t)
             (replace-match "" t t)))))))
 
-;; Disable auto indentation so that I can paste stuff while preserving
-;; the indentation of the original.
-
-(defun set-paste ()
-  (interactive)
-  (electric-indent-mode -1))
-
-(defun unset-paste ()
-  (interactive)
-  (electric-indent-mode 1))
-
 ;; Code-folding
 
 (global-origami-mode)
@@ -913,115 +872,6 @@ which is its intended use."
   (interactive "MPrefix: ")
   (query-replace-regexp "^" string))
 
-;; org-mode: let me specify colors for text;
-;; these colors show up both when editing
-;; and in the export.
-;; (add-to-list 'load-path
-;;              (expand-file-name "~/.emacs.d/3"))
-;; (load "org-colored-text" nil 't)
-
-;; (defun gpt (prompt)
-;;   "Send a prompt to OpenAI *using my shell script*,
-;;   and print its response in a separate buffer"
-;;   (interactive "MGPT prompt: ")
-
-;;   (let ((output-buffer "*GPT output*"))
-;;     (split-window-below)
-;;     (other-window 1)
-;;     (switch-to-buffer output-buffer 't)
-;;     (other-window -1)
-  
-;;     (start-process "GPT"
-;;                    output-buffer
-;;                    "/Users/quinn.weaver/bin/ai"
-;;                    prompt)))
-
-;; (defun bing (prompt)
-;;   "Send a prompt to Bing Chat and return its response"
-;;   (interactive "MBing prompt: ")
-;;   (let ((output-buffer (get-buffer-create "*bing*"))
-;;         (orig-point (point)))
-;;      (print (concat "bing"
-;;                       "'"
-;;                       (shell-quote-argument prompt)
-;;                       "'"))))
-;;      (set-process-sentinel
-;;      (start-process "async-shell"
-;;                     output-buffer
-;;                     shell-file-name
-;;                     shell-command-switch
-;;                     "bing" "'" (shell-quote-argument prompt) "'")))
-;;       `(lambda (process signal)
-;;          (when (= 0 (process-exit-status process))
-;;            (with-current-buffer ,output-buffer
-;;              (let ((output-text (buffer-string)))
-;;                (with-current-buffer ,(current-buffer)
-;;                  (save-excursion
-;;                    (goto-char ,orig-point)
-;;                    (insert output-text))))))))))
-
-
-;; Try to make it so shell-mode always runs `dirs' whenever I
-;; run a command. That way it can know the current directory
-;; with certainty, rather than trying to guess based on my
-;; shell prompt and often guessing wrong.
-;;
-;; (add-hook
-;;  'shell-mode-hook
-;;  (lambda ()
-;;    (shell-dirtrack-mode -1)
-;;    (let*
-;;        (( sgs "\\(?:" )  ;; start a "shy" (non-capturing) group
-;;         ( cgs "\\("   )  ;; start a capturing group
-;;         ( ge "\\)"    )  ;; end any group (shy or capturing)
-;;         ( path-start-regexp
-;;           (concat
-;;            sgs "[^ ]*[ ]" ge "?" ;; Optional: a string and a space
-;;            sgs ansi-color-control-seq-regexp ge ;; SGR color code
-;;            cgs ".*" ge "[$]" ;; The path itself
-;;            ;; ^ (use cgs to assign to regexp group 1)
-;;            ) ))
-   
-;;      ;; Begin diagnostics
-;;      (dirtrack-debug-mode +1)
-;;      (setq-default dirtrack-debug-mode 1)
-
-;;      (add-hook 'comint-preoutput-filter-functions
-;;                (lambda (input)
-;;                  (message (concat "input:  " input))
-;;                  input)
-;;                nil
-;;                't)
-;;      (add-hook 'comint-preoutput-filter-functions
-;;                (lambda (input)
-                 ;; (let
-                 ;;   ((output
-                 ;;     (dirtrack input))
-                      
-                 ;;    (strmout
-                 ;;     (string-match path-start-regexp input)))
-                      
-                 ;;   (message
-                 ;;     (concat
-                 ;;       "dirtrack output: "
-                 ;;       output))
-                 ;;   (message
-                 ;;     (concat
-                 ;;       "(string-match "
-                 ;;       path-start-regexp
-                 ;;       " "
-                 ;;       input
-                 ;;       ") returned "
-                 ;;      strmout))
-                 ;;   output)))
-                 ;;  nil
-                 ;;  't)
-     ;; End diagnostics   
-;;      (setq dirtrack-list (list path-start-regexp 1))))
-;;  nil
-;;  't)
-
-;; Just a more-mnemonic name for pos
 (defalias 'pos 'goto-char)
 
 ;;;; Editor MACroS settings

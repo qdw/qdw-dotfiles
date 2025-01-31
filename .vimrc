@@ -1,7 +1,6 @@
 colorscheme dim
 
-
-set guifont=SF\ Mono:h16
+set guifont=Menlo:h17
         
 " Remap ';' to ':', so I don't have to hold down the shift key.
 map ; :

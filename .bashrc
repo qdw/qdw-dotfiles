@@ -21,6 +21,10 @@ fi
 
 #### Bash metaprogramming library "settings"
 
+function which {
+    type -P "$@"
+}
+
 function complain {
     for STRING in "$@"; do
         echo "$STRING" >&2
@@ -1845,10 +1849,6 @@ function lst {
     fi
 }
 
-function try {
-    command git try "$@"
-}
-
 function readme {
     gh repo view
 }
@@ -2526,6 +2526,31 @@ function pu { p "$USER" ;}
 
 # vl ("Vim Less") - use vim as a colorizing pager
 function vl { "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@" ;}
+
+function _mvim_helper {
+    local ERROR_MESSAGE="$1"; shift
+    
+    THE_MVIM_IN_PATH="$(type -P mvim)"
+    if [[ "$THE_MVIM_IN_PATH" ]]; then
+        "$THE_MVIM_IN_PATH" "$@"
+    elif [[ -f "$HOMEBREW_ROOT/opt/macvim/bin/mvim" ]]; then
+        "$HOMEBREW_ROOT/opt/macvim/bin/mvim" "$@"
+    else
+        complain "$ERROR_MESSAGE"
+    fi
+}
+
+function gvim {
+    if which gvim >/dev/null; then
+        command gvim "$@"
+    else
+        _mvim_helper "Looks like neither gvim nor mvim (MacVim) is installed" "$@"
+    fi
+}
+
+function mvim {
+    _mvim_helper "Looks like mvim (MacVim) isn't installed" "$@"
+}
 
 #### Set operations
 
