@@ -8,10 +8,13 @@
  '("~/.emacs.d/qdw-themes"
    "~/src/1/emacs-mariana-theme"
    "~/.emacs.d/third-party-themes"))
+   
+;;;; Load my current favorite theme
 
-;;;; My current choice of theme-to-actually-use
+(setq-default custom-enabled-themes '())
+(load-theme (intern my-chosen-theme) 't)
 
-(load-theme 'tritium 't)
+(load-if-present-qdw "my-org-colors.el")
 
 ;;;; Theme-related utility functions
 

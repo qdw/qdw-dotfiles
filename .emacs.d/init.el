@@ -30,22 +30,21 @@
 
 (initialize-ui)
 
-;; Color-theme-related settings
-
-(load-file (expand-file-name "~/.emacs.d/my-themes.el"))
-
 ;; Disable bold type passim.
+
 (mapc
  (lambda (face)
    (set-face-attribute face nil :weight 'normal))
  (face-list))
  
 ;; Always use the same cursor color, no matter what theme I use.
+
 (set-cursor-color "DarkOrange1")
 
 ;;;; Dependency/library settings
 
 ;; Unpacked third-party libraries that I've downloaded
+
 (add-to-list 'load-path (expand-file-name "~/.site.lisp.d"))
 
 (setq-default load-prefer-newer 't)
@@ -90,16 +89,20 @@
   (interactive)
   (find-file user-init-file))
 
-;;;; Machine-specific settings (catch exception if no such file)
+;;;; Machine-specific settings
 
-(condition-case
-    nil
-    (load-file (expand-file-name "~/.emacs.d/site.el"))
-  (error nil))
+(defun load-if-present-qdw (file-name)
+  "Load FILE-NAME if it exists, and do nothing otherwise."
+  (condition-case nil
+      (load-file (expand-file-name file-name user-emacs-directory))
+    (error nil)))
 
-;;;; Password settings (excluded from Git)
+(load-if-present-qdw "site.el")
+(when (not (boundp 'my-chosen-theme))
+      (setq-default my-chosen-theme "tritium"))
+(load-file "my-themes.el")
 
-(load (expand-file-name "~/.emacs.d/secrets.el") 't)
+(load-if-present-qdw "secrets.el")
 
 ;;;; Utility functions used in this file
 
