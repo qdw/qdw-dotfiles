@@ -57,7 +57,7 @@ function check-args {
         local MAX_ARGS="$1"; shift
         local USAGE="$1"; shift
         local ARGC=$#
-        if ((ARGC < MIN_ARGS)); then
+        if [[ $ARGC -lt $MIN_ARGS ]]; then
             local VARAGS_CLAUSE
             if [[ "$MAX_ARGS" = "varargs" ]]; then
                 VARAGS_CLAUSE=" or more"
@@ -75,6 +75,37 @@ function check-args {
             return 0
         fi
     fi
+}
+
+function dirdo {
+    function stderr {
+        echo "$@" >/dev/stderr
+    }
+
+    check-args 1 varargs 'dirdo "SOME COMMANDS" [DIR [DIR2 ... ]]' "$@"
+    local COMMAND="$1"; shift
+    local ORIG_DIR="$(pwd)"
+    
+    local DIRS=("$@")
+    if [[ ${#DIRS[@]} -eq 0 ]]; then
+        DIRS=(".")
+    fi
+    
+    for DIR in "${DIRS[@]}"; do
+        if ! cd "$DIR"; then
+            return 1
+        fi
+        
+        stderr "==== $DIR"; stderr
+        eval "$COMMAND"
+        stderr
+
+        if ! cd "$ORIG_DIR"; then
+            return 1
+        fi
+    done
+    
+    return 0
 }
 
 function filter {
@@ -102,48 +133,31 @@ function funcalias {
 }
 
 function installed {
-    # check-args 1 1 "installed COMMAND_NAME"
+    check-args 1 1 "installed COMMAND_NAME" "$@"
     local COMMAND="$1"
-    if command -p "$COMMAND" > /dev/null 2>&1 \
-            || [[ -x "$HOMEBREW_BIN/$COMMAND" ]]
+    if command -p "$COMMAND" > /dev/null 2>&1 || [[ -x "$HOMEBREW_BIN/$COMMAND" ]]
     then
         return 0
     else
         return 1
     fi
-}    
+}
 
 #### OS-specific settings
 
 MY_OS="$(uname -s)"
-function on_macos {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-MY_OS="$(uname -s)"
 
 function on-linux {
-    local LINUX="Linux"
-    if [[ "$MY_OS" =~ $LINUX ]]; then
-        return 0
-    else
-        return 1
-    fi
+    local LINUX_REGEX="Linux"
+    [[ "$MY_OS" =~ $LINUX_REGEX ]]
 }
 
 function on-macos {
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        return 0
-    else
-        return 1
-    fi
+    [[ "$MY_OS" = "Darwin" ]]
 }
 
 if on-macos; then
+    # On Linux these are set automatically
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
     XDG_CACHE_HOME="$HOME/.cache"
@@ -363,7 +377,59 @@ for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail; do
     fi
 done
 
-#### fd settings (fd is a faster and better replacement for find(1)
+#### Show all ignore patterns in effect for the cwd
+
+function ignorefiles-helper {
+    # Run command on any ignorefiles in our home dir
+
+    check-args 1 varargs 'ignorefiles-helper "COMMAND TO RUN ON EACH IGNOREFILE"' "$@"
+    for FILE in "$HOME/.gitignore" "$HOME/.ignore"; do
+        if [[ -f "$FILE" ]]; then
+            eval "$@" "$FILE"
+        fi
+    done
+    
+    # Walk up the pwd running the command on any ignorefiles
+    # in any enclosing dirs (except our home dir, which we already did)
+    
+    local DIR="."
+    while [[ "$(realpath "$DIR")" != "/" ]]; do
+        for FILE in "$DIR/.gitignore" "$DIR/.ignore"; do
+            if [[ -f "$FILE" ]]; then
+                if [[ "$(realpath "$FILE")" != "$HOME/$FILE" ]]; then
+                    eval "$@" "$FILE"
+                fi
+            fi
+        done
+        
+        DIR="$DIR/.."
+    done
+}
+
+function ignorefiles-show-all-patterns {
+    check-args 0 0 'ignore-patterns-show-all' "$@"
+    ignorefiles-helper "cat" \
+        | command grep -vE '^[ ]*[#]' \
+        | command grep -vE '^[ ]*$' \
+        | sort -u \
+        | $PAGER
+}
+
+function ignorefiles-list {
+    check-args 0 0 'ignorefiles' "$@"
+    ignorefiles-helper "echo" | sort | $PAGER
+}
+
+function ignorefiles-which-files-contain-pattern {
+    check-args 1 varargs 'ignorefiles-which-files-contain-pattern GREP_ARGUMENTS' "$@"
+    local REGEX="$1"
+    ignorefiles-helper command grep --color=auto -H -E "$@"
+}
+
+function ignorefiles-show-all-patterns-by-file {
+    check-args 0 0 'ignorefiles-show-patterns-by-file' "$@"
+    ignorefiles-which-files-contain-pattern "."
+}
 
 function fdd {
     command fd \
@@ -1694,7 +1760,7 @@ function gists {
 }
 
 function team {
-    # check_args 1 1
+    # check-args 1 1
     local TEAM_NAME="$1"
     open -u "https://github.com/orgs/$GITHUB_ORG/teams/$TEAM_NAME"
 }
@@ -2617,12 +2683,12 @@ function mvim {
 #### Slack settings
 
 function slack-channel {
-    # check_args 1 1 "slack-channel CHANNEL_NAME # (with or without the leading '#'; doesn't matter)"
+    # check-args 1 1 "slack-channel CHANNEL_NAME # (with or without the leading '#'; doesn't matter)"
 
     # Remove leading '#' if present
     local CHANNEL_NAME="${1/##/}"
     
-    if on_macos; then
+    if on-macos; then
         macos-open-slack-channel.bash "$CHANNEL_NAME"
     else
         open "https://${SLACK_TEAM}.slack.com/channels/${CHANNEL_NAME}"
