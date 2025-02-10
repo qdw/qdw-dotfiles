@@ -904,7 +904,7 @@ which is its intended use."
 (keymap-global-set "C-c i"   'indent-region)
 (keymap-global-set "C-c l"   'display-line-numbers-mode)
 (keymap-global-set "C-c o"   'rotate-windows)
-(keymap-global-set "C-c t"   'switch-theme) 
+(keymap-global-set "C-c t"   'switch-theme)
 (keymap-global-set "C-c u"   'uncomment-region)
 (keymap-global-set "C-c v"   'vscode)
 (keymap-global-set "M-!" 'login-shell-command)
