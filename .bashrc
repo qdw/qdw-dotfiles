@@ -322,17 +322,21 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     for HDIR in "/opt/homebrew" "/usr/local"; do
         if [[ -x "$HDIR/bin/brew" ]]; then
             set -a    
-            HOMEBREW_EDITOR="command emacs -nw"
             HOMEBREW_ROOT="$HDIR"
-            HOMEBREW_BIN="$HDIR/bin"            
+            HOMEBREW_BIN="$HDIR/bin"
+
+            HOMEBREW_EDITOR="command emacs -nw"
+                        
             
             PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
 
             # man pages for brew(1) itself
-            MY_MANPATH="$HDIR/manpages"            
+            MY_MANPATH="$HDIR/manpages"           
             
-            # man pages for software installed using brew
+            # man(1) and info(1) pages for software installed using brew
             MY_MANPATH="$HDIR/share/man:$MY_MANPATH"
+            INFOPATH="$HDIR/share/info"
+
             PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
             # Fix a problem with the nmap formula
@@ -3298,10 +3302,10 @@ if [[ -z "$PATHS_SET_AT" ]]; then
     # Same goes for a single trailing colon.
     PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
 
-    ## man page path settings    
-    MANPATH="$MANPATH:$MY_MANPATH"
+    ## Places that man(1) will search for man pages:
+    MANPATH="$MY_MANPATH:$MANPATH"
 
-    ## dynamic library path settings
+    ## Dynamic library path settings
     LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
     PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"

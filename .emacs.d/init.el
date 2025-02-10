@@ -91,6 +91,10 @@
       (setq-default my-chosen-theme "tritium"))
 (load-file (expand-file-name "my-themes.el" user-emacs-directory))
 
+(defun switch-theme ()
+  (interactive)
+  (customize-variable 'custom-enabled-themes))
+
 ;; Disable bold type passim.
 
 (mapc
@@ -898,6 +902,7 @@ which is its intended use."
 (keymap-global-set "C-c i"   'indent-region)
 (keymap-global-set "C-c l"   'display-line-numbers-mode)
 (keymap-global-set "C-c o"   'rotate-windows)
+(keymap-global-set "C-c t"   'switch-theme) 
 (keymap-global-set "C-c u"   'uncomment-region)
 (keymap-global-set "C-c v"   'vscode)
 (keymap-global-set "M-!" 'login-shell-command)
@@ -1179,7 +1184,7 @@ which is its intended use."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(helm helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(macrostep-geiser geiser-chibi ac-geiser ac-slime geiser geiser-chez glue slime slime-repl-ansi-color helm helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(safe-local-variable-values '((eval display-ansi-colors)))
  '(sh-indent-statement-after-and nil))
  
