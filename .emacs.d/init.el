@@ -195,6 +195,8 @@ use `dired-find-file' to open it in a new buffer."
    "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
    "--goto" (file-line-column-colon-separated)))
 
+(defalias 'code 'vscode)
+
 ;; (defun open-colon-separated (editor-file-name &optional args)
 ;;   (interactive)
 ;;   (when buffer-file-name

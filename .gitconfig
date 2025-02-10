@@ -6,7 +6,7 @@
 
 [blame]
 	coloring = highlightRecent
-	
+
 [color "diff"]
 	meta = magenta
 	old = "#ac4d4d"
@@ -17,24 +17,32 @@
 	newMovedAlternative = brightcyan
 
 [color "blame"]
-	highlightRecent = "22,6.months.ago,28,3.months.ago,34,6.weeks.ago,40,3.weeks.ago,47,10.days.ago,120"
-	
+	highlightRecent = 22,6.months.ago,28,3.months.ago,34,6.weeks.ago,40,3.weeks.ago,47,10.days.ago,120
+
 [core]
 	excludesfile = ~/.gitignore
 	ignorecase = false
+	## whitespace = space-before-tab,tab-in-indent
+	
+## [log]
+	## ignoreAllSpace
+	## ignoreSpaceAtEol
 
 [diff]
+	## ignoreBlankLines
+	## ignoreSpaceAtEol
 	algorithm = patience
 	color = auto
 	colorMoved = dimmed-zebra
 	## difft: semantic diff that understands various programming languages
 	## tool = difft #--background dark --color always --missing-as-empty --skip-unchanged
-	
+
+
 [difftool]
 	prompt = false
 	
 [difftool "difftastic"]
-        cmd = difft "$LOCAL" "$REMOTE"
+	cmd = difft "$LOCAL" "$REMOTE"
 	
 [pager]
 	difftool = true
