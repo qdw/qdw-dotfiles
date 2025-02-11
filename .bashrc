@@ -256,30 +256,31 @@ function color {
     echo -e "${ANSI}${COLORCODE}${STRING}${RESET}"
 }
 
-# bnw (Black 'n' White): remove ANSI color (and other) sequences
+# bnw (Black 'n' White): remove non-printable chars,
+# such as ANSI color codes
+# function bnw {
+#     for ARG in <<< "$@"; do
+#         echo "$ARG" | tr -d '[:cntrl:]'
+#     done
+# }
+
 function bnw {
-    local  INPUT_STRING
+    while IFS= read -r LINE; do
 
-    function sed_it {
-        gsed 's/\x1b\[[0-9;]*m//g'
-    }
+        # Strip ANSI color codes
+        CLEAN_LINE=$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')
 
-    if [[ $# -eq 0 ]]; then
-        cat | tr -d '[:punct:]'
-    elif [[ $# -eq 1 ]]; then
-        echo "$1" | tr -d '[:punct:]'
-    else
-        complain "bnw: error: too many arguments. Usage:
-    echo "some string" | bnw
-    cat some_file | bnw
-    bnw FILENAME"
-    fi
+        # Strip control characters
+        CLEAN_LINE=$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')
+        
+        echo "$CLEAN_LINE"
+    done
 }
 
 # Take a hex triplet, and print it in the indicated color.
 # Requires a terminal that supports (ANSI SGR) 24-bit color,
 # a.k.a. true color
-function hex() {
+function hex {
     if [[ $# -ne 1 ]]; then
         complain "Wrong number of arguments. Usage: hex RRGGBB"
         return 1
@@ -1565,11 +1566,19 @@ function diff-git {
     ###############################################
 }
 
+GIT_MERGE_HELP_URL="https://howchoo.com/git/git-merge-conflicts-rebase-ours-theirs"
+
+function ours {
+    open -u "$GIT_MERGE_HELP_URL"
+}
+
+function theirs {
+    ours "$@"
+}
 
 function diff {
     diff-git "$@"
 }
-
 
 #### FTP settings
 
@@ -1580,6 +1589,37 @@ FTP_PASSWORD=""
 set +a
 
 #### Git setttings
+
+function git-latest-commits {
+    (
+        for DIR in "$@"; do
+            cd "$DIR" >/dev/null
+            echo "$(git log -n 1 --format=%cd --date=iso)  $DIR"
+            cd - >/dev/null
+        done
+    ) \
+    | sort --reverse
+}
+
+function git-show-all-commits-of {
+    check-args 1 1 'show-all-commits FILE' "$@"
+    ARGS_OK=$?
+    if [[ "$ARGS_OK" -ne 0 ]]; then
+        return "$ARGS_OK"
+    fi
+    
+    local FILE="$1"
+    git log --patch --pretty=oneline -- "$FILE"
+}
+    
+    # for COMMIT in $(git log | cat | ggrep '^commit' | sed -e 's/^commit[ ]//'); do
+    #     echo "==== $COMMIT"
+    #     echo
+    #     git show "$COMMIT" # --pretty-format "%m"
+    #     echo        
+    # done
+    
+# }
 
 ## General Git settings (not specific to GitHub)
 

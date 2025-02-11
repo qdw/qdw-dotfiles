@@ -195,6 +195,8 @@ use `dired-find-file' to open it in a new buffer."
    "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
    "--goto" (file-line-column-colon-separated)))
 
+(defalias 'code 'vscode)
+
 ;; (defun open-colon-separated (editor-file-name &optional args)
 ;;   (interactive)
 ;;   (when buffer-file-name
@@ -902,7 +904,7 @@ which is its intended use."
 (keymap-global-set "C-c i"   'indent-region)
 (keymap-global-set "C-c l"   'display-line-numbers-mode)
 (keymap-global-set "C-c o"   'rotate-windows)
-(keymap-global-set "C-c t"   'switch-theme) 
+(keymap-global-set "C-c t"   'switch-theme)
 (keymap-global-set "C-c u"   'uncomment-region)
 (keymap-global-set "C-c v"   'vscode)
 (keymap-global-set "M-!" 'login-shell-command)
