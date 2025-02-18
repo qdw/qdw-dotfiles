@@ -15,20 +15,52 @@ function setx {
     set -x
 }
 
-if [[ $MY_DEBUG ]]; then
+if [[ "$MY_DEBUG" ]]; then
     setx
 fi
 
 #### Bash metaprogramming library "settings"
 
-function which {
-    type -P "$@"
+## Helper functions
+
+function carp {
+    echo "$@" >/dev/stderr
 }
 
 function complain {
     for STRING in "$@"; do
         echo "$STRING" >&2
     done
+}
+
+if [[ "$MY_DEBUG" ]]; then
+    function debug {
+        echo "Debug: $@" >&2
+    }
+else
+    function debug {
+        : # no-op
+    }
+fi
+
+## Implementations of simple Unix commands in bash, to save fork(1) overhead
+
+function which { # like Unix which(1)
+    type -P "$@"
+}
+
+function base { # like Unix basename(1)
+    # Remove trailing slashes
+    local path="${1%/}"    
+    # Extract the filename
+    echo "${path##*/}"
+}
+
+function dir { # like Unix dirname(1)
+    # Remove trailing slashes
+    local path="${1%/}"
+    # Extract the directory path
+    echo "${path%/*}"
 }
 
 function check-args {
@@ -77,9 +109,25 @@ function check-args {
     fi
 }
 
+## Array helper functions
+
+function member {
+    check-args 2 varargs "member ELEM ARG1 [ARG2 ...]" "$@"
+    local ELEM="$1"
+    shift
+    
+    for elem in "$@"; do
+        if [[ "$ELEM" = "$elem" ]]; then
+            return true
+        fi
+    done
+
+    return false
+}
+
 function dirdo {
     function stderr {
-        echo "$@" >/dev/stderr
+        echo "$@" >&2
     }
 
     check-args 1 varargs 'dirdo "SOME COMMANDS" [DIR [DIR2 ... ]]' "$@"
@@ -325,9 +373,6 @@ if [[ ! "$PATHS_SET_AT" ]]; then
             set -a    
             HOMEBREW_ROOT="$HDIR"
             HOMEBREW_BIN="$HDIR/bin"
-
-            HOMEBREW_EDITOR="command emacs -nw"
-                        
             
             PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
 
@@ -350,28 +395,13 @@ if [[ ! "$PATHS_SET_AT" ]]; then
 fi
 
 # Prompt before overwriting files,
-# but skip this check if the destination is an empty dir
-# (since there is nothing to overwrite, and skipping
-# the check speeds things up a lot).
-function mv {
-    local LAST_ARG="${!#}"
-    if [[ -d "$LAST_ARG" ]]; then
-        local LISTING="$(command ls "$LAST_ARG" 2>&1)"
-        if [[ $? -eq 0 ]] && [[ -z "$LISTING" ]]; then
-            command mv "$@"; return
-        fi
-    fi
-                
-    command mv -i "$@"
-}
-
 if [[ "$MY_OS" = "Darwin" ]] && [[ -f "$HOMEBREW_BIN/trash" ]]; then
     function rm {
         trash "$@"
     }
 fi
 
-## If on macOS, use the Homebrew versions of basic command-line utilities
+## If on macOS, use the Homebrew versions of common command-line utilities
 ## instead of the bundled macOS versions, as the Homebrewed versions
 ## are more frequently updated.
 
@@ -382,7 +412,7 @@ for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail; do
     fi
 done
 
-#### Show all ignore patterns in effect for the cwd
+## Show all ignore patterns in effect for the cwd
 
 function ignorefiles-helper {
     # Run command on any ignorefiles in our home dir
@@ -821,6 +851,9 @@ function nbsp {
 #### Pager settings
 
 set -a
+
+LESS="--RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+
 if [[ "$INSIDE_EMACS" ]]; then
     # Emacs shell-mode is a dumb terminal, so use special pager settings there.
     export PAGER="cat"
@@ -839,19 +872,22 @@ else
         export AWS_PAGER="$PAGER"
     fi
 
-    export PAGER="command less --RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+    export PAGER="less"
     
-    export GIT_PAGER="$PAGER -j 2" # Show an extra line before match - useful with 'git diff'
+    # Show an extra line before each match - useful when running 'git diff'
+    export GIT_PAGER="$PAGER -j 2"
     
-    export PSQL_PAGER="command less --no-init"
+    export PSQL_PAGER="less --no-init --mouse"
 fi
 
 ACK_PAGER="$PAGER"
 BAT_PAGER="$PAGER"
 MANPAGER="$PAGER"
-set +a
 
-function less { $PAGER "$@" ;}
+# PAGER="bat"
+# BAT_PAGER="batless"
+
+set +a
 
 #### Markdown settings
 
@@ -859,6 +895,8 @@ function less { $PAGER "$@" ;}
 function readme {
     gh repo view
 }
+
+## #FIXME rewrite 'function bbat {...}' to use 'gh' and GLAMOUR_STYLE, which should make the output look nicer
 
 # bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub)
 function bbat {
@@ -872,9 +910,6 @@ function bbat {
 function markdown2html {
     pandoc "$1" -t html
 }
-function md2html { markdown2html "$@" ;}
-
-#### #FIXME settings: rewrite 'function bbat {...}' to use 'gh' and GLAMOUR_STYLE, which should make the output look nicer
 
 #### Linker settings
 
@@ -895,7 +930,7 @@ function ldd {
     if on-macos; then
         otool -L "$@" | $PAGER
     else
-        command ldd "$@"
+        command ldd "$@" | $PAGER
     fi
 }
 
@@ -1097,28 +1132,25 @@ function re {
     se
 }
 
+MY_EDITOR="$HOME/bin/emacs-function"
+
 set -a
-if [[ "$INSIDE_EMACS" ]]; then
-    EDITOR_FUNCTION="emacs"
-else
-    EDITOR_FUNCTION="command emacs -nw"
-fi
-EDITOR="$VISUAL"
-GIT_EDITOR="$EDITOR_FUNCTION"
-# PSQL_EDITOR="$EDITOR_FUNCTION"
-PSQL_EDITOR="subl --new-window"
-VISUAL="$EMACS_BINARY"
+EDITOR="$MY_EDITOR"
+# GIT_EDITOR="$MY_EDITOR"
+# HOMEBREW_EDITOR="$HOME/bin/emacs-function"
+# PSQL_EDITOR="$MY_EDITOR"
+VISUAL="$MY_EDITOR"
 set +a
 
+## FIXME: find a more elegant way
 # (This function depends on the third-party newtab() function;
 # see ~/.bashrc.d/third-party.bash)
 # 
 # te ("TErminal window") - create a new Terminal.app window in the same directory I'm in when I run te.
-function te {
-    newtab bash # -c "cd $(pwd); $@" #FIXME: get this -c thing to work
-}
-
-function nt { newtab "$@" ;}
+# function te {
+#     newtab bash # -c "cd $(pwd); $@" #FIXME: get this -c thing to work
+# }
+# function nt { newtab "$@" ;}
 
 # Required for the corner case where you
 # want to run emacs M-x shell in Terminal.app
@@ -1131,7 +1163,7 @@ function update_terminal_cwd {
 # Required to enable the Terminal.app feature
 # where you can click on a directory name
 # to open it in Finder... but I don't like
-# that feature, so I'm comment it out for now.
+# that feature, so I'm commenting it out for now.
 #
 # function update_terminal_cwd {
 #     # Identify the directory using a "file:" scheme URL,
@@ -1395,7 +1427,7 @@ function func {
     if [[ "$FIRST_LINE" = "$FUNCTION_NAME is a function" ]]; then
         command type "$FUNCTION_NAME" | tail -n +2 | bat --language bash
     else
-        echo "$FUNCTION_NAME is not defined as a function" > /dev/stderr
+        echo "$FUNCTION_NAME is not defined as a function" >&2
         return 1
     fi
 }
@@ -1887,7 +1919,7 @@ function gist {
         if [[ -z "$EDITOR_VAR" ]]; then
             GIST_EDITOR=vi
         fi
-        $GIST_EDITOR "$FILENAME"        
+        "$GIST_EDITOR" "$FILENAME"        
     elif [[ $# -eq 1 ]]; then
         # Assume we were invoked like this:
         #     some_command | gist DESCRIPTION
@@ -1906,6 +1938,7 @@ function gist {
     
     gh gist create --web --filename "$FILENAME" "$DESCRIPTION_CLAUSE"
 }
+
 
 # gtr (Git Team and Repo) - run this in any dir inside a working copy of a GitHub repo to show the team name plus repo name in GitHub notation, e.g., myorg/myrepo
 function gtr {
