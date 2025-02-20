@@ -15,7 +15,7 @@ function setx {
     set -x
 }
 
-if [[ "$MY_DEBUG" ]]; then
+if [[ -n "$MY_DEBUG" ]]; then
     setx
 fi
 
@@ -228,6 +228,40 @@ if on-macos; then
 fi
 
 #### Color settings
+
+function color-printf {
+  local COLOR_NAME="$1"
+  shift
+
+  local COLOR BRIGHT
+  case "$COLOR_NAME" in
+      black) COLOR=30; BRIGHT=0;;
+      red) COLOR=31; BRIGHT=0;;
+      green) COLOR=32; BRIGHT=0;;
+      yellow) COLOR=33; BRIGHT=0;;
+      blue) COLOR=34; BRIGHT=0;;
+      magenta) COLOR=35; BRIGHT=0;;
+      cyan) COLOR=36; BRIGHT=0;;
+      white) COLOR=37; BRIGHT=0;;
+      bright-black) COLOR=90; BRIGHT=1;;
+      bright-red) COLOR=91;  BRIGHT=1;;
+      bright-green) COLOR=92; BRIGHT=1;;
+      bright-yellow) COLOR=93; BRIGHT=1;;
+      bright-blue) COLOR=94; BRIGHT=1;;
+      bright-magenta) COLOR=95; BRIGHT=1;;
+      bright-cyan) COLOR=96; BRIGHT=1;;
+      bright-white) COLOR=97; BRIGHT=1;;
+      *) echo "Invalid color name '$COLOR_NAME'" >/dev/stderr; return 1;;
+  esac
+
+  # # No
+  # echo "${START}${BRIGHT}$@${COLOR}${RESET}"
+  
+  printf '\033[%d;%dm%s\033[0m\n' \
+         "$BRIGHT" \
+         "$COLOR" \
+         "$@"
+}
 
 # function word_wrap {
 #     local STRING
@@ -536,10 +570,11 @@ set -a
 # Prefer ripgrep if installed.
 if installed "rg"; then
     MY_GREP="rg"
-    MY_GREP_OPTIONS="--color=always --no-line-number"
-    GREP_RECURSE="--no-heading --follow --no-one-file-system"
+    MY_GREP_OPTIONS="--color=always" # --no-line-number"
+    # MY_GREP_OPTIONS="$MY_GREP_OPTIONS -H --column -n"
+    GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
     GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
-    GREP_COLOR_FLAGS="--colors match:fg:red"
+    GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
 
 # If ripgrep is not installed, assume GNU grep.
 else
@@ -549,7 +584,7 @@ else
         MY_GREP="grep"
     fi
     
-    MY_GREP_OPTIONS="-I --color=always"
+    MY_GREP_OPTIONS="-n -I --color=always"
     GREP_RECURSE="-R"
     GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
     
@@ -639,7 +674,7 @@ function fip {
     #         if [[ "$LINE" = "" ]]; then
     
     for FILE in "$@"; do
-        grep -vE "$FIP_REGEX" "$FILE" | sponge "$FILE"
+        command grep -vE "$FIP_REGEX" "$FILE" | sponge "$FILE"
     done
 }
 
@@ -670,6 +705,23 @@ function count_one_level {
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur {
     $MY_GREP $GREP_RECURSE --files-with-matches --max-count=1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
+}
+
+# dirs-matching REGEX [DIR ...]
+# Take a list of dirs,
+# and print those whose recursive contents
+# match REGEX (case-insensitive).
+function dirs-matching {
+    check-args 1 varargs 'dirs-matching REGEX [DIR ...]' "$@"
+
+    local REGEX="$1"
+    shift
+    
+    for DIR in "$@"; do
+        if rg -i "$REGEX" "$DIR" >/dev/null 2>&1; then
+            echo "$DIR"
+        fi
+    done
 }
 
 #### Bash settings
@@ -867,7 +919,8 @@ else
     # If we're a non-dumb terminal, then page fancily,
     # with the color and pagination options I like.
     if command -v jless > /dev/null; then
-        export AWS_PAGER="jless"
+        # export AWS_PAGER="jless"
+        export AWS_PAGER="bat --language json --style=rule,snip"
     else
         export AWS_PAGER="$PAGER"
     fi
@@ -945,6 +998,14 @@ function ldd {
 # set +a
 
 #### AWS settings
+
+### Generic AWS settings
+
+function aws-account {
+    echo "$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
+}
+
+### AWS IAM settings
 
 function iam {
     if [[ $# -eq 0 ]]; then
@@ -1044,12 +1105,40 @@ function list-rds-instances { rds_ls "$@" ;}
 function list-secrets { aws secretsmanager list-secrets ;}
 function list-secret-ids { list-secrets | jq --raw-output '.SecretList[].Name' | sort ;}
 
+### AWS SSM (a.k.a. Secrets Manager) settings
 
 function get-secret {
     aws secretsmanager get-secret-value --secret-id "$1" \
         | jq '.SecretString | fromjson'
 }
 function secret { get-secret "$@" ;}
+
+### AWS S3 setttings
+
+function ls-buckets {
+    check-args 0 1 'ls-buckets [MATCHING_PREFIX]' "$@" || return 1
+    if [[ $# -eq 0 ]]; then
+        aws s3 ls
+    elif [[ $# -eq 1 ]]; then
+        aws s3 ls --bucket-name-prefix "$1"
+    fi
+}
+
+function rm-bucket {
+    check-args 1 1 'rm-bucket BUCKET_NAME' "$@"
+    local ARGUMENT_VALIDITY=$?
+    if [[ $ARGUMENT_VALIDITY -ne 0 ]]; then
+        return $ARGUMENT_VALIDITY
+    elif ! in-playground; then
+        complain "Currently logged in to account '$(aws-account)'" \
+                 "Not in playground; refusing to remove data!"
+        return 1
+    else
+        local BUCKET_NAME="$1"
+        aws s3 rm --recursive "s3://${BUCKET_NAME}" >/dev/null \
+            && aws s3api delete-bucket --bucket "$BUCKET_NAME"
+    fi
+}
 
 #### Editor settings: Emacs Emacs Emacs Emacs Emacs (and more Emacs)
 
@@ -1262,7 +1351,7 @@ function brew-deps-all {
 function brew-all-deps { brew-deps-all "$@" ;}
 
 function brew-leaves {
-    brew-deps-all | command ggrep -E '^[:alpha]' | sort | uniq | $PAGER
+    brew-deps-all | command ggrep -E '^[[:alpha:]]' | sort | uniq | $PAGER
 }
 
 function brew-leaf {
@@ -1346,7 +1435,7 @@ function _brew-n-deps {
     if ! brew ls --formula "$PACKAGE_NAME" >/dev/null 2>&1; then
         echo -1
     else
-        RAW_COUNT=$(brew deps --tree --installed | grep -c "$PACKAGE_NAME")
+        RAW_COUNT=$(brew deps --tree --installed | command grep -c "$PACKAGE_NAME")
         N_DEPENDERS=$(( RAW_COUNT - 1 ))
         echo $N_DEPENDERS
     fi
@@ -1509,12 +1598,12 @@ function ls {
     fi
 }
 
-function recent {
-    ls -t "$@" | head -5
+function lsd {
+    ls ~/d/
 }
 
-function lsd {
-    command $MY_LS $MY_LS_OPTIONS "$@" ~/d/ | $PAGER
+function recent {
+    ls -t "$@" | head -5
 }
 
 #### diff settings
@@ -1634,20 +1723,14 @@ function git-latest-commits {
 }
 
 function git-show-all-commits-of {
-    check-args 1 1 'show-all-commits FILE' "$@" || return $?
-    
+    check-args 1 1 'show-all-commits FILE' "$@" || return $?    
     local FILE="$1"
-    git log --patch --pretty=oneline -- "$FILE"
+    
+    for COMMIT in $(git rev-list HEAD); do
+        color-printf "red" "Commit $COMMIT"
+        GIT_PAGER="cat" git show "$COMMIT:$FILE"
+    done
 }
-    
-    # for COMMIT in $(git log | cat | ggrep '^commit' | sed -e 's/^commit[ ]//'); do
-    #     echo "==== $COMMIT"
-    #     echo
-    #     git show "$COMMIT" # --pretty-format "%m"
-    #     echo        
-    # done
-    
-# }
 
 ## General Git settings (not specific to GitHub)
 
@@ -1859,7 +1942,7 @@ function gb {
             && git co --quiet "$MAIN" \
             && git pull --ff-only --quiet \
             && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
-                | command grep -v -E 'remote:' #\
+                | command grep -vE 'remote:' #\
             #&& git push --set-upstream origin # --quiet
     else
         echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
@@ -2576,7 +2659,7 @@ function bghex {
     printf '\e]11;%s\a' "#${1}"
 }
 
-function ips { /sbin/ifconfig -a | grep 'inet ' | grep -v 'inet6 ' ;}
+function ips { /sbin/ifconfig -a | command grep 'inet ' | command grep -v 'inet6 ' | grep 'inet' ;}
 function ipv6 { /sbin/ifconfig -a | grep 'inet6 ' ;}
 
 # flast - print the first and last lines of a file
@@ -2891,7 +2974,7 @@ function ff {
     fi
 }
 
-function ho { grep "Host .*${1}" ~/.ssh/*conf* ;}
+function ho { command grep -E "Host .*${1}" ~/.ssh/*conf* ;}
 
 # mr ("mount real") - show all mounted devices that are actually disks (see also dfr).
 function mr {
@@ -2937,7 +3020,7 @@ function paraln {
     awk "/$PARALN_REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$PARALN_REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
 }
 
-function sshconf { para "$1" ~/.ssh/*.config | grep -e '^' -e "$1" ;}
+function sshconf { para "$1" ~/.ssh/*.config | command grep -e '^' -e "$1" ;}
 
 # pi ("Perl @INC") - print @INC dirs, one per line, preceded by the path to Perl.
 function pi {
@@ -2948,7 +3031,7 @@ function pi {
 
 # shn ("SSH hostname") - print the canonical hostname for a ~/.ssh/config alias.
 function shn {
-    grep -A 1 "$1" ~/.ssh/*config* | tail -1 | awk '{ print $3; }'
+    command grep -A 1 "$1" ~/.ssh/*config* | tail -1 | awk '{ print $3; }'
 }
 
 ## tmux
@@ -3211,6 +3294,21 @@ function jenkins {
         # fi
     fi
 }
+
+#### JSON settings
+
+function json-key { 
+    check-args 1 varargs 'json-key KEY_NAME [FILE1 [FILE2...]]' "$@"
+    local KEY_NAME="$1"
+    shift
+    if [[ $# -eq 0 ]]; then
+        grep -i -R "\"$KEY_NAME\":"  "."
+    else
+        grep -i "\"$KEY_NAME\":"  "$@"
+    fi
+}
+
+#### Jenkins settings
 
 function jthis {
     local REPO  BRANCH

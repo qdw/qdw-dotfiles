@@ -40,35 +40,6 @@ function cjql {
 
 ### Bad functions
 
-function jira-create-ticket {
-    local  USAGE  ISSUE_TYPE  PROJECT_ID  ERROR_OCCURRED
-
-    USAGE="jira-create-ticket [ISSUE_TYPE [PROJECT_ID]]
-You may omit the arguments if you define env vars JIRA_DEFAULT_ISSUE_TYPE and JIRA_DEFAULT_ISSUE_ID"
-    ISSUE_TYPE="$1"; if [[ ! "$ISSUE_TYPE" ]]; then ISSUE_TYPE="$JIRA_DEFAULT_ISSUE_TYPE"; fi
-    PROJECT_ID="$2"; if [[ ! "$PROJECT_ID" ]]; then PROJECT_ID="$JIRA_DEFAULT_PROJECT_ID"; fi
-    
-    function err {
-        ERROR_OCCURED=1
-        echo "jira-create-ticket: error: $@"
-    }
-    
-    [[ -n "$JIRA_BASE_URL" ]] || err "missing environment variable JIRA_BASE_URL"
-    [[ -n "$ISSUE_TYPE" ]] || err "missing argument ISSUE_TYPE"
-    [[ -n "$PROJECT_ID" ]] || err "missing argument PROJECT_ID"
-    
-    if [[ ! "$ERROR_OCCURRED" ]]; then
-         open "${JIRA_BASE_URL}/issues/secure/CreateIssue.jspa?issuetype=${ISSUE_TYPE}&pid=${PROJECT_ID}"
-    fi
-}
-
-function jc {
-    if [[ $# -ne 0 ]]; then
-        echo "jc: warning: jc takes zero arguments; ignoring the $# passed"
-    fi
-    jira-create-ticket > /dev/null
-}
-
 function jira-url-for-ticket {
     local TICKET_NUMBER
     
@@ -133,9 +104,6 @@ function jira {
         jira-browse-site
     elif [[ $# -eq 1 ]]; then
         jira-open-existing-ticket "$@"
-    elif [[ $# -eq 2 ]] && [[ $1 -eq "create" ]]; then
-        shift
-        jira-create-ticket "$@"
     else
         echo "j: invalid number of arguments '$#'. Doing nothing"
     fi
