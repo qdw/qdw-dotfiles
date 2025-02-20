@@ -1634,11 +1634,7 @@ function git-latest-commits {
 }
 
 function git-show-all-commits-of {
-    check-args 1 1 'show-all-commits FILE' "$@"
-    ARGS_OK=$?
-    if [[ "$ARGS_OK" -ne 0 ]]; then
-        return "$ARGS_OK"
-    fi
+    check-args 1 1 'show-all-commits FILE' "$@" || return $?
     
     local FILE="$1"
     git log --patch --pretty=oneline -- "$FILE"
