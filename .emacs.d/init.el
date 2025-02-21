@@ -1006,7 +1006,7 @@ which is its intended use."
 (keymap-global-set   "C-c l"     'shell)
 (keymap-global-set   "C-c n"     'display-line-numbers-mode)
 (keymap-global-set   "C-c o"     'rotate-windows)
-(keymap-global-set   "C-c C-c s" 'switch-theme)
+(keymap-global-set   "C-c C-c t" 'switch-theme)
 (keymap-global-set   "C-c t"     'toggle-theme)
 (keymap-global-set   "C-c u"     'uncomment-region)
 (keymap-global-set   "C-c v"     'vscode)
