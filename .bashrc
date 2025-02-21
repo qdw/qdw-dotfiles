@@ -1873,7 +1873,6 @@ function git-backup {
         local GIT_URL="$(gurl)"
         if [[ "$GIT_URL" ]]; then
             local REPO="${GIT_URL##*/}"
-            echo "$REPO"
             git-backup-helper "$REPO"
         else
             carp "couldn't determine which repo to operate on"
