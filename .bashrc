@@ -24,7 +24,12 @@ fi
 ## Helper functions
 
 function carp {
-    echo "$@" >/dev/stderr
+    local CALLER="${FUNCNAME[1]}"
+    if [[ -z "$CALLER" ]]; then
+        CALLER="bash"
+    fi
+    
+    echo "$CALLER:" "$@" >&2
 }
 
 function complain {
@@ -1732,6 +1737,20 @@ function git-show-all-commits-of {
     done
 }
 
+function for-all-commits {
+    check-args 1 1 'for-all commits COMMAND_STRING' "$@" || return 1
+    CMD="$1"
+
+    for COMMIT in $(git rev-list HEAD); do
+        color-printf "red" "Commit $COMMIT"
+        eval "$CMD"
+    done
+}
+
+function git-show-name-only-diffs {
+    for-all-commits 'git diff --name-only --color=always $COMMIT HEAD'
+}
+
 ## General Git settings (not specific to GitHub)
 
 BREW_GIT_D="/opt/homebrew/bin"
@@ -1829,7 +1848,7 @@ function gr {
     basename "$(git rev-parse --show-toplevel)"
 }
 
-function git-backup {
+function git-backup-helper {
     local REPO_NAME ORIG_DIR EXIT_STATUS
     if [[ $# -ne 1 ]]; then
         echo "git-backup: error: missing argument. Usage: git-backup REPO_NAME"
@@ -1842,6 +1861,24 @@ function git-backup {
             "$HOME/git-backups/${REPO_NAME}-$(date +%Y-%m-%d-%H%M%S%z)"
 
         cd "$ORIG_DIR"
+    fi
+}
+
+
+function git-backup {
+    check-args 0 1  'git-backup [REPO_NAME]'  "$@" || return 1
+    if [[ $# -eq 1 ]]; then
+        git-backup-helper "$1"
+    elif [[ $# -eq 0 ]]; then
+        local GIT_URL="$(gurl)"
+        if [[ "$GIT_URL" ]]; then
+            local REPO="${GIT_URL##*/}"
+            echo "$REPO"
+            git-backup-helper "$REPO"
+        else
+            carp "couldn't determine which repo to operate on"
+            return 2
+        fi
     fi
 }
 
