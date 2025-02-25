@@ -48,21 +48,17 @@
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
-           ;; black  "#000000" ;; Terminal emulator's ANSI black
            black  "#141414"  ;;      Grey15
-           ;; black  "#111111" ;; darker
     bright-black  "#575757"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
            green  "#3b8560"
     bright-green  "#00a700"  ;; bright green
- ;; bright-green  "#00ff00"  ;; brightest possible green
+    bright-green  "#00ff00"  ;; brightest possible green
           yellow  "#9164ff"  ;;      actually purple
-;; bright-yellow  "#ceb80c"  ;; less-bright yellow
    bright-yellow  "#b5b500"  ;; bright yellow   
 ;; bright-yellow  "#ffff00"  ;; brightest possible yellow
             blue  "#6495ed"
-;;   bright-blue  "#6e4eb5"
      bright-blue  "#6161ff"
          magenta  "#af5faf"
   bright-magenta  "#d8a0d0"

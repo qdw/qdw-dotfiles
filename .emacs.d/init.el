@@ -302,14 +302,14 @@ use `dired-find-file' to open it in a new buffer."
 ;;;; Human-language settings (including English)
 
 ;; From xahlee.org
-(defun xah-unfill-paragraph ()
+(defun unfill-paragraph-xah ()
   "Replace newline chars in current paragraph by single spaces.
 This command does the reverse of `fill-paragraph'."
   (interactive)
   (let ((fill-column 90002000))
     (fill-paragraph nil)))
- 
-(defun unfill-region (start end)
+
+(defun unfill-region-xah (start end)
   "Replace newline chars in region by single spaces.
 This command does the reverse of `fill-region'."
   (interactive "r")
@@ -328,13 +328,17 @@ This command does the reverse of `fill-region'."
 
 ;;;; Shell settings
 
-;; When running shell commands, source my ~/.bashrc first,
-;; so that my many custom shell functions are available,
-;; as they would be in a terminal emulator session.
+;; When running shell commands, 
 
 (defun login-shell-command (command-string)
+  "Run a shell command, sourcing my ~/.bashrc first, so that my many custom shell functions are available, as they would be in a terminal emulator session. This doesn't shell-quote your arguments, so if you need to do that, do that"
   (interactive "MShell command: ")
   (shell-command (concat "source ~/.bashrc && " command-string)))
+
+(defun login-shell-command-and-show-output (command-string)
+  "Like login-shell-command, but show standard output and standard error (each in its own new buffer)"
+  (interactive "MShell command: ")
+  (shell-command (concat "source ~/.bashrc && INSIDE_EMACS=true " command-string) "stdout" "stderr"))
   
 (defun shell-in-dir ()
   "Open an existing or new shell, cd'ing to the current dir if appropriate"
@@ -1011,7 +1015,8 @@ which is its intended use."
 (keymap-global-set   "C-c t"     'toggle-theme)
 (keymap-global-set   "C-c u"     'uncomment-region)
 (keymap-global-set   "C-c v"     'vscode)
-(keymap-global-set   "M-!"       'login-shell-command)
+(keymap-global-set   "M-1"       'login-shell-command)
+(keymap-global-set   "M-!"       'login-shell-command-and-show-output)
 (keymap-global-set   "M-("       'eval-expression)
 (keymap-global-set   "M-5"       'query-replace-regexp)
 (keymap-global-set   "M-o"       'other-window-reverse)
@@ -1051,12 +1056,12 @@ which is its intended use."
 
 ;;;; Binary-file-viewing settings
 
-(defun use-hexl-mode-if-binary-p ()
+(defun use-hexl-mode-if-binary ()
   "If the current buffer is a binary file, switch to `hexl-mode'."
     (when (string-match-p "\0" (buffer-string))
         (hexl-mode)))
        
-(add-hook 'find-file-hook #'use-hexl-mode-if-binary-p)
+(add-hook 'find-file-hook #'use-hexl-mode-if-binary)
 
 ;;;; Usenet settings
 
@@ -1192,6 +1197,7 @@ which is its intended use."
    '(wgrep macrostep-geiser geiser-chibi ac-geiser ac-slime geiser geiser-chez glue slime slime-repl-ansi-color helm helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(safe-local-variable-values '((eval display-ansi-colors)))
  '(sh-indent-statement-after-and nil)
+ '(shell-command-dont-erase-buffer nil)
  '(shell-prompt-pattern "\"[[~].*$ "))
  
 (put 'narrow-to-region 'disabled nil)
