@@ -2553,6 +2553,8 @@ function air {
     set +uo pipefail
 }
 
+#### Convenience functions for working with local files
+
 function buy {
     # check-args 0 1 "buy [PRODUCT_NAME]"
     local URL
@@ -2587,6 +2589,31 @@ function buy {
             fi
         fi
     fi
+}
+
+function gtd {
+    echo '* TODO' "$@" >> ~/.site.bash.d/gtd/gtd.org
+}
+
+function inbox {
+    gtd "$@"
+}
+
+function todo {
+    gtd "$@"
+}
+
+function rtfm {
+    check-args 0 1 'rtfm [TOPIC' "$@" || return 1
+    if [[ $# -eq 0 ]]; then
+        command ls --color=never "$HOME/.site.bash.d/rtfm"
+    elif [[ $# -eq 1 ]]; then
+        cat "$HOME/.site.bash.d/rtfm/$1"
+    fi
+}
+
+function wish () { 
+    echo '* TODO' "$@" >> ~/.site.bash.d/wishlist/wishlist.org
 }
 
 #### Python settings

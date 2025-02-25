@@ -987,7 +987,8 @@ which is its intended use."
 (keymap-unset org-mode-map "C-c RET")
 (keymap-set org-mode-map "C-c RET" 'org-insert-subheading)
 
-(keymap-global-set   "C-c /"     'search-in-buffers)
+(keymap-global-set   "C-c /"     'isearch-forward-regexp)
+(keymap-global-set   "C-c ?"     'search-in-buffers)
 (keymap-global-set   "C-c \\"    'helm-swoop-back-to-last-point)
 (keymap-global-unset "C-c .")
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
