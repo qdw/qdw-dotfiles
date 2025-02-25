@@ -52,7 +52,7 @@
 	renamelimit = 10500
 
 [alias]
-	added = diff --diff-filter=A
+	added = diff --diff-filter=A	
 	char-diff = diff --word-diff-regex=.
 	ch = "!function _ch { git diff \"${1}^\" \"${1}\" ;}; _ch "
 	co = checkout
@@ -74,6 +74,7 @@
 	tg = "!function _tg { git tag | sort -g ;}; _tg"
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit
 	try = "!f() { git add . && git commit --allow-empty-message -m '' && git push; }; f"
+	unadd = restore --staged
 	branch = branch --quiet
 
 [init]
