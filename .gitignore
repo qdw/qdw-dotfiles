@@ -7,7 +7,7 @@ initialize-repo.sh
 # AWS CDK JSON output
 cdk.context.json
 cdk.json
-cdk.out
+cdk.out*
 
 # Compiled objects
 .pyc .elc .o __pycache__
