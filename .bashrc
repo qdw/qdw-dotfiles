@@ -1984,20 +1984,25 @@ function branchify {
 ## GitHub-specific Git settings
 
 function gclone {
+    set -x
     check-args 1 1 'URL' "$@" || return 1
     local URL="$1"
+    shift
     
     local SSH_REGEX="^git[@]"
     local HTTPS_REGEX="^https://"
-    
+
     if [[ "$URL" =~ $SSH_REGEX ]]; then
-        echo "$URL"
+        git clone "$URL"
     elif [[ "$URL" =~ $HTTPS_REGEX ]]; then
-        git-https-to-ssh "$URL"
+        local SSH_URL="$(git-https-to-ssh "$URL")"
+        [[ "$SSH_URL" ]] || return 2
+        git clone "$URL"
     else
         carp "Unrecognized URL format in '$URL'"
-        return 2
+        return 3
     fi
+    set +x
 }
 
 function git-https-to-ssh {
