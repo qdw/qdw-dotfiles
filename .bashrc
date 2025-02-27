@@ -1984,7 +1984,6 @@ function branchify {
 ## GitHub-specific Git settings
 
 function gclone {
-    set -x
     check-args 1 1 'URL' "$@" || return 1
     local URL="$1"
     shift
@@ -2002,7 +2001,6 @@ function gclone {
         carp "Unrecognized URL format in '$URL'"
         return 3
     fi
-    set +x
 }
 
 function git-https-to-ssh {
