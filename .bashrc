@@ -879,7 +879,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     }
     
     function my_prompt_function {
-        REALPATH="$(realpath "$PWD")"
+        local REALPATH="$(realpath "$PWD")"
         
         if [[ -d "$REALPATH/.git" \
               && ( ! "$REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION" \
@@ -1104,9 +1104,12 @@ function rds {
     fi
 }
 
-# rds-ls ("RDS LiSt") - list RDS instances (highlighting the hostname portio nof the FQDN)
+# rds-ls ("RDS LiSt") - list RDS instances (highlighting the hostname portion of the FQDN)
 function rds-ls {
-    if [[ -n "$1" ]]; then
+    check-args 0 1 'rds-ls [HOSTNAME_REGEX]' "$@" || return 1
+
+    if [[ $# -eq 1 ]]; then
+        local REGEX="$1"
         aws rds describe-db-instances --no-paginate \
             | jq --raw-output '.DBInstances[].Endpoint.Address' \
             | grep '^[^.]*' \
