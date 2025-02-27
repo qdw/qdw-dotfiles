@@ -1,4 +1,5 @@
 # Git: hooks and meta-stuff
+bypass-husky
 **/.husky/**
 hooks**
 initialize-repo.sh
