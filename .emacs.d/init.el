@@ -77,6 +77,12 @@
 (defun ini ()
   (interactive)
   (find-file user-init-file))
+  
+;;;; Edit my ~/.bashrc
+
+(defun edit-bashrc ()
+  (interactive)
+  (find-file (expand-file-name "~/.bashrc")))
 
 ;;;; Color-theme settings (plus site-specific settings)
 
@@ -543,6 +549,11 @@ This command does the reverse of `fill-region'."
         (compile (concat command-string " " buffer-file-name)
                  't)))
     (set-face-attribute 'underline nil :underline original-underline-face)))
+    
+;;;; Makefile settings
+(add-hook 'makefile-mode-hook
+          (lambda ()
+            (setq indent-tabs-mode 't)))
 
 ;;;; org-mode settings
 
@@ -711,9 +722,9 @@ which is its intended use."
 (defun rotate-windows () ;; from whattheemacsd.com
   "Rotate your windows"
   (interactive)
-  (cond ((not (> (count-windows)1))
+  (cond ((not (> (count-windows) 1))
          (message "You can't rotate a single window!"))
-        (t
+        ('t
          (setq i 1)
          (setq numWindows (count-windows))
          (while  (< i numWindows)
@@ -854,6 +865,8 @@ which is its intended use."
 
 ;;;; Lisp settings
 
+(defalias 'index 'elt) ;; as in Chez Scheme
+
 ;; Make the contents of *scratch* persist across Emacs sessions
 
 (setq scratch-buffer-file (expand-file-name "~/tmp/scratch.el"))
@@ -982,7 +995,9 @@ which is its intended use."
     (message regexp)
     (fd-grep-dired current-dir regexp)))
 
-;;;; Global Editor MACroS settings
+;;;; Editor MACroS settings
+
+;;; Global macros/keybindings
 
 (keymap-global-set   "RET" 'my-enter)
 (keymap-set c-mode-map "RET" 'electric-newline-and-maybe-indent)
@@ -993,7 +1008,7 @@ which is its intended use."
 
 (keymap-global-set   "C-c /"     'isearch-forward-regexp)
 (keymap-global-set   "C-c ?"     'search-in-buffers)
-(keymap-global-set   "C-c \\"    'helm-swoop-back-to-last-point)
+;; (keymap-global-set   "C-c \\"    'helm-swoop-back-to-last-point)
 (keymap-global-unset "C-c .")
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
 (keymap-global-set   "C-c !"     'async-shell-command)
@@ -1006,6 +1021,9 @@ which is its intended use."
 (keymap-global-set   "C-c f"     'origami-toggle-node)
 (keymap-global-set   "C-c g"     'rg-in-current-directory)
 (keymap-global-set   "C-c i"     'indent-region)
+(keymap-global-unset "C-c C-c b")(keymap-global-set   "C-c C-c b" 'edit-bashrc)
+(keymap-global-unset "C-c C-c i")
+(keymap-global-set   "C-c C-c i" 'ini)
 (keymap-global-set   "C-c SPC"   'iterm2-here)
 (keymap-global-set   "C-c k"     'shell)
 (keymap-global-set   "C-c l"     'shell)
@@ -1021,23 +1039,25 @@ which is its intended use."
 (keymap-global-set   "M-5"       'query-replace-regexp)
 (keymap-global-set   "M-o"       'other-window-reverse)
 
-;;;; c-mode Editor MACroS settings
+;;;; c-mode macros/keybindings
 
 (keymap-set c-mode-map "C-c {" 'beginning-of-defun)
 (keymap-set c-mode-map "C-c }" 'end-of-defun)
 
-;;;; help-command Editor MACroS settings
+;;;; help-command macros/keybindings
 
 (define-key 'help-command (kbd "C-f") 'find-function)
 (define-key 'help-command (kbd "C-k") 'find-function-on-key)
 (define-key 'help-command (kbd "C-l") 'find-library)
 (define-key 'help-command (kbd "C-v") 'find-variable)
 
-;;;; org-mode Editor MACroS settings
+;;;; org-mode macros/keybindings
 
-(keymap-set org-mode-map "C-c RET" 'org-open-at-point)
+(keymap-set org-mode-map "C-c RET"
+                                 'org-open-at-point)
 (keymap-set org-mode-map "C-c >"
-                          'org-insert-subheading-respect-content-qdw)
+                                 'org-insert-subheading-respect-content-qdw)
+
 (keymap-set org-mode-map "C-c [" 'org-table-move-column-left)
 (keymap-set org-mode-map "C-c ]" 'org-table-move-column-right)
 (keymap-set org-mode-map "C-c s" 'org-insert-slack-link)
@@ -1048,11 +1068,16 @@ which is its intended use."
 (keymap-set org-mode-map "C-c ]" 'org-table-move-column-right)
 (keymap-set org-mode-map "C-c s" 'org-insert-slack-link)
 
-;;;; shell-mode Editor MACroS settings
+;;;; shell-mode macros/keybindings
 
 (keymap-unset shell-mode-map "C-c .")
 (keymap-set shell-mode-map "C-c ." 'find-file-at-point-with-line-and-column-if-present)
 (keymap-global-set "C-c s" 'shell-in-dir)
+
+;;;; shell-script-editing-mode macros/keybindings
+(define-prefix-command 'sh-mode-prefix-map)
+(define-key sh-mode-map (kbd "C-c C-c") 'sh-mode-prefix-map)
+(keymap-unset sh-mode-map "C-c C-c i")
 
 ;;;; Binary-file-viewing settings
 
@@ -1159,6 +1184,8 @@ which is its intended use."
  '(flycheck-error ((t (:weight normal))))
  '(italic ((t (:underline t :slant normal :weight normal))))
  '(org-date ((t (:foreground "#6495ed" :weight normal))))
+ '(org-headline-done ((t (:foreground "#007f06"))))
+ '(org-level-1 ((t (:foreground "#6699cc"))))
  '(sh-quoted-exec ((t (:foreground "#f5b5ff" :weight normal)))))
 
 ;;;; customize other settings
@@ -1194,7 +1221,7 @@ which is its intended use."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(wgrep macrostep-geiser geiser-chibi ac-geiser ac-slime geiser geiser-chez glue slime slime-repl-ansi-color helm helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(wgrep macrostep-geiser geiser-chibi ac-geiser ac-slime geiser geiser-chez glue slime slime-repl-ansi-color helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(safe-local-variable-values '((eval display-ansi-colors)))
  '(sh-indent-statement-after-and nil)
  '(shell-command-dont-erase-buffer nil)

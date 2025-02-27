@@ -68,6 +68,8 @@
 	no = diff --name-only
 	nol = "!function _nol { git last "$@" --name-only ;}; _nol "
 	coml = "!function _nol { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
+	diff-remote = diff @{u}
+	diff-remote-committed = diff @{u} HEAD
 	report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	s = status
