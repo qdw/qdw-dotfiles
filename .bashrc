@@ -1807,6 +1807,16 @@ fi
 
 export GIT_SHELL_PATH="$HOMEBREW_BIN/bash"
 
+function git-toplevel {
+    if ! check-args 0 0 'git-toplevel' "$@"; then
+        return 1
+    elif ! git rev-parse --is-inside-work-tree >/dev/null; then
+        return 2
+    else
+        git rev-parse --show-toplevel
+    fi
+}
+
 function branch-name {
     local PHRASE_STRING
     if [[ $# -eq 1 ]]; then
@@ -1863,8 +1873,13 @@ function lisp-case { kebab-case "$@" ;}
 # For example, if you're in directory ~/src/my-project/javascript then
 # 'gcd python' will change the cwd to ~/src/my-project/python
 function gcd {
-    check-args 0 1 "gcd [RELATIVE_DIR]"
-    cd "$(git rev-parse --show-toplevel)/$1"
+    check-args 0 1 'gcd [RELATIVE_DIR]' "$@" || return 1
+    local DIR="$(git-toplevel)"
+    if [[ $? -ne 0 ]]; then
+        return "$?"
+    else
+        echo "$DIR"
+    fi
 }
 
 # function git-delete-this-branch {
@@ -1955,11 +1970,8 @@ function gbss {
 
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
 function gurl {
-    local ORIG_DIR
-    ORIG_DIR=$(pwd)
-    gcd \
-        && command grep url .git/config | sed -e 's/^[ \t]*url[ ][=][ ]//'
-    cd "$ORIG_DIR"
+    local ORIG_DIR="$(pwd)"
+    command grep url "$(git-toplevel)/.git/config" | sed -e 's/^[ \t]*url[ ][=][ ]//'
 }
 
 # branchify - munge a branch description into a branch name
@@ -1973,6 +1985,34 @@ function branchify {
 }
 
 ## GitHub-specific Git settings
+
+function gclone {
+    set -x
+    check-args 1 1 'URL' "$@" || return 1
+    local URL="$1"
+    shift
+    
+    local SSH_REGEX="^git[@]"
+    local HTTPS_REGEX="^https://"
+
+    if [[ "$URL" =~ $SSH_REGEX ]]; then
+        git clone "$URL"
+    elif [[ "$URL" =~ $HTTPS_REGEX ]]; then
+        local SSH_URL="$(git-https-to-ssh "$URL")"
+        [[ "$SSH_URL" ]] || return 2
+        git clone "$URL"
+    else
+        carp "Unrecognized URL format in '$URL'"
+        return 3
+    fi
+    set +x
+}
+
+function git-https-to-ssh {
+    check-args 1 1 'HTTPS_URL' "$@" || return 1
+    local HTTPS_URL="$1"
+    echo "$HTTPS_URL" | sed -e s'|^https://|git@github.com:|'
+}
 
 # branch BRANCH_NAME - display the GitHub web page for BRANCH_NAME
 function all_gists {
