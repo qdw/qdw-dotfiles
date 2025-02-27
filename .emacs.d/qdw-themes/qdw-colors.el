@@ -1,138 +1,53 @@
-;; (defun 0x (color-name)
-;;   (letrec ((rgb (color-name-to-rgb color-name))
-;; 	   (hex (color-rgb-to-hex rgb)))
-;;     (message "equivalent exchange: %s" color-name)))
-					   
+(setqu
+ 
+ qdw-black "#141414"
+ qdw-red "#af5f00" ;; actually orange
+ qdw-green "#007f06"
+ qdw-yellow "#9164ff" ;; actually purple
+ qdw-blue "#6495ed"
+ qdw-cyan "#008080"
+ qdw-magenta "#af5faf"
+ qdw-white "#91908f"
 
-(cond
+ 
+ qdw-bright-black "#383838"
+ qdw-bright-red "#ff7f00" ;; actually bright orange
+ qdw-bright-green "#00ff00"
+ qdw-bright-yellow "#ffff00"
+ qdw-bright-blue "#6161ff"
+ qdw-bright-cyan "#4bbfc4"
+ qdw-bright-magenta "#f5b5ff"
+ qdw-bright-white "#aaaaaa"
 
- ;;; For terminals that support full 24-bit color
- ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
-  (setqu
-   black "#141414"
-   ;; black "#1c1c1c"
-   ;; black "#262626"        ;; "Grey15"     == 235
-   ;; black "#000000" ;; Use the terminal emulator's ANSI-black color.    
+ 
+ qdw-ansi-bright-red "#973030"
+ )
 
-   bright-black "#383838"
 
-   red "#af5f00" ;; actually orange
-   bright-red "#ff7f00" ;; bright orange; used for the cursor, inter alia
-   ansi-bright-red "#973030"
-    
-   green "#007f06"
-   bright-green "#00ff00"
-   
-   yellow "#9164ff" ;; actually purple
-   bright-yellow yellow
-   
-   blue "#6495ed"
-   bright-blue blue
-   
-   magenta "#af5faf"
-   bright-magenta "#f5b5ff"
-   
-   cyan "#008080"
-   bright-cyan cyan
-   
-   white "#91908f"
-   bright-white white
-   ))
-
-  
-   ;;; For terminals that support only 256 colors
-   ;;; (i.e., almost every terminal in use today)
-  ('t 
-   (setqu
-
-    black "#141414"        ;; "Grey15"     == 235
-    ;; black "#000000"  ;; Use the terminal emulator's ANSI-black color.    
-    ;; black "color-16" ;; Use the terminal emulator's background color.
-
-    bright-black "#5f5f5f" ;; "Grey37"     ==  59
-
-    red "#af5f00" ;; "DarkOrange3"         == 130
-    bright-red "#ff7f00" ;; "DarkOrange1"  == ???  ;; bright orange; used for the cursor, inter alia. This color has a name in Emacs but not in X11. In SGR 256-color space, it seems to correspond roughly to color-166(?)
-    ansi-bright-red "#cd2626" ;; "firebrick3"
-
-    green "#008700"        ;; "Green4"     ==  28
-    bright-green "#00ff00" ;; "Green1"     ==  46
-    
-    yellow "#875fff"       ;; "SlateBlue1" == 99 ;; in Emacs, this displays as purple, despite the X11 name
-    bright-yellow yellow
-
-    blue "#00afff" ;; "DeepSkyBlue1"   ==  39
-    bright-blue blue
-
-    magenta "#af00af"        ;; "Magenta3" == 127
-    bright-magenta "#ff87ff" ;; "Orchid1"  == 213
-    
-    cyan "#00af87"           ;; "DarkCyan" ==  36
-    bright-cyan cyan
-
-    white "#949494"          ;; "Grey58" == 246
-    bright-white white
-    ))
-)
-
-(defvar *colors-loaded-p* 't)
-
-;;; [Untested; might not work] For terminals that support only 16 colors
-
-;; (setqu
-;;  black "#000000"        ;; "Black (SYSTEM)"  ==  0  == ANSI black
-;;  bright-black           ;; "Grey (SYSTEM)"   == 8 == ANSI bright-black
-;;  red "#800000"          ;; "Maroon (SYSTEM)" ==  1  == ANSI red
-;;  bright-red red
-;;  green "#008000"        ;; "Green (SYSTEM)"  ==  2  == ANSI green
-;;  bright-green "#00ff00" ;; "Lime"            == 10 == ANSI bright-green
-;;  yellow "#800080"       ;; "Purple (SYSTEM)" ==  5  == ANSI magenta
-;;  blue "#000080"         ;; "Navy (SYSTEM)"   ==  4  == ANSI blue
-;;  bright-blue blue
-;;  magenta "#800080"      ;; "Purple (SYSTEM)" ==  5  == ANSI magenta
-;;  bright-magenta "Aqua"
-;;  cyan "#008080"         ;; "Teal (SYSTEM)"   ==  6  == ANSI cyan
-;;  bright-cyan cyan
-;;  white bright-black
-;;  bright-white white
-;;  )
-
-;;; [Untested; might not work] For terminals that support only 8 colors
-
-;; (setqu
-;; black "#000000"        ;; "Black (SYSTEM)"   ==  0  == ANSI black
-;; bright-black "#c0c0c0" ;; "Silver (SYSTEM)"  ==  7  == ANSI white
-;; red "#800000"          ;; "Maroon (SYSTEM)"  ==  1  == ANSI red
-;; bright-red red
-;; green "#008000"        ;; "Green (SYSTEM)"   ==  2  == ANSI green
-;; bright-green green
-;; yellow "#800080"       ;; "Purple (SYSTEM)"  ==  5  == ANSI magenta
-;; bright-yellow yellow
-;; blue "#000080"         ;; "Navy (SYSTEM)"    ==  4  == ANSI blue
-;; bright-blue blue
-;; magenta "#800080"      ;; "Fuchsia (SYSTEM)" == 13  == ANSI bright-magenta
-;; bright-magenta         ;; "Red (SYSTEM)"     == 9  == ANSI bright-red
-;; cyan "#008080"         ;; "Teal (SYSTEM)"   ==   6  == ANSI cyan
-;; bright-cyan cyan
-;; white bright-black
-;; bright-white white
-;; )
-
-(defun list-colors-qdw ()
+ (defun list-colors-qdw ()
   (interactive)
-  (message "black: %s" black)
-  (message "bright-black: %s" bright-black)
-  (message "red: %s" red)
-  (message "bright-red: %s" bright-red)
-  (message "green: %s" green)
-  (message "bright-green: %s" bright-green)
-  (message "yellow: %s" yellow)
-  (message "bright-yellow: %s" bright-yellow)
-  (message "blue: %s" blue)
-  (message "bright-blue: %s" blue)
-  (message "magenta: %s" magenta)
-  (message "bright-magenta: %s" magenta)
-  (message "cyan: %s" cyan)
-  (message "bright-cyan: %s" bright-cyan)
-  (message "white: %s" white)
-  (message "bright-white: %s" bright-white))
+ 
+  (message "qdw-black: \"%s\"" qdw-black)
+  (message "qdw-red: \"%s\"" qdw-red)
+  (message "qdw-green: \"%s\"" qdw-green)
+  (message "qdw-yellow: \"%s\"" qdw-yellow)
+  (message "qdw-blue: \"%s\"" qdw-blue)
+  (message "qdw-cyan: \"%s\"" qdw-cyan)
+  (message "qdw-magenta: \"%s\"" qdw-magenta)
+  (message "qdw-white: \"%s\"" qdw-white)
+
+  (message "qdw-bright-black: \"%s\"" qdw-bright-black)
+  (message "qdw-bright-red: \"%s\"" qdw-bright-red)
+  (message "qdw-bright-green: \"%s\"" qdw-bright-green)
+  (message "qdw-bright-yellow: \"%s\"" qdw-bright-yellow)
+  (message "qdw-bright-blue: \"%s\"" blue)
+  (message "qdw-bright-cyan: \"%s\"" qdw-bright-cyan)
+  (message "qdw-bright-magenta: \"%s\"" magenta)
+  (message "qdw-bright-white: \"%s\"" qdw-bright-white)
+  (message "qdw-ansi-bright-red: \"%s\"" qdw-ansi-bright-red))
+
+
+ (defun 0x (color-name)
+   (letrec ((rgb (color-name-to-rgb color-name))
+	    (hex (color-rgb-to-hex rgb)))
+     (message "equivalent exchange: \"%s\"" color-name)))
