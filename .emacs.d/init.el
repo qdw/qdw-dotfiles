@@ -331,10 +331,42 @@ This command does the reverse of `fill-region'."
      (add-to-list 'load-path (expand-file-name "~/src-3/nov.el") nil)
      (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
      (nov-mode))))
+     
+;;;; Shell-script-editing settings
+
+(defun remove-annoying-sh-mode-map-bindings ()
+  "C-c is supposed to be the prefix for user-defined keybindings, generally speaking, but shell-script-mode sets a bunch of C-c bindings that do dumb stuff like inserting syntactic constructs like case statements, for loops, and so on. I'm fine with typing those out like a normal person, so I don't want these features, and they're clobbering my personal keybindings. So unmap them."
+  (interactive)
+  (let ((c-c-bindings
+         (list "C-c C-d"  ;; sh-cd-here             
+               "C-c C-f"  ;; sh-for                 
+               "C-c TAB"  ;; sh-if                  
+               "C-c C-l"  ;; sh-indexed-loop        
+               "C-c C-n"  ;; sh-send-line-or-region-
+               "C-c C-o"  ;; sh-while-getopts       
+               "C-c C-r"  ;; sh-repeat              
+               "C-c C-s"  ;; sh-select              
+               "C-c C-t"  ;; sh-tmp-file            
+               "C-c C-u"  ;; sh-until               
+               "C-c C-w"  ;; sh-while               
+               "C-c C-x"  ;; executable-interpret   
+               "C-c C-z"  ;; sh-show-shell          
+               "C-c C-\\" ;; sh-backslash-region    
+               "C-c ("    ;; sh-function            
+               "C-c +"    ;; sh-add                 
+               "C-c :"    ;; sh-set-shell
+               "C-c <"    ;; }
+               "C-c ="    ;; }}
+               "C-c >"    ;; }}} indentation-related functions
+               "C-c ?"    ;; }}
+                          ;; }
+               )))
+    (dolist (binding c-c-bindings)
+      (keymap-unset sh-mode-map binding))))
+      
+(remove-annoying-sh-mode-map-bindings)
 
 ;;;; Shell settings
-
-;; When running shell commands, 
 
 (defun login-shell-command (command-string)
   "Run a shell command, sourcing my ~/.bashrc first, so that my many custom shell functions are available, as they would be in a terminal emulator session. This doesn't shell-quote your arguments, so if you need to do that, do that"
@@ -1006,26 +1038,22 @@ which is its intended use."
 (keymap-unset org-mode-map "C-c RET")
 (keymap-set org-mode-map "C-c RET" 'org-insert-subheading)
 
-(keymap-global-set   "C-c /"     'isearch-forward-regexp)
-(keymap-global-set   "C-c ?"     'search-in-buffers)
+(keymap-global-set   "C-c g"     'search-in-buffers)
 ;; (keymap-global-set   "C-c \\"    'helm-swoop-back-to-last-point)
 (keymap-global-unset "C-c .")
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
-(keymap-global-set   "C-c !"     'async-shell-command)
-(keymap-global-set   "C-c %"     'query-replace-regexp)
+(keymap-global-set   "C-c 1"     'async-shell-command)
 (keymap-global-set   "C-c :"     'eval-expression)
 (keymap-global-set   "C-h 1"     'describe-face)
 (keymap-global-set   "C-c C-f"   'multi-occur-in-matching-buffers)
-(keymap-global-set   "C-c C-s"   'isearch-forward-regexp)
 (keymap-global-set   "C-c c"     'comment-region)
 (keymap-global-set   "C-c f"     'origami-toggle-node)
-(keymap-global-set   "C-c g"     'rg-in-current-directory)
+(keymap-global-set   "C-c C-c g"     'rg-in-current-directory-qdw)
 (keymap-global-set   "C-c i"     'indent-region)
 (keymap-global-unset "C-c C-c b")(keymap-global-set   "C-c C-c b" 'edit-bashrc)
 (keymap-global-unset "C-c C-c i")
 (keymap-global-set   "C-c C-c i" 'ini)
 (keymap-global-set   "C-c SPC"   'iterm2-here)
-(keymap-global-set   "C-c k"     'shell)
 (keymap-global-set   "C-c l"     'shell)
 (keymap-global-set   "C-c n"     'display-line-numbers-mode)
 (keymap-global-set   "C-c o"     'rotate-windows)
