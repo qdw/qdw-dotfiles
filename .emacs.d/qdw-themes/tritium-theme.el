@@ -56,7 +56,7 @@
     bright-green  "#00a700"  ;; bright green ("#00ff00" = brightest possible green)
           yellow  "#9164ff"  ;;      actually purple
    bright-yellow  "#b5b500"  ;; bright yellow; "#ffff00"= brightest possible yellow
-            blue  "#6495ed"
+            blue  "#6495ed" ;; decent darker blue (from iTerm): "#0d22b9"
      bright-blue  "#6161ff"
          magenta  "#af5faf"
   bright-magenta  "#d8a0d0"
