@@ -15,7 +15,7 @@ function setx {
     set -x
 }
 
-if [[ -n "$MY_DEBUG" ]]; then
+if [[ "$MY_DEBUG" ]]; then
     setx
 fi
 
@@ -437,11 +437,7 @@ if [[ ! "$PATHS_SET_AT" ]]; then
             INFOPATH="$HDIR/share/info"
 
             PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
-
-            # Fix a problem with the nmap formula
-            PYTHONPATH="${PYTHONPATH}:${HDIR}/lib/python3.9/site-packages"
             set +a
-
             break
         fi
     done
@@ -961,6 +957,16 @@ MANPAGER="$PAGER"
 
 set +a
 
+#### Makefile settings
+
+function make-targets {
+    gsed -e 's/^[^:]*$// ; /^$/d ; s/\(.*\):.*/\1/' Makefile | sort
+}
+
+function make-rules {
+    command grep -E --color=never '[[:alpha:]]+:' Makefile
+}
+
 #### Markdown settings
 
 # export GLAMOUR_STYLE="Dark"
@@ -1022,6 +1028,17 @@ function ldd {
 
 function aws-account {
     echo "$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
+}
+
+function aws-clear {
+    unset AWS_ACCOUNT \
+          AWS_ACCESS_KEY_ID \
+          AWS_SECRET_ACCESS_KEY \
+          AWS_SESSION_TOKEN
+}
+
+function enva {
+    env | grep ^AWS
 }
 
 ### AWS IAM settings
@@ -1134,6 +1151,20 @@ function get-secret {
         | jq '.SecretString | fromjson'
 }
 function secret { get-secret "$@" ;}
+
+### AWS logs/CloudWatch/LogGroup/log group settings
+
+function rds-ls-log-groups {
+    set -o pipefail
+
+    aws logs describe-log-groups --log-group-name-prefix "/aws/rds" \
+        | command ggrep logGroupName \
+        | command ggrep -v "proxy" \
+        | sort \
+        | sed -e 's|.*/aws/rds/instance/||; s|/postgresql",$||'
+    
+    set +o pipefail
+}
 
 ### AWS S3 setttings
 
@@ -2006,6 +2037,18 @@ function gclone {
     fi
 }
 
+# function merge {
+#     check-args 0 1 'PR_NUMBER' "$@" || return 1
+#     
+#     set -o pipefail
+#     local PR_NUMBER="$(prs | cat | awk '{print $1}')"
+#     set +o pipefail
+#         
+#     if [[ $? -eq 0 ]] && [[ $PR_NUMBER ]]; then
+#         gh pr merge --squash "$PR_NUMBER"
+#     fi
+# }
+        
 function git-https-to-ssh {
     check-args 1 1 'HTTPS_URL' "$@" || return 1
     local HTTPS_URL="$1"
@@ -2680,6 +2723,10 @@ function gtd {
     echo '* TODO' "$@" >> ~/.site.bash.d/gtd/gtd.org
 }
 
+function yak {
+    echo '* YAK_SHAVING' "$@" >> ~/.site.bash.d/gtd/gtd.org
+}
+
 function inbox {
     gtd "$@"
 }
@@ -2708,12 +2755,17 @@ MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 # Homebrew stable Python version
 
 set -a
-PYTHON_INTERPRETER_PATH="/usr/local/bin"
+PYTHON_INTERPRETER_PATH="$HOMEBREW_BIN"
 PYTHON_PIPX_PATH=~/.local/bin
 set +a
 
-function python { python3 "$@" ;}
-function pip { pip3 "$@" ;}
+function python {
+    python3 "$@"
+}
+
+function po {
+    python3 "$@"
+}
 
 function va {
     local VENV_NAME
