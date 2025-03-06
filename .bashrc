@@ -1,6 +1,8 @@
 umask 0022
 export CLICOLOR=1
 
+set -o pipefail
+
 #### Bash debugging settings
 
 # Uncomment this to enable various hackish debugging statements in this file.
@@ -18,6 +20,10 @@ function setx {
 if [[ "$MY_DEBUG" ]]; then
     setx
 fi
+
+function sb {
+    source ~/.bashrc
+}
 
 #### Bash metaprogramming library "settings"
 
@@ -1216,10 +1222,8 @@ function rm-bucket {
                                      --bucket-logging-status '{}' \
             || return 1
         
-        set -o pipefail
         aws s3 rm --recursive "s3://${BUCKET_NAME}" >/dev/null \
             && aws s3api delete-bucket --bucket "$BUCKET_NAME"
-        set +o pipefail
     fi
 }
 
@@ -1521,6 +1525,18 @@ function _brew-n-deps {
         RAW_COUNT=$(brew deps --tree --installed | command grep -c "$PACKAGE_NAME")
         N_DEPENDERS=$(( RAW_COUNT - 1 ))
         echo $N_DEPENDERS
+    fi
+}
+
+# bls (Brew List/Search): search for package in installed packages (brew ls);
+# if there are no results there, search uninstalled packages (brew search).
+function bls {
+    check-args 1 1 'REGEX' "$@" || return 1
+    local REGEX="$1"
+
+    brew ls | grep "$REGEX"
+    if [[ $? -ne 0 ]]; then
+        brew search "/$REGEX/"
     fi
 }
 
@@ -1838,16 +1854,6 @@ fi
 
 export GIT_SHELL_PATH="$HOMEBREW_BIN/bash"
 
-function git-toplevel {
-    if ! check-args 0 0 'git-toplevel' "$@"; then
-        return 1
-    elif ! git rev-parse --is-inside-work-tree >/dev/null; then
-        return 2
-    else
-        git rev-parse --show-toplevel
-    fi
-}
-
 function branch-name {
     local PHRASE_STRING
     if [[ $# -eq 1 ]]; then
@@ -1900,19 +1906,6 @@ function kebab-case {
 
 function lisp-case { kebab-case "$@" ;}
 
-# gcd ("Git CD") - cd to a directory, relative to the root dir of this repo
-# For example, if you're in directory ~/src/my-project/javascript then
-# 'gcd python' will change the cwd to ~/src/my-project/python
-function gcd {
-    check-args 0 1 'gcd [RELATIVE_DIR]' "$@" || return 1
-    local DIR="$(git-toplevel)"
-    if [[ $? -ne 0 ]]; then
-        return "$?"
-    else
-        echo "$DIR"
-    fi
-}
-
 # function git-delete-this-branch {
 #     OLD_BRANCH=$(git branch --show-current)
 #     # delete_it {
@@ -1935,11 +1928,6 @@ function gcd {
 #         fi
 #     fi
 # }
-
-# gr (git repo) - print repo name (if your cwd is in a git working copy)
-function gr {
-    basename "$(git rev-parse --show-toplevel)"
-}
 
 function git-backup-helper {
     local REPO_NAME ORIG_DIR EXIT_STATUS
@@ -1999,10 +1987,40 @@ function gbss {
     done
 }
 
+# gr (git repo) - print repo name (if your cwd is in a git working copy)
+function gr {
+    basename "$(git rev-parse --show-toplevel)"
+}
+
 # gu (Git URL) - run this in any dir inside a Git working copy to show the URL
 function gurl {
-    local ORIG_DIR="$(pwd)"
-    command grep url "$(git-toplevel)/.git/config" | sed -e 's/^[ \t]*url[ ][=][ ]//'
+    git config --get remote.origin.url
+}
+
+function greldir {
+    # greldir ("Git RELative DIRectory"): given a relative path,
+    # cd to "$WORKING_COPY_ROOT/$RELPATH". If we're not inside
+    # a Git working copy, then err.
+    check-args 0 1 'greldir [RELATIVE_DIR]' "$@" || return 1
+    local REL_DIR="$1" # okay if blank
+        
+    local ABS_DIR="$(git-rev-parse --show-toplevel)/$REL_DIR"
+    if [[ $? -ne 0 ]]; then
+        return "$?"
+    else
+        cd "$ABS_DIR"
+    fi
+}
+
+# gcd ("Git CD") - cd to a directory, relative to the root dir of this repo
+# For example, if you're in directory ~/src/my-project/javascript then
+# 'gcd python' will change the cwd to ~/src/my-project/python
+function gcd {
+    check-args 0 1 'gcd [RELATIVE_DIR]' "$@" || return 1
+    local ABS_DIR="$(greldir "$@")"
+    if [[ $? -eq 1 ]]; then
+        cd "$ABS_DIR"
+    fi
 }
 
 # branchify - munge a branch description into a branch name
@@ -2040,10 +2058,8 @@ function gclone {
 # function merge {
 #     check-args 0 1 'PR_NUMBER' "$@" || return 1
 #     
-#     set -o pipefail
 #     local PR_NUMBER="$(prs | cat | awk '{print $1}')"
-#     set +o pipefail
-#         
+
 #     if [[ $? -eq 0 ]] && [[ $PR_NUMBER ]]; then
 #         gh pr merge --squash "$PR_NUMBER"
 #     fi
@@ -2312,7 +2328,6 @@ function repos {
     
     # Search in various places for repos matching PATTERN,
     # stopping at the first place where we find a match.
-    set -o pipefail
     {
         verbose-print "searching $GITHUB_ORG repos"
         gh repo list --limit 2000 "$GITHUB_ORG" | command grep -E "$PATTERN"
@@ -2350,19 +2365,17 @@ function repo {
     fi
 }
 
-function actions {
-    local REPO_URL="$(gurl)"
-    REPO_FOUND=$?
-    if [[ $REPO_FOUND -ne 0 ]]; then
-        return $REPO_FOUND
-    else
-        HTTPS_REPO_URL="$(echo "$REPO_URL" | sed -e 's|:|/|' -e 's|git[@]|https://|' -e 's|[.]git$||')"
-        open -u "$HTTPS_REPO_URL/actions"
-    fi
-}
-
+# Open the latest GitHub action (or the main GitHub actions page if none found)
 function act {
-    actions "$@"
+    check-args 0 0 'gac' "$@" || return 1
+
+    local LATEST_ACTION_ID="$(gh run list --json databaseId --jq '.[0].databaseId')"
+    if [[ "$LATEST_ACTION_ID" ]]; then
+        gh run view --web "$LATEST_ACTION_ID" >/dev/null
+    else
+        carp "no GitHub actions found (at least for this branch)"
+        return 2
+    fi
 }
 
 # PR (Pull Request) - manipulate GitHub pull requests
@@ -2444,7 +2457,7 @@ function pr {
 }
 
 function prs {
-    pr --list
+    gh pr list
 }
 
 # purl ("Pull request URL") - print the URL of the latest pull request on this branch.
@@ -2648,7 +2661,6 @@ function ser {
 ## PurpleAir air quality monitor settings
 
 function air {
-    set -uo pipefail
     local RESPONSE_FILE
     RESPONSE_FILE=$(mktemp "$HOME/tmp/air.XXXX")
 
@@ -2677,8 +2689,6 @@ function air {
 
         echo "PM 2.5 is ${PM25}ppm (as of $NUMBER_OF_MINUTES $INFLECTED ago)"
     fi
-    
-    set +uo pipefail
 }
 
 #### Convenience functions for working with local files
@@ -2923,10 +2933,8 @@ function mshost {
 #     else
 #         HEADER="$($PS_COMMAND | head -1)"
 
-#         set -o pipefail
 #         PROCS="$($PS_COMMAND | command grep -v grep | command grep --color=always "$@")" | $PAGER
 #         RC=$?
-#         set +o pipefail
         
 #         if [[ -n "$PROCS" ]]; then
 #             echo "$HEADER"
@@ -3684,3 +3692,4 @@ if [[ -z "$PATHS_SET_AT" ]]; then
 fi
 
 source-if-exists ~/.site.bash.d/postamble.bash
+set +o pipefail
