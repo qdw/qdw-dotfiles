@@ -15,10 +15,13 @@
 
           ("POSTPONED" . ,qdw-yellow)
           ("INFO" . ,qdw-yellow)
+          ("YAK_SHAVING" . ,qdw-yellow)
           ("PROJECT" . ,qdw-blue)
           ("SUBPROJECT" . ,qdw-bright-cyan)
           ("IN_PROGRESS" . ,qdw-bright-yellow)
-          ("DONE" . ,qdw-green)))
+          ("DONE" . ,qdw-green)
+          ("WONTFIX" . ,qdw-green)
+          ))
 
 
                   

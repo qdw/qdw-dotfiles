@@ -609,7 +609,7 @@
       ((t (:foreground ,yellow))))
 
     ;;;; org-mode
-
+    
     `(org-drawer
       ((t (:inherit org-document-info-keyword))))
   
