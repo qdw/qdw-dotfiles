@@ -56,3 +56,5 @@ jenkins_output.*
 **/assets/**
 **/docs/**
 **/__snapshots__/**
+site.el
+
