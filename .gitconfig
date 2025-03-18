@@ -56,7 +56,7 @@
 	branch = branch --quiet
 	ch = "!function _ch { git diff \"${1}^\" \"${1}\" ;}; _ch "
 	char-diff = diff --word-diff-regex=.
-	co = checkout
+	co = switch
 	coml = "!function _nol { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
 	comp = diff --compact-summary
 	delete-remote-branch = push origin --delete
