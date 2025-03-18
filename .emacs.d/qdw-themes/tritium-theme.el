@@ -63,7 +63,7 @@
             cyan  "#028080"
      bright-cyan  "#4bbfc4"
            white  "#878787"
-    bright-white  "#aaaaaa"
+    bright-white  "#878787" ;; "#aaaaaa"
     ))
   
   ;;; For terminals that support only 256 colors
