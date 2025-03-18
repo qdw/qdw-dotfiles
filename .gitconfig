@@ -53,11 +53,15 @@
 
 [alias]
 	added = diff --diff-filter=A	
-	char-diff = diff --word-diff-regex=.
+	branch = branch --quiet
 	ch = "!function _ch { git diff \"${1}^\" \"${1}\" ;}; _ch "
+	char-diff = diff --word-diff-regex=.
 	co = checkout
+	coml = "!function _nol { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
 	comp = diff --compact-summary
 	delete-remote-branch = push origin --delete
+	diff-remote = diff @{u}
+	diff-remote-committed = diff @{u} HEAD
 	dr = "!git diff  \"origin/$(git branch --show-current)\"  \"$(git branch --show-current)\"  "
 	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
@@ -67,17 +71,14 @@
 	mm = commit --allow-empty-message -m ''
 	no = diff --name-only
 	nol = "!function _nol { git last "$@" --name-only ;}; _nol "
-	coml = "!function _nol { COMMIT=${1:HEAD}; git diff --compact-summary \"${COMMIT}^\" \"${COMMIT}\" ;}; _nol "
-	diff-remote = diff @{u}
-	diff-remote-committed = diff @{u} HEAD
 	report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
-	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	s = status
+	stat = status
 	tg = "!function _tg { git tag | sort -g ;}; _tg"
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit
 	try = "!f() { git add . && git commit --allow-empty-message -m '' && git push; }; f"
 	unadd = restore --staged
-	branch = branch --quiet
+	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 
 [init]
 	defaultBranch = main
