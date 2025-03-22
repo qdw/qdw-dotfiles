@@ -619,6 +619,8 @@ fi
 set +a
 
 function grep {
+    set -o pipefail
+    
     # When using rg as my grep implementation, I often type -R out of habit,
     # but rg has no -R flag (and it's recursive by default).
     # So, if I try to pass that flag to rg, just remove it.
@@ -638,6 +640,8 @@ function grep {
         $MY_GREP_OPTIONS \
         $GREP_COLOR_FLAGS \
         $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
+        
+    set +o pipefail
 }
 
 function g { grep $GREP_RECURSE "$@" ;}
@@ -2112,6 +2116,7 @@ function owner {
 
 # gb (Git Branch) - create a new branch based on the main one, and check it out
 function gb {
+    check-args 0 1 'gb [NEW_BRANCH_NAME' "$@"
     local NEW_BRANCH_NAME MAIN
 
     if [[ $# -eq 0 ]]; then
@@ -2119,11 +2124,10 @@ function gb {
     elif [[ $# -eq 1 ]]; then
         NEW_BRANCH_NAME="$1"
         MAIN=$(get-main-branch-name) \
-            && git co --quiet "$MAIN" \
-            && git pull --ff-only --quiet \
-            && git checkout -b "$NEW_BRANCH_NAME" "$MAIN" \
-                | command grep -vE 'remote:' #\
-            #&& git push --set-upstream origin # --quiet
+            && git switch --quiet "$MAIN" \
+            && git pull --quiet --ff-only  \
+            && git switch --create "$NEW_BRANCH_NAME" "$MAIN" \
+                | command grep -vE 'remote:'
     else
         echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
     fi
@@ -2935,37 +2939,19 @@ function mshost {
     mhost "$COMMAND" "$@"
 }
 
-#### Process settings
-
-# Display all processes, in a style that I like. If an argument is
-# given, interpret it as a grep regex, and display only those that
-# match that regex. Yeah, I know I could do this with pgrep, but it
-# wouldn't give me all the output-format flexibility that I get from
-# using ps itself.
-# function p {
-#     local HEADER
-#     local PROCS
-#     local PS_COMMAND="ps auxwwwww"
-    
-#     if [[ $# -eq 0 ]]; then
-#         $PS_COMMAND | $PAGER
-#     else
-#         HEADER="$($PS_COMMAND | head -1)"
-
-#         PROCS="$($PS_COMMAND | command grep -v grep | command grep --color=always "$@")" | $PAGER
-#         RC=$?
-        
-#         if [[ -n "$PROCS" ]]; then
-#             echo "$HEADER"
-#             echo "$PROCS"
-#         fi
-
-#         return $RC
-#     fi
-# }
+#### Process-related settings
 
 function pstree {
     command pstree -g 3 -u $USER "$@" | $PAGER
+}
+
+function p {
+    check-args 1 varargs 'p [GREP_FLAGS] REGEX' "$@" || return 1
+    
+    ps auxwwwwww \
+        | command grep -vE 'grep|rg' \
+        | $MY_GREP $MY_GREP_OPTIONS $GREP_COLOR_FLAGS "$@" \
+        | $PAGER
 }
 
 # Display only processes that belong to me.
