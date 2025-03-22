@@ -6,9 +6,8 @@
  (lambda (file-name)
          (add-to-list 'custom-theme-load-path (expand-file-name file-name)))
  '("~/.emacs.d/qdw-themes"
-   "~/src/1/emacs-mariana-theme"
-   "~/.emacs.d/third-party-themes"))
-   
+   "~/src/forks/mariana-theme"))
+
 ;;;; Load my current favorite theme
 
 (setq-default custom-enabled-themes '())

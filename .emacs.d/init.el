@@ -206,8 +206,8 @@ but it calls defvar under the hood."
                               ((eq theme 'mariana)
                                'tritium)
            
-                              (('t
-                                nil)))))
+                              ('t
+                                nil))))
     (when other-theme
       (custom-set-variables '(custom-enabled-themes
                               (list other-theme))))))

@@ -2861,6 +2861,27 @@ function gemi {
                      "$@"
 }
 
+#### Network-related settings
+
+function ips {
+    /sbin/ifconfig -a \
+        | command grep --color=never 'inet ' \
+        | command grep --color=never -v 'inet6 ' \
+        | grep 'inet'
+}
+
+function ipv6 {
+    /sbin/ifconfig -a \
+        | grep 'inet6 '
+}
+
+function whois {
+    complain "whois is deprecated; using rdap instead"
+    complain "(if you really need to use whois, do 'command whois ...')."
+    complain
+    rdap "$@"
+}
+
 #### Miscellaneous shell functions
 
 # Change this terminal's background to the hex triplet passed in.
@@ -2869,8 +2890,6 @@ function bghex {
     printf '\e]11;%s\a' "#${1}"
 }
 
-function ips { /sbin/ifconfig -a | command grep 'inet ' | command grep -v 'inet6 ' | grep 'inet' ;}
-function ipv6 { /sbin/ifconfig -a | grep 'inet6 ' ;}
 
 # flast - print the first and last lines of a file
 function flast {
