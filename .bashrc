@@ -2007,13 +2007,8 @@ function greldir {
     # a Git working copy, then err.
     check-args 0 1 'greldir [RELATIVE_DIR]' "$@" || return 1
     local REL_DIR="$1" # okay if blank
-        
-    local ABS_DIR="$(git-rev-parse --show-toplevel)/$REL_DIR"
-    if [[ $? -ne 0 ]]; then
-        return "$?"
-    else
-        cd "$ABS_DIR"
-    fi
+    local ABS_DIR="$(git rev-parse --show-toplevel)/$REL_DIR"
+    echo "$ABS_DIR"
 }
 
 # gcd ("Git CD") - cd to a directory, relative to the root dir of this repo
@@ -2022,7 +2017,7 @@ function greldir {
 function gcd {
     check-args 0 1 'gcd [RELATIVE_DIR]' "$@" || return 1
     local ABS_DIR="$(greldir "$@")"
-    if [[ $? -eq 1 ]]; then
+    if [[ $? -eq 0 ]]; then
         cd "$ABS_DIR"
     fi
 }

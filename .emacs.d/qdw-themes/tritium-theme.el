@@ -49,7 +49,7 @@
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
            black  "#141414"  ;;      Grey15
-    bright-black  "#575757"
+    bright-black  "#343434"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
            green  "#3b8560"
@@ -255,10 +255,10 @@
      ((t (:foreground ,yellow))))
      
    `(mode-line
-     ((t (:foreground ,blue :background ,black))))
+     ((t (:foreground ,blue :background ,bright-black))))
 
    `(mode-line-inactive
-     ((t (:foreground ,bright-blue :background ,black))))
+     ((t (:foreground ,cyan :background ,bright-black))))
      
    ;;;; font lock
 
