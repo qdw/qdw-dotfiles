@@ -1,3 +1,5 @@
+set runtimepath+=~/.vimruntime
+        
 colorscheme dim
 
 set guifont=Menlo:h17
