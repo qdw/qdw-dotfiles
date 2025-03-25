@@ -1,7 +1,5 @@
 # readline configuration file with vim keybindings.
-# Use by doing 'export INPUTRC=~/.vimputrc' in your shell.
+# Use by doing 'export INPUTRC=~/.inputrc--vi-keybindings' in your shell.
 # For documentation of this file's format, 'man inputrc' or see
 # https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
-
 set editing-mode vi
-
