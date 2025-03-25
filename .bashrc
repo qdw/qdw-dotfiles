@@ -1702,7 +1702,7 @@ function ls {
 }
 
 function lsd {
-    ls ~/d/
+    ls "$@" ~/Desktop
 }
 
 function recent {
