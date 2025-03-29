@@ -94,3 +94,5 @@
 
 [github]
 	user = qdw
+[advice]
+	diverging = false

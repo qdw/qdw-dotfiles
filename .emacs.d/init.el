@@ -957,11 +957,11 @@ which is its intended use."
 (let ((desired-indent-level 2))
   (setq-default
    typescript-indent-level desired-indent-level
-   js-indent-level desired-indent-level))
+   js-indent-level desired-indent-level
+   js-switch-indent-offset desired-indent-level)
 
-(setq-default
- tide-node-executable
- (expand-file-name "~/.asdf/installs/nodejs/16.20.0/bin/node"))
+   tide-node-executable (expand-file-name
+                         "~/.asdf/installs/nodejs/16.20.0/bin/node"))
 
 ;; eslint (JavaScript/TypeScript linter) settings
 (defun seteslintrc ()
