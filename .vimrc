@@ -1,4 +1,4 @@
-colorscheme dim
+" colorscheme dim
 
 set guifont=Menlo:h17
         

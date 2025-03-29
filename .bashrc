@@ -1,3 +1,5 @@
+unset PROMPT_COMMAND
+
 umask 0022
 export CLICOLOR=1
 
@@ -14,6 +16,7 @@ set -o pipefail
 function setx {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
+    export PS4='${BASH_SOURCE}:${LINENO} '
     set -x
 }
 
@@ -292,15 +295,7 @@ function okl {
 ## ANSI SGR 4-bit color codes
 
  ANSI='\033['
- CYAN='36m'
 RESET='\033[0m'
-
-BRIGHT_CYAN='96m'
-
-function cyan {
-    check-args 0 0 "cyan"
-    echo -e "$ANSI$CYAN=cyan=$RESET"
-}
 
 function color {
     # check-args 2 2 "color STRING_TO_DISPLAY COLOR_NAME_IN_ALL_CAPS"
@@ -460,12 +455,15 @@ fi
 ## instead of the bundled macOS versions, as the Homebrewed versions
 ## are more frequently updated.
 
-for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail; do
-    BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
-    if [[ -f "$BREWED_GNU" ]]; then
-        funcalias "$GNU_COMMAND" "$BREWED_GNU"
-    fi
-done
+if on-macos; then
+    for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail
+    do
+        BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
+        if [[ -f "$BREWED_GNU" ]]; then
+            funcalias "$GNU_COMMAND" "$BREWED_GNU"
+        fi
+    done
+fi
 
 ## Show all ignore patterns in effect for the cwd
 
@@ -560,7 +558,7 @@ function fdgrep {
 # Recursively search the current working directory for files that don't
 # end in a single newline, and print their names
 function newlineless {
-    fd -t f -x bash -c 'tail -c 1 "$1" | ggrep -qvE "^$" && echo "$1"' _ {} \;
+    fd -t f -x bash -c 'tail -c 1 "$1" | command grep -qvE "^$" && echo "$1"' _ {} \;
 }
 
 # Grep TypeScript files only
@@ -611,8 +609,8 @@ else
     
     GREEN="32"
     YELLOW="33"
-    local FILENAME_COLOR="fn=${GREEN}"
-    local LINE_NUMBER_COLOR="ln=${YELLOW}"
+    FILENAME_COLOR="fn=${GREEN}"
+    LINE_NUMBER_COLOR="ln=${YELLOW}"
     export GREP_COLOR_FLAGS=""
     export GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
 fi
@@ -902,7 +900,8 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     }
     
     MY_PROMPT_FUNCTION_DEFINITION=$(command -V my_prompt_function | tail -n +2)
-    ## not for upstart_web export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
+    ## not for upstart_web 
+    ## export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
 fi
 
 #### Scheme Shell settings
@@ -1168,8 +1167,8 @@ function rds-ls-log-groups {
     set -o pipefail
 
     aws logs describe-log-groups --log-group-name-prefix "/aws/rds" \
-        | command ggrep logGroupName \
-        | command ggrep -v "proxy" \
+        | command grep logGroupName \
+        | command grep -v "proxy" \
         | sort \
         | sed -e 's|.*/aws/rds/instance/||; s|/postgresql",$||'
     
@@ -1391,27 +1390,22 @@ function activate-iTerm2-integration {
 
 ## Bash prompt settings
 
-# If this is my work laptop, just put "laptop" as the hostname,
-# not the rather-verbose hostname assigned by DHCP.
-#
-# Actually, I'm disabling this; now that I'm all DevOps-y,
-# I never get to ssh anywhere.
 PS1_LOGO=""
-if [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
+if [[ "$LAPTOP_HOSTNAME" ]] && [[ "$HOSTNAME" = "$LAPTOP_HOSTNAME" ]]; then
     PS1_HOSTNAME="laptop"
 else
     PS1_HOSTNAME="\\h"
 fi
 
-# Unicode logos as visual cues for different hosts/apps
-if [[ "$INSIDE_EMACS" ]]; then
-    PS1_LOGO=$'\u2130' # Cursive uppercase E
-elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
-    PS1_LOGO=$'\uF8FF' # Apple logo
-fi
+# # Use Unicode emoji as visual cues for different hosts/apps
+# if [[ "$INSIDE_EMACS" ]]; then
+#     PS1_LOGO=$'\u2130' # Cursive uppercase E
+# elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
+#     PS1_LOGO=$'\uF8FF' # Apple logo
+# fi
+# export PS1="\\[\\e[33;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
 
-#export PS1="\\[\\e[33;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
-export PS1="\\[\\e[33;1m\\]\\w\\$\\[\\e[0m\\] "
+export PS1="\\[\\e[33;1m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
 export DEFAULT_PS1="$PS1"
 
 # macOS: suppress nag message about Bash being deprecated in favor of zsh
@@ -1442,7 +1436,7 @@ function brew-deps-all {
 function brew-all-deps { brew-deps-all "$@" ;}
 
 function brew-leaves {
-    brew-deps-all | command ggrep -E '^[[:alpha:]]' | sort | uniq | $PAGER
+    brew-deps-all | command grep -E '^[[:alpha:]]' | sort | uniq | $PAGER
 }
 
 function brew-leaf {
@@ -1970,7 +1964,7 @@ function git-backup {
 function get-main-branch-name {
     local MAIN_OR_MASTER
     
-    MAIN_OR_MASTER="$(command git branch --remotes | command ggrep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
+    MAIN_OR_MASTER="$(command git branch --remotes | command grep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
     echo "$MAIN_OR_MASTER"
 }
 
@@ -3614,7 +3608,7 @@ function yv {
         
         #FIXME: figure out how to glob for *.yaml case-insensitively. Maybe use fd?
         # command grep --no-filename "${KEY}:[ ]*" *.yaml | sort | uniq | sed "s/^[ ]*${KEY}:[ ]*//"
-        fdd "$@" .yaml -X ggrep "${KEY}:"
+        fdd "$@" .yaml -X grep "${KEY}:"
     fi
 }
 
@@ -3670,7 +3664,9 @@ if [[ -z "$PATHS_SET_AT" ]]; then
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
     LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
     PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
-    export SDKROOT="`xcrun --show-sdk-path`"
+    if on-macos; then
+        export SDKROOT="`xcrun --show-sdk-path`"
+    fi
     
     # If some of those variables that I interpolated in my PATH are undefined,
     # then I will wind up with '::' in my PATH. That's equivalent to having
