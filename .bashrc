@@ -561,7 +561,7 @@ function newlineless {
     fd -t f -x bash -c 'tail -c 1 "$1" | command grep -qvE "^$" && echo "$1"' _ {} \;
 }
 
-# Grep TypeScript files only
+# grep TypeScript files only
 function tsgrep { fdgrep "[.]ts$" "$@" ;}
 
 function fdoccur {
@@ -584,67 +584,65 @@ function file-type-counts {
 
 #### grep settings
 
-set -a
-
+# set -a
+# 
 # Prefer ripgrep if installed.
-if installed "rg"; then
-    MY_GREP="rg"
-    MY_GREP_OPTIONS="--color=always" # --no-line-number"
-    # MY_GREP_OPTIONS="$MY_GREP_OPTIONS -H --column -n"
-    GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
-    GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
-    GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
-
-# If ripgrep is not installed, assume GNU grep.
-else
-    if on-macos && installed "ggrep"; then
-        MY_GREP="ggrep"
-    else
-        MY_GREP="grep"
-    fi
+# if installed "rg"; then
+#     MY_GREP="rg"
+#     MY_GREP_OPTIONS="--color=always" # --no-line-number"
+#     # MY_GREP_OPTIONS="$MY_GREP_OPTIONS -H --column -n"
+#     GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
+#     GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
+#     GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
+# else
+#     if on-macos && installed "ggrep"; then
+#         MY_GREP="ggrep"
+#     else
+#         MY_GREP="$(which grep)"
+#     fi
+#     
+#     MY_GREP_OPTIONS="-n -I --color=always"
+#     GREP_RECURSE="-R"
+#     GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
     
-    MY_GREP_OPTIONS="-n -I --color=always"
-    GREP_RECURSE="-R"
-    GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
-    
-    GREEN="32"
-    YELLOW="33"
-    FILENAME_COLOR="fn=${GREEN}"
-    LINE_NUMBER_COLOR="ln=${YELLOW}"
-    export GREP_COLOR_FLAGS=""
-    export GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
-fi
-set +a
+#     GREEN="32"
+#     YELLOW="33"
+#     FILENAME_COLOR="fn=${GREEN}"
+#     LINE_NUMBER_COLOR="ln=${YELLOW}"
+#     GREP_COLOR_FLAGS=""
+#     GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
+# fi
+# set +a
 
-function grep {
-    set -o pipefail
-    
-    # When using rg as my grep implementation, I often type -R out of habit,
-    # but rg has no -R flag (and it's recursive by default).
-    # So, if I try to pass that flag to rg, just remove it.
-    local ARGS=()
-    if [[ "$MY_GREP" = "rg" ]]; then
-        for ARG in "$@"; do
-            # FIXME: rewrite this properly, using Bash's builtin getopts
-            if [[ "$ARG" != "-R" ]]; then
-                ARGS+=("$ARG")
-            fi
-        done
-    else
-        ARGS=$@
-    fi
+# function grep {
+#     set -o pipefail
+#     
+#     # When using rg as my grep implementation, I often type -R out of habit,
+#     # but rg has no -R flag (and it's recursive by default).
+#     # So, if I try to pass that flag to rg, just remove it.
+#     local ARGS=()
+#     if [[ "$MY_GREP" = "rg" ]]; then
+#         for ARG in "$@"; do
+#             # FIXME: rewrite this properly, using Bash's builtin getopts
+#             if [[ "$ARG" != "-R" ]]; then
+#                 ARGS+=("$ARG")
+#             fi
+#         done
+#     else
+#         ARGS=($@)
+#     fi
+#
+#     $MY_GREP \
+#         $MY_GREP_OPTIONS \
+#         $GREP_COLOR_FLAGS \
+#         $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
+#         
+#     set +o pipefail
+# }
 
-    $MY_GREP \
-        $MY_GREP_OPTIONS \
-        $GREP_COLOR_FLAGS \
-        $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
-        
-    set +o pipefail
-}
-
-function g { grep $GREP_RECURSE "$@" ;}
-function gbr { g "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-function ge { g "$@" ~/.emacs.d ;}
+# function g { grep $GREP_RECURSE "$@" ;}
+# function gbr { g "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+# function ge { g "$@" ~/.emacs.d ;}
 
 function grep-settings {
     # check-args 2 varargs
@@ -769,15 +767,6 @@ function my-source {
     
     if [[ $MY_DEBUG ]]; then
         echo "sourced '$FILE' in $SECONDS seconds"
-    fi
-}
-
-# grbash - grep my Bash config files
-function grbash {
-    if [[ $# -ne 1 ]]; then
-        echo "grbash: error: wrong number of arguments. Usage: grbash GRBASH_REGEX [GREP_OPTION ...]"
-    else
-        grep -R "$@" ~/.bashrc ~/.bashrc.d ~/.bash_profile ~/.bash_login ~/.bash_logout ~/.site.bash.d
     fi
 }
 
@@ -1232,10 +1221,15 @@ function rm-bucket {
 
 #### Editor settings: Emacs Emacs Emacs Emacs Emacs (and more Emacs)
 
-set -a
-EMACS_BINARY="$HOMEBREW_BIN/emacs"
-EMACSCLIENT_BINARY="$HOMEBREW_BIN/emacsclient"
-set +a
+if [[ "$HOMEBREW_BIN" ]]; then
+    set -a
+    EMACS_BINARY="$HOMEBREW_BIN/emacs"
+    EMACSCLIENT_BINARY="$HOMEBREW_BIN/emacsclient"
+    set +a
+else
+    EMACS_BINARY="$(which emacs)"
+    EMACSCLIENT_BINARY="$(which emacsclient)"
+fi
 
 ### Emacs daemon settings
 
@@ -3064,61 +3058,6 @@ function ssh-add-all {
     done
 }
 
-# [FIXME: needs work] When I first ssh to a host, configure it by installing my public ssh keys, my favorite dotfiles, my favorite yum packages, et cetera.
-function quinnify_host {
-    local DOTFILES NODE PACKAGES
-
-    # set -x
-
-    if [[ ! $1 ]]; then
-        echo "Error: missing argument. Usage: quinnify_host $HOSTNAME_OR_SSH_HOSTALIAS"
-        return
-    fi
-
-    NODE="$1"
-
-    DOTFILES='
-        .bashrc.qweaver.bash
-        .emacs
-        .emacs.d
-        .gitconfig
-        .hushlogin
-        .inputrc
-        .psqlrc
-        .screenrc
-        .tmux.qweaver.conf
-        .vimrc.qweaver
-        .vim
-    '
-
-    PACKAGES='
-        ack
-        colordiff
-        emacs-nox
-        htop
-        nc
-        nmap
-        pgcenter
-        pv
-        tmux
-        wemux
-    '
-
-    ssh-copy-id -i ~/.ssh/qweaver_switchfly_3_id_ed25519 "$NODE" > /dev/null 2>&1
-
-    rsync -rptgoDL ~/...sms-me "${NODE}:~/"
-
-    #### Dotfiles.
-
-    cd ~/dotfiles \
-       && rsync -rptgoDL $DOTFILES ${NODE}:~/
-    cd - > /dev/null
-
-    ssh "$NODE" touch .quinnified
-
-    # set +x
-}
-
 function my_ssh {
     NODE=$1
 
@@ -3236,73 +3175,37 @@ function shn {
     command grep -A 1 "$1" ~/.ssh/*config* | tail -1 | awk '{ print $3; }'
 }
 
-## tmux
-
-function _tmux_is_new {
-    local LEADING_DIGIT_OF_VERSION_NUMBER
-    LEADING_DIGIT_OF_VERSION_NUMBER="$(tmux -V | sed 's/^tmux[ ]\([0123456789]\).*/\1/')"
-
-    if [[ "$LEADING_DIGIT_OF_VERSION_NUMBER" -ge 3 ]]; then
-        return 0
-    elif [[ "$LEADING_DIGIT_OF_VERSION_NUMBER" -lt 3 ]]; then
-        return 1
-    else
-        echo "_tmux_is_new: error: version number starts with invalid character '$LEADING_DIGIT_OF_VERSION_NUMBER'"
-        return 2
-    fi
-}
+## tmux settings
 
 # ta $SESSION_NAME ("Tmux Attach") - attach to named session, creating if needed
 function ta {
-    local SESSION_NAME TMUX_CONF
-    
     if [[ $# -ne 1 ]]; then
         echo "ta: error: wrong number of arguments. Usage: ta SESSION_NAME"
     else
-        SESSION_NAME="$1"
+        local SESSION_NAME="$1"
 
-        if _tmux_is_new; then
-            local TMUX_CONF=~/.tmux.new-versions.conf
-        else
-            local TMUX_CONF=~/.tmux.old-versions.conf
-        fi
-
-        if (! tmux has-session -t "$SESSION_NAME" 2> /dev/null); then
+        if ! tmux has-session -t "$SESSION_NAME" 2> /dev/null; then
 	    tn "$SESSION_NAME"
         else
-            tmux -f "$TMUX_CONF" -2 attach-session -t "$SESSION_NAME"
+            tmux attach-session -t "$SESSION_NAME"
         fi
     fi
 }
 
 # tn ("Tmux New") - create a new tmux session
 function tn {
-    local SESSION_NAME TMUX_CONF
-    
     if [[ $# -ne 1 ]]; then
         echo "tn: error: wrong number of arguments. Usage: tn SESSION_NAME"
     else
-        SESSION_NAME="$1"
+        local SESSION_NAME="$1"
 
-        if _tmux_is_new; then
-            TMUX_CONF=~/.tmux.new-versions.conf
-        else
-            TMUX_CONF=~/.tmux.old-versions.conf
-        fi
-
-        tmux -f "$TMUX_CONF" new-session -s "$SESSION_NAME"
+        tmux new-session -s "$SESSION_NAME"
     fi
 }
 
 # tl ("Tmux List") - list running tmux sessions.
 function tl {
-    if _tmux_is_new; then
-        local TMUX_CONF=~/.tmux.new-versions.conf
-    else
-        local TMUX_CONF=~/.tmux.old-versions.conf
-    fi
-
-    tmux -f "$TMUX_CONF" list-sessions 2> /dev/null
+    tmux list-sessions 2>/dev/null
 }
 
 function timestamp { date +%Y%m%dT%H%M%S%z ;}

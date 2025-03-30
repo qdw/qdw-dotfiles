@@ -1,6 +1,7 @@
 ;;;; Window-chrome settings
 
 (setq inhibit-startup-screen 't)
+(require 'tool-bar)
 (if (boundp 'menu-bar-mode) (menu-bar-mode -1))
 (if (boundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
@@ -131,19 +132,13 @@ but it calls defvar under the hood."
 ;;;; Dependencies settings
 
 (load-if-present-qdw "site.el")
-
 (add-to-list 'load-path (expand-file-name "~/.site.lisp.d"))
 (setq-default load-prefer-newer 't)
-
-;; I'm running emacs as a daemon,
-;; so just require all these modules at once;
-;; don't get clever with lazy-loading.
 
 (require 'ansi-color)
 (require 'blacken)
 (require 'comint)
 (require 'compile)
-(require 'devil)
 (require 'dirtrack)
 (require 'dockerfile-mode)
 (require 'fd-dired)
@@ -169,6 +164,18 @@ but it calls defvar under the hood."
 (require 'typescript-mode)
 (require 'whitespace)
 (require 'yaml-mode)
+
+;;;; Settings for the Emacs package system
+  
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+;; (package-refresh-contents)
+;; (package-install-selected-packages)
+
+;; I'm running emacs as a daemon,
+;; so just require all these modules at once;
+;; don't get clever with lazy-loading.
 
 ;;;; Edit this file
 
@@ -511,14 +518,6 @@ This command does the reverse of `fill-region'."
 
 ;; (add-hook 'comint-input-filter-functions 'dirs-qdw)
 ;; (add-hook 'comint-output-filter-functions 'dirs-qdw)
-
-;;;; Settings for the Emacs package system
-  
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-;; (package-refresh-contents)
-;; (package-install-selected-packages)
 
 ;; Customized visual bell
 (setq ring-bell-function
@@ -1230,7 +1229,7 @@ which is its intended use."
       (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(wgrep macrostep-geiser geiser-chibi ac-geiser ac-slime geiser geiser-chez glue slime slime-repl-ansi-color helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
+   '(wgrep macrostep-geiser geiser-chibi ac-geiser ac-slime geiser geiser-chez glue slime slime-repl-ansi-color helm-swoop elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack yaml-mode symbol-overlay multiple-cursors paredit-everywhere lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub fd-dired counsel-fd osx-trash org logview outshine paredit butler git-modes lsp-origami origami origami-predef xterm-color flymake flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode titlecase company-lua flymake-lua lua-mode evil go-mode jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets magit-delta dired-sidebar magit dockerfile-mode dumb-jump terraform-mode company tide elpher json-mode markdown-mode typescript-mode ox-jira))
  '(safe-local-variable-values '((eval display-ansi-colors)))
  '(sh-indent-statement-after-and nil)
  '(shell-command-dont-erase-buffer nil)
