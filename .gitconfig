@@ -1,8 +1,20 @@
+# -*- mode: gitconfig -*-
 # -*- eval: (indent-tabs-mode 1) -*-
-	
+
+[github]
+	user = qdw
+
 [user]
-	name = Quinn Weaver
 	email = quinn.weaver@gmail.com
+	name = Quinn Weaver
+
+[includeIf "gitdir:~/upst"]
+	path = ~/.upstart-gitconfig
+
+[includeif "gitdir:blue-shaper"]
+	path = ~/.blue-shaper-gitconfig
+
+
 
 [blame]
 	coloring = highlightRecent
@@ -92,7 +104,5 @@
 [push]
 	autoSetupRemote = on
 
-[github]
-	user = qdw
 [advice]
 	diverging = false

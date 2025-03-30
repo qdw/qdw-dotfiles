@@ -20,6 +20,7 @@
                        "POSTPONED(p)"
                        "INFO(f)"
                        "PROJECT(r)"
+                       "SUBPROJECT(s)"
                        )))
 
 (when (or (member 'tritium custom-enabled-themes)
