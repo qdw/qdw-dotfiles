@@ -889,8 +889,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     }
     
     MY_PROMPT_FUNCTION_DEFINITION=$(command -V my_prompt_function | tail -n +2)
-    ## not for upstart_web 
-    ## export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
+    export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
 fi
 
 #### Scheme Shell settings
@@ -1806,25 +1805,15 @@ function git-latest-commits {
     (
         for DIR in "$@"; do
             cd "$DIR" >/dev/null
-            echo "$(git log -n 1 --format=%cd --date=iso)  $DIR"
+            echo "$(git log -n 1 --pretty=%cd --date=iso)  $DIR"
             cd - >/dev/null
         done
     ) \
     | sort --reverse
 }
 
-function git-show-all-commits-of {
-    check-args 1 1 'show-all-commits FILE' "$@" || return $?    
-    local FILE="$1"
-    
-    for COMMIT in $(git rev-list HEAD); do
-        color-printf "red" "Commit $COMMIT"
-        GIT_PAGER="cat" git show "$COMMIT:$FILE"
-    done
-}
-
 function for-all-commits {
-    check-args 1 1 'for-all commits COMMAND_STRING' "$@" || return 1
+    check-args 1 1 'for-all-commits COMMAND_STRING' "$@" || return 1
     CMD="$1"
 
     for COMMIT in $(git rev-list HEAD); do
@@ -1832,6 +1821,21 @@ function for-all-commits {
         eval "$CMD"
     done
 }
+
+function git-show-all-commits-of {
+    check-args 1 1 'git-show-all-commits-of FILE' "$@" || return $?    
+    local FILE="$1"
+    
+    local GIT_PAGER=cat
+    for COMMIT in $(git rev-list HEAD); do
+        color-printf "red"  "$(git show  --pretty='tformat:%ci %an %H'  "$COMMIT" | head -1)"
+        echo
+        git show "${COMMIT}:${FILE}"
+        echo
+    done
+}
+
+function commits { git-show-all-commits-of "$@" ;}    
 
 function git-show-name-only-diffs {
     for-all-commits 'git diff --name-only --color=always $COMMIT HEAD'
@@ -2022,6 +2026,11 @@ function branchify {
 
 ## GitHub-specific Git settings
 
+function branch {
+    local REPO_NAME="$(basename "$(git rev-parse --show-toplevel)")"
+    open -u "https://github.com/$GITHUB_ORG/$REPO_NAME/branches"
+}
+
 function gclone {
     check-args 1 1 'URL' "$@" || return 1
     local URL="$1"
@@ -2061,20 +2070,6 @@ function git-https-to-ssh {
 # branch BRANCH_NAME - display the GitHub web page for BRANCH_NAME
 function all_gists {
     gists --limit -1
-}
-
-function branch {
-    local BRANCH_NAME
-    
-    if [[ $# -eq 0 ]]; then
-        BRANCH_NAME="$("gb")"
-    elif [[ $# -eq 1 ]]; then
-        BRANCH_NAME="$1"
-    else
-        echo "branch: error: too many arguments. Usage: branch [BRANCH_NAME]" >&2
-    fi
-    
-    gh browse --branch "$BRANCH_NAME"
 }
 
 function gists {
@@ -2246,7 +2241,8 @@ function readme {
 function gcl {
     REPO="$1"
     cd ~/src >/dev/null \
-        && git clone "git@github.com:${GITHUB_ORG}/${REPO}" "$@"
+        && git clone "git@github.com:${GITHUB_ORG}/${REPO}" "$@" \
+        && git-configure-email 2>/dev/null
     cd - >/dev/null
 }
 
@@ -2290,6 +2286,9 @@ function gl {
     git log -n "$N_COMMITS" "$@"
 }
 
+function merge {
+    gh pr merge --delete-branch --squash "$@"
+}
 
 # repos - multitool for listing/searching GitHub repositories 
 function repos {
@@ -2444,7 +2443,7 @@ function pr {
 }
 
 function prs {
-    gh pr list
+    gh pr list | command grep -vE '^no open pull requests'
 }
 
 # purl ("Pull request URL") - print the URL of the latest pull request on this branch.
