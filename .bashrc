@@ -3455,7 +3455,7 @@ function jenkins-branch {
 
 #### Jira settings, regrettably
 
-my-source ~/.bashrc.d/jira.bash
+source-if-exists ~/.bashrc.d/jira.bash
 
 #### Music-related settings
 
