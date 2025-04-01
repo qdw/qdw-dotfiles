@@ -584,65 +584,66 @@ function file-type-counts {
 
 #### grep settings
 
-# set -a
-# 
+set -a
+
 # Prefer ripgrep if installed.
-# if installed "rg"; then
-#     MY_GREP="rg"
-#     MY_GREP_OPTIONS="--color=always" # --no-line-number"
-#     # MY_GREP_OPTIONS="$MY_GREP_OPTIONS -H --column -n"
-#     GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
-#     GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
-#     GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
-# else
-#     if on-macos && installed "ggrep"; then
-#         MY_GREP="ggrep"
-#     else
-#         MY_GREP="$(which grep)"
-#     fi
-#     
-#     MY_GREP_OPTIONS="-n -I --color=always"
-#     GREP_RECURSE="-R"
-#     GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
+if installed "rg"; then
+    MY_GREP="rg"
+    MY_GREP_OPTIONS="--color=always" # --no-line-number"
+    # MY_GREP_OPTIONS="$MY_GREP_OPTIONS -H --column -n"
+    GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
+    GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
+    GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
+else
+    if on-macos && installed "ggrep"; then
+        MY_GREP="ggrep"
+    else
+        MY_GREP="$(which grep)"
+    fi
     
-#     GREEN="32"
-#     YELLOW="33"
-#     FILENAME_COLOR="fn=${GREEN}"
-#     LINE_NUMBER_COLOR="ln=${YELLOW}"
-#     GREP_COLOR_FLAGS=""
-#     GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
-# fi
-# set +a
+    MY_GREP_OPTIONS="-n -I --color=always"
+    GREP_RECURSE="-R"
+    GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
+    
+    GREEN="32"
+    YELLOW="33"
+    FILENAME_COLOR="fn=${GREEN}"
+    LINE_NUMBER_COLOR="ln=${YELLOW}"
+    GREP_COLOR_FLAGS=""
+    GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
+fi
+set +a
 
-# function grep {
-#     set -o pipefail
-#     
-#     # When using rg as my grep implementation, I often type -R out of habit,
-#     # but rg has no -R flag (and it's recursive by default).
-#     # So, if I try to pass that flag to rg, just remove it.
-#     local ARGS=()
-#     if [[ "$MY_GREP" = "rg" ]]; then
-#         for ARG in "$@"; do
-#             # FIXME: rewrite this properly, using Bash's builtin getopts
-#             if [[ "$ARG" != "-R" ]]; then
-#                 ARGS+=("$ARG")
-#             fi
-#         done
-#     else
-#         ARGS=($@)
-#     fi
-#
-#     $MY_GREP \
-#         $MY_GREP_OPTIONS \
-#         $GREP_COLOR_FLAGS \
-#         $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
-#         
-#     set +o pipefail
-# }
 
-# function g { grep $GREP_RECURSE "$@" ;}
-# function gbr { g "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-# function ge { g "$@" ~/.emacs.d ;}
+function grep {
+    set -o pipefail
+    
+    # When using rg as my grep implementation, I often type -R out of habit,
+    # but rg has no -R flag (and it's recursive by default).
+    # So, if I try to pass that flag to rg, just remove it.
+    local ARGS=()
+    if [[ "$MY_GREP" = "rg" ]]; then
+        for ARG in "$@"; do
+            # FIXME: rewrite this properly, using Bash's builtin getopts
+            if [[ "$ARG" != "-R" ]]; then
+                ARGS+=("$ARG")
+            fi
+        done
+    else
+        ARGS=($@)
+    fi
+
+    $MY_GREP \
+        $MY_GREP_OPTIONS \
+        $GREP_COLOR_FLAGS \
+        $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
+        
+    set +o pipefail
+}
+
+function g { grep $GREP_RECURSE "$@" ;}
+function gbr { g "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
+function ge { g "$@" ~/.emacs.d ;}
 
 function grep-settings {
     # check-args 2 varargs
