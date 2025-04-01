@@ -31,6 +31,15 @@
 
 (initialize-ui)
 
+;;;; Font settings                              
+
+;; Disable bold type passim.
+
+(mapc
+ (lambda (face)
+   (set-face-attribute face nil :weight 'normal))
+ (face-list))
+
 ;;;; Basic comfort
 
 (column-number-mode 1)
@@ -191,6 +200,12 @@ but it calls defvar under the hood."
 
 ;;;; Color-theme settings (plus site-specific settings)
 
+;; Always use the same cursor color, no matter what theme I use.
+
+(set-cursor-color "DarkOrange1")
+
+;; Themes that I have customized
+
 (load-file (expand-file-name "qdw-org-keywords.el" user-emacs-directory))
 (when (not (boundp 'my-chosen-theme))
       (setq-default my-chosen-theme "tritium"))
@@ -219,16 +234,19 @@ but it calls defvar under the hood."
       (custom-set-variables '(custom-enabled-themes
                               (list other-theme))))))
 
-;; Disable bold type passim.
-
-(mapc
- (lambda (face)
-   (set-face-attribute face nil :weight 'normal))
- (face-list))
- 
-;; Always use the same cursor color, no matter what theme I use.
-
-(set-cursor-color "DarkOrange1")
+;;;; Third-party themes that I like okay:
+;;
+;;; Light mode:
+;;
+;; (load-theme 'modus-operandi) ;; (bundled with Emacs)
+;; (load-theme 'modus-operandi-tinted) ;; (bundled with Emacs)
+;; (load-theme 'hydandata)
+;; (load-theme 'solo-jazz)
+;; (load-theme 'infodoc)
+;; (load-theme 'organic-green)
+;;
+;;; Dark mode:
+;; None; my tritium theme is the best :3
 
 ;;;; Machine-specific settings
 
