@@ -953,7 +953,6 @@ function make-rules {
 
 #### Markdown settings
 
-# export GLAMOUR_STYLE="Dark"
 function readme {
     gh repo view
 }
@@ -2012,6 +2011,8 @@ function branchify {
 }
 
 ## GitHub-specific Git settings
+
+export GLAMOUR_STYLE="ansi"
 
 function branch {
     local REPO_NAME="$(basename "$(git rev-parse --show-toplevel)")"
