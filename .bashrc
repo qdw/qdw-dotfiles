@@ -205,6 +205,31 @@ function installed {
     fi
 }
 
+function source-if-exists {
+    check-args 1 1 'FILE' "$@"
+    local FILE="$1"
+    if [[ -f "$FILE" ]]; then
+        my-source "$FILE"
+    else
+        return 2
+    fi
+}
+
+function my-source {
+    check-args 1 1 "my-source FILE" "$@"
+    local FILE="$1"
+
+    if [[ $MY_DEBUG ]]; then
+        SECONDS=0
+    fi
+
+    source "$FILE"
+
+    if [[ $MY_DEBUG ]]; then
+        echo "sourced '$FILE' in $SECONDS seconds"
+    fi
+}
+
 #### OS-specific settings
 
 MY_OS="$(uname -s)"
@@ -226,7 +251,29 @@ if on-macos; then
     XDG_DATA_HOME="$HOME/.local/share"
     XDG_STATE_HOME="$HOME/.local/state"
     set +a
+
+    function dock {
+        local VALID_ARGS="left|right|bottom"
+
+        check-args 1 1 "[$VALID_ARGS]" "$@" || return 1
+        local SIDE="$1"
+        case "$SIDE" in
+            left|right|bottom) :;;
+            *) complain "invalid argument '$SIDE'. " \
+                        "Valid arguments: $VALID_ARGS"
+               return 1;;
+        esac
+
+        defaults write com.apple.dock orientation "$SIDE" \
+            && killall Dock
+    }
 fi
+
+function command-exists {
+    check-args 1 1 'COMMAND_NAME' "$@" || return 1
+    local COMMAND="$1"
+    command -v "$COMMAND" >/dev/null 2>&1
+}
 
 ## Clipboard settings
 
@@ -601,6 +648,10 @@ GREP_COLOR_FLAGS=""
 GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
 set +x
 
+if command-exists rg || command-exists ggrep; then
+    source-if-exists ~/.bashrc.d/grep.bash
+fi
+
 function grep {
     set -o pipefail
     
@@ -730,31 +781,6 @@ function dirs-matching {
             echo "$DIR"
         fi
     done
-}
-
-#### Bash settings
-
-function source-if-exists {
-    check-args 1 1 "source-if-exists FILE" "$@"
-    local FILE="$1"
-    if [[ -f "$FILE" ]]; then
-        my-source "$FILE"
-    fi
-}
-
-function my-source {
-    check-args 1 1 "my-source FILE" "$@"
-    local FILE="$1"
-
-    if [[ $MY_DEBUG ]]; then
-        SECONDS=0
-    fi
-
-    source "$FILE"
-    
-    if [[ $MY_DEBUG ]]; then
-        echo "sourced '$FILE' in $SECONDS seconds"
-    fi
 }
 
 #### Bash history settings
@@ -1453,6 +1479,7 @@ function bnl()  { brew-next-leaf "$@" ;}
 function leaf { brew-next-leaf "$@" ;}
 
 
+function bh { brew home "$@" ;}
 function bi { brew install "$@" ;}
 function bo { brew update; brew outdated ;}
 # function bo { brew doctor; brew update && brew outdated ;}
