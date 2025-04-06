@@ -75,17 +75,17 @@
 	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
 	ignored = "!f() { /bin/echo -n \"$1\" 'is'; git check-ignore --quiet \"$1\"; if [[ $? = 1 ]]; then /bin/echo -n ' not'; fi; /bin/echo ' ignored by git'; }; f "
-	main = "!f() { HELPER=\"$HOME/bin/get-main-branch-name\"; MAIN_BRANCH=\"$(\"$HELPER\")\"; git switch \"$MAIN_BRANCH\"; }; f "
+	main = "!f() { git switch "$(get-main-branch-name)"; }; f "
 	mm = commit --allow-empty-message -m ''
 	no = diff --name-only
-	## report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
 	s = status
 	stat = status
-	tg = "!f() { git tag | sort -g ;}; f "
+	tg = "!f() { git tag | sort -g; }; f "
 	tree = log --graph --decorate --pretty=oneline --abbrev-commit
 	try = "!f() { git add . && git commit --allow-empty-message -m '' && git push; }; f"
 	unadd = restore --staged
-	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b' --author "Quinn|qdw"
+	report = log --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b'
+	weekly-report = log --since='7 days' --pretty='----------------------------------------------------------------------------%n%s%w(0,4,4)%b'
 
 [init]
 	defaultBranch = main
