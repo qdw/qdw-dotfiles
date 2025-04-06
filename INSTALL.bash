@@ -1,29 +1,43 @@
 #!/usr/bin/env bash
 
-GIT_WORKING_COPY="$(dirname "$0")"
+function main {
+    local GIT_WORKING_COPY="$(dirname "$0")"
 
-# Install only some dotfiles by default - not all.
-FILES_TO_INSTALL="
-.bashrc
-.bashrc.d
-.git-prompt-colors.sh
+    # Install only some dotfiles by default - not all.
+    local FILES_FOR_HOME_DIR="
 .bash_logout
-.gitconfig
-.gitignore
+.bash_profile
+.bashrc
+.git-prompt-colors.sh
 .hushlogin
 .inputrc
+.inputrc--vi-keybindings
 .psqlrc
+.psqlrc-9.4.1
 .screenrc
-.tmux.new-versions.conf
-.tmux.old-versions.conf
-.vimrc"
+.ssh-config-template
+"
+    for DOTFILE in $FILES_FOR_HOME_DIR; do
+        ln -si "$GIT_WORKING_COPY/$DOTFILE" "$HOME"
+    done
 
-for DOTFILE in $FILES_TO_INSTALL; do
-    ln -si "$GIT_WORKING_COPY/$DOTFILE" ~
-done
+    # Special case: $HOME/.ssh/config must go in a directory with the right mode,
+    # and it must be copied, not symlinked. This prevents certain exploits.
+    mkdir -p "$HOME/.ssh"
+    chmod 0700 "$HOME/.ssh"
+    cp -ia "$GIT_WORKING_COPY/.ssh/global.config" "$HOME/.ssh/"
 
-# Special case: ~/.ssh/config must go in a directory with the right mode
-# and it must be copied, not symlinked. This prevents certain exploits.
-mkdir -p ~/.ssh
-chmod 0700 ~/.ssh
-cp -ai "$GIT_WORKING_COPY/.ssh/global.config" ~/.ssh/
+    local CONFIG_DIR="{$XDG_CONFIG_HOME:-$HOME/.config}"
+    local DIRS_FOR_XDG_CONFIG="
+alacritty/
+bat/
+git/
+tmux/
+vim/
+"
+    for DIR in $DIRS_FOR_XDG_CONFIG; do
+        ln -is "$GIT_WORKING_COPY/$DIR" "$CONFIG_DIR"
+    done
+}
+
+main
