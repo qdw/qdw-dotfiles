@@ -245,7 +245,7 @@ function on-macos {
 
 function open {
     if on-macos; then
-        open "$@"
+        command open "$@"
     elif which xdg-open >/dev/null 2>&1; then
         xdg-open "$@"
     else
