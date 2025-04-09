@@ -49,6 +49,7 @@
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
            black  "#141414"  ;;      Grey15
+           black  "#000000"
     bright-black  "#343434"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
@@ -142,7 +143,7 @@
 
 (custom-theme-set-faces
    'tritium
-
+   
    ;;;; default stuff
    
    `(cursor
@@ -150,6 +151,9 @@
 
    `(default
       ((t (:background ,black :foreground ,white))))
+
+   `(forbidden-whitespace
+      ((t (:background ,bright-green :foreground ,black))))
 
    `(fringe
      ((t (:background ,black))))
@@ -167,21 +171,21 @@
      ((t (:foreground ,red :bold nil))))
 
    `(isearch
-     ((t (:background ,bright-magenta :foreground ,black :bold nil))))
+     ((t (:background ,bright-yellow :foreground ,black :bold nil))))
+
+   `(isearch-fail
+     ((t (:background ,cyan :foreground ,black :bold nil))))
 
    `(lazy-highlight
-     ((t (:background ,red :foreground ,black :bold nil))))
+     ((t (:background ,bright-yellow :foreground ,black :bold nil))))
 
    `(query-replace
      ((t (:inherit lazy-highlight))))
 
-   `(trailing-whitespace
-     ((t (:inherit show-paren-mismatch-face :underline nil))))
-   
    `(minibuffer-prompt
      ;; ((t (:foreground ,bright-magenta))))
      ((t (:foreground ,yellow))))
-     
+
    `(header-line
      ((t (:background ,black :foreground ,white :foreground ,white))))
 
@@ -553,12 +557,12 @@
      ((t (:inherit header-line))))
 
    `(magit-whitespace-warning-face
-     ((t (:inherit font-lock-warning))))
+     ((t (:background ,bright-green :foreground ,black))))
 
    ;;;; compilation
 
    `(compilation-error
-     ((t (:foreground ,green :underline nil))))
+     ((t (:foreground ,bright-red :underline nil))))
       
    `(compilation-info
      ((t (:inherit default))))
@@ -783,6 +787,55 @@
 
     `(diredp-ignored-file-name
       ((t (:foreground ,bright-black))))
+      
+    ;;;; whitespace
+    `(whitespace-big-indent
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-empty
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-hspace
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-indentation
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-line
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-missing-newline-at-eof
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-newline
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-space
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-space-after-tab
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-space-before-tab
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-tab
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
+
+    `(whitespace-trailing
+      ((t (:background ,bright-green :foreground ,black))))
+      ;; ((t (:inherit forbidden-whitespace))))
 
     ) ;; custom-theme-set-faces
 
