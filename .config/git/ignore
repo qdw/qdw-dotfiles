@@ -1,4 +1,5 @@
 # Git: hooks and meta-stuff
+
 bypass-husky
 **/.husky/**
 hooks**
@@ -6,14 +7,17 @@ initialize-repo.sh
 .gitattributes
 
 # AWS CDK JSON output
+
 cdk.context.json
 cdk.json
 cdk.out*
 
 # Compiled objects
+
 .pyc .elc .o __pycache__
 
 # Emacs droppings
+
 \#*
 *~
 *.elc
@@ -39,12 +43,14 @@ auto-save-list
 desktop
 .projectile
 
-# Other editor/IDE/operating system droppings
+# Other editor/IDE/OS droppings
+
 .DS_Store
 .idea
 *.sw?
 
 # Cruft-filenames idiosyncratic to me
+
 bad-*
 cuts*
 simplified-*
