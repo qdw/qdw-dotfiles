@@ -59,23 +59,25 @@ fi
 
 ## Implementations of simple Unix commands in bash, to save fork(1) overhead
 
-function which { # like Unix which(1)
+function which {
     type -P "$@"
 }
 
-function base { # like Unix basename(1)
+function basenam {
     # Remove trailing slashes
     local path="${1%/}"    
     # Extract the filename
     echo "${path##*/}"
 }
 
-function dir { # like Unix dirname(1)
+function dirnam {
     # Remove trailing slashes
     local path="${1%/}"
     # Extract the directory path
     echo "${path%/*}"
 }
+
+## Hackish runtime argument validation
 
 function check-args {
     local FUNCTION="${FUNCNAME[1]}"
@@ -278,17 +280,21 @@ if on-macos; then
         defaults write com.apple.dock orientation "$SIDE" \
             && killall Dock
     }
-fi
+    
+    function darken {
+        check-args 1 1 'true|false' "$@" || return 1
+        local BOOL="$1"
+        osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
+    }
 
-function command-exists {
-    check-args 1 1 'COMMAND_NAME' "$@" || return 1
-    local COMMAND="$1"
-    command -v "$COMMAND" >/dev/null 2>&1
-}
-
-## Clipboard settings
-
-if on-macos; then
+    function dark {
+        darken "true"
+    }
+    
+    function light {
+        darken "false"
+    }
+    
     function pbc {
         local FILENAME="$1"
         if [[ "$FILENAME" ]]; then
@@ -298,6 +304,12 @@ if on-macos; then
         fi
     }
 fi
+
+function command-exists {
+    check-args 1 1 'COMMAND_NAME' "$@" || return 1
+    local COMMAND="$1"
+    command -v "$COMMAND" >/dev/null 2>&1
+}
 
 #### Color settings
 
@@ -1407,7 +1419,7 @@ function activate-iTerm2-integration {
 ## Bash prompt settings
 
 PS1_LOGO=""
-if [[ "$LAPTOP_HOSTNAME" ]] && [[ "$HOSTNAME" = "$LAPTOP_HOSTNAME" ]]; then
+if [[ "$LAPTOP_HOSTNAME" ]] && [[ "$(hostname)" = "$LAPTOP_HOSTNAME" ]]; then
     PS1_HOSTNAME="laptop"
 else
     PS1_HOSTNAME="\\h"
