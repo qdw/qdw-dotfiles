@@ -243,6 +243,17 @@ function on-macos {
     [[ "$MY_OS" = "Darwin" ]]
 }
 
+function open {
+    if on-macos; then
+        open "$@"
+    elif which xdg-open >/dev/null 2>&1; then
+        xdg-open "$@"
+    else
+        complain "function 'open': couldn't find xdg-open"
+        return 2
+    fi
+}
+
 if on-macos; then
     # On Linux these are set automatically
     set -a
@@ -335,7 +346,7 @@ function okl {
     if [[ -n "$RGB" ]]; then
         complain "Sorry, RGB -> Oklch conversion isn't implemented yet. Try 'okl'"
     else
-        open -u "https://oklch.com/"
+        open "https://oklch.com/"
     fi
 }
 
@@ -1793,7 +1804,7 @@ function diff-git {
 GIT_MERGE_HELP_URL="https://howchoo.com/git/git-merge-conflicts-rebase-ours-theirs"
 
 function ours {
-    open -u "$GIT_MERGE_HELP_URL"
+    open "$GIT_MERGE_HELP_URL"
 }
 
 function theirs {
@@ -2043,7 +2054,7 @@ export GLAMOUR_STYLE="ansi"
 
 function branch {
     local REPO_NAME="$(basename "$(git rev-parse --show-toplevel)")"
-    open -u "https://github.com/$GITHUB_ORG/$REPO_NAME/branches"
+    open "https://github.com/$GITHUB_ORG/$REPO_NAME/branches"
 }
 
 function gclone {
@@ -2094,7 +2105,7 @@ function gists {
 function team {
     # check-args 1 1
     local TEAM_NAME="$1"
-    open -u "https://github.com/orgs/$GITHUB_ORG/teams/$TEAM_NAME"
+    open "https://github.com/orgs/$GITHUB_ORG/teams/$TEAM_NAME"
 }
 
 function owner_echo {
@@ -2403,7 +2414,7 @@ function prl {
     if [[ -z "$URL" ]]; then
         complain "Looks like you don't have any PRs open in this repo"
     else
-        open -u "$URL"
+        open "$URL"
     fi
 }
 
@@ -2695,7 +2706,13 @@ function air {
 #### Convenience functions for working with local files
 
 function buy {
-    # check-args 0 1 "buy [PRODUCT_NAME]"
+    if !on-macos; then
+        complain "buy is implemented for macOS only, for now. Sorry!"
+        return 2
+    fi
+
+    check-args 0 1 '[PRODUCT_NAME]' "$@" || return 1
+    
     local URL
     local URL_DIR="$HOME/.site.bash.d/buy"
     function list-things-you-can-buy {
@@ -2714,7 +2731,7 @@ function buy {
             complain "Don't know how to buy '$PRODUCT_NAME'"
             complain "(no such file '$URL_FILE')"
             list-things-you-can-buy /dev/stderr
-            return 1
+            return 3
         else
             local URL="$(cat "$URL_FILE")"
             CAT_EXIT_STATUS=$?
@@ -2722,7 +2739,7 @@ function buy {
                 return $CAT_EXIT_STATUS
             elif [[ -z "$URL" ]]; then
                 complain "'$URL_FILE' is empty"
-                return 254
+                return 4
             else
                 open -a Firefox "$URL"
             fi
@@ -2730,20 +2747,8 @@ function buy {
     fi
 }
 
-function gtd {
-    echo '* TODO' "$@" >> ~/.site.bash.d/gtd/gtd.org
-}
-
 function yak {
     echo '* YAK_SHAVING' "$@" >> ~/.site.bash.d/gtd/gtd.org
-}
-
-function inbox {
-    gtd "$@"
-}
-
-function todo {
-    gtd "$@"
 }
 
 function rtfm {
@@ -3311,13 +3316,13 @@ function gmail-search {
     else
         QUERY="$1"
         URLENCODED_QUERY=$(urlencode "$QUERY")
-        open -u "$BASE_URL/$URLENCODED_QUERY"
+        open "$BASE_URL/$URLENCODED_QUERY"
     fi
 }
 
 function gmail {
     if [[ $# -eq 0 ]]; then
-        open -u "https://mail.google.com/"
+        open "https://mail.google.com/"
     elif [[ $# -eq 1 ]]; then
         gmail-search "$1"
     else
@@ -3334,12 +3339,20 @@ function google {
         local INPUT_QUERY MASSAGED_QUERY
         INPUT_QUERY="$1"
         URLENCODED_QUERY=$(urlencode "$INPUT_QUERY")
-        open -u "${BASE_URL}${URLENCODED_QUERY}"
+        open "${BASE_URL}${URLENCODED_QUERY}"
     fi
 }
 
 function goog {
     google "$@"
+}
+
+function sheets {
+    open "https://sheets.google.com/"
+}
+
+function sheet {
+    sheets "$@"
 }
 
 #### Java settings
@@ -3395,7 +3408,7 @@ function jenkins {
         #     echo "$DOCKER_IMAGE_URL" | tee >(pbcopy)
         # elif command grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
         #     SHORT_MESSAGE="Jenkins login needed"
-        #     echo "First log in at $JENKINS_BASE_URL"; open -u "$JENKINS_BASE_URL"
+        #     echo "First log in at $JENKINS_BASE_URL"; open "$JENKINS_BASE_URL"
         # elif command grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
         #     SHORT_MESSAGE="Failed to build repo '$REPO', branch '$BRANCH'"
         #     cat "$LOGFILE"
@@ -3505,7 +3518,7 @@ function zophar {
                 complain "Console '$1' is unsupported"; return 1;;
         esac
         
-        open -u "$URL"
+        open "$URL"
     fi
 }
 
