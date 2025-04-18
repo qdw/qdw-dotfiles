@@ -25,24 +25,23 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this file.  If not, see http://www.gnu.org/licenses/
 
-(defvar black)
-(defvar bright-black)
-(defvar red)
-(defvar bright-red)
-(defvar green)
-(defvar bright-green)
-(defvar yellow)
-(defvar bright-yellow)
-(defvar blue)
-(defvar bright-blue)
-(defvar magenta)
-(defvar bright-magenta)
-(defvar cyan)
-(defvar bright-cyan)
-(defvar white)
-(defvar bright-white)
+;; (defvar black)
+;; (defvar bright-black)
+;; (defvar red)
+;; (defvar bright-red)
+;; (defvar green)
+;; (defvar bright-green)
+;; (defvar yellow)
+;; (defvar bright-yellow)
+;; (defvar blue)
+;; (defvar bright-blue)
+;; (defvar magenta)
+;; (defvar bright-magenta)
+;; (defvar cyan)
+;; (defvar bright-cyan)
+;; (defvar white)
+;; (defvar bright-white)
 
-;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
 (cond
   
   ;;; For terminals (that I use) that support full 24-bit color (currently: iTerm2)
@@ -135,8 +134,6 @@
 
 ) ;; cond
 ;; ) ;; when
-
-(defvar *colors-loaded-p* 't)
 
 (deftheme tritium
   "tritium emacs theme")
