@@ -227,6 +227,7 @@ but it calls defvar under the hood."
 
 ;;;; Special colors for org-mode, overriding whatever theme I'm using
 
+# FIXME: add this stuff to the special 'user' theme instead
 (defun overlay-org-colors () 
   (interactive)
   (setq-default
@@ -274,11 +275,6 @@ but it calls defvar under the hood."
                 org-keyword-to-color-qdw))))
 
 (overlay-org-colors)
-
-;; (custom-set-faces
-;;  ( `(*SPEC*) 't)
-;;  ( `(*SPEC*) 't))
-
 
 ;;;; Theme-related utility functions
 
