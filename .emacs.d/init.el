@@ -227,7 +227,7 @@ but it calls defvar under the hood."
 
 ;;;; Special colors for org-mode, overriding whatever theme I'm using
 
-# FIXME: add this stuff to the special 'user' theme instead
+;; FIXME: add this stuff to the special 'user' theme instead
 (defun overlay-org-colors () 
   (interactive)
   (setq-default
