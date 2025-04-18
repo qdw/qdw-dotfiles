@@ -534,6 +534,8 @@ function cdd {
 
 #### Homebrew settings
 
+export HOMEBREW_CASK_OPTS="--appdir=$HOME/Applications"
+
 if [[ ! "$PATHS_SET_AT" ]]; then
     for HDIR in "/opt/homebrew" "/usr/local"; do
         if [[ -x "$HDIR/bin/brew" ]]; then
@@ -1092,15 +1094,17 @@ function aws-account {
     echo "$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
 }
 
-function aws-clear {
+function clear-env {
     unset AWS_ACCOUNT \
           AWS_ACCESS_KEY_ID \
           AWS_SECRET_ACCESS_KEY \
-          AWS_SESSION_TOKEN
-}
-
-function enva {
-    env | grep ^AWS
+          AWS_SESSION_TOKEN \
+          PGDATABASE \
+          PGHOST \
+          PGPASSWORD \
+          PGPORT \
+          PGSERVICE \
+          PGUSER
 }
 
 ### AWS IAM settings
@@ -1372,11 +1376,15 @@ function re {
 MY_EDITOR="$HOME/bin/emacs-function"
 
 set -a
-EDITOR="$MY_EDITOR"
 # GIT_EDITOR="$MY_EDITOR"
 # HOMEBREW_EDITOR="$HOME/bin/emacs-function"
-# PSQL_EDITOR="$MY_EDITOR"
+EDITOR="$MY_EDITOR"
 VISUAL="$MY_EDITOR"
+if command-exists subl; then
+    PSQL_EDITOR="subl -w"
+else
+    PSQL_EDITOR="$MY_EDITOR"
+fi
 set +a
 
 ## FIXME: find a more elegant way
@@ -1449,11 +1457,6 @@ function activate-iTerm2-integration {
 ## Bash prompt settings
 
 PS1_LOGO=""
-if [[ "$LAPTOP_HOSTNAME" ]] && [[ "$(hostname)" = "$LAPTOP_HOSTNAME" ]]; then
-    PS1_HOSTNAME="laptop"
-else
-    PS1_HOSTNAME="\\h"
-fi
 
 # # Use Unicode emoji as visual cues for different hosts/apps
 # if [[ "$INSIDE_EMACS" ]]; then
@@ -1534,7 +1537,7 @@ function leaf { brew-next-leaf "$@" ;}
 
 function bh { brew home "$@" ;}
 function bi { brew install "$@" ;}
-function bo { brew update; brew outdated ;}
+function bo { brew update; brew outdated "$@" ;}
 # function bo { brew doctor; brew update && brew outdated ;}
 function bs { brew search "$@" ;}
 function bser { brew services "$@" ;}
@@ -1742,7 +1745,7 @@ function qp { cdq && git add . && git commit && git push && cd - ;}
 
 #### ls settings
 
-export LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;91;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:'
+export LS_COLORS='rs=0:di=01;34:ln=01;33:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;91;01:mi=00:su=30;31:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:'
 
 function ls {
     if [[ "$PWD" = "$HOME" ]] && [[ $# -eq 0 ]]; then
@@ -2307,8 +2310,15 @@ function readme {
 
 # gcl (Git CLone) - quickly clone a repo belonging to my organization
 function gcl {
-    REPO="$1"
-    cd ~/src >/dev/null \
+    check-args 1 2 'REPO_NAME [SRC_DIR] # defaults to ~/src' "$@" || return 1
+
+    local REPO="$1"
+    shift
+    
+    local SRC_DIR="${1:-$HOME/src}"
+    shift
+    
+    cd "$SRC_DIR" >/dev/null \
         && git clone "git@github.com:${GITHUB_ORG}/${REPO}" "$@" \
         && git-configure-email 2>/dev/null
     cd - >/dev/null
@@ -3071,17 +3081,13 @@ function mvim {
 #     fi
 # }
 
+function set-difference {
+    check-args 2 2 'FILE_1 FILE_2' "$@" || return 1
 
-# function set-difference {
-#     if [[ $# -eq 2 ]]; then
-#         comm -23 "$1" "$2"
-#     else
-#         complain "set-difference: error: wrong number of arguments (got $#, expected 2)"
-#     fi
-# }
+    comm -23 <(sort -u "$1") <(sort -u "$2")
+}
 
 # function set-disjunctive-union { set-difference "$@" ;}
-
 
 # function set-union {
 #     if [[ $# -eq 2 ]]; then
@@ -3222,7 +3228,14 @@ function paraln {
     awk "/$PARALN_REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$PARALN_REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
 }
 
-function sshconf { para "$1" ~/.ssh/*.config | command grep -e '^' -e "$1" ;}
+# FIXME: doesn't work
+# function stanza {
+#     check-args 1 1 'PATTERN' "$@" || return 1
+#     local PATTERN="$1"
+
+#     para "$PATTERN" ~/.ssh/*.config \
+#         | command grep -e '^' -e "$PATTERN"
+# }
 
 # pi ("Perl @INC") - print @INC dirs, one per line, preceded by the path to Perl.
 function pi {
@@ -3269,8 +3282,19 @@ function tl {
     tmux list-sessions 2>/dev/null
 }
 
-function timestamp { date +%Y%m%dT%H%M%S%z ;}
-function ts { timestamp "$@" ;}
+# Timestamp with time zone, no special chars, OK to interpolate into filenames
+function ts {
+    date +%Y%m%dT%H%M%S%z "$@"
+}
+
+# Timestamp in the format used by YAML
+function ts-yaml {
+    local TIMEZONE_SHORTCODE="$(date +%Z "$@")"
+    local TS_WITH_NANOSECONDS="$(date +%Y-%m-%dT%H:%M:%S.%N "$@")"
+    local TS_WITH_DECISECONDS=${TS_WITH_NANOSECONDS:0:21}
+    local RETVAL="${TS_WITH_DECISECONDS}${TIMEZONE_SHORTCODE}"
+    echo "$RETVAL"
+}
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
 function tor_wget {

@@ -1,6 +1,4 @@
 (load-file (expand-file-name "~/.emacs.d/qdw-themes/qdw-colors.el"))
-(custom-set-faces `(org-level-1 ((t (:foreground ,qdw-bright-white)))))
-(custom-set-faces `(org-headline-done ((t (:foreground ,qdw-green)))))
 
 (setq-default
   org-catch-invisible-edits "show"
@@ -12,15 +10,15 @@
                        "AWAITING_RESPONSE(a)"          
                        "QUESTION(q)"
                        "YAK_SHAVING(y)"
+                       "INFO(f)"
+                       "PROJECT(r)"
+                       "SUBPROJECT(s)"
+                       "POSTPONED(p)"
                        
                        "|"
 
                        "DONE(d)"
                        "WONTFIX(w)"
-                       "POSTPONED(p)"
-                       "INFO(f)"
-                       "PROJECT(r)"
-                       "SUBPROJECT(s)"
                        )))
 
 (when (or (member 'tritium custom-enabled-themes)
@@ -44,3 +42,7 @@
   (setq org-todo-keyword-faces
         (mapc (lambda (pair) (add-to-list 'org-todo-keyword-faces pair))
               org-keyword-to-color-qdw)))
+
+;; (custom-set-faces
+;;  ( `(*SPEC*) 't)
+;;  ( `(*SPEC*) 't))

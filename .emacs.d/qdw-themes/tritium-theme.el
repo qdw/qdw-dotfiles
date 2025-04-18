@@ -45,7 +45,7 @@
 ;; (when (not (and (boundp '*colors-loaded-p*) *colors-loaded-p*))
 (cond
   
-  ;;; For terminals that support full 24-bit color
+  ;;; For terminals (that I use) that support full 24-bit color (currently: iTerm2)
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
            ;; black  "#141414"  ;;      Grey15
@@ -57,14 +57,14 @@
     bright-green  "#00a700"  ;; bright green ("#00ff00" = brightest possible green)
           yellow  "#9164ff"  ;;      actually purple
    bright-yellow  "#b5b500"  ;; bright yellow; "#ffff00"= brightest possible yellow
-            blue  "#6495ed" ;; decent darker blue (from iTerm): "#0d22b9"
+            blue  "#6495ed"  ;; decent darker blue (from iTerm): "#0d22b9"
      bright-blue  "#6161ff"
          magenta  "#af5faf"
   bright-magenta  "#d8a0d0"
             cyan  "#028080"
      bright-cyan  "#4bbfc4"
            white  "#878787"
-    bright-white  "#878787" ;; "#aaaaaa"
+    bright-white  "#878787"  ;; "#aaaaaa"
     ))
   
   ;;; For terminals that support only 256 colors
@@ -267,8 +267,8 @@
    ;;;; font lock
 
    `(font-lock-builtin-face
-     ((t ((:foreground ,blue)))))
-
+    ((t ((:foreground ,blue)))))
+   
    `(font-lock-comment-delimiter-face
      ((t (:foreground ,cyan))))
      
@@ -573,19 +573,6 @@
    `(compilation-warning
      ((t (:inherit font-lock-warning))))
 
-   ;;;; twittering-mode
-   `(twittering-username-face
-     ((t (:inherit font-lock-keyword-face))))
-
-    `(twittering-uri-face
-      ((t (:inherit link))))
-
-    `(twittering-timeline-header-face
-      ((t (:foreground ,bright-magenta))))
-
-    `(twittering-timeline-footer-face
-      ((t (:inherit twittering-timeline-header-face))))
-
     ;;;; outline
 
     `(outline-1
@@ -627,7 +614,7 @@
       ((t (:inherit org-document-info-keyword))))
 
     `(org-level-1
-      ((t (:inherit outline-1))))
+      ((t (:inherit default))))
 
     `(org-level-2
       ((t (:inherit outline-2))))
@@ -635,12 +622,9 @@
     `(org-level-3
       ((t (:inherit outline-3))))
     
-    ;; `(org-level-4
-    ;;   ((t (:inherit outline-4))))
-    
     `(org-level-4
-      ((t (:inherit outline-3))))
-
+      ((t (:inherit outline-4))))
+    
     `(org-level-5
       ((t (:inherit outline-5))))
 
@@ -660,8 +644,9 @@
       ((t (:inherit link))))
 
     `(org-checkbox
-      ((t (:background ,black :foreground ,white
-    		       :box (:line-width 1 :style released-button)))))
+      ((t (:background ,black
+           :foreground ,white
+           :box (:line-width 1 :style released-button)))))
 
     `(org-done
       ((t (:foreground ,green))))

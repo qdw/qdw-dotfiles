@@ -13,7 +13,7 @@
 (setq-default custom-enabled-themes '())
 (load-theme (intern my-chosen-theme) 't)
 
-(load-if-present-qdw "my-org-colors.el")
+(load-if-present-qdw "qdw-org-keywords.el")
 
 ;;;; Theme-related utility functions
 
