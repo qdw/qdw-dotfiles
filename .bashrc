@@ -32,8 +32,8 @@ function sb {
 
 ## Helper functions
 
-function carp {
-    local CALLER="${FUNCNAME[1]}"
+function _diag_msg_helper {
+    local CALLER="${FUNCNAME[2]}"
     if [[ -z "$CALLER" ]]; then
         CALLER="bash"
     fi
@@ -41,7 +41,19 @@ function carp {
     echo "$CALLER:" "$@" >&2
 }
 
-function complain {
+function warn {
+    _diag_msg_helper "warning:" "$@"
+}
+
+function error {
+    _diag_msg_helper "error:" "$@"
+}
+
+function carp {
+    _diag_msg_helper "$@"
+}
+
+function complain { # sugar for multiline msgs (pass each line as a string)
     for STRING in "$@"; do
         echo "$STRING" >&2
     done
@@ -302,6 +314,37 @@ if on-macos; then
         else
             echo "pbc: error: missing argument. Usage: pbc FILENAME"
         fi
+    }
+    
+    function ldd-app {
+        local APP_NAME EXECUTABLE_PATH
+    
+        check-args 1 1 'APP_NAME' "$@" || return 1
+        local APP_NAME="$1"
+        local EXECUTABLE_PATH="$(bin "$APP_NAME")"
+        local BIN_FUNC_EXIT_STATUS=$?
+        if [[ $BIN_FUNC_EXIT_STATUS -ne 0 ]]; then
+            return $BIN_FUNC_EXIT_STATUS
+        else
+            otool -L "$EXECUTABLE_PATH"
+        fi
+    }
+    
+    # Given an app name, find the path to its executable
+    function bin {
+        check-args 1 1 'APP' "$@" || return 1
+        local APP="$1"
+    
+        set -o pipefail
+        for DIR in "/Applications" "$HOME/Applications"; do
+            local EXC="$(command ls "$DIR/$APP/Contents/MacOS" | command ls -a "$APP")"
+            if [[ "$PTH" ]]; then
+                echo "$DIR/$EXC"
+                return
+            fi
+        done
+        complain "couldn't find '$APP' in applications"
+        return 1
     }
 fi
 
@@ -1022,19 +1065,6 @@ function markdown2html {
 }
 
 #### Linker settings
-
-function ldd-app {
-    local APP_NAME EXECUTABLE_PATH
-
-    APP_NAME="$1"
-
-    for APP_DIR in /Applications ~/Applications; do
-        EXECUTABLE_PATH="${APP_DIR}/${APP_NAME}.app/Contents/MacOS/${APP_NAME}"
-        if [[ -f "$EXECUTABLE_PATH" ]]; then
-            otool -L "$EXECUTABLE_PATH"
-        fi
-    done
-}
 
 function ldd {
     if on-macos; then

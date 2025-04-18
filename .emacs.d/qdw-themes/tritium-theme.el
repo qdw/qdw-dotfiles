@@ -48,7 +48,7 @@
   ;;; For terminals that support full 24-bit color
   ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
    (setq
-           black  "#141414"  ;;      Grey15
+           ;; black  "#141414"  ;;      Grey15
            black  "#000000"
     bright-black  "#343434"
              red  "#af5f00"  ;;      actually orange
