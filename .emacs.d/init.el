@@ -107,8 +107,6 @@
  
 ;;;; Emacs Lisp helper settings
 
-(setq-default load-prefer-newer 't)
-
 (defun load-file-if-exists-qdw (file-name)
   "Load FILE-NAME if it exists, and do nothing otherwise."
   (condition-case
@@ -150,6 +148,27 @@ but it calls defvar under the hood."
              
 (load-file-if-exists-qdw "site.el")
 (load-file-if-exists-qdw "secrets.el")
+
+;;;; Dependency settings
+
+;; If I hack .el files but forget to recompile them to .elc,
+;; then notice the newer .el file and read that instead.
+(setq-default load-prefer-newer 't)
+
+;; Don't show me warnings about deprecated Emacs Lisp idioms
+;; (or about anything else).
+(setq warning-minimum-level :error)
+
+;; Also don't show me the not-a-warning about the deprecated
+;; Common Lisp compat package, cl.el # FIXME: doesn't work
+(advice-add
+  'message
+  :around
+  (lambda (orig &rest args)
+    (unless (and args
+                 (stringp (car args))
+                 (string-match-p "^Package cl is deprecated" (car args)))
+      (apply orig args))))
 
 (require 'ansi-color)
 (require 'blacken)
@@ -443,9 +462,10 @@ but it calls defvar under the hood."
            
                               ('t
                                 nil))))
-    (when other-theme (custom-set-variables '(custom-enabled-themes
-                                              (list other-theme)))
-                      (overlay-org-colors))))
+    (when (and (boundp 'other-theme) other-theme)
+          (custom-set-variables '(custom-enabled-themes
+                                  (list other-theme)))
+          (overlay-org-colors))))
 
 ;;;; Third-party themes that I like okay:
 ;;

@@ -1342,8 +1342,6 @@ function emacs {
             echo "You're already in emacs, genius" >&2
         fi
     else
-        local DAEMON_STATUS
-        DAEMON_STATUS=$(the-emacs-daemon-is-running)
         if the-emacs-daemon-is-running; then
             "$EMACSCLIENT_BINARY" --tty "$@"
         else
@@ -1537,20 +1535,13 @@ function leaf { brew-next-leaf "$@" ;}
 
 function bh { brew home "$@" ;}
 function bi { brew install "$@" ;}
+function bl { brew ls "$@" ;}
 function bo { brew update; brew outdated "$@" ;}
 # function bo { brew doctor; brew update && brew outdated ;}
 function bs { brew search "$@" ;}
 function bser { brew services "$@" ;}
-function bu {
-    brew update
+function bu { brew update && brew upgrade ;}
     
-    if [[ "$I_HAVE_ADMIN_POWERS" ]]; then
-        brew upgrade
-    else
-        brew upgrade --formula \
-            && brew outdated
-    fi
-}
 
 function buc {
     (brew update && brew upgrade --formula) \
