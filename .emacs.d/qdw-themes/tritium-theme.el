@@ -42,11 +42,13 @@
 ;; (defvar white)
 ;; (defvar bright-white)
 
-(cond
-  
-  ;;; For terminals (that I use) that support full 24-bit color (currently: iTerm2)
-  ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
-   (setq
+
+
+(cond (
+
+  (or (string= "truecolor" (getenv "COLORTERM"))
+      (string= "24bit" (getenv "COLORTERM")))
+  (setq
            ;; black  "#141414"  ;;      Grey15
            black  "#000000"
     bright-black  "#343434"
