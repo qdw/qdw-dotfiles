@@ -1483,7 +1483,8 @@ which is its intended use."
  '(column-number-mode t)
  '(custom-enabled-themes (list other-theme))
  '(custom-safe-themes
-   '("6c096c3ce77f7c26b0514ebeceb37bbbbec45f0ca40bbe810b297d83b76497fc"
+   '("2df2c583eb55b44c923327a7e9295f3aaf69f97efd371353092b8488ff95eb98"
+     "6c096c3ce77f7c26b0514ebeceb37bbbbec45f0ca40bbe810b297d83b76497fc"
      "5e21c307024418659c0d15d1718650fc88569d7309dd9cdbb55192d3dc7bb634"
      "33621eb48ffce6449afb76a454158400813bc00dedfa2f97a2f13fb6d86b1ed7"
      "017be32f80e73217d0e8625625392177ec2737fa6000bd5ca31d94b6a2b7ff8c"
