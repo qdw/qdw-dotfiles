@@ -310,6 +310,14 @@ if on-macos; then
     function light {
         darken "false"
     }
+
+    function left {
+        dock "left"
+    }
+
+    function right {
+        dock "right"
+    }
     
     function pbc {
         local FILENAME="$1"
