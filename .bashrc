@@ -1432,7 +1432,7 @@ function update_terminal_cwd {
 
 #### Terminal emulator settings
 
-export TERM=xterm-256color # used by tmux
+export COLORTERM="truecolor"
 
 function strip_control_characters_from {
     local STRING
