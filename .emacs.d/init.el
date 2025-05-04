@@ -1221,7 +1221,8 @@ which is its intended use."
    ))
 
 (setq whitespace-display-mappings '((tab-mark 9 [187 9] [92 9]))) ;; Optional: Customize tab display
-(global-whitespace-mode 1)
+(global-whitespace-mode -1)
+(setq-default tab-width 4)
 
 ;;;; Settings > Hacking > JavaScript/TypeScript/JSON
 
