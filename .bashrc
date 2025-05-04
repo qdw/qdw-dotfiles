@@ -7,6 +7,10 @@ set -o pipefail
 
 #### Bash debugging settings
 
+function enva {
+    env | command grep -E '^AWS|^PG' | sort
+}
+
 # Uncomment this to enable various hackish debugging statements in this file.
 # export MY_DEBUG=true
 
@@ -305,6 +309,14 @@ if on-macos; then
     
     function light {
         darken "false"
+    }
+
+    function left {
+        dock "left"
+    }
+
+    function right {
+        dock "right"
     }
     
     function pbc {
@@ -1109,7 +1121,7 @@ function clear-env {
 
 ### AWS IAM settings
 
-function iam {
+function iam-provision-pgpassword {
     if [[ $# -eq 0 ]]; then
         echo "USAGE:"
         echo
@@ -3092,6 +3104,18 @@ function set-difference {
 
 #### Slack settings
 
+SLACK_EXTRAS="$HOME/.site.bash.d/slack-urls.bash"
+if [[ -e "$SLACK_EXTRAS" ]]; then
+    source "$SLACK_EXTRAS"
+    function msg {
+        check-args 1 1 'SLACK_USERNAME' "$@" || return 1
+        URL="$(slack-username2url "$1")"
+        if [[ $URL ]]; then
+            open "$URL"
+        fi
+    }
+fi
+
 function slack-channel {
     # check-args 1 1 "slack-channel CHANNEL_NAME # (with or without the leading '#'; doesn't matter)"
 
@@ -3658,7 +3682,7 @@ if [[ -z "$PATHS_SET_AT" ]]; then
     # and a privileged user cd's there and accidentally runs it.
     # So remove any instances of two (or more) consecutive colons.
     # Same goes for a single trailing colon.
-    PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
+    PATH="$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')"
 
     ## Places that man(1) will search for man pages:
     MANPATH="$MY_MANPATH:$MANPATH"
