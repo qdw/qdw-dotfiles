@@ -119,7 +119,7 @@ function check-args {
         
         local MIN_ARGS="$1"; shift
         local MAX_ARGS="$1"; shift
-        local USAGE="$1"; shift
+        local USAGE="$1"; shift        
         local ARGC=$#
         if [[ $ARGC -lt $MIN_ARGS ]]; then
             local VARAGS_CLAUSE
@@ -129,11 +129,11 @@ function check-args {
                 VARAGS_CLAUSE=""
             fi
             complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARAGS_CLAUSE} required)." \
-                     "usage: $USAGE"
+                     "usage: $FUNCTION $USAGE"
             return 1
         elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
             complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
-                     "usage: $USAGE"
+                     "usage: $FUNCTION $USAGE"
             return 2
         else
             return 0
@@ -3575,6 +3575,25 @@ function music {
 function am {
     ~/src-3/music-cli/src/am.sh
 }
+
+#### Video game settings
+
+## Steam settings
+if on-macos; then
+    function steam {
+        local STEAM_GAMES_DIR="$HOME/Library/Application Support/Steam/steamapps/common"
+        check-args 0 1 "[GAME_NAME] # or its first few chars"  "$@" || return 1
+        if [[ $# -eq 0 ]]; then
+            command ls -1 "$STEAM_GAMES_DIR" \
+                | command grep -v "Steam Controller Configs"
+        elif [[ $# -eq 1 ]]; then
+            local PREF="$1"
+            open "$STEAM_GAMES_DIR/${PREF}"*/*.app
+        fi
+    }
+fi
+
+### BGM settings
 
 # zophar - search for video game music (BGM)
 function zophar {
