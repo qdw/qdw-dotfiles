@@ -351,6 +351,8 @@
 			</array>
 			<key>Keyboard Map</key>
 			<dict/>
+			<key>Left Option Key Changeable</key>
+			<false/>
 			<key>Mouse Reporting</key>
 			<true/>
 			<key>Name</key>
@@ -362,11 +364,11 @@
 			<key>Normal Font</key>
 			<string>Monaco 12</string>
 			<key>Option Key Sends</key>
-			<integer>0</integer>
+			<integer>2</integer>
 			<key>Prompt Before Closing 2</key>
 			<false/>
 			<key>Right Option Key Sends</key>
-			<integer>0</integer>
+			<integer>2</integer>
 			<key>Rows</key>
 			<integer>49</integer>
 			<key>Screen</key>
@@ -2604,6 +2606,8 @@
 			<string>No</string>
 			<key>Allow Paste Bracketing</key>
 			<false/>
+			<key>Allow modifyOtherKeys</key>
+			<true/>
 			<key>Ambiguous Double Width</key>
 			<false/>
 			<key>Ansi 0 Color</key>
@@ -2992,6 +2996,8 @@
 			</array>
 			<key>Keyboard Map</key>
 			<dict/>
+			<key>Left Option Key Changeable</key>
+			<false/>
 			<key>Link Color</key>
 			<dict>
 				<key>Alpha Component</key>
@@ -3028,7 +3034,7 @@
 			<key>Reduce Flicker</key>
 			<true/>
 			<key>Right Option Key Changeable</key>
-			<true/>
+			<false/>
 			<key>Right Option Key Sends</key>
 			<integer>2</integer>
 			<key>Rows</key>
@@ -3184,6 +3190,8 @@
 	<key>PromptOnQuit</key>
 	<false/>
 	<key>PromptOnQuitEvenIfThereAreNoWindows</key>
+	<false/>
+	<key>RemapModifiersWithoutEventTap</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
 	<true/>
