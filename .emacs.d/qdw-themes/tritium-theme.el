@@ -44,11 +44,12 @@
 
 
 
-(cond (
+(cond
 
-  (or (string= "truecolor" (getenv "COLORTERM"))
+  ((or (string= "truecolor" (getenv "COLORTERM"))
       (string= "24bit" (getenv "COLORTERM")))
-  (setq
+
+   (setq
            ;; black  "#141414"  ;;      Grey15
            black  "#000000"
     bright-black  "#343434"
@@ -59,14 +60,20 @@
           yellow  "#9164ff"  ;;      actually purple
    bright-yellow  "#b5b500"  ;; bright yellow; "#ffff00"= brightest possible yellow
             blue  "#6495ed"  ;; decent darker blue (from iTerm): "#0d22b9"
-     bright-blue  "#6161ff"
+
+            
+     bright-blue  "#525dec"
          magenta  "#af5faf"
   bright-magenta  "#d8a0d0"
             cyan  "#028080"
      bright-cyan  "#4bbfc4"
            white  "#878787"
-    bright-white  "#878787"  ;; "#aaaaaa"
-    ))
+    bright-white  "#878787")  ;; "#aaaaaa"
+  
+   (setq
+ansi-black bright-black
+ansi-bright-black "#676767"
+ansi-bright-red "#800000"))
   
   ;;; For terminals that support only 256 colors
   ;;; (i.e., almost every other terminal in use today)
@@ -133,7 +140,6 @@
 ;;           white  ????       ;;   ?
 ;;    bright-white  white
 ;;  ))
-
 ) ;; cond
 ;; ) ;; when
 
@@ -210,33 +216,7 @@
      ((t (:foreground ,bright-magenta))))
 
    `(link
-     ((t (:foreground ,yellow :underline t))))
-     
-   ;;;; ANSI colors (used in shell-mode)
-   
-   `(ansi-color-black ((t (:background ,black :foreground ,black :underline nil))))
-   `(ansi-color-bright-black ((t (:background ,bright-black :foreground ,bright-black :underline nil))))
-   
-   `(ansi-color-red ((t (:background ,red :foreground ,red :underline nil))))
-   `(ansi-color-bright-red ((t (:background ,bright-red :foreground ,bright-red :underline nil))))
-   
-   `(ansi-color-green ((t (:background ,green :foreground ,green :underline nil))))
-   `(ansi-color-bright-green ((t (:background ,bright-green :foreground ,bright-green :underline nil))))
-   
-   `(ansi-color-yellow ((t (:background ,yellow :foreground ,yellow :underline nil))))
-   `(ansi-color-bright-yellow ((t (:background ,bright-yellow :foreground ,bright-yellow :underline nil))))
-   
-   `(ansi-color-blue ((t (:background ,blue :foreground ,blue :underline nil))))
-   `(ansi-color-bright-blue ((t (:background ,bright-blue :foreground ,bright-blue :underline nil))))
-
-   `(ansi-color-magenta ((t (:background ,magenta :foreground ,magenta :underline nil))))
-   `(ansi-color-bright-magenta ((t (:background ,bright-magenta :foreground ,bright-magenta :underline nil))))
-
-   `(ansi-color-cyan ((t (:background ,cyan :foreground ,cyan :underline nil))))
-   `(ansi-color-bright-cyan ((t (:background ,bright-cyan :foreground ,bright-cyan :underline nil))))
-      
-   `(ansi-color-white ((t (:background ,white :foreground ,white :underline nil))))
-   `(ansi-color-bright-white ((t (:background ,bright-white :foreground ,bright-white :underline nil))))
+     ((t (:foreground ,yellow :underline t))))     
    
    ;;;; customize
 
@@ -575,28 +555,28 @@
     ;;;; outline
 
     `(outline-1
-      ((t (:foreground ,red))))
+      ((t (:foreground ,bright-magenta))))
 
     `(outline-2
-      ((t (:foreground ,magenta))))
+      ((t (:foreground ,red))))
     
     `(outline-3
-      ((t (:foreground ,cyan))))
-
+      ((t (:foreground ,magenta))))
+      
     `(outline-4
-      ((t (:foreground ,cyan))))
+      ((t (:foreground ,bright-blue))))
 
     `(outline-5
-      ((t (:foreground ,yellow))))
+      ((t (:foreground ,cyan))))
 
     `(outline-6
-      ((t (:foreground ,blue))))
+      ((t (:foreground ,white))))
 
     `(outline-7
-      ((t (:foreground ,magenta))))
+      ((t (:foreground ,ansi-bright-black))))
 
     `(outline-8
-      ((t (:foreground ,yellow))))
+      ((t (:foreground ,ansi-black))))
 
     ;;;; org-mode
     
@@ -613,7 +593,7 @@
       ((t (:inherit org-document-info-keyword))))
 
     `(org-level-1
-      ((t (:inherit default))))
+      ((t (:inherit outline-1))))
 
     `(org-level-2
       ((t (:inherit outline-2))))

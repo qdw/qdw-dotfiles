@@ -319,59 +319,66 @@ but it calls defvar under the hood."
 
 (add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
 
-(defun test-pattern ()
-  (interactive)
-  (let ((buffer (get-buffer-create "*tritium colors*")))
-    (with-current-buffer buffer
-      (erase-buffer)
-      (dolist (color-name '("black"
-                            "red"
-                            "green"
-                            "yellow"
-                            "blue"
-                            "magenta"
-                            "cyan"
-                            "white"))
-        (let ((hex-string
-               (symbol-value (intern color-name)))
-              
-              (bright-hex-string
-              (symbol-value (intern (concat "bright-" color-name))))
-              
-              (color-symbol (symbol-name (intern color-name)))
-              
-              (bright-color-symbol (symbol-name
-                                    (intern
-                                     (concat "bright-" color-name)))))
-          (insert
-           (propertize
-            (concat hex-string "  " color-name "\n")
-            'face `(:foreground ,hex-string)))
-          (insert 
-           (propertize
-            (concat bright-hex-string "  bright-" color-name "\n")
-            'face `(:foreground ,bright-hex-string)))))
-      (display-buffer buffer)))
+(defun insert-color (color-name)
+  (let* ((hex-string (symbol-value (intern color-name))))
+    (insert
+     (propertize (concat hex-string "  " color-name "\n")
+                 'face `(:foreground ,hex-string)))))
 
-(defun test-pattern ()
+
+(defun test-pattern (&rest additional-colors)
   (interactive)
-  (let ((buffer (get-buffer-create "*tritium colors*")))
+  (let*
+      ((buffer
+        (get-buffer-create "*tritium colors*"))
+
+       (basic-colors '("black"
+                       "red"
+                       "green"
+                       "yellow"
+                       "blue"
+                       "magenta"
+                       "cyan"
+                       "white"))
+                     
+       (bright-colors
+        (mapcar (lambda (c) (concat "bright-" c)) basic-colors))
+      
+       (all-colors
+        (append basic-colors bright-colors additional-colors)))
+                       
     (with-current-buffer buffer
       (erase-buffer)
-      (dolist (brightness '("" "bright-"))
-        (dolist (color '("black"
-                         "red"
-                         "green"
-                         "yellow"
-                         "blue"
-                         "magenta"
-                         "cyan"
-                         "white"))
-          (let* ((color-name (concat brightness color))
-                 (hex-string (symbol-value (intern color-name))))
-            (insert (propertize (concat hex-string "  " color-name "\n")
-                                'face `(:foreground ,hex-string)))))))
-    (display-buffer buffer)))
+      (dolist (co all-colors) (insert-color co))
+      (display-buffer buffer))))
+      
+      
+(defun idiosyncratic-test-pattern ()
+  (interactive)
+  (test-pattern "ansi-black"
+                "ansi-bright-black"
+                "ansi-bright-red"))
+      
+(defun test-patttern-interleaved ()
+  (interactive)
+  (let* 
+      ((buffer (get-buffer-create "*tritium colors*"))
+       (basic-colors '("black"
+                       "red"
+                       "green"
+                       "yellow"
+                       "blue"
+                       "magenta"
+                       "cyan"
+                       "white"))
+       (variants '("bright"
+                   "ansi")))
+                         
+    (dolist (color basic-colors)
+      (insert-color color)
+      (dolist (var variants)
+        (insert-color (concat variant "-" color))))))
+  
 
 (defun tritium-generate-tinted-theme-yaml ()
   (interactive)
@@ -1507,7 +1514,9 @@ which is its intended use."
  '(column-number-mode t)
  '(custom-enabled-themes (list other-theme))
  '(custom-safe-themes
-   '("d09acc0564824346c42919c5cc79edc0990e6f73c615a9c9ec28f4796864791f"
+   '("5a897c2c1919bc2e13321534a250d4fafbf55fa82496cdf47080dc69a23d1468"
+     "b70a39d0a8ef98f231a22d39d9dced347275598ec202c8c138972ca40cd29fc0"
+     "d09acc0564824346c42919c5cc79edc0990e6f73c615a9c9ec28f4796864791f"
      "81abc2c491be64d999588f05bc16672b771d8965099e16d0ceefc8d2fb6c682a"
      "f027ed38df2792060c1558aabef13bd85cba7735da74d6720bea8e7b8ecaeeeb"
      "52fddd1e2f5a6aecfd4ef03ead7bca5791fbbc6027da48a29b8f54b2f1eeea61"
