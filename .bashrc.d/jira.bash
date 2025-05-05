@@ -108,3 +108,9 @@ function jira {
         echo "j: invalid number of arguments '$#'. Doing nothing"
     fi
 }
+
+#### Confluence settings
+
+function confluence {
+    open "$JIRA_BASE_URL/wiki/home"
+}
