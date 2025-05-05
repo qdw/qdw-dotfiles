@@ -1,6 +1,6 @@
-;;;; Suppress noise; hide chrome.
+;;;; Suppress noisy warnings about packages that use deprecated idioms.
+;;;; FIXME: somehow none of this works.
 
-;; ;; Somehow none of this works.
 ;; (defun ignore-all-warnings (type message &rest args)
 ;;   "Ignore all warnings."
 ;;     (ignore))
@@ -8,6 +8,8 @@
 ;; (setq warning-minimum-level :emergency)
 ;; (setq byte-compile-warnings nil)
 ;; (setq warning-minimum-level :error)
+
+;;;; Hide window chrome
 
 (setq inhibit-startup-screen 't)
 (require 'tool-bar)
@@ -40,9 +42,7 @@
 
 (initialize-ui)
 
-;;;; Font settings                              
-
-;; Disable bold type passim.
+;;;; Typesettings: disable bold type
 
 (mapc
  (lambda (face)
@@ -152,11 +152,12 @@ but it calls defvar under the hood."
 (add-to-list 'load-path
              (expand-file-name "~/src/forks/mariana-theme"))
 
-(add-to-list 'load-path
-             (expand-file-name "~/.site.lisp.d"))
-             
-(load-file-if-exists-qdw "site.el")
 (load-file-if-exists-qdw "secrets.el")
+(load-file-if-exists-qdw "site.el")
+
+(set 'jiralib-url (getenv "JIRA_BASE_URL"))
+(set 'jira-default-project-qdw (getenv "JIRA_DEFAULT_PROJECT"))
+(defvar slack-team (getenv "SLACK_TEAM"))
 
 ;;;; Dependency settings
 
@@ -179,6 +180,18 @@ but it calls defvar under the hood."
                  (string-match-p "^Package cl is deprecated" (car args)))
       (apply orig args))))
 
+;;;; Settings for the Emacs package system
+  
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+;; (package-refresh-contents)
+(package-install-selected-packages)
+
+;; I'm running emacs as a daemon,
+;; so just require all these modules at once;
+;; don't get clever with lazy-loading.
+
 (require 'ansi-color)
 (require 'blacken)
 (require 'comint)
@@ -190,7 +203,6 @@ but it calls defvar under the hood."
 (require 'flycheck)
 (require 'json)
 (require 'magit)
-;; (require 'magithub)
 (require 'menu-bar)
 (require 'mouse)
 (require 'origami)
@@ -198,6 +210,7 @@ but it calls defvar under the hood."
 (require 'osx-trash)
 (require 'package)
 (require 'paredit)
+(require 'pandoc-mode)
 (require 'recentf)
 (require 'ruby-mode)
 (require 'scroll-bar)
@@ -207,18 +220,6 @@ but it calls defvar under the hood."
 (require 'typescript-mode)
 (require 'whitespace)
 (require 'yaml-mode)
-
-;;;; Settings for the Emacs package system
-  
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-;; (package-refresh-contents)
-;; (package-install-selected-packages)
-
-;; I'm running emacs as a daemon,
-;; so just require all these modules at once;
-;; don't get clever with lazy-loading.
 
 ;;;; Edit this file
 
@@ -287,7 +288,7 @@ but it calls defvar under the hood."
             ("NEXT_ACTION" . ,bright-red)
             ("IN_PROGRESS" . ,bright-yellow)
             ("GET_HELP" . ,bright-red)
-            ("AWAITING_RESPONSE" . ,bright-magenta)
+            ("AWAITING_RESPONSE" . ,yellow)
             ("QUESTION" . ,magenta)
             ("YAK_SHAVING" . ,yellow)
 
@@ -350,9 +351,9 @@ but it calls defvar under the hood."
            (propertize
             (concat bright-hex-string "  bright-" color-name "\n")
             'face `(:foreground ,bright-hex-string)))))
-      (display-buffer buffer))))
+      (display-buffer buffer)))
 
-(defun test-pattern-brights-last ()
+(defun test-pattern ()
   (interactive)
   (let ((buffer (get-buffer-create "*tritium colors*")))
     (with-current-buffer buffer
@@ -457,6 +458,7 @@ but it calls defvar under the hood."
   (interactive)
   (customize-variable 'custom-enabled-themes))
   
+
 (defun toggle-theme ()
   "Toggle between my two favorite color themes, if applicable"
   (interactive)
@@ -480,17 +482,16 @@ but it calls defvar under the hood."
 ;;;; Third-party themes that I like okay:
 ;;
 ;;; Light mode:
-;;
-;; (load-theme 'modus-operandi) ;; (bundled with Emacs)
-;; (load-theme 'modus-operandi-tinted) ;; (bundled with Emacs)
+;; Bundled with Emacs:
+;; (load-theme 'modus-operandi) ;; max-contrast light theme
+;; (load-theme 'modus-operandi-tinted)
+;; (load-theme 'modus-vivendi)  ;; max-contrast dark theme (good in sunlight)
+
 ;; (load-theme 'hydandata)
 ;; (load-theme 'solo-jazz)
 ;; (load-theme 'infodoc)
 ;; (load-theme 'organic-green)
-;;
-;;; Dark mode:
-;; None; my tritium theme is the best :3
-;;;; dired settings
+
 
 (defun dired-find-file-qdw ()
   "In Dired, visit the file or directory on the cursor.
@@ -858,12 +859,12 @@ This command does the reverse of `fill-region'."
 
 (setq-default
   org-agenda-restore-windows-after-quit 't
-  org-startup-folded 't
-  org-cycle-separator-lines -2
-  org-return-follows-link 't 
   org-agenda-files (list (expand-file-name "~/main.org")
-                         (expand-file-name "~/personal.org")
-                         ))
+                         (expand-file-name "~/personal.org"))
+  org-cycle-separator-lines 1
+  org-return-follows-link 't 
+  org-startup-folded 't
+  org-insert-heading '((heading . auto) (plain-list-item . auto)))
 
 (defun org-insert-jira-link-qdw ()
   (interactive)
@@ -1093,12 +1094,12 @@ which is its intended use."
 
 ;; Automatically make file executable if it starts with a #!
 (add-hook 'after-save-hook
-          #'executable-make-buffer-file-executable-if-script-p)
+          'executable-make-buffer-file-executable-if-script-p)
 
 ;; Globally enable dumb-jump, an it-just-works way to jump
 ;; from functions' invocations to their definitions of those
 ;; functions, which supports many languages.
-(add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+(add-hook 'xref-backend-functions 'dumb-jump-xref-activate)
 
 (defun my-enter ()
   "Inserts a newline character then indents the new line just
@@ -1233,7 +1234,7 @@ which is its intended use."
 
 (setq whitespace-display-mappings '((tab-mark 9 [187 9] [92 9]))) ;; Optional: Customize tab display
 (global-whitespace-mode -1)
-b
+
 ;;;; Settings > Hacking > JavaScript/TypeScript/JSON
 
 (let ((desired-indent-level 2))
@@ -1251,7 +1252,6 @@ b
   (interactive)
     (setq flycheck-eslintrc
           (locate-dominating-file "~/" ".eslintrc.json")))
-
 
 (defun configure-typescript ()
   (interactive)
@@ -1507,12 +1507,20 @@ b
  '(column-number-mode t)
  '(custom-enabled-themes (list other-theme))
  '(custom-safe-themes
-   '(
+   '("d09acc0564824346c42919c5cc79edc0990e6f73c615a9c9ec28f4796864791f"
+     "81abc2c491be64d999588f05bc16672b771d8965099e16d0ceefc8d2fb6c682a"
+     "f027ed38df2792060c1558aabef13bd85cba7735da74d6720bea8e7b8ecaeeeb"
+     "52fddd1e2f5a6aecfd4ef03ead7bca5791fbbc6027da48a29b8f54b2f1eeea61"
+     "bec1808d1b07e9c43e9208f7bd72f9a84b1b1212fe1458fb5e87b822a78ac0b7"
+     "e72ff600fc010ca9abc1db4b7fc9facada4cbb1dbeef1d5a96c54d65b402aa14"
+     "afffef1edcc6fbeff42664696b5c4525de7662ad954754e7374f208df39b57e8"
+     "5950f03a3ef75043032c938bc1bee8094cb3a14d14b355a395321474727a9cf9"
+     "c812704cb47660e990264ca40b5a109f8fee716a76485642004e012ea4d4f999"
+     "1f4a44bf30dd3f8c368c18a4414bcb9d69a54842b4170ab693beb5ddf026df49"
      default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
  '(explicit-bash-args '("--noediting" "-i" "-l"))
- '(markdown-italic-underscore t)
  '(mode-line-position-column-format '(" %C"))
  '(mode-line-position-column-line-format '(" (%l,%C)"))
  '(neo-cwd-line-style 'text)
@@ -1526,19 +1534,19 @@ b
      ("`" org-code verbatim) ("~" (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(wgrep macrostep-geiser geiser-chibi ac-geiser ac-slime geiser
-     geiser-chez glue slime slime-repl-ansi-color helm-swoop
-     elisp-slime-nav tt-mode elfeed elquery elpy elpygen ack devil
-     yaml-mode symbol-overlay multiple-cursors paredit-everywhere
-     lyrics-fetcher tron-legacy-theme jiralib2 osx-plist magithub
-     fd-dired counsel-fd osx-trash org logview outshine paredit butler
-     git-modes lsp-origami origami origami-predef xterm-color flymake
-     flymake-yamllint yaml-tomato yaml-pro gptai ivy fish-mode blacken
-     titlecase company-lua flymake-lua lua-mode evil go-mode
-     jenkinsfile-mode applescript-mode w3m ## vimrc-mode org-bullets
-     magit-delta dired-sidebar magit dockerfile-mode dumb-jump
-     terraform-mode company tide elpher json-mode markdown-mode
-     typescript-mode ox-jira))
+   '(## ac-geiser ac-slime ack applescript-mode blacken butler company
+     company-lua counsel-fd devil dired-sidebar dockerfile-mode
+     dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil
+     fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser
+     geiser-chez geiser-chibi git-modes glue go-mode gptai helm-swoop
+     ivy jenkinsfile-mode jiralib2 json-mode logview lsp-origami
+     lua-mode lyrics-fetcher macrostep-geiser magit magit-delta
+     magithub markdown-mode multiple-cursors org org-bullets origami
+     origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode
+     paredit paredit-everywhere polymode slime slime-repl-ansi-color
+     symbol-overlay terraform-mode tide titlecase tron-legacy-theme
+     tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color
+     yaml-mode yaml-pro yaml-tomato))
  '(safe-local-variable-values '((eval display-ansi-colors)))
  '(sh-indent-statement-after-and nil)
  '(shell-command-dont-erase-buffer nil)
