@@ -688,9 +688,6 @@ function newlineless {
     fd -t f -x bash -c 'tail -c 1 "$1" | command grep -qvE "^$" && echo "$1"' _ {} \;
 }
 
-# grep TypeScript files only
-function tsgrep { fdgrep "[.]ts$" "$@" ;}
-
 function fdoccur {
     # check-args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
     local FILENAME_REGEX="$1"; shift
@@ -716,23 +713,22 @@ function file-type-counts {
 
 set -a
 MY_GREP="command grep"
-MY_GREP_OPTIONS="-n -I --color=always"
+MY_GREP_OPTIONS="-EIin --color=always"
 GREP_RECURSE="-R"
 GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
-
 GREEN="32"
 YELLOW="33"
 FILENAME_COLOR="fn=${GREEN}"
 LINE_NUMBER_COLOR="ln=${YELLOW}"
 GREP_COLOR_FLAGS=""
 GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
-set +x
+set +a
 
 if command-exists rg || command-exists ggrep; then
     source-if-exists ~/.bashrc.d/grep.bash
 fi
 
-function grep {
+function my-grep {
     set -o pipefail
     
     # When using rg as my grep implementation, I often type -R out of habit,
@@ -758,9 +754,53 @@ function grep {
     set +o pipefail
 }
 
-function g { grep $GREP_RECURSE "$@" ;}
-function gbr { g "$@" ~/.bashr* ~/.*profile* ~/.site.bash* ;}
-function ge { g "$@" ~/.emacs.d ;}
+function grep {
+    my-grep "$@"
+}
+
+function g {
+    check-args 1 2 'REGEX [PATH]' "$@" || return 1
+    local REGEX="$1"
+    local PTH="${2:-.}"
+
+    my-grep $GREP_RECURSE "$REGEX" "$PTH"
+}
+
+function gbr {
+    g "$@" ~/.bashr* ~/.*profile* ~/.site.bash*
+}
+
+function ge {
+    g "$@" ~/.emacs.d
+}
+
+function defs {
+    # Show Python function names
+    check-args 0 varargs \
+               '[GREP_ARG_1 [GREP-ARG_2 ...]] [DIRECTORY] # defaults to .' \
+               "$@" \
+        || return 1
+
+    # Get the last argument, and remove it from $@
+    local PTH
+    if [[ $# -ne 0 ]]; then
+        local PTH="${@[$# - 1]}"
+        unset ${@[$# - 1]}
+        echo "PTH: $PTH"
+        echo "remaining args: $@"
+    else
+         PTH="."
+    fi
+    
+    command fd -t f '.py$' \
+        -x command grep -RiE --color=always "$@"  "^[ ]*def[ ]"  "{}" \; \
+        "$PTH"
+}
+
+# grep TypeScript files only
+function tsgrep {
+    fdgrep "[.]ts$" "$@"
+}
 
 function grep-settings {
     # check-args 2 varargs
@@ -1545,6 +1585,7 @@ function bnl()  { brew-next-leaf "$@" ;}
 function leaf { brew-next-leaf "$@" ;}
 
 
+function be { EDITOR=vim brew edit "$@" ;}
 function bh { brew home "$@" ;}
 function bi { brew install "$@" ;}
 function bl { brew ls "$@" ;}
@@ -2624,11 +2665,19 @@ function pg {
     
     BINARY_PATH=$(echo $HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/$PROGRAM_NAME)
     
-    # subshell
+    
     (
         export PGSERVICE="pg${VERSION}"
         "$BINARY_PATH" "$@"
     )
+}
+
+function pg_dump_roles {
+    pg_dumpall --roles-only --no-role-passwords "$@"
+}
+
+function pg_dump_globals_rds {
+    pg_dumpall --globals-only --no-role-passwords "$@"
 }
 
 declare -Ax pgpasses
@@ -2720,6 +2769,26 @@ function ser {
     else
         local SERVICE_NAME_SUBSTRING="$1"
         para "$SERVICE_NAME_SUBSTRING" ~/.pg_service.conf | $COLORIZE
+    fi
+}
+
+function snip {
+    local SNIPPET_DIR="$HOME/sql-snippets"
+
+    if [[ ! -d "$SNIPPET_DIR" ]]; then
+        carp "No such directory '$SNIPPET_DIR'"
+        return 2
+    elif [[ $# -eq 0 ]]; then
+        echo "Available snippets:"
+        echo
+        command ls -1 "$SNIPPET_DIR"
+    elif [[ $# -eq 1 ]]; then
+        if [[ "$PGSERVICE" ]]; then
+            qql "$SNIPPET_DIR"
+        else
+            carp "You must set the PGSERVICE env var, so qql knows to run the snippet"
+            return 3
+        fi
     fi
 }
 
