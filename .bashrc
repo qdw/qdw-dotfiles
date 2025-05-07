@@ -2761,7 +2761,7 @@ function air {
 #### Convenience functions for working with local files
 
 function buy {
-    if !on-macos; then
+    if ! on-macos; then
         complain "buy is implemented for macOS only, for now. Sorry!"
         return 2
     fi
