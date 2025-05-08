@@ -36,6 +36,11 @@ function sb {
 
 ## Helper functions
 
+# Run a command, but ignore its STDOUT.
+function sil {
+    "$@" >/dev/null
+}
+
 function _diag_msg_helper {
     local CALLER="${FUNCNAME[2]}"
     if [[ -z "$CALLER" ]]; then
@@ -248,6 +253,21 @@ function my-source {
     fi
 }
 
+function xkcd-automate-p {
+    local XKCD_CHART="$HOME/doc/is_it_worth_the_time_2x.png"
+    if [[ -f "$XKCD_CHART" ]]; then
+        open "$XKCD_CHART"
+    else
+        echo "Missing file '$XKCD_CHART'. Go grab it from https://xkcd.com/1205/"
+    fi
+}
+
+function xkcd {
+    check-args 1 1 'COMIC_NUMBER' "$@" || return 1
+    local COMIC_NUMBER="$1"
+    open "https://xkcd.com/$COMIC_NUMBER"
+}
+
 #### OS-specific settings
 
 MY_OS="$(uname -s)"
@@ -303,14 +323,6 @@ if on-macos; then
         osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
     }
 
-    function dark {
-        darken "true"
-    }
-    
-    function light {
-        darken "false"
-    }
-
     function left {
         dock "left"
     }
@@ -319,6 +331,14 @@ if on-macos; then
         dock "right"
     }
     
+    function dark {
+        darken "true"
+    }
+    
+    function light {
+        darken "false"
+    }
+
     function pbc {
         local FILENAME="$1"
         if [[ "$FILENAME" ]]; then
@@ -532,6 +552,8 @@ function dashify-path {
 
 function cds { cd ~/src ;}
 function cdq { cd ~/src/1/qdw-dotfiles ;}
+function cd3 { cd ~/src-3 ;}
+function cd1 { cd ~/src/1 ;}
 
 # cdd - cd to the enclosing dir of a file/dir.
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
@@ -759,15 +781,21 @@ function grep {
 }
 
 function g {
-    check-args 1 2 'REGEX [PATH]' "$@" || return 1
+    check-args 1 varargs 'REGEX [PATH1 [PATH2 [...]]]' "$@" || return 1
+ 
     local REGEX="$1"
-    local PTH="${2:-.}"
-
-    my-grep $GREP_RECURSE "$REGEX" "$PTH"
+    shift
+    if [[ $# -eq 0 ]]; then
+        my-grep $GREP_RECURSE "$REGEX" "."
+    else
+        my-grep $GREP_RECURSE "$REGEX" "$@"
+    fi
 }
 
 function gbr {
-    g "$@" ~/.bashr* ~/.*profile* ~/.site.bash*
+    check-args 1 1 'gbr REGEX' "$@" || return 1
+    local REGEX="$1"
+    g "$REGEX" ~/.bashr* ~/.*profile* ~/.site.bash*
 }
 
 function ge {
@@ -1099,23 +1127,18 @@ function make-rules {
 
 #### Markdown settings
 
-function readme {
-    gh repo view
-}
-
-## #FIXME rewrite 'function bbat {...}' to use 'gh' and GLAMOUR_STYLE, which should make the output look nicer
-
-# bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub)
-function bbat {
-    local TMPFILE
-    
-    TMPFILE=$(gmktemp --suffix .html /tmp/bbat.XXXXXX) \
-        && pandoc --from markdown --to html --reference-links "$@" > "$TMPFILE" \
-        && elinks "$TMPFILE"
-}
-
 function markdown2html {
     pandoc "$1" -t html
+}
+
+#### AI settings
+
+function hug {
+    huggingface-cli "$@"
+}
+
+function qw {
+    "$HOME/ai/llamafiles/Qwen2.5-Coder-14B-Instruct-Q6_K.llamafile"  "$@"
 }
 
 #### Linker settings
@@ -2139,8 +2162,6 @@ function branchify {
 
 ## GitHub-specific Git settings
 
-export GLAMOUR_STYLE="ansi"
-
 function branch {
     local REPO_NAME="$(basename "$(git rev-parse --show-toplevel)")"
     open "https://github.com/$GITHUB_ORG/$REPO_NAME/branches"
@@ -2191,9 +2212,13 @@ function gists {
     gh git list "$@"
 }
 
+function readme {
+    gh repo view
+}
+
 function team {
-    # check-args 1 1
-    local TEAM_NAME="$1"
+    check-args 0 1 '[GITHUB_TEAM_NAME]' "$@" || return 1
+    local TEAM_NAME="$1" # may be empty, which is okay
     open "https://github.com/orgs/$GITHUB_ORG/teams/$TEAM_NAME"
 }
 
@@ -2225,26 +2250,6 @@ function gb {
         echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
     fi
 }
-
-# Generate a 
-function gbb {
-    local SHORTNAME
-
-    echo "First create a JIRA ticket and copy its shortname (e.g., 'MYPROJ-1')"
-    jira-create-ticket
-
-    echo "Now paste in the shortname:"
-    read SHORTNAME
-    
-    echo "Now paste in a brief description in English"
-    read DESCRIPTION
-    DESC="$(branchify "$DESCRIPTION")"
-    
-    NEW_BRANCH_NAME="$GITHUB_USERNAME/$SHORTNAME/$DESC"
-    
-    echo "New branch is '$NEW_BRANCH_NAME'"    
-    # gb "$NEW_BRANCH_NAME"
-}   
 
 # gb (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
 # command to create and switch to a branch.
@@ -3631,9 +3636,182 @@ function jenkins-branch {
     fi
 }
 
-#### Jira settings, regrettably
+#### Jira settings
 
-source-if-exists ~/.bashrc.d/jira.bash
+function _j-check-env {
+    local VALUE
+
+    local MY_EXIT_STATUS=0
+    for VARNAME in JIRA_USERNAME  \
+                   JIRA_API_TOKEN \
+                   JIRA_BASE_URL  \
+                   JIRA_DEFAULT_PROJECT
+    do
+        VALUE="{!VARNAME}"
+        if [[ -z "$VALUE" ]]; then
+            MY_EXIT_STATUS=1
+            echo "Error: environment variable $VARNAME is not set" 2>&1
+        fi
+    done
+    
+    return "$MY_EXIT_STATUS"
+}
+
+function jiv { # view an existing issue
+    _j-check-env || return 2
+    check-args 1 1 'ISSUE' "$@" || return 1
+    local ISSUE="$1"
+    jira issue view "$ISSUE"
+}
+
+function jiro { # open an issue in the web browser
+    _j-check-env
+    check-args 1 1 'ISSUE' "$@" || return 1
+    local ISSUE="$1"
+    open "$JIRA_BASE_URL/browse/$ISSUE"
+}
+
+function jiw {
+    jiro "$@"
+}
+
+function jv {
+    jiv "$@"
+}
+
+function jmv { # change issue state (e.g. Planned -> Completed)
+    _j-check-env || return 2
+    check-args 2 2 'ISSUE_CODE STATE (example: DATAPLAT-01 Done)' "$@" \
+        || return 1
+    local ISSUE="$1"
+    local STATE="$2"
+
+    local STDOUT EXIT_STATUS
+    STDOUT="$(jira issue move "$ISSUE" "$STATE")"
+    EXIT_STATUS="$?"
+    if [[ "$EXIT_STATUS" -ne 0 ]]; then
+        echo "$STDOUT" >&2
+        return "$EXIT_STATUS"
+    fi
+}
+
+function jdone { # mark an issue as completed :)
+    jmv "$ISSUE" "Completed"
+}
+
+function jcancel { # mark issue Canceled (closest possible thing to deleting it)
+    _j-check-env || return 2
+    check-args 1 1 'ISSUE' "$@" || return 1
+    local ISSUE="$1"
+
+    jmv "$ISSUE" "Canceled"
+}
+
+function jrm {
+    jcancel "$@"
+}
+
+function jas { # assign an existing issue
+    _j-check-env || return 2
+    check-args 1 2 'ISSUE [USERNAME] # defaults to you!' "$@" || return 1
+    local ISSUE="$1"
+    local ASSIGNEE="${2:-$JIRA_USERNAME}"
+    
+    local STDOUT EXIT_STATUS
+    STDOUT="$(jira issue assign "$ISSUE" "$JIRA_USERNAME")"
+    EXIT_STATUS="$?"
+    if [[ "$EXIT_STATUS" -ne 0 ]]; then
+        echo "$STDOUT" >&2
+        return "$EXIT_STATUS"
+    fi
+}
+
+function jep { # create an epic
+    _j-check-env || return 2
+    check-args 1 varargs '[--ADDITIONAL -J -I -RA --CLI-FLAGS] SHORT_TITLE [LABELS]' "$@" || return 1
+    local -a JIRA_CLI_ARGS
+
+    # # Flags, like -f, --flag, or --flag-with-arg arg. Currently none supported.
+    # while [[ $# -gt 0 ]]; do
+    #     case "$1" in
+    #         -*) echo "Unsupported option '$1'" >&2
+    #             return 1;;
+    # 
+    #          *) break;; # first non-flag arg: start of positional args
+    #     esac
+    # done
+
+
+    # Required positional argument: the issue summary
+    local ONE_LINER="$1"; shift
+    JIRA_CLI_ARGS+=("--name" "$ONE_LINER" "--summary" "$ONE_LINER")
+    
+    # Optional positional arguments: labels for the issue
+    for LABEL in "$@"; do
+        JIRA_CLI_ARGS+=("--label" "$LABEL")
+    done
+    
+    local JIRA_CLI_OUTPUT  JIRA_CLI_EXIT_STATUS
+    JIRA_CLI_OUTPUT="$(
+        jira epic create --no-input "${JIRA_CLI_ARGS[@]}"
+    )"
+    JIRA_CLI_EXIT_STATUS="$?"
+
+    if [[ "$JIRA_CLI_EXIT_STATUS" -eq 0 ]]; then
+        local URL_OF_THE_NEW_EPIC="$(echo "$JIRA_CLI_OUTPUT" | tail -1)"
+        local EPIC_NAME="${URL_OF_THE_NEW_EPIC##*/}" # e.g. "DATAPLAT-10"
+        jas "$EPIC_NAME" "$JIRA_USERNAME"
+        echo "$EPIC_NAME"
+    else
+        echo "The jira CLI app reported an error:" >&2
+        echo >&2
+        echo "$JIRA_CLI_OUTPUT" >&2
+        return $JIRA_CLI_EXIT_STATUS
+    fi
+}
+
+function jis { # create a "normal" issue, which in my workflow means a Task
+    _j-check-env || return 2
+    check-args 1 1 'SUMMARY_ONELINE' "$@" || return 1
+    local ONE_LINER="$1"
+
+    local JIRA_CLI_OUTPUT JIRA_CLI_EXIT_STATUS
+    JIRA_CLI_OUTPUT="$(jira issue create --no-input --type Task --summary "$ONE_LINER")"
+    JIRA_CLI_EXIT_STATUS="$?"
+    if [[ "$JIRA_CLI_EXIT_STATUS" -eq 0 ]]; then
+        local URL_OF_THE_NEW_ISSUE="$(echo "$JIRA_CLI_OUTPUT" | tail -1)"
+        local ISSUE_NAME="${URL_OF_THE_NEW_ISSUE##*/}"
+        jas "$ISSUE_NAME" "$JIRA_USERNAME"
+        echo "$ISSUE_NAME"
+    fi
+
+    return "$JIRA_CLI_EXIT_STATUS"
+}
+
+# # Untested
+# function jil { # link one issue to another
+#     _j-check-env || return 2
+#     check-args 3 3 'ISSUE_NAME_A ISSUE_NAME_B RELATIONSHIP' "$@" || return 1
+#     local RELATIONSHIP="$3"
+#     jira issue link "$1" "$2" "$RELATIONSHIP"
+# }
+
+function jeip { # create an issue in an existing epic.
+    _j-check-env || return 2
+    check-args 2 varargs \
+               'EPIC_NAME ISSUE_SUMMARY_ONELINE [...]' \
+               "$@" \
+        || return 1
+
+    local EPIC_NAME="$1"
+    shift
+    
+    local ISSUE_NAME
+    ISSUE_NAME="$(_create_issue "$@")" \
+        && jas "$ISSUE" \
+        && jira epic link --issue "$ISSUE_NAME" --epic "$EPIC_NAME"
+}
+
 
 #### Music-related settings
 
