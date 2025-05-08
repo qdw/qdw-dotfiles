@@ -109,9 +109,9 @@ function check-args {
 
         local ARGUMENTS_INFLECTED
         if [[ $# -eq 1 ]]; then
-            ARGUMENTS_INFLECTED="arguments"
-        else
             ARGUMENTS_INFLECTED="argument"
+        else
+            ARGUMENTS_INFLECTED="argument2"
         fi
         complain "check-args: error: $FUNCTION passed the wrong number of arguments to check-args itself" \
                  "($FUNCTION called check-args with $# $ARGUMENTS_INFLECTED, but it requires" \
@@ -338,6 +338,10 @@ if on-macos; then
     function light {
         darken "false"
     }
+    
+    # function day {
+    #     # set wallpaper
+    # }
 
     function pbc {
         local FILENAME="$1"
@@ -578,6 +582,8 @@ if [[ ! "$PATHS_SET_AT" ]]; then
             HOMEBREW_BIN="$HDIR/bin"
             
             PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
+            
+            MY_MANPATH="$HOME/share/man"
 
             # man pages for brew(1) itself
             MY_MANPATH="$HDIR/manpages"           
@@ -3178,9 +3184,32 @@ function set-difference {
 
 #### Slack settings
 
+function slack-channel {
+    check-args \
+        1 \
+        1 \
+        "slack-channel CHANNEL_NAME # (with or without the leading '#'; doesn't matter)" \
+        "$@" \
+     || return 1
+
+    # Remove leading '#' if present
+    local CHANNEL_NAME="${1/##/}"
+    
+    if on-macos; then
+        macos-open-slack-channel.osascript "$CHANNEL_NAME"
+    else
+        open "https://${SLACK_TEAM}.slack.com/channels/${CHANNEL_NAME}"
+    fi
+}
+
+function channel {
+    slack-channel "$@"
+}
+
 SLACK_EXTRAS="$HOME/.site.bash.d/slack-urls.bash"
 if [[ -e "$SLACK_EXTRAS" ]]; then
     source "$SLACK_EXTRAS"
+
     function msg {
         check-args 1 1 'SLACK_USERNAME' "$@" || return 1
         URL="$(slack-username2url "$1")"
@@ -3188,21 +3217,21 @@ if [[ -e "$SLACK_EXTRAS" ]]; then
             open "$URL"
         fi
     }
+
+    function slack-username2url {
+        check-args 1 1 'SLACK_USERNAME # e.g. alice.hacker' "$@" || return 1
+        local SUSERNAME="$1"
+
+        local URL="${SLACK_USERNAME2URL["$SUSERNAME"]}"
+        if [[ -z "$URL" ]]; then
+            error "the URL for $SUSERNAME is unknown"
+            echo "Add it to the Bash env var SLACK_USERNAME2URL, an assoc array" >&2
+            return 2
+        else
+            echo "$URL"
+        fi
+    }
 fi
-
-function slack-channel {
-    # check-args 1 1 "slack-channel CHANNEL_NAME # (with or without the leading '#'; doesn't matter)"
-
-    # Remove leading '#' if present
-    local CHANNEL_NAME="${1/##/}"
-    
-    if on-macos; then
-        macos-open-slack-channel.bash "$CHANNEL_NAME"
-    else
-        open "https://${SLACK_TEAM}.slack.com/channels/${CHANNEL_NAME}"
-    fi
-}
-    
 
 #### SSH settings
 
@@ -3786,6 +3815,36 @@ function jis { # create a "normal" issue, which in my workflow means a Task
     fi
 
     return "$JIRA_CLI_EXIT_STATUS"
+}
+
+# function jil {
+#     _j-check-env || return 2
+#     check-args 0 0 "" "$@" || return 1
+    
+#     jira issue list --status Task
+# }
+
+function _jql2url {
+    _j-check-env || return 2
+    check-args 1 1 'JQL_QUERY_STRING' "$@" || return 1
+    local QUERY="$1"
+    
+    local JQL_BASE_URL="${JIRA_BASE_URL}/issues/?jql="
+    local URLENCODED_QUERY
+    URLENCODED_QUERY=$(urlencode "$QUERY")
+    if [[ $? -ne 0 ]]; then
+        return $?
+    else
+        local FULL_URL="${JQL_BASE_URL}${URLENCODED_QUERY}"
+        echo "$FULL_URL"
+    fi
+}
+
+function jql {
+    _j-check-env || return 2
+    check-args 1 1 'JQL_QUERY_STRING' "$@" || return 1
+    local QUERY="$1"
+    open -u "$(_jql2url "$QUERY")"
 }
 
 # # Untested
