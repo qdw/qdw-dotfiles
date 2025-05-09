@@ -1508,7 +1508,7 @@ which is its intended use."
  '(column-number-mode t)
  '(custom-enabled-themes (list other-theme))
  '(custom-safe-themes
-   '(
+   '("6c096c3ce77f7c26b0514ebeceb37bbbbec45f0ca40bbe810b297d83b76497fc"
      default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
