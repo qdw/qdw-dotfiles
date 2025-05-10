@@ -44,7 +44,7 @@
 	## ignoreBlankLines
 	## ignoreSpaceAtEol
 	algorithm = patience
-	color = auto
+	color = always
 	colorMoved = dimmed-zebra
 	## difft: semantic diff that understands various programming languages
 	## tool = difft #--background dark --color always --missing-as-empty --skip-unchanged
