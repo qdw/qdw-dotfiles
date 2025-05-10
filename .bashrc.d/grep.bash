@@ -3,7 +3,7 @@
 set -a
 
 # Prefer ripgrep if installed.
-if installed "rg"; then
+if command -v "rg" >/dev/null 2>&1; then
     MY_GREP="rg"
     MY_GREP_OPTIONS="--color=always" # --no-line-number"
     # MY_GREP_OPTIONS="$MY_GREP_OPTIONS -H --column -n"
