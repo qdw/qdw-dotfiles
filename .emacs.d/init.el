@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t; -*-
+        
 ;;;; Suppress noisy warnings about packages that use deprecated idioms.
 ;;;; FIXME: somehow none of this works.
 
@@ -114,7 +116,7 @@
  visible-bell 't
  )
  
-;;;; Emacs Lisp helper settings
+ ;;;; Emacs Lisp helper settings
 
 (defun load-file-if-exists-qdw (file-name)
   "Load FILE-NAME if it exists, and do nothing otherwise."
@@ -211,6 +213,7 @@ but it calls defvar under the hood."
 (require 'package)
 (require 'paredit)
 (require 'pandoc-mode)
+;; (require 'per-buffer-theme)
 (require 'recentf)
 (require 'ruby-mode)
 (require 'scroll-bar)
@@ -257,7 +260,6 @@ but it calls defvar under the hood."
 
 ;;;; Special colors for org-mode, overriding whatever theme I'm using
 
-;; FIXME: add this stuff to the special 'user' theme instead
 (defun overlay-org-colors () 
   (interactive)
   (setq-default
@@ -319,18 +321,19 @@ but it calls defvar under the hood."
 
 (add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
 
-(defun insert-color (color-name)
-  (let* ((hex-string (symbol-value (intern color-name))))
-    (insert
-     (propertize (concat hex-string "  " color-name "\n")
-                 'face `(:foreground ,hex-string)))))
+(defun theme-insert-color (color-name)
+  (when (boundp (intern color-name))
+        (let* ((hex-string (symbol-value (intern color-name))))
+          (insert (propertize hex-string
+                              'face `(:foreground ,hex-string)))
+          (insert (concat "  " color-name "\n")))))
 
 
-(defun test-pattern (&rest additional-colors)
+(defun theme-test-pattern (&rest additional-colors)
   (interactive)
   (let*
       ((buffer
-        (get-buffer-create "*tritium colors*"))
+        (get-buffer-create "*theme colors*"))
 
        (basic-colors '("black"
                        "red"
@@ -349,20 +352,22 @@ but it calls defvar under the hood."
                        
     (with-current-buffer buffer
       (erase-buffer)
-      (dolist (co all-colors) (insert-color co))
+      (dolist (co all-colors) (theme-insert-color co))
       (display-buffer buffer))))
+
       
-      
-(defun idiosyncratic-test-pattern ()
+(defun idiosyncratic-test-pattern-qdw ()
   (interactive)
-  (test-pattern "ansi-black"
-                "ansi-bright-black"
-                "ansi-bright-red"))
-      
-(defun test-patttern-interleaved ()
+  (theme-test-pattern "extended-bright-white"
+                        "extended-bright-black"
+                        "extended-black"
+                        "extended-bright-red"))
+
+
+(defun theme-test-pattern-interleaved ()
   (interactive)
   (let* 
-      ((buffer (get-buffer-create "*tritium colors*"))
+      ((buffer (get-buffer-create "*theme colors*"))
        (basic-colors '("black"
                        "red"
                        "green"
@@ -371,21 +376,25 @@ but it calls defvar under the hood."
                        "magenta"
                        "cyan"
                        "white"))
-       (variants '("bright"
-                   "ansi")))
-                         
-    (dolist (color basic-colors)
-      (insert-color color)
-      (dolist (var variants)
-        (insert-color (concat variant "-" color))))))
-  
-
-(defun tritium-generate-tinted-theme-yaml ()
-  (interactive)
-  (let ((buffer (get-buffer-create "*tritium.yaml")))
+       (variants '("extended"
+                   "bright"
+                   "extended-bright")))
+    
     (with-current-buffer buffer
       (erase-buffer)
-      (dolist (base16name-tritiumname '(("base00" . "black")
+      (dolist (col basic-colors)
+        (theme-insert-color col)
+        (dolist (variant variants)
+          (theme-insert-color (concat variant "-" col))))
+      (display-buffer buffer))))
+
+
+(defun theme-generate-tinted-theme-yaml ()
+  (interactive)
+  (let ((buffer (get-buffer-create "theme.yaml")))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (dolist (base16name-themename '(("base00" . "black")
                                         ("base01" . "red")
                                         ("base02" . "green")
                                         ("base03" . "yellow")
@@ -402,30 +411,31 @@ but it calls defvar under the hood."
                                         ("base0E" . "bright-cyan")
                                         ("base0F" . "bright-white")))                             
         
-        (let* ((tinted-name (car base16name-tritiumname))
-                 (tritium-name (cdr base16name-tritiumname))
-                 (hex (symbol-value (intern tritium-name))))
+        (let* ((tinted-name (car base16name-themename))
+                 (theme-name (cdr base16name-themename))
+                 (hex (symbol-value (intern theme-name))))
           (insert (concat tinted-name ": \"" hex "\"\n"))))
       (display-buffer buffer))))
 
 (defalias 'colors 'list-colors-display)
 
-(defun reload-tritium ()
+(defun amber-reload ()
+  (interactive)
+  (load-theme 'amber 't 't))
+
+(defun tritium-reload ()
   (interactive)
   (load-theme 'tritium 't 't))
   
-(defun reload-amber ()
-  (interactive)
-  (load-theme '4MB3R 't 't))
 
-(defun re-theme ()
+(defun tritium-re-theme ()
   "Load a file that defines the 16 4-bit ANSI colors;
   then load tritium, my custom 16-color theme"
   (interactive)
   (load-file
    (read-file-name "Color definition file: "
                    (expand-file-name "~/.emacs.d/qdw-themes/")))
-  (reload-tritium))
+  (tritium-reload))
 
 ;; Interpret any ANSI escape codes in this buffer,
 ;; coloring the buffer text accordingly.
@@ -556,6 +566,12 @@ use `dired-find-file' to open it in a new buffer."
           (buffer-file-name)
           (line-number-at-pos)
           (+ 1 (current-column))))
+          
+(defun curse ()
+  (interactive)
+  (alt-editor
+   "/usr/local/bin/cursor"
+   "--goto" (file-line-column-colon-separated)))
 
 (defun subl ()
   (interactive)
@@ -568,8 +584,6 @@ use `dired-find-file' to open it in a new buffer."
   (alt-editor
    "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
    "--goto" (file-line-column-colon-separated)))
-
-(defalias 'code 'vscode)
 
 ;; (defun open-colon-separated (editor-file-name &optional args)
 ;;   (interactive)
@@ -875,11 +889,13 @@ This command does the reverse of `fill-region'."
 
 (defun org-insert-jira-link-qdw ()
   (interactive)
-  (letrec ((pre-filled-text (if (boundp 'jira-default-project-qdw)
-                                (concat jira-default-project-qdw "-")
-                                ""))
-           (ticket-name (read-string
-                         "Ticket name (e.g. MYPROJ-000): "
+  (letrec (
+           ;; (pre-filled-text (if (boundp 'jira-default-project-qdw)
+           ;;                      (concat jira-default-project-qdw "-")
+           ;;                      ""))
+           (pre-filled-text "")                                
+           (issue-name (read-string
+                         "Issue name (e.g. MYPROJ-0000): "
                          pre-filled-text
                          nil
                          nil
@@ -889,8 +905,8 @@ This command does the reverse of `fill-region'."
                      pre-filled-text))
 
     (org-insert-link nil
-                     (concat jiralib-url "/browse/" ticket-name)
-                     ticket-name)))
+                     (concat jiralib-url "/browse/" issue-name)
+                     issue-name)))
                      
 (defun org-linkify-buffer-qdw ()
   "Make each line in the buffer into an org-mode style link
@@ -1097,11 +1113,19 @@ which is its intended use."
 ;; (don't create a new frame).
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 
-;;;; File-handling settings 
+;;;; File-handling settings
 
-;; Automatically make file executable if it starts with a #!
+;;; Smart setting of executable bits for...
+
+;; ... files that start with a #! (shebang) line
 (add-hook 'after-save-hook
           'executable-make-buffer-file-executable-if-script-p)
+
+;; ... files written in bash, python, AppleScript, &c.
+(setq executable-binary-suffixes '(".pl"
+                                   ".py"
+                                   ".scpt"
+                                   ".sh"))
 
 ;; Globally enable dumb-jump, an it-just-works way to jump
 ;; from functions' invocations to their definitions of those
@@ -1288,6 +1312,7 @@ which is its intended use."
    "-"
    string))
 
+
 (setq lyrics-fetcher-format-file-name-method
       'munge-song-or-band-name)
 
@@ -1308,7 +1333,6 @@ which is its intended use."
 ;;;; Editor MACroS settings
 
 ;;; Global macros/keybindings
-;; (keymap-global-set   "C-c \\"    'helm-swoop-back-to-last-point)
 (keymap-global-unset "C-c .")
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
 (keymap-global-set   "RET"       'my-enter)
@@ -1501,6 +1525,23 @@ which is its intended use."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ansi-color-black ((t (:foreground "black") t)))
+ '(ansi-color-blue ((t (:foreground "blue") t)))
+ '(ansi-color-bright-black ((t (:foreground "black") t)))
+ '(ansi-color-bright-blue ((t (:foreground "blue") t)))
+ '(ansi-color-bright-cyan ((t (:foreground "cyan") t)))
+ '(ansi-color-bright-green ((t (:foreground "green") t)))
+ '(ansi-color-bright-magenta ((t (:foreground "magenta") t)))
+ '(ansi-color-bright-red ((t (:foreground "red") t)))
+ '(ansi-color-bright-white ((t (:foreground "white") t)))
+ '(ansi-color-bright-yellow ((t (:foreground "yellow") t)))
+ '(ansi-color-cyan ((t (:foreground "cyan") t)))
+ '(ansi-color-green ((t (:foreground "green") t)))
+ '(ansi-color-magenta ((t (:foreground "magenta") t)))
+ '(ansi-color-name (('t (:foreground ansi-color-symbol) 't)))
+ '(ansi-color-red ((t (:foreground "red") t)))
+ '(ansi-color-white ((t (:foreground "white") t)))
+ '(ansi-color-yellow ((t (:foreground "yellow") t)))
  '(italic ((t (:underline t :slant normal :weight normal)))))
 
 ;;;; customize other settings
@@ -1512,9 +1553,19 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(column-number-mode t)
- '(custom-enabled-themes (list other-theme))
+ '(custom-enabled-themes '(mariana))
  '(custom-safe-themes
-   '("5a897c2c1919bc2e13321534a250d4fafbf55fa82496cdf47080dc69a23d1468"
+   '("2f0c5eee7bc5b05b3590cf8355e625289281c8cfcc4c2a45c0518e60c3e64f41"
+     "3c67fe7b8429d6f7674a915c0552f753b7b47756f54eadc29d15ce6e088230ed"
+     "159ae4abf0ad2c59a2510e5b96db6455dd5a6009334e2d1fb55d4f581e575978"
+     "8833611549f9601a1ce916f81a7fe1991b9725cefb603a7bf7c27e15ba9da13c"
+     "513e86c779765823244631afd7512f8781de9992d1a04e20ffc07536b5abf5c1"
+     "dcde5ee234edfae4c33cf8a115af01c1ac16ecd8c998685d25da02a7d1fd58b7"
+     "9e4c1fe99c24137cc7d3c972e63e7c294336a0e08a111d220bffe6ae6aa25d5f"
+     "6f6f83b1f1913e59ea0a7426a817bd174b77ba23fad8a2b477a8d685532b4b5b"
+     "bb0baaa8c02224f89cf0c9a97e7584c54bc78db194526c8df96bdc24e39c0e33"
+     "b208fb51ab6725140f7454dcef5816064cfd71c0c347866e27b3e30bacaa5424"
+     "5a897c2c1919bc2e13321534a250d4fafbf55fa82496cdf47080dc69a23d1468"
      "b70a39d0a8ef98f231a22d39d9dced347275598ec202c8c138972ca40cd29fc0"
      "d09acc0564824346c42919c5cc79edc0990e6f73c615a9c9ec28f4796864791f"
      "81abc2c491be64d999588f05bc16672b771d8965099e16d0ceefc8d2fb6c682a"
@@ -1529,7 +1580,9 @@ which is its intended use."
      default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
+ '(exec-suffixes nil)
  '(explicit-bash-args '("--noediting" "-i" "-l"))
+ '(ls-lisp-use-insert-directory-program nil)
  '(mode-line-position-column-format '(" %C"))
  '(mode-line-position-column-line-format '(" (%l,%C)"))
  '(neo-cwd-line-style 'text)
@@ -1543,19 +1596,19 @@ which is its intended use."
      ("`" org-code verbatim) ("~" (:strike-through t))))
  '(osx-trash-command '("trash" "-F"))
  '(package-selected-packages
-   '(## ac-geiser ac-slime ack applescript-mode blacken butler company
+   '(## ac-geiser ac-slime ack applescript-mode blacken company
      company-lua counsel-fd devil dired-sidebar dockerfile-mode
      dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil
      fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser
-     geiser-chez geiser-chibi git-modes glue go-mode gptai helm-swoop
-     ivy jenkinsfile-mode jiralib2 json-mode logview lsp-origami
-     lua-mode lyrics-fetcher macrostep-geiser magit magit-delta
-     magithub markdown-mode multiple-cursors org org-bullets origami
+     geiser-chez geiser-chibi git-modes glue go-mode gptai ivy
+     jenkinsfile-mode jiralib2 json-mode logview lsp-origami lua-mode
+     lyrics-fetcher macrostep-geiser magit magit-delta magithub
+     markdown-mode multiple-cursors org org-bullets origami
      origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode
-     paredit paredit-everywhere polymode slime slime-repl-ansi-color
-     symbol-overlay terraform-mode tide titlecase tron-legacy-theme
-     tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color
-     yaml-mode yaml-pro yaml-tomato))
+     paredit paredit-everywhere per-buffer-theme polymode slime
+     slime-repl-ansi-color symbol-overlay terraform-mode tide
+     titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode
+     w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato))
  '(safe-local-variable-values '((eval display-ansi-colors)))
  '(sh-indent-statement-after-and nil)
  '(shell-command-dont-erase-buffer nil)

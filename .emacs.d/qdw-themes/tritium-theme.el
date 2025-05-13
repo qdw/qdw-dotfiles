@@ -43,7 +43,6 @@
 ;; (defvar bright-white)
 
 
-
 (cond
 
   ((or (string= "truecolor" (getenv "COLORTERM"))
@@ -62,18 +61,19 @@
             blue  "#6495ed"  ;; decent darker blue (from iTerm): "#0d22b9"
 
             
-     bright-blue  "#525dec"
+     bright-blue  "#5172d3"
          magenta  "#af5faf"
   bright-magenta  "#d8a0d0"
             cyan  "#028080"
      bright-cyan  "#4bbfc4"
-           white  "#878787"
-    bright-white  "#878787")  ;; "#aaaaaa"
+           white  "#767676"
+    bright-white  "#767676")  ;; "#aaaaaa"
   
    (setq
-ansi-black bright-black
-ansi-bright-black "#676767"
-ansi-bright-red "#800000"))
+extended-black bright-black
+extended-bright-black "#676767"
+extended-bright-red "#800000"
+extended-bright-white "#a6acb9"))
   
   ;;; For terminals that support only 256 colors
   ;;; (i.e., almost every other terminal in use today)
@@ -141,11 +141,31 @@ ansi-bright-red "#800000"))
 ;;    bright-white  white
 ;;  ))
 ) ;; cond
-;; ) ;; when
+
+(dolist (prefix '("" "bright-"))
+  (dolist (color-name '("black"
+                        "red"
+                        "green"
+                        "yellow"
+                        "blue"
+                        "magenta"
+                        "cyan"
+                        "white"))
+    (let* ((ansi-color-name (concat "ansi-color-" prefix color-name))
+           (ansi-color-symbol (intern ansi-color-name))
+           (desired-hex-value (symbol-value (intern color-name))))
+      (set ansi-color-symbol desired-hex-value)
+      (face-spec-set ansi-color-symbol `((t (:foreground ,desired-hex-value)))))))
 
 (deftheme tritium
   "tritium emacs theme")
 
+(custom-theme-set-faces
+   'tritium
+   
+   `(ansi-color-yellow
+     ((t (:foreground ,ansi-color-yellow) t))))
+      
 (custom-theme-set-faces
    'tritium
    
@@ -353,6 +373,10 @@ ansi-bright-red "#800000"))
 
    `(eshell-ls-special
      ((t (:foreground ,bright-magenta))))
+     
+   ;;;; shell-mode
+   
+   
 
    ;;;; calendar
 
@@ -555,7 +579,7 @@ ansi-bright-red "#800000"))
     ;;;; outline
 
     `(outline-1
-      ((t (:foreground ,bright-magenta))))
+      ((t (:foreground ,blue))))
 
     `(outline-2
       ((t (:foreground ,red))))
@@ -564,19 +588,19 @@ ansi-bright-red "#800000"))
       ((t (:foreground ,magenta))))
       
     `(outline-4
-      ((t (:foreground ,bright-blue))))
+      ((t (:foreground ,cyan))))
 
     `(outline-5
-      ((t (:foreground ,cyan))))
+      ((t (:foreground ,bright-blue))))
 
     `(outline-6
       ((t (:foreground ,white))))
 
     `(outline-7
-      ((t (:foreground ,ansi-bright-black))))
+      ((t (:foreground ,extended-bright-black))))
 
     `(outline-8
-      ((t (:foreground ,ansi-black))))
+      ((t (:foreground ,extended-black))))
 
     ;;;; org-mode
     
@@ -640,10 +664,10 @@ ansi-bright-red "#800000"))
       ((t (:foreground ,white))))
 
     `(org-date
-      ((t (:foreground ,blue))))
+      ((t (:foreground ,bright-red))))
 
     `(org-document-info-keyword
-      ((t (:foreground ,blue))))
+      ((t (:foreground ,extended-bright-black))))
 
     `(org-document-info
       ((t (:foreground ,blue))))
@@ -752,6 +776,14 @@ ansi-bright-red "#800000"))
     `(diredp-ignored-file-name
       ((t (:foreground ,bright-black))))
       
+    ;;;; Markdown
+    
+    `(markdown-code-face
+      ((t (:noinherit :foreground ,magenta))))
+
+    `(markdown-header-delimiter-face
+      ((t :inherit font-lock-comment-delimiter-face)))
+
     ;;;; whitespace
     `(whitespace-big-indent
       ((t (:background ,bright-green :foreground ,black))))

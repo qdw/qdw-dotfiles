@@ -8,7 +8,14 @@ set -o pipefail
 #### Bash debugging settings
 
 function enva {
-    env | command grep -E '^AWS|^PG' | sort
+    check-args 0 0 "[no arguments]" "$@" || return 1
+    env | grep '^AWS' | sort
+}
+
+function envap {
+    enva
+    echo
+    env | grep '^PG' | sort
 }
 
 # Uncomment this to enable various hackish debugging statements in this file.
@@ -134,11 +141,11 @@ function check-args {
                 VARAGS_CLAUSE=""
             fi
             complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARAGS_CLAUSE} required)." \
-                     "usage: $USAGE"
+                     "usage: $FUNCTION $USAGE"
             return 1
         elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
             complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
-                     "usage: $USAGE"
+                     "usage: $FUNCTION $USAGE"
             return 2
         else
             return 0
@@ -163,10 +170,6 @@ function member {
 }
 
 function dirdo {
-    function stderr {
-        echo "$@" >&2
-    }
-
     check-args 1 varargs 'dirdo "SOME COMMANDS" [DIR [DIR2 ... ]]' "$@"
     local COMMAND="$1"; shift
     local ORIG_DIR="$(pwd)"
@@ -181,9 +184,9 @@ function dirdo {
             return 1
         fi
         
-        stderr "==== $DIR"; stderr
+        (echo "==== $DIR"; echo) >&2
         eval "$COMMAND"
-        stderr
+        echo >&2
 
         if ! cd "$ORIG_DIR"; then
             return 1
@@ -337,6 +340,10 @@ if on-macos; then
     
     function light {
         darken "false"
+    }
+    
+    function wallpaper {
+        "$HOME/bin/macos-set-wallpaper.scpt" "$@"
     }
     
     # function day {
@@ -560,14 +567,20 @@ function cd3 { cd ~/src-3 ;}
 function cd1 { cd ~/src/1 ;}
 
 # cdd - cd to the enclosing dir of a file/dir.
+#
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
+#
+# If the user passes no arguments, then do that to the directory portion
+# of the previous argument passed ($_).
 function cdd {
-    if [[ $# -ne 1 ]]; then
-        echo "cdd: wrong number of arguments. Usage: cdd PATH"
-    else
-        cd "$(dirname "$(realpath "$1")")"
+    local DIR="$_"
+    check-args 0 1 'cdd DIR' "$@" || return 1
+    if [[ $# -eq 1 ]]; then
+        DIR="$1"
     fi
+        
+    cd "$(dirname "$(realpath "$DIR")")"
 }
 
 #### Homebrew settings
@@ -2100,14 +2113,6 @@ function git-backup {
     fi
 }
 
-
-function get-main-branch-name {
-    local MAIN_OR_MASTER
-    
-    MAIN_OR_MASTER="$(command git branch --remotes | command grep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
-    echo "$MAIN_OR_MASTER"
-}
-
 # gbs (Git Branches) - list (local) git branches
 function gbs { git branch ;}
 
@@ -2159,11 +2164,25 @@ function gcd {
 # branchify - munge a branch description into a branch name
 # (by translating spaces to dashes and uppercase to lowercase)
 function branchify {
-    if [[ $# -ne 1 ]]; then
-        echo "branchify: error: wrong number of arguments. Usage: branchify DESCRIPTIVE_STRING"
-    else
-        echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' ' '-'
+    check-args 1 1 'DESCRIPTIVE_STRING' "$@" || return 1
+    local DESTR="$1"
+    echo "$DESTR" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr '[[:punct:]]' '-'
+}
+
+function gbj {
+    check-args 1 1 'TINY_SUMMARY' "$@" || return 1
+    local SCRIBBLE="$1";
+    if [[ -z "$GITHUB_USERNAME" ]]; then
+        carp "You must set the GITHUB_USERNAME env var" >&2
+        return 2
     fi
+
+    local ISSUE DESC BRANCH_NAME
+    ISSUE="$(jis "$SCRIBBLE")" || return 3
+    DESC="$(branchify "$SCRIBBLE")" || return 4
+    BRANCH_NAME="$GITHUB_USERNAME/$ISSUE/$DESC"    
+    gb "$BRANCH_NAME"
+    echo "$ISSUE" | pbcopy
 }
 
 ## GitHub-specific Git settings
@@ -2197,12 +2216,12 @@ function gclone {
 #     check-args 0 1 'PR_NUMBER' "$@" || return 1
 #     
 #     local PR_NUMBER="$(prs | cat | awk '{print $1}')"
-
+#     
 #     if [[ $? -eq 0 ]] && [[ $PR_NUMBER ]]; then
 #         gh pr merge --squash "$PR_NUMBER"
 #     fi
 # }
-        
+
 function git-https-to-ssh {
     check-args 1 1 'HTTPS_URL' "$@" || return 1
     local HTTPS_URL="$1"
@@ -2238,23 +2257,24 @@ function owner {
     team "$TEAM_NAME"
 }
 
-# gb (Git Branch) - create a new branch based on the main one, and check it out
-function gb {
-    check-args 0 1 'gb [NEW_BRANCH_NAME' "$@"
-    local NEW_BRANCH_NAME MAIN
+function get-main-branch-name {
+    local MAIN_OR_MASTER
+    
+    MAIN_OR_MASTER="$(command git branch --remotes | command ggrep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
+    echo "$MAIN_OR_MASTER"
+}
 
-    if [[ $# -eq 0 ]]; then
-        git branch --show-current
-    elif [[ $# -eq 1 ]]; then
-        NEW_BRANCH_NAME="$1"
-        MAIN=$(get-main-branch-name) \
-            && git switch --quiet "$MAIN" \
-            && git pull --quiet --ff-only  \
-            && git switch --create "$NEW_BRANCH_NAME" "$MAIN" \
-                | command grep -vE 'remote:'
-    else
-        echo "gb: error: invalid number of arguments '$#'. Usage: gb | gb NEW_BRANCH_NAME"
-    fi
+# gb (Git Branch) - create a new branch based on the main one, and switch to it
+function gb {
+    check-args 1 1 'gb NEW_BRANCH_NAME' "$@" || return 1
+    local NEW_BRANCH_NAME MAIN
+    NEW_BRANCH_NAME="$1"
+
+    MAIN="$(git main)" \
+        && git switch --quiet "$MAIN" \
+        && git pull --quiet --ff-only  \
+        && git switch --create "$NEW_BRANCH_NAME" "$MAIN" \
+      | command grep -vE 'remote:'
 }
 
 # gb (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
@@ -3196,13 +3216,13 @@ function slack-channel {
     local CHANNEL_NAME="${1/##/}"
     
     if on-macos; then
-        macos-open-slack-channel.osascript "$CHANNEL_NAME"
+        macos-open-slack-channel.scpt "$CHANNEL_NAME"
     else
         open "https://${SLACK_TEAM}.slack.com/channels/${CHANNEL_NAME}"
     fi
 }
 
-function channel {
+function chan {
     slack-channel "$@"
 }
 
@@ -3491,27 +3511,25 @@ function urlencode {
     fi
 }
 
-function gmail-search {
-    local QUERY  BASE_URL
-    BASE_URL="https://mail.google.com/mail/u/0/#search"
+function gmail {
+    check-args 0 1 '[SEARCH_TERMS_STRING]' "$@" || return 1
     
-    if [[ $# -ne 1 ]]; then
-        echo "gmail-search: error: wrong number of arguments. Usage: gmail-search QUERY_STRING"
-    else
-        QUERY="$1"
-        URLENCODED_QUERY=$(urlencode "$QUERY")
-        open "$BASE_URL/$URLENCODED_QUERY"
+    if [[ $# -eq 1 ]]; then
+        local SEARCH_STRING="$1"
+        gmail-search "$SEARCH_STRING"
+    elif [[ $# -eq 0 ]]; then
+        open -u "https://mail.google.com/mail/u/0"
     fi
 }
 
-function gmail {
-    if [[ $# -eq 0 ]]; then
-        open "https://mail.google.com/"
-    elif [[ $# -eq 1 ]]; then
-        gmail-search "$1"
-    else
-        echo "gmail: error: wrong number of arguments. Usage: gmail [SEARCH_STRING]"
-    fi
+function gmail-search {
+    check-args 0 1 'QUERY [BASE_URL' "$@" || return 1
+    local QUERY="$1"
+    local BASE_URL="${2:-https://mail.google.com/mail/u/0}"
+    
+    local URL="$BASE_URL/#search"
+    local URLENCODED_QUERY="$(urlencode "$QUERY")"
+    open -u "${BASE_URL}/${URLENCODED_QUERY}"
 }
 
 function google {
@@ -3693,19 +3711,11 @@ function jiv { # view an existing issue
     jira issue view "$ISSUE"
 }
 
-function jiro { # open an issue in the web browser
+function jiw { # open an issue in the web browser
     _j-check-env
     check-args 1 1 'ISSUE' "$@" || return 1
     local ISSUE="$1"
     open "$JIRA_BASE_URL/browse/$ISSUE"
-}
-
-function jiw {
-    jiro "$@"
-}
-
-function jv {
-    jiv "$@"
 }
 
 function jmv { # change issue state (e.g. Planned -> Completed)
@@ -3817,12 +3827,18 @@ function jis { # create a "normal" issue, which in my workflow means a Task
     return "$JIRA_CLI_EXIT_STATUS"
 }
 
-# function jil {
-#     _j-check-env || return 2
-#     check-args 0 0 "" "$@" || return 1
+function jls { # list issues
+    _j-check-env || return 2
+    check-args 0 0 "" "$@" || return 1
     
-#     jira issue list --status Task
-# }
+    jira issue list
+}
+
+function jld { # list my Done issues
+    _j-check-env || return 2
+    check-args 0 0 "" "$@" || return 1
+    jira issue list --assignee "$JIRA_USERNAME" --status "Done"
+}
 
 function _jql2url {
     _j-check-env || return 2
@@ -3847,14 +3863,6 @@ function jql {
     open -u "$(_jql2url "$QUERY")"
 }
 
-# # Untested
-# function jil { # link one issue to another
-#     _j-check-env || return 2
-#     check-args 3 3 'ISSUE_NAME_A ISSUE_NAME_B RELATIONSHIP' "$@" || return 1
-#     local RELATIONSHIP="$3"
-#     jira issue link "$1" "$2" "$RELATIONSHIP"
-# }
-
 function jeip { # create an issue in an existing epic.
     _j-check-env || return 2
     check-args 2 varargs \
@@ -3870,7 +3878,6 @@ function jeip { # create an issue in an existing epic.
         && jas "$ISSUE" \
         && jira epic link --issue "$ISSUE_NAME" --epic "$EPIC_NAME"
 }
-
 
 #### Music-related settings
 

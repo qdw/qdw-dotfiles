@@ -43,23 +43,45 @@
 (defvar bright-white)
 
 (setq
-             red  "#af5f00"
-      bright-red  "#ff7f00"
-           black  "#111111"
-    bright-black  black
-           green  red
-    bright-green  bright-red
-          yellow  red
-   bright-yellow  bright-red
-            blue  bright-red
-     bright-blue  red
-         magenta  bright-red
-  bright-magenta  bright-red
-            cyan  red
-     bright-cyan  red
-           white  red
-    bright-white  red
-    )
+           black  "#000000"   ;; True black
+             red  "#FFB300"   ;; Bright amber (most intense)
+           green  "#E69500"   ;; Slightly dimmer amber
+          yellow  "#FFC04D"   ;; Pale, glowing amber
+            blue  "#B37700"   ;; Dark amber, almost brown
+         magenta  "#CC9900"   ;; Golden-amber, muted warmth
+            cyan  "#A66F00"   ;; Cooler amber, reduced intensity
+           white  "#663F00"   ;; Strong amber brown highlight (burnt)
+  )
+  
+(setq
+    bright-black  "#1A0F00"   ;; Slightly raised from pure black (dim glow)
+      bright-red  "#FFD24D"   ;; Hottest amber-white highlight
+    bright-green  "#FFB84D"   ;; Bright warm amber
+   bright-yellow  "#FFE680"   ;; Soft amber-white; max visible glow
+     bright-blue  "#CC9900"   ;; Rich golden amber, brighter than base blue
+  bright-magenta  "#DDAA33"   ;; Warm orange-gold pop
+     bright-cyan  "#BB8800"   ;; Coolest usable amber variant
+    bright-white  "#663F00"   ;; Strong amber brown highlight (burnt)
+ )
+
+;; (setq
+;;            black  "#111111"
+;;     bright-black  black
+;;              red  "#af5f00"
+;;       bright-red  "#ff7f00"
+;;            green  red
+;;     bright-green  bright-red
+;;           yellow  red
+;;    bright-yellow  bright-red
+;;             blue  bright-red
+;;      bright-blue  red
+;;          magenta  bright-red
+;;   bright-magenta  bright-red
+;;             cyan  red
+;;      bright-cyan  red
+;;            white  red
+;;     bright-white  red
+;;     )
 
 (defvar *colors-loaded-p* 't)
 
