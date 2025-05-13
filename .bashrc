@@ -39,9 +39,21 @@ function sb {
     source ~/.bashrc
 }
 
-#### Bash metaprogramming library "settings"
+#### Bash metaprogramming library settings
 
-## Helper functions
+# Check for functions, aliases, and executables.
+function command-exists {
+    check-args 1 1 'COMMAND_NAME' "$@" || return 1
+    local COMMAND="$1"
+    command -v "$COMMAND" >/dev/null 2>&1
+}
+
+# Check for executables only.
+function installed {
+    check-args 1 1 'COMMAND_NAME' "$@" || return 1
+    local COMMAND="$1"
+    type -P "$COMMAND" >/dev/null 2>&1
+}
 
 # Run a command, but ignore its STDOUT.
 function sil {
@@ -57,22 +69,18 @@ function _diag_msg_helper {
     echo "$CALLER:" "$@" >&2
 }
 
-function warn {
-    _diag_msg_helper "warning:" "$@"
-}
-
-function error {
-    _diag_msg_helper "error:" "$@"
-}
-
-function carp {
-    _diag_msg_helper "$@"
-}
-
-function complain { # sugar for multiline msgs (pass each line as a string)
+function complain { # for multiline msgs (pass each line as a separate arg)
     for STRING in "$@"; do
         echo "$STRING" >&2
     done
+}
+
+function err {
+    echo "error:" "$@" >&2
+}
+
+function warn {
+    echo "warning:" "$@" >&2
 }
 
 if [[ "$MY_DEBUG" ]]; then
@@ -85,27 +93,7 @@ else
     }
 fi
 
-## Implementations of simple Unix commands in bash, to save fork(1) overhead
-
-function which {
-    type -P "$@"
-}
-
-function basenam {
-    # Remove trailing slashes
-    local path="${1%/}"    
-    # Extract the filename
-    echo "${path##*/}"
-}
-
-function dirnam {
-    # Remove trailing slashes
-    local path="${1%/}"
-    # Extract the directory path
-    echo "${path%/*}"
-}
-
-## Hackish runtime argument validation
+## Hackish runtime argument checking
 
 function check-args {
     local FUNCTION="${FUNCNAME[1]}"
@@ -131,7 +119,7 @@ function check-args {
         
         local MIN_ARGS="$1"; shift
         local MAX_ARGS="$1"; shift
-        local USAGE="$1"; shift
+        local USAGE="$1"; shift        
         local ARGC=$#
         if [[ $ARGC -lt $MIN_ARGS ]]; then
             local VARAGS_CLAUSE
@@ -152,6 +140,27 @@ function check-args {
         fi
     fi
 }
+
+## Implementations of simple Unix commands in bash, to save fork(1) overhead
+
+function basenam {
+    # Remove trailing slashes
+    local path="${1%/}"    
+    # Extract the filename
+    echo "${path##*/}"
+}
+
+function dirnam {
+    # Remove trailing slashes
+    local path="${1%/}"
+    # Extract the directory path
+    echo "${path%/*}"
+}
+
+function which {
+    type -P "$@"
+}
+
 
 ## Array helper functions
 
@@ -220,17 +229,6 @@ function funcalias {
     fi
 }
 
-function installed {
-    check-args 1 1 "installed COMMAND_NAME" "$@"
-    local COMMAND="$1"
-    if command -p "$COMMAND" > /dev/null 2>&1 || [[ -x "$HOMEBREW_BIN/$COMMAND" ]]
-    then
-        return 0
-    else
-        return 1
-    fi
-}
-
 function source-if-exists {
     check-args 1 1 'FILE' "$@"
     local FILE="$1"
@@ -284,19 +282,7 @@ function on-macos {
     [[ "$MY_OS" = "Darwin" ]]
 }
 
-function open {
-    if on-macos; then
-        command open "$@"
-    elif which xdg-open >/dev/null 2>&1; then
-        xdg-open "$@"
-    else
-        complain "function 'open': couldn't find xdg-open"
-        return 2
-    fi
-}
-
-if on-macos; then
-    # On Linux these are set automatically
+if on-macos; then # (on other Unix OS's these are set automatically)
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
     XDG_CACHE_HOME="$HOME/.cache"
@@ -304,6 +290,12 @@ if on-macos; then
     XDG_STATE_HOME="$HOME/.local/state"
     set +a
 
+    if [[ -f "$HOMEBREW_BIN/trash" ]]; then
+        function rm {
+            trash "$@"
+        }
+    fi
+    
     function dock {
         local VALID_ARGS="left|right|bottom"
 
@@ -311,11 +303,10 @@ if on-macos; then
         local SIDE="$1"
         case "$SIDE" in
             left|right|bottom) :;;
-            *) complain "invalid argument '$SIDE'. " \
-                        "Valid arguments: $VALID_ARGS"
-               return 1;;
+             *) complain "invalid argument '$SIDE'. " \
+                         "Valid arguments: $VALID_ARGS"
+                         return 1;;
         esac
-
         defaults write com.apple.dock orientation "$SIDE" \
             && killall Dock
     }
@@ -389,13 +380,16 @@ if on-macos; then
         complain "couldn't find '$APP' in applications"
         return 1
     }
-fi
+else
+    # Special code for non-macOS platforms:
 
-function command-exists {
-    check-args 1 1 'COMMAND_NAME' "$@" || return 1
-    local COMMAND="$1"
-    command -v "$COMMAND" >/dev/null 2>&1
-}
+    if command-exists xdg-open; then
+        function open {
+            xdg-open "$@"
+        }
+    fi
+
+fi
 
 #### Color settings
 
@@ -612,13 +606,6 @@ if [[ ! "$PATHS_SET_AT" ]]; then
     done
 fi
 
-# Prompt before overwriting files,
-if [[ "$MY_OS" = "Darwin" ]] && [[ -f "$HOMEBREW_BIN/trash" ]]; then
-    function rm {
-        trash "$@"
-    }
-fi
-
 ## If on macOS, use the Homebrew versions of common command-line utilities
 ## instead of the bundled macOS versions, as the Homebrewed versions
 ## are more frequently updated.
@@ -778,7 +765,7 @@ function my-grep {
     local ARGS=()
     if [[ "$MY_GREP" = "rg" ]]; then
         for ARG in "$@"; do
-            # FIXME: rewrite this properly, using Bash's builtin getopts
+            # FIXME: rewrite this properly, using Bash's builtin getopt
             if [[ "$ARG" != "-R" ]]; then
                 ARGS+=("$ARG")
             fi
@@ -1829,7 +1816,21 @@ function path {
 # qp ("qdw-dotfiles Push")
 function qp { cdq && git add . && git commit && git push && cd - ;}
 
-#### ls settings
+#### Improvements on core Unix commands
+
+if command-exists rsync; then
+    function cp {
+        check-args \
+            2 varargs \
+            'cp FILE_1 FILE_2 | cp FILE_1 [FILE_2 [...]] DIR # uses rsync' \
+            "$@" \
+        || return 1
+        
+        rsync -aq "$@"
+    }
+fi
+
+### ls settings
 
 export LS_COLORS='rs=0:di=01;34:ln=01;33:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;91;01:mi=00:su=30;31:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:'
 
@@ -2861,7 +2862,7 @@ function air {
 #### Convenience functions for working with local files
 
 function buy {
-    if !on-macos; then
+    if ! on-macos; then
         complain "buy is implemented for macOS only, for now. Sorry!"
         return 2
     fi
@@ -3888,6 +3889,25 @@ function music {
 function am {
     ~/src-3/music-cli/src/am.sh
 }
+
+#### Video game settings
+
+## Steam settings
+if on-macos; then
+    function steam {
+        local STEAM_GAMES_DIR="$HOME/Library/Application Support/Steam/steamapps/common"
+        check-args 0 1 "[GAME_NAME] # or its first few chars"  "$@" || return 1
+        if [[ $# -eq 0 ]]; then
+            command ls -1 "$STEAM_GAMES_DIR" \
+                | command grep -v "Steam Controller Configs"
+        elif [[ $# -eq 1 ]]; then
+            local PREF="$1"
+            open "$STEAM_GAMES_DIR/${PREF}"*/*.app
+        fi
+    }
+fi
+
+### BGM settings
 
 # zophar - search for video game music (BGM)
 function zophar {
