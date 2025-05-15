@@ -224,6 +224,34 @@ but it calls defvar under the hood."
 (require 'whitespace)
 (require 'yaml-mode)
 
+;;;; Settings for the Emacs package system
+  
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+;; (package-refresh-contents)
+;; (package-install-selected-packages)
+
+;; I'm running emacs as a daemon,
+;; so just require all these modules at once;
+;; don't get clever with lazy-loading.
+
+;;;; Buffer-management functions
+
+(defun buffer-saver-killer-helper (prompt-bool)
+  (save-some-buffers prompt-bool)
+  (mapc 'kill-buffer (cl-remove-if-not 'buffer-file-name (buffer-list))))
+    
+(defun kill-all-buffers-qdw ()
+  "Kill all file buffers, prompting to save each unsaved buffer"
+  (interactive)
+  (buffer-saver-killer-helper nil))
+
+(defun kill-all-file-buffers-without-prompting-qdw ()
+  "Kill all file buffers, first saving any that need it (without prompting)"
+  (interactive)
+  (buffer-saver-killer-helper 't))
+
 ;;;; Edit this file
 
 (defun ini ()
@@ -1265,10 +1293,6 @@ which is its intended use."
 
 (setq whitespace-display-mappings '((tab-mark 9 [187 9] [92 9]))) ;; Optional: Customize tab display
 (global-whitespace-mode -1)
-<<<<<<< HEAD
-=======
-(setq-default tab-width 4)
->>>>>>> 22b160d9783b5665e08f44fd09ebd3ba6fbe0180
 
 ;;;; Settings > Hacking > JavaScript/TypeScript/JSON
 
@@ -1337,6 +1361,7 @@ which is its intended use."
 ;;;; Editor MACroS settings
 
 ;;; Global macros/keybindings
+(keymap-global-set "M-`" 'unfill-paragraph-xah)
 (keymap-global-unset "C-c .")
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
 (keymap-global-set   "RET"       'my-enter)
@@ -1559,7 +1584,6 @@ which is its intended use."
  '(column-number-mode t)
  '(custom-enabled-themes '(mariana))
  '(custom-safe-themes
-<<<<<<< HEAD
    '("2f0c5eee7bc5b05b3590cf8355e625289281c8cfcc4c2a45c0518e60c3e64f41"
      "3c67fe7b8429d6f7674a915c0552f753b7b47756f54eadc29d15ce6e088230ed"
      "159ae4abf0ad2c59a2510e5b96db6455dd5a6009334e2d1fb55d4f581e575978"
@@ -1582,9 +1606,6 @@ which is its intended use."
      "5950f03a3ef75043032c938bc1bee8094cb3a14d14b355a395321474727a9cf9"
      "c812704cb47660e990264ca40b5a109f8fee716a76485642004e012ea4d4f999"
      "1f4a44bf30dd3f8c368c18a4414bcb9d69a54842b4170ab693beb5ddf026df49"
-=======
-   '("6c096c3ce77f7c26b0514ebeceb37bbbbec45f0ca40bbe810b297d83b76497fc"
->>>>>>> 22b160d9783b5665e08f44fd09ebd3ba6fbe0180
      default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
