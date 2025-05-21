@@ -2342,21 +2342,17 @@ function gtr {
 
 # gline (Git Line) - open a file in GitHub's web UI, at a given line
 function gline {
-    local FILENAME_AND_LINE  USAGE  BRANCH
-    USAGE="Usage: gline FILENAME:LINENO"
-    BRANCH="$(gb)"
+    check-args 1 2 'FILENAME [LINENO]' "$@" || return 1
+    local FILENAME="$1"
+    local LINENO="${2:-1}"
     
-    if [[ $# -eq 1 ]]; then
-        FILENAME_AND_LINE="$1"
-    elif [[ $# -eq 2 ]]; then
-        FILENAME_AND_LINE="${1}:${2}"
-    else
-        echo "gline: error: wrong number of arguments ($#). $USAGE"
-    fi
-    
-    if [[ -n "$FILENAME_AND_LINE" ]]; then
-        gh browse --branch "$BRANCH" "$FILENAME_AND_LINE"
-    fi
+    set -x
+    local GIT_WORKING_COPY_ROOT_DIR="$(git rev-parse --show-toplevel)"
+    FILENAME="${FILENAME/$GIT_WORKING_COPY_ROOT_DIR\//}"
+
+    local BRANCH="$(git branch --show-current)"    
+    gh browse --branch "$BRANCH" "${FILENAME}:${LINENO}"
+    set +x
 }
 
 function lst {

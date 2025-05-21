@@ -1216,7 +1216,22 @@ which is its intended use."
           (lambda ()
             (origami-mode +1)))
 
-;;;; Magit settings
+;;;; Git/Magit settings
+
+(defun gline-qdw ()
+  (interactive)
+  (let* ((dir (file-name-directory buffer-file-name))
+         (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
+    (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)))
+    (if (not git-working-copy-root-dir)
+        (message (format "Not a Git working copy: %s"
+                         (file-name-directory buffer-file-name)))
+        (replace-regexp git-working-copy-root-dir "" dir)
+        (message git-working-copy-root-dir))))
+      ;; (login-shell-command-and-show-output-qdw
+      ;; (message (format "gline %s %s" buffer-file-name (line-number-at-pos)))
+      ;; )
+       )))
 
 ;; In the default view, show stashes and local branches.
 ;; Also, move the sections around a bit to suit my preferences.
