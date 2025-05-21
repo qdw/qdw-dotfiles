@@ -68,6 +68,7 @@
 	branch = branch --quiet
 	char-diff = diff --word-diff-regex=.
 	co = switch
+	prev = "!f() { local FILE=\"$HOME/tmp/$(basename $(git rev-parse --show-toplevel))-$(basename $(tty))\"; echo \"old: \"$(cat $FILE)\"; new: $1\"; /bin/echo \"$1\" > \"$FILE\"; }; f "
 	comp = diff --compact-summary
 	delete-remote-branch = push origin --delete
 	diff-remote = diff @{u}
