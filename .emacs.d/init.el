@@ -1,5 +1,3 @@
-;;; -*- lexical-binding: t; -*-
-        
 ;;;; Suppress noisy warnings about packages that use deprecated idioms.
 ;;;; FIXME: somehow none of this works.
 
@@ -260,7 +258,7 @@ but it calls defvar under the hood."
 
 ;;;; Special colors for org-mode, overriding whatever theme I'm using
 
-(defun overlay-org-colors () 
+(defun overlay-org-colors-qdw () 
   (interactive)
   (setq-default
    org-catch-invisible-edits "show"
@@ -306,7 +304,7 @@ but it calls defvar under the hood."
           (mapc (lambda (pair) (add-to-list 'org-todo-keyword-faces pair))
                 org-keyword-to-color-qdw))))
 
-(overlay-org-colors)
+(overlay-org-colors-qdw)
 
 ;;;; Theme-related utility functions
 
@@ -474,7 +472,7 @@ but it calls defvar under the hood."
 (defun switch-theme ()
   (interactive)
   (customize-variable 'custom-enabled-themes))
-  
+
 
 (defun toggle-theme ()
   "Toggle between my two favorite color themes, if applicable"
@@ -494,7 +492,28 @@ but it calls defvar under the hood."
     (when (and (boundp 'other-theme) other-theme)
           (custom-set-variables '(custom-enabled-themes
                                   (list other-theme)))
-          (overlay-org-colors))))
+          (overlay-org-colors-qdw))))
+          
+
+(defun load-theme-wrapper-qdw (orig-fun theme &optional no-confirm no-enable)
+  ;; Disable all currently enabled themes
+  (mapc 'disable-theme custom-enabled-themes)
+  
+  (prog1
+    ;; Call the original load-theme
+    (funcall orig-fun theme no-confirm no-enable)
+    
+    ;; Always use my custom org colors, regardless of theme
+    (overlay-org-colors-qdw)))
+                      
+(advice-add 'load-theme :around #'load-theme-wrapper-qdw)
+
+
+;; (defun theme-load-qdw (theme-name)
+;;   "Load one of my themes, then overlay my org-mode colors"
+;;   (custom-set-variable custom-enabled-themes '())
+;;   (load-theme theme-name)
+;;   (overlay-org-colors-qdw))
 
 ;;;; Third-party themes that I like okay:
 ;;
@@ -508,7 +527,6 @@ but it calls defvar under the hood."
 ;; (load-theme 'solo-jazz)
 ;; (load-theme 'infodoc)
 ;; (load-theme 'organic-green)
-
 
 (defun dired-find-file-qdw ()
   "In Dired, visit the file or directory on the cursor.
@@ -731,12 +749,12 @@ This command does the reverse of `fill-region'."
 
 ;;;; Shell settings
 
-(defun login-shell-command (command-string)
+(defun login-shell-command-qdw (command-string)
   "Run a shell command, sourcing my ~/.bashrc first, so that my many custom shell functions are available, as they would be in a terminal emulator session. This doesn't shell-quote your arguments, so if you need to do that, do that"
   (interactive "MShell command: ")
   (shell-command (concat "source ~/.bashrc && " command-string)))
 
-(defun login-shell-command-and-show-output (command-string)
+(defun login-shell-command-and-show-output-qdw (command-string)
   "Like login-shell-command, but show standard output and standard error (each in its own new buffer)"
   (interactive "MShell command: ")
   (shell-command (concat "source ~/.bashrc && INSIDE_EMACS=true " command-string) "stdout" "stderr"))
@@ -851,9 +869,13 @@ This command does the reverse of `fill-region'."
  case-fold-search 't
 
  isearch-allow-scroll 'unlimited)
- 
-(defun search-in-buffers (regexp)
-  (interactive "sSearch for regexp: ")
+
+(defun grep-buffer-qdw (regexp)
+  (interactive "sSearch this buffer for regexp: ")
+  (occur regexp))
+  
+(defun grep-all-buffers-qdw (regexp)
+  (interactive "sSearch all buffers for regexp: ")
    (multi-occur-in-matching-buffers
      "."
      regexp
@@ -1280,10 +1302,7 @@ which is its intended use."
 
 (setq whitespace-display-mappings '((tab-mark 9 [187 9] [92 9]))) ;; Optional: Customize tab display
 (global-whitespace-mode -1)
-<<<<<<< HEAD
-=======
 (setq-default tab-width 4)
->>>>>>> 22b160d9783b5665e08f44fd09ebd3ba6fbe0180
 
 ;;;; Settings > Hacking > JavaScript/TypeScript/JSON
 
@@ -1352,8 +1371,10 @@ which is its intended use."
 ;;;; Editor MACroS settings
 
 ;;; Global macros/keybindings
-(keymap-global-unset "C-c .")
+
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
+(keymap-global-set   "C-c /"     'grep-buffer-qdw)
+(keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
 (keymap-global-set   "RET"       'my-enter)
 (keymap-global-set   "C-c g"     'search-in-buffers)
 (keymap-global-set   "C-c 1"     'async-shell-command)
@@ -1365,9 +1386,7 @@ which is its intended use."
 (keymap-global-set   "C-c f"     'origami-toggle-node)
 (keymap-global-set   "C-c C-c g"     'rg-in-current-directory-qdw)
 (keymap-global-set   "C-c i"     'indent-region)
-(keymap-global-unset "C-c C-c b")
 (keymap-global-set   "C-c C-c b" 'edit-bashrc)
-(keymap-global-unset "C-c C-c i")
 (keymap-global-set   "C-c C-c i" 'ini)
 (keymap-global-set   "C-c SPC"   'iterm2-here)
 (keymap-global-set   "C-c l"     'shell)
@@ -1379,8 +1398,8 @@ which is its intended use."
 (keymap-global-set   "C-c t"     'toggle-theme)
 (keymap-global-set   "C-c u"     'uncomment-region)
 (keymap-global-set   "C-c v"     'vscode)
-(keymap-global-set   "M-1"       'login-shell-command)
-(keymap-global-set   "M-!"       'login-shell-command-and-show-output)
+(keymap-global-set   "M-1"       'login-shell-command-qdw)
+(keymap-global-set   "M-!"       'login-shell-command-and-show-output-qdw)
 (keymap-global-set   "M-("       'eval-expression)
 (keymap-global-set   "M-5"       'query-replace-regexp)
 (keymap-global-set   "M-o"       'other-window-reverse)
@@ -1572,10 +1591,10 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(column-number-mode t)
- '(custom-enabled-themes '(mariana))
+ '(custom-enabled-themes (list (intern theme-name)))
  '(custom-safe-themes
-<<<<<<< HEAD
-   '("2f0c5eee7bc5b05b3590cf8355e625289281c8cfcc4c2a45c0518e60c3e64f41"
+   '("d3879290d7be1497b7e9b9347cdc7c97fde8b828a971f11a9065587c46512ba1"
+     "2f0c5eee7bc5b05b3590cf8355e625289281c8cfcc4c2a45c0518e60c3e64f41"
      "3c67fe7b8429d6f7674a915c0552f753b7b47756f54eadc29d15ce6e088230ed"
      "159ae4abf0ad2c59a2510e5b96db6455dd5a6009334e2d1fb55d4f581e575978"
      "8833611549f9601a1ce916f81a7fe1991b9725cefb603a7bf7c27e15ba9da13c"
@@ -1597,9 +1616,6 @@ which is its intended use."
      "5950f03a3ef75043032c938bc1bee8094cb3a14d14b355a395321474727a9cf9"
      "c812704cb47660e990264ca40b5a109f8fee716a76485642004e012ea4d4f999"
      "1f4a44bf30dd3f8c368c18a4414bcb9d69a54842b4170ab693beb5ddf026df49"
-=======
-   '("6c096c3ce77f7c26b0514ebeceb37bbbbec45f0ca40bbe810b297d83b76497fc"
->>>>>>> 22b160d9783b5665e08f44fd09ebd3ba6fbe0180
      default))
  '(eldoc-idle-delay 0.15)
  '(elpher-default-url-type "gemini")
