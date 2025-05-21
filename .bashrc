@@ -1206,6 +1206,17 @@ function instances {
         | jq '.DBInstances[] | .DBInstanceIdentifier'
 }
 
+function cdk {
+    case "$1" in
+        diff | deploy) SUBCOMMAND="$1"
+                       shift
+                       command cdk "$SUBCOMMAND" --quiet "$@" \
+                           2> >(grep -v "Hold on while" >&2)
+                       stty sane;;
+        *) command cdk "$@";;
+    esac
+}
+
 # tags - show CDK tags for a project
 function tags {
     local ORIG_DIR
@@ -1997,7 +2008,7 @@ function git-show-name-only-diffs {
     for-all-commits 'git diff --name-only --color=always $COMMIT HEAD'
 }
 
-## General Git settings (not specific to GitHub)
+#### Git: general settings (not specific to GitHub)
 
 BREW_GIT_D="/opt/homebrew/bin"
 if [[ -d "$BREW_GIT_D" ]]; then
@@ -2170,7 +2181,7 @@ function branchify {
     echo "$DESTR" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr '[[:punct:]]' '-'
 }
 
-function gbj {
+function gnb {
     check-args 1 1 'TINY_SUMMARY' "$@" || return 1
     local SCRIBBLE="$1";
     if [[ -z "$GITHUB_USERNAME" ]]; then
@@ -2186,7 +2197,7 @@ function gbj {
     echo "$ISSUE" | pbcopy
 }
 
-## GitHub-specific Git settings
+#### GitHub-specific settings
 
 function branch {
     local REPO_NAME="$(basename "$(git rev-parse --show-toplevel)")"
@@ -2229,10 +2240,9 @@ function git-https-to-ssh {
     echo "$HTTPS_URL" | sed -e s'|^https://|git@github.com:|'
 }
 
-# branch BRANCH_NAME - display the GitHub web page for BRANCH_NAME
-function all_gists {
-    gists --limit -1
-}
+# function all-gists {
+#     gists --limit -1
+# }
 
 function gists {
     gh git list "$@"
@@ -2267,22 +2277,18 @@ function get-main-branch-name {
 
 # gb (Git Branch) - create a new branch based on the main one, and switch to it
 function gb {
-    check-args 1 1 'gb NEW_BRANCH_NAME' "$@" || return 1
-    local NEW_BRANCH_NAME MAIN
-    NEW_BRANCH_NAME="$1"
-
-    MAIN="$(git main)" \
-        && git switch --quiet "$MAIN" \
-        && git pull --quiet --ff-only  \
-        && git switch --create "$NEW_BRANCH_NAME" "$MAIN" \
-      | command grep -vE 'remote:'
-}
-
-# gb (Branch Create) - alias for gb, mnemonic because "b c" is the Magit
-# command to create and switch to a branch.
-# Shadows the crappy Unix built-in calculator bc(1).
-function bc {
-    gb "$@"
+    check-args 0 1 '[NEW_BRANCH_NAME]' "$@" || return 1
+    if [[ $# -eq 0 ]]; then
+        git branch --show-current
+    else
+        local MAIN_BRANCH
+        local NEW_BRANCH_NAME="$1"
+        MAIN_BRANCH="$(git main)" \
+            && git switch --quiet "$MAIN_BRANCH" \
+            && git pull --quiet --ff-only  \
+            && git switch --create "$NEW_BRANCH_NAME" "$MAIN_BRANCH" \
+                | command grep -vE 'remote:'
+    fi
 }
 
 # gist - view gists or create a gist
@@ -2594,6 +2600,10 @@ function pr {
 
 function prs {
     gh pr list | command grep -vE '^no open pull requests'
+}
+
+function prm {
+    gh pr list --author '@me' | command grep -vE '^no open pull requests'
 }
 
 # purl ("Pull request URL") - print the URL of the latest pull request on this branch.
@@ -3280,7 +3290,10 @@ function news { cast-text "$@" ;}
 function cel { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
 
 # d ("date") - give today's date in YYYY-MM-DD format.
-function d { date +%Y-%m-%d ;}
+function d {
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    date +%Y-%m-%d
+}
 
 function epoch2human {
     # check-args 1 1 "epoch2human EPOCH_SECONDS"
@@ -3419,6 +3432,7 @@ function tl {
 
 # Timestamp with time zone, no special chars, OK to interpolate into filenames
 function ts {
+    check-args 0 0 '[no-arguments]' "$@" || return 1
     date +%Y%m%dT%H%M%S%z "$@"
 }
 
@@ -3701,6 +3715,34 @@ function _j-check-env {
     return "$MY_EXIT_STATUS"
 }
 
+function jlabels {
+    _j-check-env || return 2
+    check-args 0 0 '[no arguments]' "$@" || return 1;
+
+    local -A UNIQUE_LABELS
+
+    function extract-unique-labels-from {
+        while IFS= read -r line; do
+            IFS=',' read -ra LABELS_ON_THIS_LINE <<< "$line"
+            for LABEL in "${LABELS_ON_THIS_LINE[@]}"; do
+                UNIQUE_LABELS["$LABEL"]="1"
+            done
+        done
+    }
+
+    extract-unique-labels-from < \
+        <(jira issue list --plain \
+                          --no-truncate \
+                          --columns "LABELS" \
+                          --jql "labels is not empty and (assignee = '$JIRA_USERNAME')" \
+              | awk '{print $2}' | tail -n +2)
+    
+    for LBL in "${!UNIQUE_LABELS[@]}"; do
+        echo "$LBL"
+    done \
+        | sort
+}
+
 function jiv { # view an existing issue
     _j-check-env || return 2
     check-args 1 1 'ISSUE' "$@" || return 1
@@ -3762,7 +3804,7 @@ function jas { # assign an existing issue
     fi
 }
 
-function jep { # create an epic
+function jec { # create an epic
     _j-check-env || return 2
     check-args 1 varargs '[--ADDITIONAL -J -I -RA --CLI-FLAGS] SHORT_TITLE [LABELS]' "$@" || return 1
     local -a JIRA_CLI_ARGS
@@ -3776,7 +3818,6 @@ function jep { # create an epic
     #          *) break;; # first non-flag arg: start of positional args
     #     esac
     # done
-
 
     # Required positional argument: the issue summary
     local ONE_LINER="$1"; shift
@@ -3806,7 +3847,7 @@ function jep { # create an epic
     fi
 }
 
-function jis { # create a "normal" issue, which in my workflow means a Task
+function jic { # create a "normal" issue, which in my workflow means a Task
     _j-check-env || return 2
     check-args 1 1 'SUMMARY_ONELINE' "$@" || return 1
     local ONE_LINER="$1"
@@ -3824,12 +3865,28 @@ function jis { # create a "normal" issue, which in my workflow means a Task
     return "$JIRA_CLI_EXIT_STATUS"
 }
 
-function jls { # list issues
+function jls { # list issues (including epics)
     _j-check-env || return 2
-    check-args 0 0 "" "$@" || return 1
+    check-args 0 0 '[no arguments]' "$@" || return 1
     
     jira issue list
 }
+
+function jle { # list epics only
+    _j-check-env || return 2
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    
+    jls --type Task
+}
+
+function jlt { # list tasks only
+    _j-check-env || return 2
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    
+    jls --type Epic
+}
+    
+    
 
 function jld { # list my Done issues
     _j-check-env || return 2
