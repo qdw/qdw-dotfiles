@@ -222,6 +222,34 @@ but it calls defvar under the hood."
 (require 'whitespace)
 (require 'yaml-mode)
 
+;;;; Settings for the Emacs package system
+  
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+;; (package-refresh-contents)
+;; (package-install-selected-packages)
+
+;; I'm running emacs as a daemon,
+;; so just require all these modules at once;
+;; don't get clever with lazy-loading.
+
+;;;; Buffer-management functions
+
+(defun buffer-saver-killer-helper (prompt-bool)
+  (save-some-buffers prompt-bool)
+  (mapc 'kill-buffer (cl-remove-if-not 'buffer-file-name (buffer-list))))
+    
+(defun kill-all-buffers-qdw ()
+  "Kill all file buffers, prompting to save each unsaved buffer"
+  (interactive)
+  (buffer-saver-killer-helper nil))
+
+(defun kill-all-file-buffers-without-prompting-qdw ()
+  "Kill all file buffers, first saving any that need it (without prompting)"
+  (interactive)
+  (buffer-saver-killer-helper 't))
+
 ;;;; Edit this file
 
 (defun ini ()
@@ -1371,7 +1399,8 @@ which is its intended use."
 ;;;; Editor MACroS settings
 
 ;;; Global macros/keybindings
-
+(keymap-global-set "M-`" 'unfill-paragraph-xah)
+(keymap-global-unset "C-c .")
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
 (keymap-global-set   "C-c /"     'grep-buffer-qdw)
 (keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
