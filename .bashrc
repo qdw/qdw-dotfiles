@@ -3743,11 +3743,12 @@ function jlabels {
         | sort
 }
 
-function jiv { # view an existing issue
+function jiv { # view issue
     _j-check-env || return 2
-    check-args 1 1 'ISSUE' "$@" || return 1
+    check-args 1 varargs 'ISSUE [JIRA_CLI_ARGS...]' "$@" || return 1
     local ISSUE="$1"
-    jira issue view "$ISSUE"
+    shift
+    jira issue view "$@" "$ISSUE"
 }
 
 function jiw { # open an issue in the web browser
@@ -3849,11 +3850,15 @@ function jec { # create an epic
 
 function jic { # create a "normal" issue, which in my workflow means a Task
     _j-check-env || return 2
-    check-args 1 1 'SUMMARY_ONELINE' "$@" || return 1
+    check-args 1 varargs 'SUMMARY_ONELINE [JIRA_CLI_ARGS...]' "$@" || return 1
     local ONE_LINER="$1"
+    shift
 
     local JIRA_CLI_OUTPUT JIRA_CLI_EXIT_STATUS
-    JIRA_CLI_OUTPUT="$(jira issue create --no-input --type Task --summary "$ONE_LINER")"
+    JIRA_CLI_OUTPUT="$(jira issue create --no-input \
+                                         --type Task \
+                                         "$@" \
+                                         --summary "$ONE_LINER")"
     JIRA_CLI_EXIT_STATUS="$?"
     if [[ "$JIRA_CLI_EXIT_STATUS" -eq 0 ]]; then
         local URL_OF_THE_NEW_ISSUE="$(echo "$JIRA_CLI_OUTPUT" | tail -1)"
@@ -3867,26 +3872,25 @@ function jic { # create a "normal" issue, which in my workflow means a Task
 
 function jls { # list issues (including epics)
     _j-check-env || return 2
-    check-args 0 0 '[no arguments]' "$@" || return 1
+    check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     
-    jira issue list
+    jira issue list "$@"
 }
 
 function jle { # list epics only
     _j-check-env || return 2
+    check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     check-args 0 0 '[no arguments]' "$@" || return 1
     
-    jls --type Task
+    jls --type Epic "$@"
 }
 
 function jlt { # list tasks only
     _j-check-env || return 2
-    check-args 0 0 '[no arguments]' "$@" || return 1
+    check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     
-    jls --type Epic
+    jls --type Epic "$@"
 }
-    
-    
 
 function jld { # list my Done issues
     _j-check-env || return 2
@@ -3917,21 +3921,21 @@ function jql {
     open -u "$(_jql2url "$QUERY")"
 }
 
-function jeip { # create an issue in an existing epic.
-    _j-check-env || return 2
-    check-args 2 varargs \
-               'EPIC_NAME ISSUE_SUMMARY_ONELINE [...]' \
-               "$@" \
-        || return 1
+# function jeip { # create an issue in an existing epic.
+#     _j-check-env || return 2
+#     check-args 2 varargs \
+#                'EPIC_NAME ISSUE_SUMMARY_ONELINE [...]' \
+#                "$@" \
+#         || return 1
 
-    local EPIC_NAME="$1"
-    shift
+#     local EPIC_NAME="$1"
+#     shift
     
-    local ISSUE_NAME
-    ISSUE_NAME="$(_create_issue "$@")" \
-        && jas "$ISSUE" \
-        && jira epic link --issue "$ISSUE_NAME" --epic "$EPIC_NAME"
-}
+#     local ISSUE_NAME
+#     ISSUE_NAME="$(_create_issue "$@")" \
+#         && jas "$ISSUE" \
+#         && jira epic link --issue "$ISSUE_NAME" --epic "$EPIC_NAME"
+# }
 
 #### Music-related settings
 
