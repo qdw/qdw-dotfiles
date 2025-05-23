@@ -76,7 +76,8 @@ function complain { # for multiline msgs (pass each line as a separate arg)
 }
 
 function err {
-    echo "error:" "$@" >&2
+    local CALLER="${FUNCNAME[1]}"
+    echo "$CALLER: error:" "$@" >&2
 }
 
 function warn {
@@ -799,9 +800,8 @@ function g {
 }
 
 function gbr {
-    check-args 1 1 'gbr REGEX' "$@" || return 1
-    local REGEX="$1"
-    g "$REGEX" ~/.bashr* ~/.*profile* ~/.site.bash*
+    check-args 1 varargs 'gbr [ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
+    g "$@" ~/.bashr* ~/.*profile* ~/.site.bash*
 }
 
 function ge {
@@ -957,33 +957,52 @@ source-if-exists ~/.bashrc.d/daemons.bash
 source-if-exists ~/.site.bash.d/preamble.bash
 source-if-exists ~/.secrets.bash
 
-## Bash completion settings
+## Bash completion and prompt settings
 ## Dependencies:
 ##     - Homebrew itself
 ##     - Homebrewed bash >= 5 (set as your login shell)
 ##     - The following additional Homebrew formulas:
 ##         - bash-completion@2
-##         - bash-git-prompt
 ##         - gh
 ##         - docker
 ##         - rclone
 ##         - openshift
-
+##
+##     - bash-git-prompt, preferably my fork: https://github.com/qdw/bash-git-prompt
 
 set -a
 GIT_PROMPT_THEME="Custom"
 GIT_PROMPT_ONLY_IN_REPO=1
 set +a
 
-
 if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
-    export BASH_COMPLETION_DIR="$HOMEBREW_ROOT/etc/bash_completion.d"
+    function use-gitprompt {
+        local OPTIONAL_WORKTREE="$1"
+    
+        local MY_FORKED_SCRIPT="$HOME/src/forks/bash-git-prompt/gitprompt.sh"
+        local ORIGINAL_SCRIPT="$HOMEBREW_ROOT/share/gitprompt.sh"
 
+        if [[ -f "$MY_FORKED_SCRIPT" ]]; then
+            if [[ "$OPTIONAL_WORKTREE" ]]; then
+                local BOUNDS="$(get-branch-name-bounds "$OPTIONAL_WORKTREE")"
+                if [[ "$BOUNDS" ]]; then
+                    read OFFSET LIMIT <<< "$BOUNDS"
+                    export GIT_PROMPT_BRANCH_OFFSET="$OFFSET"
+                    export GIT_PROMPT_BRANCH_LIMIT="$LIMIT"
+                fi
+            fi
+            source "$MY_FORKED_SCRIPT"
+        else
+            source "/opt/homebrew/share/gitprompt.sh"
+        fi
+    }
+
+    export BASH_COMPLETION_DIR="$HOMEBREW_ROOT/etc/bash_completion.d"
     # comp - activate shell completion
     function comp {
         function sc {
             for FILENAME in "$@"; do
-                my-source "$BASH_COMPLETION_DIR/${FILENAME}"
+                my-source "$BASH_COMPLETION_DIR/$FILENAME"
             done
         }
 
@@ -1009,7 +1028,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
                 ;;
         
             git)
-                my-source "$HOMEBREW_ROOT/share/gitprompt.sh"    
+                use-gitprompt "$(realpath "$PWD")"
                 sc "gh" \
                    "git-completion.bash"
                 ;;
@@ -1044,14 +1063,14 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
         if [[ -d "$REALPATH/.git" \
               && ( ! "$REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION" \
                        || \
-                   ! "$REALPATH" =~ $REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION ) \
-              && ( ! "$GIT_COMPLETION_ACTIVATED" \
-                       || \
-                     "$INSIDE_EMACS" ) ]]; then
-            my-source "$HOMEBREW_ROOT/share/gitprompt.sh"
-            my-source "$BASH_COMPLETION_DIR/gh"
-            my-source "$BASH_COMPLETION_DIR/git-completion.bash"
-            export GIT_COMPLETION_ACTIVATED=1
+                   ! "$REALPATH" =~ $REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION ) ]];
+        then
+            use-gitprompt "$REALPATH"
+            if [[ ! "$GIT_COMPLETION_ACTIVATED" ]]; then
+                my-source "$BASH_COMPLETION_DIR/gh"
+                my-source "$BASH_COMPLETION_DIR/git-completion.bash"
+                export GIT_COMPLETION_ACTIVATED=1
+            fi
         fi
     }
     
@@ -1467,7 +1486,7 @@ MY_EDITOR="$HOME/bin/emacs-function"
 
 set -a
 # GIT_EDITOR="$MY_EDITOR"
-# HOMEBREW_EDITOR="$HOME/bin/emacs-function"
+HOMEBREW_EDITOR="subl -w"
 EDITOR="$MY_EDITOR"
 VISUAL="$MY_EDITOR"
 if command-exists subl; then
@@ -2249,7 +2268,8 @@ function gists {
 }
 
 function readme {
-    gh repo view
+    check-args 0 varargs "readme [options to pass to 'gh repo view'" "$@" || return 1
+    gh repo view "$@"
 }
 
 function team {
@@ -2382,10 +2402,6 @@ function lst {
     fi
 }
 
-function readme {
-    gh repo view
-}
-
 # gcl (Git CLone) - quickly clone a repo belonging to my organization
 function gcl {
     check-args 1 2 'REPO_NAME [SRC_DIR] # defaults to ~/src' "$@" || return 1
@@ -2406,13 +2422,6 @@ function clone { gcl "$@" ;}
 function gdo { git diff origin HEAD ;}
 function gn { git diff --name-only "$@" ;}
 function gs { git status "$@" ;}
-
-# function mma {
-#     git add . \
-#         && git commit --allow-empty-message -m "" \
-#         && git push \
-#         && prl
-# }
 
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi {
