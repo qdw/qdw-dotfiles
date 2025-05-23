@@ -22,7 +22,6 @@
 (defun initialize-ui ()
   (interactive)
   (cond
-
     ((display-graphic-p)
      (set-face-font 'default "Menlo-17")
      (blink-cursor-mode -1))
@@ -202,6 +201,7 @@ but it calls defvar under the hood."
 (require 'fd-dired)
 (require 'flycheck)
 (require 'json)
+(require 'markdown-mode)
 (require 'magit)
 (require 'menu-bar)
 (require 'mouse)
@@ -317,7 +317,7 @@ but it calls defvar under the hood."
             ("IN_PROGRESS" . ,bright-yellow)
             ("GET_HELP" . ,bright-red)
             ("AWAITING_RESPONSE" . ,yellow)
-            ("QUESTION" . ,magenta)
+            ("QUESTION" . ,bright-magenta)
             ("YAK_SHAVING" . ,yellow)
 
             ("DONE" . ,green)
@@ -777,38 +777,33 @@ This command does the reverse of `fill-region'."
 
 ;;;; Shell settings
 
-(defun login-shell-command-qdw (command-string)
-  "Run a shell command, sourcing my ~/.bashrc first, so that my many custom shell functions are available, as they would be in a terminal emulator session. This doesn't shell-quote your arguments, so if you need to do that, do that"
-  (interactive "MShell command: ")
-  (shell-command (concat "source ~/.bashrc && " command-string)))
+(defun shell-command-qdw (&optional prefix)
+  "Prompt for a shell command If there is a region selected, then insert it as the last argument in the prompt, with the point positioned immediately before that last argument. If PREFIX is non-nil, then insert the command output into in the current buffer at point."
+  (interactive "P")
+   (let* ((prompt
+           "Shell command: ")
 
-(defun login-shell-command-and-show-output-qdw (command-string)
-  "Like login-shell-command, but show standard output and standard error (each in its own new buffer)"
-  (interactive "MShell command: ")
-  (shell-command (concat "source ~/.bashrc && INSIDE_EMACS=true " command-string) "stdout" "stderr"))
+          (final-arg
+           (if (not (use-region-p))
+               ""
+               (concat " " (shell-quote-argument
+                            (buffer-substring-no-properties
+                             (region-beginning)
+                             (region-end))))))
+          
+          (command-string
+           (minibuffer-with-setup-hook
+               (lambda ()
+                 (goto-char (+ 1 (length prompt))))
+               (read-shell-command prompt final-arg))))
+               
+     (shell-command
+      (concat
+       "source ~/.bashrc && INSIDE_EMACS=1 "
+       command-string))))
   
-(defun shell-in-dir ()
-  "Open an existing or new shell, cd'ing to the current dir if appropriate"
-  (interactive)
-  (letrec ((dir (if buffer-file-name
-                    (file-name-directory buffer-file-name)
-                    nil)))
-    (shell)
-    (when dir
-
-      ;; (goto-char (point-max))
-      ;; (comint-simple-send "cd " + dir))))
-      
-      (shell-cd dir))))
-
-;; Depends on my ~/.bashrc, which sets HOMEBREW_BIN
-
-(when
-  (getenv "HOMEBREW_BIN")
-  (setq explicit-shell-file-name
-        (concat (getenv "HOMEBREW_BIN") "/bash")))
-
 ;; Don't display the STDOUT or STDERR of quick shell commands
+
 (add-to-list 'display-buffer-alist
              '("\\*Async Shell Command\\*"
                (display-buffer-no-window)
@@ -816,6 +811,7 @@ This command does the reverse of `fill-region'."
 
 ;; Don't prompt me about shell sessions, debug sessions, et cetera
 ;; when I quit Emacs. Just kill them.
+
 (add-hook 'comint-exec-hook
           (lambda ()
             (set-process-query-on-exit-flag
@@ -870,8 +866,7 @@ This command does the reverse of `fill-region'."
 (defun ts()
   "Insert today's date in YYYY-MM-DD format."
   (interactive)
-  (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
-
+  (insert (shell-command-to-string "date +%Y-%m-%d")))
 
 ;;;; Search/compile/shell-command output buffer settings
 
@@ -936,28 +931,7 @@ This command does the reverse of `fill-region'."
   org-return-follows-link 't 
   org-startup-folded 't
   org-insert-heading '((heading . auto) (plain-list-item . auto)))
-
-(defun org-insert-jira-link-qdw ()
-  (interactive)
-  (letrec (
-           ;; (pre-filled-text (if (boundp 'jira-default-project-qdw)
-           ;;                      (concat jira-default-project-qdw "-")
-           ;;                      ""))
-           (pre-filled-text "")                                
-           (issue-name (read-string
-                         "Issue name (e.g. MYPROJ-0000): "
-                         pre-filled-text
-                         nil
-                         nil
-                         nil)))
-    (message (format "jira-default-project-qdw: %s\npre-filled-text: %s"
-                     jira-default-project-qdw
-                     pre-filled-text))
-
-    (org-insert-link nil
-                     (concat jiralib-url "/browse/" issue-name)
-                     issue-name)))
-                     
+  
 (defun org-linkify-buffer-qdw ()
   "Make each line in the buffer into an org-mode style link
 by enclosing it in [[double square brackets]]. This works
@@ -988,45 +962,39 @@ which is its intended use."
                            repo
                             pr-number)))
 
-;; Hide the PROPERTIES section if folded;
-;; pasted from https://stackoverflow.com/a/17492723
-;; FIXME: broken in Emacs 31
-;; (defun org-cycle-hide-drawers (state)
-;;   "Re-hide all drawers after a visibility state change."
-;;   (when (and (derived-mode-p 'org-mode)
-;;              (not (memq state '(overview folded contents))))
-;;     (save-excursion
-;;       (let* ((globalp (memq state '(contents all)))
-;;              (beg (if globalp
-;;                     (point-min)
-;;                     (point)))
-;;              (end (if globalp
-;;                     (point-max)
-;;                     (if (eq state 'children)
-;;                       (save-excursion
-;;                         (outline-next-heading)
-;;                         (point))
-;;                       (org-end-of-subtree t)))))
-;;         (goto-char beg)
-;;         (while (re-search-forward org-drawer-regexp end t)
-;;           (save-excursion
-;;             (beginning-of-line 1)
-;;             (when (looking-at org-drawer-regexp)
-;;               (let* ((start (1- (match-beginning 0)))
-;;                      (limit
-;;                        (save-excursion
-;;                          (outline-next-heading)
-;;                            (point)))
-;;                      (msg (msg) (format
-;;                             (concat
-;;                               "org-cycle-hide-drawers:  "
-;;                               "`:END:`"
-;;                               " line missing at position %s")
-;;                             (1+ start))))
-;;                 (if (re-search-forward "^[ \t]*:END:" limit t)
-;;                   (outline-flag-region start (point-at-eol) t)
-;;                   (user-error msg))))))))))
+;;;; Jira settings for org-mode
 
+(defun org-insert-jira-link-qdw ()
+  (interactive)
+  (letrec (
+           ;; (pre-filled-text (if (boundp 'jira-default-project-qdw)
+           ;;                      (concat jira-default-project-qdw "-")
+           ;;                      ""))
+           (pre-filled-text "")                                
+           (issue-name (read-string
+                         "Issue name (e.g. MYPROJ-0000): "
+                         pre-filled-text
+                         nil
+                         nil
+                         nil)))
+    (message (format "jira-default-project-qdw: %s\npre-filled-text: %s"
+                     jira-default-project-qdw
+                     pre-filled-text))
+
+    (org-insert-link nil
+                     (concat jiralib-url "/browse/" issue-name)
+                     issue-name)))
+                     
+
+;; ;; FIXME: doesn't work (defun jira-issue-create-from-region-qdw ()
+;;   (interactive)
+;;   (if (use-region-p)
+;;       (let ((summary (shell-quote-argument (buffer-substring-no-properties
+;;                                              (region-beginning)
+;;                                              (region-end)))))
+;;         (shell-command (concat
+;;           "source ~/.bashrc && INSIDE_EMACS=1 jic "
+;;           summary)))))
 
 (defun org-fold-qdw ()
   "In org-mode, set the VISIBILITY property of the element at point
@@ -1272,16 +1240,15 @@ which is its intended use."
   (interactive)
   (let* ((dir (file-name-directory buffer-file-name))
          (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
-    (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)))
+    (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)
     (if (not git-working-copy-root-dir)
         (message (format "Not a Git working copy: %s"
                          (file-name-directory buffer-file-name)))
         (replace-regexp git-working-copy-root-dir "" dir)
-        (message git-working-copy-root-dir))))
-      ;; (login-shell-command-and-show-output-qdw
-      ;; (message (format "gline %s %s" buffer-file-name (line-number-at-pos)))
-      ;; )
-       )))
+        (message (format "About to run gline in dir '%s':" git-working-copy-root-dir))
+        ;; (shell-command-qdw
+        (message
+         (format "gline %s %s" buffer-file-name (line-number-at-pos))))))
 
 ;; In the default view, show stashes and local branches.
 ;; Also, move the sections around a bit to suit my preferences.
@@ -1427,13 +1394,14 @@ which is its intended use."
 (keymap-global-set   "C-c t"     'toggle-theme)
 (keymap-global-set   "C-c u"     'uncomment-region)
 (keymap-global-set   "C-c v"     'vscode)
-(keymap-global-set   "M-1"       'login-shell-command-qdw)
-(keymap-global-set   "M-!"       'login-shell-command-and-show-output-qdw)
+(keymap-global-set   "M-!"       'shell-command-qdw)
 (keymap-global-set   "M-("       'eval-expression)
 (keymap-global-set   "M-5"       'query-replace-regexp)
 (keymap-global-set   "M-o"       'other-window-reverse)
 
 ;;;; Experimental settings to make Emacs's navigation commands work like vim's
+;;;; (cf. evil-mode)
+
 ;; (defun evilmacs-forward-word ()
 ;;   "Move point forward using Evil word motion."
 ;;   (interactive)
@@ -1445,7 +1413,6 @@ which is its intended use."
 ;;   "Move point backward using Evil word motion."
 ;;   (interactive)
 ;;   (goto-char (evil-backward-word-begin 1)))
-
 
 ;;;; c-mode macros/keybindings
 
@@ -1620,9 +1587,13 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(async-shell-command-buffer 'new-buffer)
  '(column-number-mode t)
- '(custom-enabled-themes (list (intern theme-name)))
+ '(custom-enabled-themes (list other-theme))
  '(custom-safe-themes
-   '("d3879290d7be1497b7e9b9347cdc7c97fde8b828a971f11a9065587c46512ba1"
+   '("b68524eed148bfa189d664ee70fc2c13495c9f6c797c8f28c64b1f826fb7a482"
+     "83b73b41370d521baf3f76a113375a99968be58f0cb4b62989b62d80753cc525"
+     "f1dc1f204b55a6a79a7e63b1e812eb638ef49f0773e4b09f91fdaccca1352ceb"
+     "d6509532859e16c4f3683d2fcc7cd27b98ec5ca10d8d615facbc91e7d3699a12"
+     "d3879290d7be1497b7e9b9347cdc7c97fde8b828a971f11a9065587c46512ba1"
      "2f0c5eee7bc5b05b3590cf8355e625289281c8cfcc4c2a45c0518e60c3e64f41"
      "3c67fe7b8429d6f7674a915c0552f753b7b47756f54eadc29d15ce6e088230ed"
      "159ae4abf0ad2c59a2510e5b96db6455dd5a6009334e2d1fb55d4f581e575978"

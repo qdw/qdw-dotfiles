@@ -778,9 +778,15 @@ extended-bright-white "#a6acb9"))
       
     ;;;; Markdown
     
+    `(markdown-language-keyword-face
+      ((t (:foreground ,bright-red))))
+    
     `(markdown-code-face
-      ((t (:noinherit :foreground ,magenta))))
+      ((t (:foreground ,cyan))))
 
+    `(markdown-inline-code-face
+      ((t (:inherit markdown-code-face))))
+    
     `(markdown-header-delimiter-face
       ((t :inherit font-lock-comment-delimiter-face)))
 
