@@ -1783,6 +1783,17 @@ function func {
     fi
 }
 
+# Save-to-file a function that you defined in an interactive shell
+function save-func {
+    check-args 1 1 'BASH_FUNCTION_NAME [FILENAME] # default: ~/.bashrc' "$@" \
+        || return 1;
+
+    local FUNCTION_NAME="$1"
+    local DEST_FILE="${1:-$HOME/.bashrc}"
+    
+    func "$FUNCTION_NAME" | bnw >> "$DEST_FILE"
+}
+
 # bat-head FILENAME NUMBER: use color bat to show a file's first n lines
 function bat-head {
     local FILENAME="$1"
