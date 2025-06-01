@@ -281,29 +281,28 @@ but it calls defvar under the hood."
 
 (defun overlay-org-colors-qdw () 
   (interactive)
-  (setopt
-   org-catch-invisible-edits "show"
-   org-todo-keywords '((sequence
-                       "TODO(t)"
-                       "NEXT_ACTION(n)"
-                       "IN_PROGRESS(i)"
-                       "GET_HELP(h)"
-                       "AWAITING_RESPONSE(a)"          
-                       "QUESTION(q)"
-                       "YAK_SHAVING(y)"
-                       "INFO(f)"
-                       "PROJECT(r)"
-                       "SUBPROJECT(s)"
-                       "POSTPONED(p)"
+  (setopt org-catch-invisible-edits "show"
+          org-todo-keywords '((sequence
+                               "TODO(t)"
+                               "NEXT_ACTION(n)"
+                               "IN_PROGRESS(i)"
+                               "GET_HELP(h)"
+                               "AWAITING_RESPONSE(a)"          
+                               "QUESTION(q)"
+                               "YAK_SHAVING(y)"
+                               "INFO(f)"
+                               "PROJECT(r)"
+                               "SUBPROJECT(s)"
+                               "POSTPONED(p)"
                        
-                       "|"
+                               "|"
 
-                       "DONE(d)"
-                       "WONTFIX(w)"
-                       )))
+                               "DONE(d)"
+                               "WONTFIX(w)"
+                               )))
 
-  (when (or (member 'tritium custom-enabled-themes)
-            (member 'mariana custom-enabled-themes))
+  ;; (when (or (member 'tritium custom-enabled-themes)
+  ;;           (member 'mariana custom-enabled-themes))
     (let ((org-keyword-to-color-qdw
           `(("TODO" . ,bright-magenta)
             ("NEXT_ACTION" . ,bright-red)
@@ -321,9 +320,9 @@ but it calls defvar under the hood."
             ("SUBPROJECT" . ,bright-cyan)
             )))
 
-    (setopt org-todo-keyword-faces
-          (mapc (lambda (pair) (add-to-list 'org-todo-keyword-faces pair))
-                org-keyword-to-color-qdw))))
+      (setopt org-todo-keyword-faces
+              (mapc (lambda (pair) (add-to-list 'org-todo-keyword-faces pair))
+                    org-keyword-to-color-qdw))))
 
 (overlay-org-colors-qdw)
 
@@ -346,7 +345,6 @@ but it calls defvar under the hood."
           (insert (propertize hex-string
                               'face `(:foreground ,hex-string)))
           (insert (concat "  " color-name "\n")))))
-
 
 (defun theme-test-pattern (&rest additional-colors)
   (interactive)
@@ -373,7 +371,6 @@ but it calls defvar under the hood."
       (erase-buffer)
       (dolist (co all-colors) (theme-insert-color co))
       (display-buffer buffer))))
-
       
 (defun idiosyncratic-test-pattern-qdw ()
   (interactive)
@@ -381,7 +378,6 @@ but it calls defvar under the hood."
                         "extended-bright-black"
                         "extended-black"
                         "extended-bright-red"))
-
 
 (defun theme-test-pattern-interleaved ()
   (interactive)
@@ -720,7 +716,7 @@ This command does the reverse of `fill-region'."
     (fill-region start end))))
 
 (setopt
- async-shell-command-buffer new-buffer
+ async-shell-command-buffer 'new-buffer
  column-number-mode t
  eldoc-idle-delay 0
  elpher-default-url-type "gemini"
@@ -756,7 +752,7 @@ This command does the reverse of `fill-region'."
     "/opt/homebrew/share/man/" "/opt/node/lib/node_modules/npm/man/"
     "/opt/node/share/man/" "/usr/X11/man" "/usr/local/share/man"
     "/usr/share/man"))
-                    
+
 ;;;; eBook/e-reader settings
 
 (add-to-list
