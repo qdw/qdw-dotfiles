@@ -1,17 +1,13 @@
 ;;;; Suppress noisy warnings about packages that use deprecated idioms.
-;;;; FIXME: somehow none of this works.
 
-;; (defun ignore-all-warnings (type message &rest args)
-;;   "Ignore all warnings."
-;;     (ignore))
-;; (advice-add 'display-warning :override #'ignore-all-warnings)
-;; (setq warning-minimum-level :emergency)
-;; (setq byte-compile-warnings nil)
-;; (setq warning-minimum-level :error)
+(setopt warning-minimum-level :error)
+(setopt warning-suppress-types '((comp) (obsolete)))
+(setopt warning-suppress-log-types '((comp) (obsolete)))
+(setopt byte-compile-warnings nil)
 
 ;;;; Hide window chrome
 
-(setq inhibit-startup-screen 't)
+(setopt inhibit-startup-screen 't)
 (require 'tool-bar)
 (if (boundp 'menu-bar-mode) (menu-bar-mode -1))
 (if (boundp 'tool-bar-mode) (tool-bar-mode -1))
@@ -24,16 +20,16 @@
   (cond
     ((display-graphic-p)
      (set-face-font 'default "Menlo-17")
-     (blink-cursor-mode -1))
-    
-    ('t
-     (xterm-mouse-mode 1)
-     (global-set-key [mouse-4]
-                     (lambda () (interactive) (scroll-down 1)))
-     (global-set-key [mouse-5]
-                     (lambda () (interactive) (scroll-up 1)))
-     (defun track-mouse (e))
-     (setq mouse-sel-mode 't))))
+     (blink-cursor-mode -1)
+
+     ('t
+      (xterm-mouse-mode 1)
+      (global-set-key [mouse-4]
+                      (lambda () (interactive) (scroll-down 1)))
+      (global-set-key [mouse-5]
+                      (lambda () (interactive) (scroll-up 1)))
+      (defun track-mouse (e))
+      (setopt mouse-sel-mode 't)))))
 
 (add-hook 'after-make-frame-functions
           (lambda (frame)
@@ -50,14 +46,31 @@
 
 ;;;; Basic comfort
 
+(put 'narrow-to-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
+(put 'downcase-region 'disabled nil)
+
+
+;; Overwrite the region (selection) when I type. This is how modern GUIs work.
+(delete-selection-mode 1) 
+
 (setq-default
- ;;; Settings for use with macOS
-
- ;; Consider filenames case-sensitive
- read-file-name-completion-ignore-case nil 
-
- ;; If I write non-ASCII chars in a buffer, save the file as Unicode
+ ;; If I write non-ASCII chars in a buffer, then save the file as Unicode
  prefer-coding-system 'utf-8
+
+ ;; Don't auto-hard-wrap lines
+ auto-fill-mode nil
+ word-wrap nil
+
+ cperl-indent-level 4
+ elisp-indent-level 2
+ json-encoding-default-indentation "  "
+ org-indent-indentation-per-level 4)
+
+
+(setopt
+ ;; Consider filenames case-sensitive (needed on macOS)
+ read-file-name-completion-ignore-case nil 
  
  ;; Warn when opening large files
  large-file-warning-threshold 100000000
@@ -66,36 +79,22 @@
  ;; (e.g. 'wc -l')
  require-final-newline 't
 
- ;; Natural-language settings
-
- ; Don't auto-hard-wrap lines!
- auto-fill-mode nil
- word-wrap nil
- 
- ; Single-space: always
+ ;; Single-space: always.
  colon-double-space nil 
  
- ; Single-space. Always
+ ;; Single-space. Always.
  sentence-end-double-space nil
-
- ; If I have a region selected, and I do some typing,
- ; overwrite region when I type. This is how modern GUIs work.
- delete-selection-mode +1
 
  ;; Auto-indentation settings
 
- ; Use spaces, not tabs.
+ ;; Use spaces, not tabs.
  indent-tabs-mode nil
- cperl-indent-level 4
- elisp-indent-level 2
- json-encoding-default-indentation "  "
- org-indent-indentation-per-level 4
  
- ; The first day of the week is Monday.
+ ;; The first day of the week is Monday.
  calendar-week-start-day 1
  
- ; If I have a region selected, then make command like query-replace
- ; operate on that region only
+ ;; If I have a region selected, then make commands like query-replace
+ ;; operate on that region only
  transient-mark-mode 't
 
  make-backup-files nil
@@ -119,7 +118,7 @@
   "Load FILE-NAME if it exists, and do nothing otherwise."
   (condition-case
       nil (load-file (expand-file-name file-name user-emacs-directory))
-      (error (message (concat "Error loading " file-name)))))
+      (error nil)))
       
 (defmacro setqu (&rest args)
   "Set multiple variables globally, overriding them if they are
@@ -138,7 +137,7 @@ but it calls defvar under the hood."
   
 ;;;; .ignore settings
 ;;;; This file is formatted exactly like .gitignore,
-;;;; and is honored by fd, rg, and maybe others?
+;;;; and is honored by fd, rg, and maybe others.
 
 (add-to-list 'auto-mode-alist
              '("\\.ignore\\'" . gitignore-mode))
@@ -151,11 +150,11 @@ but it calls defvar under the hood."
 (add-to-list 'load-path
              (expand-file-name "~/src/forks/mariana-theme"))
 
-(load-file-if-exists-qdw "secrets.el")
-(load-file-if-exists-qdw "site.el")
+;; (load-file-if-exists-qdw "secrets.el")
+;; (load-file-if-exists-qdw "site.el")
 
-(set 'jiralib-url (getenv "JIRA_BASE_URL"))
-(set 'jira-default-project-qdw (getenv "JIRA_DEFAULT_PROJECT"))
+(defvar jira-base-url (getenv "JIRA_BASE_URL"))
+(defvar jira-default-project-qdw (getenv "JIRA_DEFAULT_PROJECT"))
 (defvar slack-team (getenv "SLACK_TEAM"))
 
 ;;;; Dependency settings
@@ -166,7 +165,7 @@ but it calls defvar under the hood."
 
 ;; Don't show me warnings about deprecated Emacs Lisp idioms
 ;; (or about anything else).
-(setq warning-minimum-level :error)
+(setopt warning-minimum-level :error)
 
 ;; Also don't show me the not-a-warning about the deprecated
 ;; Common Lisp compat package, cl.el # FIXME: doesn't work
@@ -181,18 +180,15 @@ but it calls defvar under the hood."
 
 ;;;; Settings for the Emacs package system
   
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 ;; (package-refresh-contents)
-(package-install-selected-packages)
+;; (package-install-selected-packages)
 
 ;; I'm running emacs as a daemon,
 ;; so just require all these modules at once;
 ;; don't get clever with lazy-loading.
 
 (require 'ansi-color)
-(require 'blacken)
 (require 'comint)
 (require 'compile)
 (require 'dirtrack)
@@ -200,18 +196,17 @@ but it calls defvar under the hood."
 (require 'evil)
 (require 'fd-dired)
 (require 'flycheck)
+(require 'gptel)
 (require 'json)
 (require 'markdown-mode)
 (require 'magit)
 (require 'menu-bar)
 (require 'mouse)
-(require 'origami)
 (require 'org)
 (require 'osx-trash)
 (require 'package)
 (require 'paredit)
 (require 'pandoc-mode)
-;; (require 'per-buffer-theme)
 (require 'recentf)
 (require 'ruby-mode)
 (require 'scroll-bar)
@@ -219,16 +214,9 @@ but it calls defvar under the hood."
 (require 'tide)
 (require 'tool-bar)
 (require 'typescript-mode)
+(require 'woman)
 (require 'whitespace)
 (require 'yaml-mode)
-
-;;;; Settings for the Emacs package system
-  
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-;; (package-refresh-contents)
-;; (package-install-selected-packages)
 
 ;; I'm running emacs as a daemon,
 ;; so just require all these modules at once;
@@ -268,7 +256,7 @@ but it calls defvar under the hood."
 
 (set-cursor-color "DarkOrange1")
 
-;;;; Themes that I created or forked
+;;; Themes that I created or forked
 
 (defvar qdw-themes '("amber" "amber-without-bold" "mariana" "tritium"))
 
@@ -278,17 +266,22 @@ but it calls defvar under the hood."
  '("~/.emacs.d/qdw-themes"
    "~/src/forks/mariana-theme"))
 
-;;;; Load my current favorite theme
+;;; Load my current favorite theme
 
-(setq-default custom-enabled-themes '())
-(setq-default my-chosen-theme "tritium")
+(setopt custom-enabled-themes '())
+(defvar my-chosen-theme "tritium")
 (load-theme (intern my-chosen-theme) 't)
 
-;;;; Special colors for org-mode, overriding whatever theme I'm using
+;;; Use a special color theme for org-mode buffers, overriding whatever theme I'm using
+
+;; (require 'per-buffer-theme)
+;; (nconc per-buffer-theme-ignored-buffernames-regex ".")
+;; (setq per-buffer-theme-themes-alist '(((:theme . tritium)
+;;                                        (:buffernames ("main.org" "411.org")))))
 
 (defun overlay-org-colors-qdw () 
   (interactive)
-  (setq-default
+  (setopt
    org-catch-invisible-edits "show"
    org-todo-keywords '((sequence
                        "TODO(t)"
@@ -311,7 +304,7 @@ but it calls defvar under the hood."
 
   (when (or (member 'tritium custom-enabled-themes)
             (member 'mariana custom-enabled-themes))
-    (setq org-keyword-to-color-qdw
+    (let ((org-keyword-to-color-qdw
           `(("TODO" . ,bright-magenta)
             ("NEXT_ACTION" . ,bright-red)
             ("IN_PROGRESS" . ,bright-yellow)
@@ -326,9 +319,9 @@ but it calls defvar under the hood."
             ("INFO" . ,yellow)
             ("PROJECT" . ,blue)
             ("SUBPROJECT" . ,bright-cyan)
-            ))
+            )))
 
-    (setq org-todo-keyword-faces
+    (setopt org-todo-keyword-faces
           (mapc (lambda (pair) (add-to-list 'org-todo-keyword-faces pair))
                 org-keyword-to-color-qdw))))
 
@@ -501,7 +494,6 @@ but it calls defvar under the hood."
   (interactive)
   (customize-variable 'custom-enabled-themes))
 
-
 (defun toggle-theme ()
   "Toggle between my two favorite color themes, if applicable"
   (interactive)
@@ -518,10 +510,10 @@ but it calls defvar under the hood."
                               ('t
                                 nil))))
     (when (and (boundp 'other-theme) other-theme)
-          (custom-set-variables '(custom-enabled-themes
-                                  (list other-theme)))
+          (setopt custom-enabled-themes (list other-theme)
+                  per-buffer-theme-default-theme other-theme)
           (overlay-org-colors-qdw))))
-          
+
 
 (defun load-theme-wrapper-qdw (orig-fun theme &optional no-confirm no-enable)
   ;; Disable all currently enabled themes
@@ -532,16 +524,11 @@ but it calls defvar under the hood."
     (funcall orig-fun theme no-confirm no-enable)
     
     ;; Always use my custom org colors, regardless of theme
-    (overlay-org-colors-qdw)))
+    (overlay-org-colors-qdw))
+    
+   (setopt per-buffer-theme-default-theme other-theme))
                       
-(advice-add 'load-theme :around #'load-theme-wrapper-qdw)
-
-
-;; (defun theme-load-qdw (theme-name)
-;;   "Load one of my themes, then overlay my org-mode colors"
-;;   (custom-set-variable custom-enabled-themes '())
-;;   (load-theme theme-name)
-;;   (overlay-org-colors-qdw))
+(advice-add 'load-theme :around 'load-theme-wrapper-qdw)
 
 ;;;; Third-party themes that I like okay:
 ;;
@@ -569,22 +556,23 @@ use `dired-find-file' to open it in a new buffer."
       
 ;;;; Buffer list settings
 
-(setq ibuffer-formats
-      '((mark modified read-only " "
-              (name 40 40 :left :elide) ;; "Name" column width
-              " "
-              (size 9 -1 :right)
-              " "
-              (mode 16 16 :left :elide)
-              " "
-              filename-and-process)))
+(setopt ibuffer-formats
+        '((mark modified read-only " "
+                (name 40 40 :left :elide) ;; "Name" column width
+                " "
+                (size 9 -1 :right)
+                " "
+                (mode 16 16 :left :elide)
+                " "
+                filename-and-process)))
 
 
 ;;;; Alternative-editor settings
 
 ;; If a file is open in Emacs and another editor saves the file,
 ;; update the one in Emacs. Also do this for dired.
-(setq-default auto-revert-verbose nil)
+
+(setopt auto-revert-verbose nil)
 (when (not global-auto-revert-mode)
       (global-auto-revert-mode 't))
 
@@ -639,7 +627,7 @@ use `dired-find-file' to open it in a new buffer."
 ;;       (alt-editor command
 ;;        editor-file-name ))))
 
-;;;; QoL settings
+;;;; Quality-of-life settings
 
 (defun goto-column (num)
   "Move to column N (1-based) of the current line"
@@ -688,7 +676,7 @@ use `dired-find-file' to open it in a new buffer."
   ;; When I delete files in dired, send them to the macOS Trash
 
   (osx-trash-setup)
-  (setq-default delete-by-moving-to-trash 't)
+  (setopt delete-by-moving-to-trash 't)
   (defun system-move-file-to-trash (path)
     "Moves file at PATH to the macOS Trash
     according to `move-file-to-trash' convention.
@@ -705,14 +693,14 @@ use `dired-find-file' to open it in a new buffer."
   
   (dolist (gnu-ls '("/opt/homebrew/bin/gls" "/usr/local/bin/gls"))
     (when (file-exists-p gnu-ls)
-      (setq insert-directory-program
-            gnu-ls
+      (setopt insert-directory-program
+              gnu-ls
             
-            dired-use-ls-dired
-            t
+              dired-use-ls-dired
+              t
             
-            dired-listing-switches
-            "-aBhl --group-directories-first"))))
+              dired-listing-switches
+              "-aBhl --group-directories-first"))))
 
 ;;;; Human-language settings (including English)
 
@@ -727,10 +715,48 @@ This command does the reverse of `fill-paragraph'."
 (defun unfill-region-xah (start end)
   "Replace newline chars in region by single spaces.
 This command does the reverse of `fill-region'."
-  (interactive "r")
+  (interactive "r"
   (let ((fill-column 90002000))
-    (fill-region start end)))
+    (fill-region start end))))
 
+(setopt
+ async-shell-command-buffer new-buffer
+ column-number-mode t
+ eldoc-idle-delay 0
+ elpher-default-url-type "gemini"
+ exec-suffixes nil
+ explicit-bash-args '("--noediting" "-i" "-l")
+ ls-lisp-use-insert-directory-program nil
+ mode-line-position-column-format '(" %C")
+ mode-line-position-column-line-format '(" (%l,%C)")
+ neo-cwd-line-style 'text
+ neo-theme 'classic
+ ns-alternate-modifier 'none
+ ns-right-alternate-modifier 'meta
+ org-agenda-files '("/Users/quinn.weaver/main.org")
+ org-babel-load-languages '((shell . t) (emacs-lisp . t))
+ org-emphasis-alist '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim
+                                                               ("`" org-code verbatim) ("~" (:strike-through t))))
+ osx-trash-command '("trash" "-F")
+ package-selected-packages '(## ac-geiser ac-slime ack applescript-mode blacken company company-lua counsel-fd devil dired-sidebar dockerfile-mode dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser geiser-chez geiser-chibi git-modes glue go-mode gptai gptel gptel-aibo gptel-fn-complete ivy jenkinsfile-mode  json-mode logview lsp-origami lua-mode  macrostep-geiser magit magit-delta magithub markdown-mode multiple-cursors org org-bullets origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode paredit paredit-everywhere per-buffer-theme slime slime-repl-ansi-color symbol-overlay terraform-mode tide titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato)
+
+ sh-indent-statement-after-and nil
+ shell-command-dont-erase-buffer nil
+ shell-prompt-pattern "\"[[~].*$ "
+ woman-path
+   '("/Applications/Wireshark.app/Contents/Resources/share/man"
+    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/share/man"
+    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/man"
+    "/Applications/Xcode.app/Contents/Developer/usr/share/man"
+    "/Library/Apple/usr/share/man"
+    "/System/Cryptexes/App/usr/share/man"
+    "/Users/quinn.weaver/.local/share/man"
+    "/Users/quinn.weaver/share/man" "/opt/X11/share/man"
+    "/opt/homebrew/manpages/" "/opt/homebrew/opt/diffutils/share/man"
+    "/opt/homebrew/share/man/" "/opt/node/lib/node_modules/npm/man/"
+    "/opt/node/share/man/" "/usr/X11/man" "/usr/local/share/man"
+    "/usr/share/man"))
+                    
 ;;;; eBook/e-reader settings
 
 (add-to-list
@@ -741,6 +767,19 @@ This command does the reverse of `fill-region'."
      (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
      (nov-mode))))
      
+;;;; Generative AI/LLM/genai settings
+
+(defun get-openai-key ()
+  (getenv "OPENAI_API_KEY"))
+
+(defun get-curl-path ()
+  "/opt/homebrew/bin/curl")
+
+(setopt
+ gptel-api-key 'get-openai-key
+ gptel-use-curl 't
+ gptel--curl-path 'get-curl-path)
+
 ;;;; Shell-script-editing settings
 
 (defun remove-annoying-sh-mode-map-bindings ()
@@ -982,7 +1021,7 @@ which is its intended use."
                      pre-filled-text))
 
     (org-insert-link nil
-                     (concat jiralib-url "/browse/" issue-name)
+                     (concat jira-base-url "/browse/" issue-name)
                      issue-name)))
                      
 
@@ -1365,9 +1404,11 @@ which is its intended use."
 
 ;;;; Editor MACroS settings
 
-;;; Global macros/keybindings
+;; ;; Nuclear option
+;; (define-key key-translation-map (kbd "C-c a") (kbd "C-c z"))  ;; remaps C-c a to C-c z
+
+;;; Global keybindings
 (keymap-global-set "M-`" 'unfill-paragraph-xah)
-(keymap-global-unset "C-c .")
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
 (keymap-global-set   "C-c /"     'grep-buffer-qdw)
 (keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
@@ -1390,7 +1431,7 @@ which is its intended use."
 (keymap-global-set   "C-c o"     'rotate-windows)
 (keymap-global-set   "C-c s"     'isearch-forward-regexp)
 (keymap-global-set   "C-c r"     'isearch-backward-regexp)
-(keymap-global-set   "C-c C-q t" 'switch-theme)
+(keymap-global-set   "C-c C-c C-t" 'switch-theme)
 (keymap-global-set   "C-c t"     'toggle-theme)
 (keymap-global-set   "C-c u"     'uncomment-region)
 (keymap-global-set   "C-c v"     'vscode)
@@ -1414,26 +1455,25 @@ which is its intended use."
 ;;   (interactive)
 ;;   (goto-char (evil-backward-word-begin 1)))
 
-;;;; c-mode macros/keybindings
+;;;; C settings
 
 (keymap-set c-mode-map "RET" 'electric-newline-and-maybe-indent)
 (keymap-set c-mode-map "C-c {" 'beginning-of-defun)
 (keymap-set c-mode-map "C-c }" 'end-of-defun)
 
-;;;; dired-mode macros/keybindings
+;;;; dired-mode keybindings
 
 (keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
 
-;;;; help-command macros/keybindings
+;;;; help-command keybindings
 
 (define-key 'help-command (kbd "C-f") 'find-function)
 (define-key 'help-command (kbd "C-k") 'find-function-on-key)
 (define-key 'help-command (kbd "C-l") 'find-library)
 (define-key 'help-command (kbd "C-v") 'find-variable)
 
-;;;; org-mode macros/keybindings
+;;;; org-mode keybindings
 
-(keymap-unset org-mode-map "C-c RET")
 (keymap-set org-mode-map "C-c RET" 'org-open-at-point)
 (keymap-set org-mode-map "C-c >"   'org-insert-subheading-respect-content-qdw)
 (keymap-set org-mode-map "C-c ["   'org-table-move-column-left)
@@ -1446,17 +1486,15 @@ which is its intended use."
 (keymap-set org-mode-map "C-c ]"   'org-table-move-column-right)
 (keymap-set org-mode-map "C-c s"   'org-insert-slack-link)
 
-;;;; shell-mode macros/keybindings
+;;;; shell-mode keybindings
 
-(keymap-unset shell-mode-map "C-c .")
 (keymap-set shell-mode-map "C-c ." 'find-file-at-point-with-line-and-column-if-present)
-;; FIXME (keymap-global-set "C-c s" 'shell-in-dir)
 
-;;;; shell-script-editing-mode macros/keybindings
+;;;; shell-script-editing-mode keybindings
 
-(define-prefix-command 'sh-mode-prefix-map)
-(define-key sh-mode-map (kbd "C-c C-c") 'sh-mode-prefix-map)
-(keymap-unset sh-mode-map "C-c C-c i")
+;; (define-prefix-command 'sh-mode-prefix-map)
+;; (define-key sh-mode-map (kbd "C-c C-c") 'sh-mode-prefix-map)
+;; (keymap-unset sh-mode-map "C-c C-c i")
 
 ;;;; Binary-file-viewing settings
 
@@ -1542,11 +1580,12 @@ which is its intended use."
 ;;                     :foreground black)                    
 ;;
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                                                              ;;;;
-;;;; Don't change stuff below this comment; it's programmatically ;;;;
-;;;; maintained by the Customize system.                          ;;;;
-;;;;                                                              ;;;;
+;;;;                                                              
+;;;; Don't change stuff below this comment; it's programmatically 
+;;;; maintained by the Customize system.                          
+;;;;                                                              
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;; customize faces
@@ -1577,81 +1616,3 @@ which is its intended use."
  '(ansi-color-white ((t (:foreground "white") t)))
  '(ansi-color-yellow ((t (:foreground "yellow") t)))
  '(italic ((t (:underline t :slant normal :weight normal)))))
-
-;;;; customize other settings
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(async-shell-command-buffer 'new-buffer)
- '(column-number-mode t)
- '(custom-enabled-themes (list other-theme))
- '(custom-safe-themes
-   '("b68524eed148bfa189d664ee70fc2c13495c9f6c797c8f28c64b1f826fb7a482"
-     "83b73b41370d521baf3f76a113375a99968be58f0cb4b62989b62d80753cc525"
-     "f1dc1f204b55a6a79a7e63b1e812eb638ef49f0773e4b09f91fdaccca1352ceb"
-     "d6509532859e16c4f3683d2fcc7cd27b98ec5ca10d8d615facbc91e7d3699a12"
-     "d3879290d7be1497b7e9b9347cdc7c97fde8b828a971f11a9065587c46512ba1"
-     "2f0c5eee7bc5b05b3590cf8355e625289281c8cfcc4c2a45c0518e60c3e64f41"
-     "3c67fe7b8429d6f7674a915c0552f753b7b47756f54eadc29d15ce6e088230ed"
-     "159ae4abf0ad2c59a2510e5b96db6455dd5a6009334e2d1fb55d4f581e575978"
-     "8833611549f9601a1ce916f81a7fe1991b9725cefb603a7bf7c27e15ba9da13c"
-     "513e86c779765823244631afd7512f8781de9992d1a04e20ffc07536b5abf5c1"
-     "dcde5ee234edfae4c33cf8a115af01c1ac16ecd8c998685d25da02a7d1fd58b7"
-     "9e4c1fe99c24137cc7d3c972e63e7c294336a0e08a111d220bffe6ae6aa25d5f"
-     "6f6f83b1f1913e59ea0a7426a817bd174b77ba23fad8a2b477a8d685532b4b5b"
-     "bb0baaa8c02224f89cf0c9a97e7584c54bc78db194526c8df96bdc24e39c0e33"
-     "b208fb51ab6725140f7454dcef5816064cfd71c0c347866e27b3e30bacaa5424"
-     "5a897c2c1919bc2e13321534a250d4fafbf55fa82496cdf47080dc69a23d1468"
-     "b70a39d0a8ef98f231a22d39d9dced347275598ec202c8c138972ca40cd29fc0"
-     "d09acc0564824346c42919c5cc79edc0990e6f73c615a9c9ec28f4796864791f"
-     "81abc2c491be64d999588f05bc16672b771d8965099e16d0ceefc8d2fb6c682a"
-     "f027ed38df2792060c1558aabef13bd85cba7735da74d6720bea8e7b8ecaeeeb"
-     "52fddd1e2f5a6aecfd4ef03ead7bca5791fbbc6027da48a29b8f54b2f1eeea61"
-     "bec1808d1b07e9c43e9208f7bd72f9a84b1b1212fe1458fb5e87b822a78ac0b7"
-     "e72ff600fc010ca9abc1db4b7fc9facada4cbb1dbeef1d5a96c54d65b402aa14"
-     "afffef1edcc6fbeff42664696b5c4525de7662ad954754e7374f208df39b57e8"
-     "5950f03a3ef75043032c938bc1bee8094cb3a14d14b355a395321474727a9cf9"
-     "c812704cb47660e990264ca40b5a109f8fee716a76485642004e012ea4d4f999"
-     "1f4a44bf30dd3f8c368c18a4414bcb9d69a54842b4170ab693beb5ddf026df49"
-     default))
- '(eldoc-idle-delay 0.15)
- '(elpher-default-url-type "gemini")
- '(exec-suffixes nil)
- '(explicit-bash-args '("--noediting" "-i" "-l"))
- '(ls-lisp-use-insert-directory-program nil)
- '(mode-line-position-column-format '(" %C"))
- '(mode-line-position-column-line-format '(" (%l,%C)"))
- '(neo-cwd-line-style 'text)
- '(neo-theme 'classic)
- '(ns-alternate-modifier 'none)
- '(ns-right-alternate-modifier 'meta)
- '(org-agenda-files '("/Users/quinn.weaver/main.org"))
- '(org-babel-load-languages '((shell . t) (emacs-lisp . t)))
- '(org-emphasis-alist
-   '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim)
-     ("`" org-code verbatim) ("~" (:strike-through t))))
- '(osx-trash-command '("trash" "-F"))
- '(package-selected-packages
-   '(## ac-geiser ac-slime ack applescript-mode blacken company
-     company-lua counsel-fd devil dired-sidebar dockerfile-mode
-     dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil
-     fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser
-     geiser-chez geiser-chibi git-modes glue go-mode gptai ivy
-     jenkinsfile-mode jiralib2 json-mode logview lsp-origami lua-mode
-     lyrics-fetcher macrostep-geiser magit magit-delta magithub
-     markdown-mode multiple-cursors org org-bullets origami
-     origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode
-     paredit paredit-everywhere per-buffer-theme polymode slime
-     slime-repl-ansi-color symbol-overlay terraform-mode tide
-     titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode
-     w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato))
- '(safe-local-variable-values '((eval display-ansi-colors)))
- '(sh-indent-statement-after-and nil)
- '(shell-command-dont-erase-buffer nil)
- '(shell-prompt-pattern "\"[[~].*$ "))
- 
-(put 'narrow-to-region 'disabled nil)
-(put 'upcase-region 'disabled nil)
