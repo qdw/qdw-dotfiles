@@ -3592,21 +3592,22 @@ function gmail-search {
     open -u "${BASE_URL}/${URLENCODED_QUERY}"
 }
 
-function google {
-    local BASE_URL="http://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q="
+function goog {
+    check-args 1 1 'QUERY_STRING # no need to URL-encode' "$@" || return 1
+    local QUERY="$1"
 
-    if [[ $# -ne 1 ]]; then
-        echo "google: error: wrong number of arguments. Usage: google QUERY"
-    else
-        local INPUT_QUERY MASSAGED_QUERY
-        INPUT_QUERY="$1"
-        URLENCODED_QUERY=$(urlencode "$INPUT_QUERY")
-        open "${BASE_URL}${URLENCODED_QUERY}"
-    fi
+    local BASE_URL="https://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q="
+    local URLENCODED_QUERY="$(urlencode "$QUERY")"
+    open "${BASE_URL}${URLENCODED_QUERY}"
 }
 
-function goog {
-    google "$@"
+function ddg {
+    check-args 1 1 'QUERY_STRING # no need to URL-encode'
+    local QUERY="$1"
+
+    local BASE_URL="https://duckduckgo.com/?t=h_&q="
+    local URLENCODED_QUERY="$(urlencode "$QUERY")"
+    open "${BASE_URL}${URLENCODED_QUERY}"
 }
 
 function sheets {
