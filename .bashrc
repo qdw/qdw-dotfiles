@@ -582,7 +582,7 @@ function cdd {
 
 export HOMEBREW_CASK_OPTS="--appdir=$HOME/Applications"
 
-if [[ ! "$PATHS_SET_AT" ]]; then
+if [[ -z "$PATHS_SET_AT" ]]; then
     for HDIR in "/opt/homebrew" "/usr/local"; do
         if [[ -x "$HDIR/bin/brew" ]]; then
             set -a    
