@@ -801,7 +801,14 @@ function g {
 
 function gbr {
     check-args 1 varargs 'gbr [ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
-    g "$@" ~/.bashr* ~/.*profile* ~/.site.bash*
+    command grep \
+        -RH \
+        --exclude '*archived*' \
+        --color=yes \
+        "$@" \
+        ~/.bashr* \
+        ~/.*profile* \
+        ~/.site.bash*
 }
 
 function ge {
@@ -1782,6 +1789,28 @@ function func {
         return 1
     fi
 }
+
+# function funcs { # function search (by regex); display color defn if found
+#     check-args 1 1 'FUNCTION_NAME_REGEX' "$@" || return 1
+#     local REGEX="$1"
+    
+    
+#     for FUNCTION_NAME in $(awk \
+# '/function[[:space:]]*[[:alpha:]_][[:alnum:]_-]*[[:space:]]*{/ {print $2}' \
+# "$HOME/.bashr"*
+# ~/.*profile*
+# ~/.site.bash*
+     
+    
+#     )
+    
+# )
+#     do
+    
+#     | sed -n 's/^function[[:space:]]\+\([[:alpha:]_][[:alnum:]_]*\)[[:space:]]*{.*/\1/p'); do
+#         echo "$FUNCTION_NAME"
+#     done
+# }
 
 # Save-to-file a function that you defined in an interactive shell
 function save-func {
@@ -4075,7 +4104,7 @@ if [[ -z "$PATHS_SET_AT" ]]; then
     PATHS_SET_AT="$(date)"
 
     ## executable PATH
-    PATH="$HOME/.umt:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+    PATH="/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
     
     ## C settings/dynamic library path settings
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
