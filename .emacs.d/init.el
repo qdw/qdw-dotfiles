@@ -1612,3 +1612,47 @@ which is its intended use."
  '(ansi-color-white ((t (:foreground "white") t)))
  '(ansi-color-yellow ((t (:foreground "yellow") t)))
  '(italic ((t (:underline t :slant normal :weight normal)))))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(async-shell-command-buffer 'new-buffer)
+ '(column-number-mode t)
+ '(custom-enabled-themes (list other-theme))
+ '(custom-safe-themes t)
+ '(eldoc-idle-delay 0.15)
+ '(elpher-default-url-type "gemini")
+ '(exec-suffixes nil)
+ '(explicit-bash-args '("--noediting" "-i" "-l"))
+ '(ls-lisp-use-insert-directory-program nil)
+ '(mode-line-position-column-format '(" %C"))
+ '(mode-line-position-column-line-format '(" (%l,%C)"))
+ '(neo-cwd-line-style 'text)
+ '(neo-theme 'classic)
+ '(ns-alternate-modifier 'none)
+ '(ns-right-alternate-modifier 'meta)
+ '(org-agenda-files '("/Users/quinn.weaver/main.org"))
+ '(org-babel-load-languages '((shell . t) (emacs-lisp . t)))
+ '(org-emphasis-alist
+   '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim)
+     ("`" org-code verbatim) ("~" (:strike-through t))))
+ '(osx-trash-command '("trash" "-F"))
+ '(package-selected-packages
+   '(## ac-geiser ac-slime ack applescript-mode blacken company
+     company-lua counsel-fd devil dired-sidebar dockerfile-mode
+     dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil
+     fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser
+     geiser-chez geiser-chibi git-modes glue go-mode gptai gptel ivy
+     jenkinsfile-mode jiralib2 json-mode logview lsp-origami lua-mode
+     lyrics-fetcher macrostep-geiser magit magit-delta magithub
+     markdown-mode multiple-cursors org org-bullets origami
+     origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode
+     paredit paredit-everywhere per-buffer-theme polymode slime
+     slime-repl-ansi-color symbol-overlay terraform-mode tide
+     titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode
+     w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato))
+ '(safe-local-variable-values '((eval display-ansi-colors)))
+ '(sh-indent-statement-after-and nil)
+ '(shell-command-dont-erase-buffer nil)
+ '(shell-prompt-pattern "\"[[~].*$ "))
