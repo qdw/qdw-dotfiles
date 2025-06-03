@@ -1405,7 +1405,7 @@ function rm-bucket {
     fi
 }
 
-#### Editor settings: Emacs Emacs Emacs Emacs Emacs (and more Emacs)
+#### Editor settings/Emacs settings
 
 if [[ "$HOMEBREW_BIN" ]]; then
     set -a
@@ -1416,6 +1416,11 @@ else
     EMACS_BINARY="$(which emacs)"
     EMACSCLIENT_BINARY="$(which emacsclient)"
 fi
+
+function emk-clean {
+    cd ~/.emacs.d \
+        && fd --no-ignore '.el[cn]$' -x rm
+}
 
 ### Emacs daemon settings
 
@@ -1448,25 +1453,25 @@ function ke {
 #
 # This looks just like a normal terminal emacs session, but starts faster
 # (and can see buffers from other emacsclient sessions, but whatever).
-function emacs {
-    # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
-    # I directly type "emacs my-file", then...
-    if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
-        # If I'm inside an Emacs interactive-shell-mode buffer,
-        # then edit my-file in the same same Emacs window.
-        if [[ $# -gt 0 ]]; then
-            "$EMACSCLIENT_BINARY" --no-wait "$@"
-        else
-            echo "You're already in emacs, genius" >&2
-        fi
-    else
-        if the-emacs-daemon-is-running; then
-            "$EMACSCLIENT_BINARY" --tty "$@"
-        else
-            se "$@"
-        fi
-    fi
-}
+# function emacs {
+#     # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
+#     # I directly type "emacs my-file", then...
+#     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
+#         # If I'm inside an Emacs interactive-shell-mode buffer,
+#         # then edit my-file in the same same Emacs window.
+#         if [[ $# -gt 0 ]]; then
+#             "$EMACSCLIENT_BINARY" --no-wait "$@"
+#         else
+#             echo "You're already in emacs, genius" >&2
+#         fi
+#     else
+#         if the-emacs-daemon-is-running; then
+#             "$EMACSCLIENT_BINARY" --tty "$@"
+#         else
+#             se "$@"
+#         fi
+#     fi
+# }
 
 # se (Start Emacs-daemon): start the Emacs daemon.
 function se {
@@ -1492,7 +1497,7 @@ function re {
 MY_EDITOR="$HOME/bin/emacs-function"
 
 set -a
-# GIT_EDITOR="$MY_EDITOR"
+GIT_EDITOR="emacsclient"
 HOMEBREW_EDITOR="subl -w"
 EDITOR="$MY_EDITOR"
 VISUAL="$MY_EDITOR"
@@ -3159,7 +3164,7 @@ function pstree {
 }
 
 function p {
-    check-args 1 varargs 'p [GREP_FLAGS] REGEX' "$@" || return 1
+    check-args 1 varargs '[GREP_FLAGS] REGEX' "$@" || return 1
     
     ps auxwwwwww \
         | command grep -vE 'grep|rg' \
