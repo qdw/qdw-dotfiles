@@ -1,11 +1,21 @@
-;;;; Suppress noisy warnings about packages that use deprecated idioms.
+(setopt vc-follow-symlinks 't)
+(setopt load-prefer-newer 't)
+
+;; Settings for the Emacs package system
+
+(setq package-archives
+      '(("gnu"    . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa"  . "https://melpa.org/packages/")))
+
+;; Suppress noisy warnings about packages that use deprecated idioms.
 
 (setopt warning-minimum-level :error)
 (setopt warning-suppress-types '((comp) (obsolete)))
 (setopt warning-suppress-log-types '((comp) (obsolete)))
 (setopt byte-compile-warnings nil)
 
-;;;; Hide window chrome
+;; Hide window chrome
 
 (setopt inhibit-startup-screen 't)
 (require 'tool-bar)
@@ -13,14 +23,14 @@
 (if (boundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
-;;;; Settings for GUI Emacs versus terminal Emacs
+;; Settings for GUI Emacs versus terminal Emacs
 
 (defun initialize-ui ()
   (interactive)
   (cond
     ((display-graphic-p)
      (set-face-font 'default "Menlo-17")
-     (blink-cursor-mode -1)
+     (blink-cursor-mode -1))
 
      ('t
       (xterm-mouse-mode 1)
@@ -29,7 +39,7 @@
       (global-set-key [mouse-5]
                       (lambda () (interactive) (scroll-up 1)))
       (defun track-mouse (e))
-      (setopt mouse-sel-mode 't)))))
+      (setopt mouse-sel-mode 't))))
 
 (add-hook 'after-make-frame-functions
           (lambda (frame)
@@ -67,7 +77,6 @@
  json-encoding-default-indentation "  "
  org-indent-indentation-per-level 4)
 
-
 (setopt
  ;; Consider filenames case-sensitive (needed on macOS)
  read-file-name-completion-ignore-case nil 
@@ -98,9 +107,6 @@
  transient-mark-mode 't
 
  make-backup-files nil
- 
- ; Automatically follow symlinks to git-controlled files; don't ask
- vc-follow-symlinks 't
  
  cursor-type 'box
  column-number-mode nil
@@ -159,31 +165,6 @@ but it calls defvar under the hood."
 
 ;;;; Dependency settings
 
-;; If I hack .el files but forget to recompile them to .elc,
-;; then notice the newer .el file and read that instead.
-(setq-default load-prefer-newer 't)
-
-;; Don't show me warnings about deprecated Emacs Lisp idioms
-;; (or about anything else).
-(setopt warning-minimum-level :error)
-
-;; Also don't show me the not-a-warning about the deprecated
-;; Common Lisp compat package, cl.el # FIXME: doesn't work
-(advice-add
-  'message
-  :around
-  (lambda (orig &rest args)
-    (unless (and args
-                 (stringp (car args))
-                 (string-match-p "^Package cl is deprecated" (car args)))
-      (apply orig args))))
-
-;;;; Settings for the Emacs package system
-  
-(package-initialize)
-;; (package-refresh-contents)
-;; (package-install-selected-packages)
-
 ;; I'm running emacs as a daemon,
 ;; so just require all these modules at once;
 ;; don't get clever with lazy-loading.
@@ -196,15 +177,12 @@ but it calls defvar under the hood."
 (require 'evil)
 (require 'fd-dired)
 (require 'flycheck)
-(require 'gptel)
 (require 'json)
 (require 'markdown-mode)
-(require 'magit)
 (require 'menu-bar)
 (require 'mouse)
 (require 'org)
 (require 'osx-trash)
-(require 'package)
 (require 'paredit)
 (require 'pandoc-mode)
 (require 'recentf)
@@ -214,7 +192,6 @@ but it calls defvar under the hood."
 (require 'tide)
 (require 'tool-bar)
 (require 'typescript-mode)
-(require 'woman)
 (require 'whitespace)
 (require 'yaml-mode)
 
@@ -272,15 +249,9 @@ but it calls defvar under the hood."
 (defvar my-chosen-theme "tritium")
 (load-theme (intern my-chosen-theme) 't)
 
-;;; Use a special color theme for org-mode buffers, overriding whatever theme I'm using
-
-;; (require 'per-buffer-theme)
-;; (nconc per-buffer-theme-ignored-buffernames-regex ".")
-;; (setq per-buffer-theme-themes-alist '(((:theme . tritium)
-;;                                        (:buffernames ("main.org" "411.org")))))
-
 (defun overlay-org-colors-qdw () 
   (interactive)
+  
   (setopt org-catch-invisible-edits "show"
           org-todo-keywords '((sequence
                                "TODO(t)"
@@ -301,8 +272,8 @@ but it calls defvar under the hood."
                                "WONTFIX(w)"
                                )))
 
-  ;; (when (or (member 'tritium custom-enabled-themes)
-  ;;           (member 'mariana custom-enabled-themes))
+  (when (or (member 'tritium custom-enabled-themes)
+            (member 'mariana custom-enabled-themes))
     (let ((org-keyword-to-color-qdw
           `(("TODO" . ,bright-magenta)
             ("NEXT_ACTION" . ,bright-red)
@@ -322,7 +293,7 @@ but it calls defvar under the hood."
 
       (setopt org-todo-keyword-faces
               (mapc (lambda (pair) (add-to-list 'org-todo-keyword-faces pair))
-                    org-keyword-to-color-qdw))))
+                    org-keyword-to-color-qdw)))))
 
 (overlay-org-colors-qdw)
 
@@ -479,12 +450,6 @@ but it calls defvar under the hood."
 ;;; Light themes, for use outdoors
 ;; T  almost-mono: light theme, okay for using outdoors, I guess?
 ;; (load-theme 'almost-mono-cream 't)
-;;
-;;; Dark themes
-;; T  base16-greenscreen: green-phosphor nostalgia theme
-;; (load-theme 'base16-greenscreen 't)
-;; T  tron-legacy: shades of blue and green text on a black background
-;; (load-theme 'tron-legacy)
 
 (defun switch-theme ()
   (interactive)
@@ -507,7 +472,7 @@ but it calls defvar under the hood."
                                 nil))))
     (when (and (boundp 'other-theme) other-theme)
           (setopt custom-enabled-themes (list other-theme)
-                  per-buffer-theme-default-theme other-theme)
+                  per-buffer-theme-default-theme theme)
           (overlay-org-colors-qdw))))
 
 
@@ -734,24 +699,25 @@ This command does the reverse of `fill-region'."
  org-emphasis-alist '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim
                                                                ("`" org-code verbatim) ("~" (:strike-through t))))
  osx-trash-command '("trash" "-F")
- package-selected-packages '(## ac-geiser ac-slime ack applescript-mode blacken company company-lua counsel-fd devil dired-sidebar dockerfile-mode dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser geiser-chez geiser-chibi git-modes glue go-mode gptai gptel gptel-aibo gptel-fn-complete ivy jenkinsfile-mode  json-mode logview lsp-origami lua-mode  macrostep-geiser magit magit-delta magithub markdown-mode multiple-cursors org org-bullets origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode paredit paredit-everywhere per-buffer-theme slime slime-repl-ansi-color symbol-overlay terraform-mode tide titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato)
+ package-selected-packages '(## ac-geiser ac-slime ack applescript-mode blacken company company-lua counsel-fd devil dired-sidebar dockerfile-mode dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser geiser-chez geiser-chibi git-modes glue go-mode gptai ivy jenkinsfile-mode  json-mode logview lsp-origami lua-mode  macrostep-geiser markdown-mode multiple-cursors org org-bullets origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode paredit paredit-everywhere per-buffer-theme slime slime-repl-ansi-color symbol-overlay terraform-mode tide titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato)
 
  sh-indent-statement-after-and nil
  shell-command-dont-erase-buffer nil
  shell-prompt-pattern "\"[[~].*$ "
- woman-path
-   '("/Applications/Wireshark.app/Contents/Resources/share/man"
-    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/share/man"
-    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/man"
-    "/Applications/Xcode.app/Contents/Developer/usr/share/man"
-    "/Library/Apple/usr/share/man"
-    "/System/Cryptexes/App/usr/share/man"
-    "/Users/quinn.weaver/.local/share/man"
-    "/Users/quinn.weaver/share/man" "/opt/X11/share/man"
-    "/opt/homebrew/manpages/" "/opt/homebrew/opt/diffutils/share/man"
-    "/opt/homebrew/share/man/" "/opt/node/lib/node_modules/npm/man/"
-    "/opt/node/share/man/" "/usr/X11/man" "/usr/local/share/man"
-    "/usr/share/man"))
+ ;; woman-path
+ ;;   '("/Applications/Wireshark.app/Contents/Resources/share/man"
+ ;;    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/share/man"
+ ;;    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/man"
+ ;;    "/Applications/Xcode.app/Contents/Developer/usr/share/man"
+ ;;    "/Library/Apple/usr/share/man"
+ ;;    "/System/Cryptexes/App/usr/share/man"
+ ;;    "/Users/quinn.weaver/.local/share/man"
+ ;;    "/Users/quinn.weaver/share/man" "/opt/X11/share/man"
+ ;;    "/opt/homebrew/manpages/" "/opt/homebrew/opt/diffutils/share/man"
+ ;;    "/opt/homebrew/share/man/" "/opt/node/lib/node_modules/npm/man/"
+ ;;    "/opt/node/share/man/" "/usr/X11/man" "/usr/local/share/man"
+ ;;    "/usr/share/man")
+ )
 
 ;;;; eBook/e-reader settings
 
@@ -837,15 +803,8 @@ This command does the reverse of `fill-region'."
        "source ~/.bashrc && INSIDE_EMACS=1 "
        command-string))))
   
-;; Don't display the STDOUT or STDERR of quick shell commands
-
-(add-to-list 'display-buffer-alist
-             '("\\*Async Shell Command\\*"
-               (display-buffer-no-window)
-               (allow-no-window . t)))
-
-;; Don't prompt me about shell sessions, debug sessions, et cetera
-;; when I quit Emacs. Just kill them.
+;; ;; Don't prompt me about shell sessions, debug sessions, et cetera
+;; ;; when I quit Emacs. Just kill them.
 
 (add-hook 'comint-exec-hook
           (lambda ()
@@ -872,18 +831,19 @@ This command does the reverse of `fill-region'."
     (apply 'start-process
            procname nil "/usr/bin/osascript" "-e" applescript-args)))
 
-;; Before every command, run `dirs`. This should prevent shell-mode
-;; from frequently getting confused about what dir is the current
-;; working directory, as it often does.
+Before every command, run `dirs`. This should prevent shell-mode
+from frequently getting confused about what dir is the current
+working directory, as it often does.
 
 (defun dirs-qdw (ignored-string)
   (when (derived-mode-p 'shell-mode)
     (shell-resync-dirs)))
 
-;; (add-hook 'comint-input-filter-functions 'dirs-qdw)
-;; (add-hook 'comint-output-filter-functions 'dirs-qdw)
+(add-hook 'comint-input-filter-functions 'dirs-qdw)
+(add-hook 'comint-output-filter-functions 'dirs-qdw)
 
-;; Customized visual bell
+;;;; Visual bell settings
+
 (setq ring-bell-function
       (lambda ()
         (let ((orig-fg (face-foreground 'mode-line)))
@@ -892,9 +852,9 @@ This command does the reverse of `fill-region'."
                                (lambda (fg)
                                  (set-face-foreground 'mode-line fg))
                                orig-fg))))
-(tool-bar-mode -1)   ;; Turn off toolbar.
-(menu-bar-mode -1)   ;; Turn off menubar.
-(scroll-bar-mode -1) ;; Turn off scrollbar.
+(tool-bar-mode -1)   Turn off toolbar.
+(menu-bar-mode -1)   Turn off menubar.
+(scroll-bar-mode -1) Turn off scrollbar.
 
 ;;;; Time-related settings
 
@@ -910,12 +870,12 @@ This command does the reverse of `fill-region'."
   (let ((original-underline-face (face-attribute 'underline :underline)))
     (unwind-protect
       (progn
-          ;; Call the original compile function
+          Call the original compile function
           (apply orig-fun args)
-          ;; Change the 'underline' face in the compilation buffer
+          Change the 'underline' face in the compilation buffer
           (with-current-buffer "*compilation*"
             (set-face-attribute 'underline nil :underline nil)))
-      ;; Restore the original 'underline' face
+      Restore the original 'underline' face
       (set-face-attribute 'underline nil :underline original-underline-face))))
 
 (advice-add 'compile :around #'disable-underline-qdw)
@@ -923,7 +883,7 @@ This command does the reverse of `fill-region'."
 ;;;; Search settings
 
 (setq-default
- ;; Make isearch case-sensitive by default.
+ Make isearch case-sensitive by default.
  case-fold-search 't
 
  isearch-allow-scroll 'unlimited)
@@ -945,13 +905,14 @@ This command does the reverse of `fill-region'."
         (original-underline-face (face-attribute 'underline :underline)))
     (unwind-protect
       (progn
-        ;; Momentarily disable underlining; it looks bad in compilation-mode
+        Momentarily disable underlining; it looks bad in compilation-mode
         (set-face-attribute 'underline nil :underline t)
         (compile (concat command-string " " buffer-file-name)
                  't)))
     (set-face-attribute 'underline nil :underline original-underline-face)))
     
 ;;;; Makefile settings
+
 (add-hook 'makefile-mode-hook
           (lambda ()
             (setq indent-tabs-mode 't)))
@@ -978,13 +939,13 @@ which is its intended use."
   (goto-char (point-min))
   (replace-regexp "$" "]]"))
 
-;; This regexp is correct...
+This regexp is correct...
 (setq jira-ticket-regexp-qdw
       "\\b[[:upper:]]\\{2,10\\}-[[:digit:]]-\\{2,\\9}")
-;; ... but this function is broken                              
-;; (defun qdw-isearch-forward-jira-ticket
-;;   (interactive)
-;;   (isearch-resume jira-ticket-regexp-qdw 't nil 't nil 't))
+... but this function is broken                              
+(defun qdw-isearch-forward-jira-ticket
+  (interactive)
+  (isearch-resume jira-ticket-regexp-qdw 't nil 't nil 't))
     
 (defun org-insert-pr-link-qdw (repo pr-number)
   "Insert a link to a GitHub pull request.
@@ -995,16 +956,28 @@ which is its intended use."
                    (format "https://github.com/%s/%s/pull/%s"
                            getenv("GITHUB_ORG")
                            repo
-                            pr-number)))
+                           pr-number)))
 
-;;;; Jira settings for org-mode
+;;;; Experimental org-mode settings
+
+;; ;; Generated by bing; read, debug, and test
+;; 
+;; (defun org-insert-subheading-with-todo-qdw ()
+;;   "Insert a subheading with the same TODO state as the current heading."
+;;   (interactive)
+;;   (let ((current-todo (org-get-todo-state)))
+;;     (org-insert-subheading nil)
+;;     (when current-todo
+;;       (org-todo current-todo))))
+
+;;;; org-mode: Jira-related settings
 
 (defun org-insert-jira-link-qdw ()
   (interactive)
   (letrec (
-           ;; (pre-filled-text (if (boundp 'jira-default-project-qdw)
-           ;;                      (concat jira-default-project-qdw "-")
-           ;;                      ""))
+           (pre-filled-text (if (boundp 'jira-default-project-qdw)
+                                (concat jira-default-project-qdw "-")
+                                ""))
            (pre-filled-text "")                                
            (issue-name (read-string
                          "Issue name (e.g. MYPROJ-0000): "
@@ -1021,7 +994,8 @@ which is its intended use."
                      issue-name)))
                      
 
-;; ;; FIXME: doesn't work (defun jira-issue-create-from-region-qdw ()
+;; ;; FIXME: doesn't work
+;; (defun jira-issue-create-from-region-qdw ()
 ;;   (interactive)
 ;;   (if (use-region-p)
 ;;       (let ((summary (shell-quote-argument (buffer-substring-no-properties
@@ -1073,14 +1047,14 @@ which is its intended use."
       ((org-at-item-p) (org-indent-item))))
 
 
-;;;; Viewport management
+Viewport management
 
 (defun other-window-reverse ()
   (interactive)
   (other-window -1))
 
-;; Cycle through viewports.
-(defun rotate-windows () ;; from whattheemacsd.com
+Cycle through viewports.
+(defun rotate-windows () from whattheemacsd.com
   "Rotate your windows"
   (interactive)
   (cond ((not (> (count-windows) 1))
@@ -1110,19 +1084,19 @@ which is its intended use."
 ;;;; Scrolling settings
 
 (setq-default
- ;; Auto Scroll: keep me from craning my neck
- ;; by automatically scrolling when the cursor gets
- ;; a few lines from the top or bottom of a buffer
- ;; scroll-margin 13
+ Auto Scroll: keep me from craning my neck
+ by automatically scrolling when the cursor gets
+ a few lines from the top or bottom of a buffer
+ scroll-margin 13
  
- ;; When I first press Ctrl-L while on a given line,
- ;; scroll so that the line appears at the top,
- ;; not the middle, of the screen.
- ;;
- ;; This behavior is affected by the setting of
- ;; scroll-margin: the top of the screen is
- ;; defined as line 1 plus scroll-margin
- ;; (same for the bottom).
+ When I first press Ctrl-L while on a given line,
+ scroll so that the line appears at the top,
+ not the middle, of the screen.
+ 
+ This behavior is affected by the setting of
+ scroll-margin: the top of the screen is
+ defined as line 1 plus scroll-margin
+ (same for the bottom).
  recenter-positions '(top middle bottom))
 
 ;;;; tail settings
@@ -1149,28 +1123,20 @@ which is its intended use."
     ;; (print (concat filename ":" line))))
     (async-shell-command (concat "gh browse " filename ":" line)
                          "emacs-gh-stdout"
-                         "emacs-gh-stderr")))
+                          "emacs-gh-stderr")))
 
-
-;; If I have a Homebrewed git installed, use that
-;; instead of /usr/bin/git
-(dolist (git-executable
-          '("/opt/homebrew/bin/git" "/usr/local/bin/git"))
-  (when (file-exists-p git-executable)
-    (setq-default magit-git-executable git-executable)))
-
-;;; diff and merge settings
+;;;; diff and merge settings
 
 ;; When invoking ediff commands, use a new pane
 ;; to the right of the current pane
 ;; (don't create a new frame).
+
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 
-;;;; File-handling settings
+;;;; Executable-script settings
 
-;;; Smart setting of executable bits for...
+;; ... files that start with a shebang line
 
-;; ... files that start with a #! (shebang) line
 (add-hook 'after-save-hook
           'executable-make-buffer-file-executable-if-script-p)
 
@@ -1207,10 +1173,6 @@ which is its intended use."
           (goto-char start)
           (while (re-search-forward "-" end t)
             (replace-match "" t t)))))))
-
-;; Code-folding
-
-(global-origami-mode)
 
 ;;;; Interactive-shell settings
 
@@ -1249,8 +1211,10 @@ which is its intended use."
         (insert-file-contents scratch-buffer-file))))
 
 (add-hook 'kill-emacs-hook #'save-scratch-buffer-to-file)
+
 (add-hook 'emacs-startup-hook #'load-scratch-buffer-from-file)
-(setq lisp-indent-function #'common-lisp-indent-function)
+
+(setopt lisp-indent-function #'common-lisp-indent-function)
 (add-hook 'lisp-mode-hook (lambda ()
                             (paredit-mode +1)
                             (eldoc-mode +1)))
@@ -1269,52 +1233,6 @@ which is its intended use."
           (lambda ()
             (origami-mode +1)))
 
-;;;; Git/Magit settings
-
-(defun gline-qdw ()
-  (interactive)
-  (let* ((dir (file-name-directory buffer-file-name))
-         (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
-    (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)
-    (if (not git-working-copy-root-dir)
-        (message (format "Not a Git working copy: %s"
-                         (file-name-directory buffer-file-name)))
-        (replace-regexp git-working-copy-root-dir "" dir)
-        (message (format "About to run gline in dir '%s':" git-working-copy-root-dir))
-        ;; (shell-command-qdw
-        (message
-         (format "gline %s %s" buffer-file-name (line-number-at-pos))))))
-
-;; In the default view, show stashes and local branches.
-;; Also, move the sections around a bit to suit my preferences.
-
-(setq-default magit-section-initial-visibility-alist
-              '((stashes . show)))
-              
-(setq-default magit-status-sections-hook
-              '(magit-insert-status-headers
-                magit-insert-merge-log
-                magit-insert-rebase-sequence
-                magit-insert-am-sequence
-                magit-insert-sequencer-sequence
-                magit-insert-bisect-output
-                magit-insert-bisect-rest
-                magit-insert-bisect-log
-                magit-insert-untracked-files
-                magit-insert-stashes
-                magit-insert-unstaged-changes
-                magit-insert-staged-changes
-                magit-insert-local-branches
-                magit-insert-unpushed-to-pushremote
-                magit-insert-unpushed-to-upstream-or-recent
-                magit-insert-unpulled-from-pushremote
-                magit-insert-unpulled-from-upstream))
-                
-(defun magit-try ()
-  (interactive)
-  (magit-stage-modified)
-  (magit-commit)
-  (magit-push))
   
 ;;;; Settings > Hacking > General
 
@@ -1368,73 +1286,68 @@ which is its intended use."
 
 (add-hook 'typescript-mode-hook #'configure-typescript)
 
-;;;; Settings > Hacking > YAML
-;; yaml-font-lock-keywords -> yaml-hash-key-re   =   (1 font-lock-keyword-face)
+;; (defun prefix (string)
+;;   (interactive "MPrefix: ")
+;;   (query-replace-regexp "^" string))
 
-;;;; Lyrics-downloading settings
+;; (defalias 'pos 'goto-char)
 
-(defun munge-song-or-band-name (string)
-  "Prepare a STRING to be saved as a part of a filename."
-  (replace-regexp-in-string
-   (rx (or "<" ">" ":" "\"" "/" "\\" "|" "?" "*" " "))
-   "-"
-   string))
+;; (defun rg-in-current-directory-qdw (regexp)
+;;   (interactive "srg ")
+;;   (let ((current-dir (if (derived-mode-p 'dired-mode)
+;;                          dired-directory
+;;                          (file-name-directory (buffer-file-name)))))
+;;     (message regexp)
+;;     (fd-grep-dired current-dir regexp)))
 
+;; ;;;; Editor MACroS settings
 
-(setq lyrics-fetcher-format-file-name-method
-      'munge-song-or-band-name)
+;; ;; ;; Nuclear option
+;; ;; (define-key key-translation-map (kbd "C-c a") (kbd "C-c z"))  ;; remaps C-c a to C-c z
 
-(defun prefix (string)
-  (interactive "MPrefix: ")
-  (query-replace-regexp "^" string))
+;; ;;; Global keybindings
+;; (keymap-global-set "M-`" 'unfill-paragraph-xah)
+;; (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
+;; (keymap-global-set   "C-c /"     'grep-buffer-qdw)
+;; (keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
+;; (keymap-global-set   "RET"       'my-enter)
+;; (keymap-global-set   "C-c g"     'search-in-buffers)
+;; (keymap-global-set   "C-c 1"     'async-shell-command)
+;; (keymap-global-set   "C-c :"     'eval-expression)
+;; (keymap-global-set   "C-h F"     'describe-face)
+;; (keymap-global-set   "C-c C-f"   'multi-occur-in-matching-buffers)
+;; (keymap-global-set   "C-c C-b"   'ibuffer)
+;; (keymap-global-set   "C-c c"     'comment-region)
+;; (keymap-global-set   "C-c f"     'origami-toggle-node)
+;; (keymap-global-set   "C-c C-c g"     'rg-in-current-directory-qdw)
+;; (keymap-global-set   "C-c i"     'indent-region)
+;; (keymap-global-set   "C-c C-c b" 'edit-bashrc)
+;; (keymap-global-set   "C-c C-c i" 'ini)
+;; (keymap-global-set   "C-c SPC"   'iterm2-here)
+;; (keymap-global-set   "C-c l"     'shell)
+;; (keymap-global-set   "C-c n"     'display-line-numbers-mode)
+;; (keymap-global-set   "C-c o"     'rotate-windows)
+;; (keymap-global-set   "C-c s"     'isearch-forward-regexp)
+;; (keymap-global-set   "C-c r"     'isearch-backward-regexp)
+;; (keymap-global-set   "C-c C-c C-t" 'switch-theme)
+;; (keymap-global-set   "C-c t"     'toggle-theme)
+;; (keymap-global-set   "C-c u"     'uncomment-region)
+;; (keymap-global-set   "C-c v"     'vscode)
+;; (keymap-global-set   "M-!"       'shell-command-qdw)
+;; (keymap-global-set   "M-("       'eval-expression)
+;; (keymap-global-set   "M-5"       'query-replace-regexp)
+;; (keymap-global-set   "M-o"       'other-window-reverse)
 
-(defalias 'pos 'goto-char)
+;;;; Experimental lyrics-downloading settings
 
-(defun rg-in-current-directory-qdw (regexp)
-  (interactive "srg ")
-  (let ((current-dir (if (derived-mode-p 'dired-mode)
-                         dired-directory
-                         (file-name-directory (buffer-file-name)))))
-    (message regexp)
-    (fd-grep-dired current-dir regexp)))
-
-;;;; Editor MACroS settings
-
-;; ;; Nuclear option
-;; (define-key key-translation-map (kbd "C-c a") (kbd "C-c z"))  ;; remaps C-c a to C-c z
-
-;;; Global keybindings
-(keymap-global-set "M-`" 'unfill-paragraph-xah)
-(keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
-(keymap-global-set   "C-c /"     'grep-buffer-qdw)
-(keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
-(keymap-global-set   "RET"       'my-enter)
-(keymap-global-set   "C-c g"     'search-in-buffers)
-(keymap-global-set   "C-c 1"     'async-shell-command)
-(keymap-global-set   "C-c :"     'eval-expression)
-(keymap-global-set   "C-h F"     'describe-face)
-(keymap-global-set   "C-c C-f"   'multi-occur-in-matching-buffers)
-(keymap-global-set   "C-c C-b"   'ibuffer)
-(keymap-global-set   "C-c c"     'comment-region)
-(keymap-global-set   "C-c f"     'origami-toggle-node)
-(keymap-global-set   "C-c C-c g"     'rg-in-current-directory-qdw)
-(keymap-global-set   "C-c i"     'indent-region)
-(keymap-global-set   "C-c C-c b" 'edit-bashrc)
-(keymap-global-set   "C-c C-c i" 'ini)
-(keymap-global-set   "C-c SPC"   'iterm2-here)
-(keymap-global-set   "C-c l"     'shell)
-(keymap-global-set   "C-c n"     'display-line-numbers-mode)
-(keymap-global-set   "C-c o"     'rotate-windows)
-(keymap-global-set   "C-c s"     'isearch-forward-regexp)
-(keymap-global-set   "C-c r"     'isearch-backward-regexp)
-(keymap-global-set   "C-c C-c C-t" 'switch-theme)
-(keymap-global-set   "C-c t"     'toggle-theme)
-(keymap-global-set   "C-c u"     'uncomment-region)
-(keymap-global-set   "C-c v"     'vscode)
-(keymap-global-set   "M-!"       'shell-command-qdw)
-(keymap-global-set   "M-("       'eval-expression)
-(keymap-global-set   "M-5"       'query-replace-regexp)
-(keymap-global-set   "M-o"       'other-window-reverse)
+;; (defun munge-song-or-band-name (string)
+;;   "Prepare a STRING to be saved as a part of a filename."
+;;   (replace-regexp-in-string
+;;    (rx (or "<" ">" ":" "\"" "/" "\\" "|" "?" "*" " "))
+;;    "-"
+;;    string))
+;; (setq lyrics-fetcher-format-file-name-method
+;;       'munge-song-or-band-name)
 
 ;;;; Experimental settings to make Emacs's navigation commands work like vim's
 ;;;; (cf. evil-mode)
@@ -1508,86 +1421,62 @@ which is its intended use."
       gnus-newsgroup-maximum-articles nil
       gnus-thread-hide-subtree 't)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                                                             ;;;;
-;;;; Experimental area                                           ;;;;
-;;;;                                                             ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Generated by bing; read, debug, and test
-;; 
-;; (defun my/org-insert-subheading-with-todo ()
-;;   "Insert a subheading with the same TODO state as the current heading."
-;;   (interactive)
-;;   (let ((current-todo (org-get-todo-state)))
-;;     (org-insert-subheading nil)
-;;     (when current-todo
-;;       (org-todo current-todo))))
-
-
-
-;; Totally broken
-;; 
-;; python-mode doesn't yet use the new *-mode-map pattern, so...
-;; (add-hook 'python-mode-hook
-;;           (lambda ()
-;;             (local-set-key (kbd "RET") 'python-auto-indent-qdw)
-;;   ;; Run the Blacken real-time Python code auto-formatter,
-;;   ;; except on third-party code.
-;;   (unless (string-match
-;;            (expand-file-name "~/src-3")
-;;            buffer-file-name)
-;;     (blacken-mode)))
-
-;; ;; sketch
-;; (defun run-applescript (lines)
-;;   (async-shell-command
-;;     (format "osascript -e '%s'"
-;;             (shell-quote-argument string))))
-
-;;;; Settings for displaying the list of currently open buffers; see https://www.gnu.org/software/emacs/manual/html_node/elisp/The-Zen-of-Buffer-Display.html
-
-;; (defun display-buffer-in-new-window-qdw (buffer)
-;;   "Display BUFFER in a new window."
-;;   (let ((window (split-window-below)))
-;;     (set-window-buffer window buffer)
-;;     window))
-;;
-;; (defun list-buffers-qdw (&optional arg)
-;;   "Display a list of names of existing buffers.
-;;    The list is displayed in a buffer named `*Buffer List*'.
-;;    Note that buffers with names starting with spaces are omitted.
-;;    Non-null optional arg means show buffer `*Buffer List*',
-;;    even if it is empty. See also `buffer-menu'."
-;;   (interactive "P")
-;;   (let ((
-;;          display-buffer-overriding-action
-;;          ('display-buffer . display-buffer-in-new-window-qdw)
-;;        ))
-;;     (list-buffers arg)))
-;;
-
 ;; Prominently highlight any tabs used for indentation in source code,
 ;; (but not in the PostgreSQL source code or in Go, because
 ;; tabs are the convention there).
-;;
-;; (set-face-attribute 'whitespace-tab nil
-;;                     :background red
-;;                     :foreground black)                    
-;;
 
+(set-face-attribute 'whitespace-tab nil
+                    :background red
+                    :foreground black)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;                                                              
-;;;; Don't change stuff below this comment; it's programmatically 
-;;;; maintained by the Customize system.                          
-;;;;                                                              
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Git/Magit settings
 
-;;;; customize faces
+(require 'magit)
 
-(put 'downcase-region 'disabled nil)
-(put 'dired-find-alternate-file 'disabled nil)
+(defun gline-qdw ()
+  (interactive)
+  (let* ((dir (file-name-directory buffer-file-name))
+         (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
+    (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)
+    (if (not git-working-copy-root-dir)
+        (message (format "Not a Git working copy: %s"
+                         (file-name-directory buffer-file-name)))
+        (replace-regexp git-working-copy-root-dir "" dir)
+        (message (format "About to run gline in dir '%s':" git-working-copy-root-dir))
+        ;; (shell-command-qdw
+        (message
+         (format "gline %s %s" buffer-file-name (line-number-at-pos))))))
+
+In the default view, show stashes and local branches.
+Also, move the sections around a bit to suit my preferences.
+
+(setq-default magit-section-initial-visibility-alist
+              '((stashes . show)))
+              
+(setq-default magit-status-sections-hook
+              '(magit-insert-status-headers
+                magit-insert-merge-log
+                magit-insert-rebase-sequence
+                magit-insert-am-sequence
+                magit-insert-sequencer-sequence
+                magit-insert-bisect-output
+                magit-insert-bisect-rest
+                magit-insert-bisect-log
+                magit-insert-untracked-files
+                magit-insert-stashes
+                magit-insert-unstaged-changes
+                magit-insert-staged-changes
+                magit-insert-local-branches
+                magit-insert-unpushed-to-pushremote
+                magit-insert-unpushed-to-upstream-or-recent
+                magit-insert-unpulled-from-pushremote
+                magit-insert-unpulled-from-upstream))
+                
+(defun magit-try ()
+  (interactive)
+  (magit-stage-modified)
+  (magit-commit)
+  (magit-push))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -1612,47 +1501,53 @@ which is its intended use."
  '(ansi-color-white ((t (:foreground "white") t)))
  '(ansi-color-yellow ((t (:foreground "yellow") t)))
  '(italic ((t (:underline t :slant normal :weight normal)))))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(async-shell-command-buffer 'new-buffer)
- '(column-number-mode t)
- '(custom-enabled-themes (list other-theme))
- '(custom-safe-themes t)
- '(eldoc-idle-delay 0.15)
- '(elpher-default-url-type "gemini")
- '(exec-suffixes nil)
- '(explicit-bash-args '("--noediting" "-i" "-l"))
- '(ls-lisp-use-insert-directory-program nil)
- '(mode-line-position-column-format '(" %C"))
- '(mode-line-position-column-line-format '(" (%l,%C)"))
- '(neo-cwd-line-style 'text)
- '(neo-theme 'classic)
- '(ns-alternate-modifier 'none)
- '(ns-right-alternate-modifier 'meta)
- '(org-agenda-files '("/Users/quinn.weaver/main.org"))
- '(org-babel-load-languages '((shell . t) (emacs-lisp . t)))
- '(org-emphasis-alist
-   '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim)
-     ("`" org-code verbatim) ("~" (:strike-through t))))
- '(osx-trash-command '("trash" "-F"))
+`
+ ;; '(async-shell-command-buffer 'new-buffer)
+ ;; '(column-number-mode t)
+ ;; '(custom-enabled-themes (list other-theme))
+ ;; '(custom-safe-themes t)
+ ;; '(eldoc-idle-delay 0.15)
+ ;; '(elpher-default-url-type "gemini")
+ ;; '(exec-suffixes nil)
+ ;; '(explicit-bash-args '("--noediting" "-i" "-l"))
+ ;; '(ls-lisp-use-insert-directory-program nil)
+ ;; '(mode-line-position-column-format '(" %C"))
+ ;; '(mode-line-position-column-line-format '(" (%l,%C)"))
+ ;; '(neo-cwd-line-style 'text)
+ ;; '(neo-theme 'classic)
+ ;; '(ns-alternate-modifier 'none)
+ ;; '(ns-right-alternate-modifier 'meta)
+ ;; '(org-agenda-files '("/Users/quinn.weaver/main.org"))
+ ;; '(org-babel-load-languages '((shell . t) (emacs-lisp . t)))
+ ;; '(org-emphasis-alist
+ ;;   '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim)
+ ;;     ("`" org-code verbatim) ("~" (:strike-through t))))
+ ;; '(osx-trash-command '("trash" "-F"))
+ ;; '(package-selected-packages
+ ;;   '(## ac-geiser ac-slime ack applescript-mode blacken company
+ ;;     company-lua counsel-fd devil dired-sidebar dockerfile-mode
+ ;;     dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil
+ ;;     fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser
+ ;;     geiser-chez geiser-chibi git-modes glue go-mode gptai gptel ivy
+ ;;     jenkinsfile-mode jiralib2 json-mode logview lsp-origami lua-mode
+ ;;     lyrics-fetcher macrostep-geiser magit magit-delta magithub
+ ;;     markdown-mode multiple-cursors org org-bullets origami
+ ;;     origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode
+ ;;     paredit paredit-everywhere per-buffer-theme polymode slime
+ ;;     slime-repl-ansi-color symbol-overlay terraform-mode tide
+ ;;     titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode
+ ;;     w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato))
+ ;; '(safe-local-variable-values '((eval display-ansi-colors)))
+ ;; '(sh-indent-statement-after-and nil)
+ ;; '(shell-command-dont-erase-buffer nil)
+ ;; '(shell-prompt-pattern "\"[[~].*$ "))
+
+ '(custom-safe-themes 't)
  '(package-selected-packages
-   '(## ac-geiser ac-slime ack applescript-mode blacken company
-     company-lua counsel-fd devil dired-sidebar dockerfile-mode
-     dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil
-     fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser
-     geiser-chez geiser-chibi git-modes glue go-mode gptai gptel ivy
-     jenkinsfile-mode jiralib2 json-mode logview lsp-origami lua-mode
-     lyrics-fetcher macrostep-geiser magit magit-delta magithub
-     markdown-mode multiple-cursors org org-bullets origami
-     origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode
-     paredit paredit-everywhere per-buffer-theme polymode slime
-     slime-repl-ansi-color symbol-overlay terraform-mode tide
-     titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode
-     w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato))
- '(safe-local-variable-values '((eval display-ansi-colors)))
- '(sh-indent-statement-after-and nil)
- '(shell-command-dont-erase-buffer nil)
- '(shell-prompt-pattern "\"[[~].*$ "))
+   '(exec-path-from-shell ## ac-geiser ac-slime ack applescript-mode blacken company company-lua counsel-fd devil dired-sidebar dockerfile-mode dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser geiser-chez geiser-chibi git-modes glue go-mode ivy jenkinsfile-mode json-mode logview lsp-origami lua-mode macrostep-geiser markdown-mode multiple-cursors org org-bullets origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode paredit paredit-everywhere per-buffer-theme slime slime-repl-ansi-color symbol-overlay terraform-mode tide titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato)))
