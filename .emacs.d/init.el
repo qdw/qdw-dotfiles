@@ -798,17 +798,6 @@ This command does the reverse of `fill-region'."
     (apply 'start-process
            procname nil "/usr/bin/osascript" "-e" applescript-args)))
 
-;; Before every command, run `dirs`. This should prevent shell-mode
-;; from frequently getting confused about what dir is the current
-;; working directory, as it often does.
-
-(defun dirs-qdw (ignored-string)
-  (when (derived-mode-p 'shell-mode)
-    (shell-resync-dirs)))
-
-(add-hook 'comint-input-filter-functions 'dirs-qdw)
-(add-hook 'comint-output-filter-functions 'dirs-qdw)
-
 ;;;; Time-related settings
 
 (defun ts()
