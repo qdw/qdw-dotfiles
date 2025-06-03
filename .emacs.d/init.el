@@ -682,7 +682,8 @@ This command does the reverse of `fill-region'."
 
 (setopt
  async-shell-command-buffer 'new-buffer
- column-number-mode t
+ column-number-mode 't
+ custom-safe-themes 't
  eldoc-idle-delay 0
  elpher-default-url-type "gemini"
  exec-suffixes nil
@@ -699,8 +700,6 @@ This command does the reverse of `fill-region'."
  org-emphasis-alist '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim
                                                                ("`" org-code verbatim) ("~" (:strike-through t))))
  osx-trash-command '("trash" "-F")
- package-selected-packages '(## ac-geiser ac-slime ack applescript-mode blacken company company-lua counsel-fd devil dired-sidebar dockerfile-mode dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser geiser-chez geiser-chibi git-modes glue go-mode gptai ivy jenkinsfile-mode  json-mode logview lsp-origami lua-mode  macrostep-geiser markdown-mode multiple-cursors org org-bullets origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode paredit paredit-everywhere per-buffer-theme slime slime-repl-ansi-color symbol-overlay terraform-mode tide titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato)
-
  sh-indent-statement-after-and nil
  shell-command-dont-erase-buffer nil
  shell-prompt-pattern "\"[[~].*$ "
@@ -1286,57 +1285,55 @@ Cycle through viewports.
 
 (add-hook 'typescript-mode-hook #'configure-typescript)
 
-;; (defun prefix (string)
-;;   (interactive "MPrefix: ")
-;;   (query-replace-regexp "^" string))
+(defun prefix (string)
+  (interactive "MPrefix: ")
+  (query-replace-regexp "^" string))
 
-;; (defalias 'pos 'goto-char)
+(defalias 'pos 'goto-char)
 
-;; (defun rg-in-current-directory-qdw (regexp)
-;;   (interactive "srg ")
-;;   (let ((current-dir (if (derived-mode-p 'dired-mode)
-;;                          dired-directory
-;;                          (file-name-directory (buffer-file-name)))))
-;;     (message regexp)
-;;     (fd-grep-dired current-dir regexp)))
+(defun rg-in-current-directory-qdw (regexp)
+  (interactive "srg ")
+  (let ((current-dir (if (derived-mode-p 'dired-mode)
+                         dired-directory
+                         (file-name-directory (buffer-file-name)))))
+    (message regexp)
+    (fd-grep-dired current-dir regexp)))
 
-;; ;;;; Editor MACroS settings
+;;;; Editor MACroS settings
 
-;; ;; ;; Nuclear option
-;; ;; (define-key key-translation-map (kbd "C-c a") (kbd "C-c z"))  ;; remaps C-c a to C-c z
+;;;; Global keybindings
 
-;; ;;; Global keybindings
-;; (keymap-global-set "M-`" 'unfill-paragraph-xah)
-;; (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
-;; (keymap-global-set   "C-c /"     'grep-buffer-qdw)
-;; (keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
-;; (keymap-global-set   "RET"       'my-enter)
-;; (keymap-global-set   "C-c g"     'search-in-buffers)
-;; (keymap-global-set   "C-c 1"     'async-shell-command)
-;; (keymap-global-set   "C-c :"     'eval-expression)
-;; (keymap-global-set   "C-h F"     'describe-face)
-;; (keymap-global-set   "C-c C-f"   'multi-occur-in-matching-buffers)
-;; (keymap-global-set   "C-c C-b"   'ibuffer)
-;; (keymap-global-set   "C-c c"     'comment-region)
-;; (keymap-global-set   "C-c f"     'origami-toggle-node)
-;; (keymap-global-set   "C-c C-c g"     'rg-in-current-directory-qdw)
-;; (keymap-global-set   "C-c i"     'indent-region)
-;; (keymap-global-set   "C-c C-c b" 'edit-bashrc)
-;; (keymap-global-set   "C-c C-c i" 'ini)
-;; (keymap-global-set   "C-c SPC"   'iterm2-here)
-;; (keymap-global-set   "C-c l"     'shell)
-;; (keymap-global-set   "C-c n"     'display-line-numbers-mode)
-;; (keymap-global-set   "C-c o"     'rotate-windows)
-;; (keymap-global-set   "C-c s"     'isearch-forward-regexp)
-;; (keymap-global-set   "C-c r"     'isearch-backward-regexp)
-;; (keymap-global-set   "C-c C-c C-t" 'switch-theme)
-;; (keymap-global-set   "C-c t"     'toggle-theme)
-;; (keymap-global-set   "C-c u"     'uncomment-region)
-;; (keymap-global-set   "C-c v"     'vscode)
-;; (keymap-global-set   "M-!"       'shell-command-qdw)
-;; (keymap-global-set   "M-("       'eval-expression)
-;; (keymap-global-set   "M-5"       'query-replace-regexp)
-;; (keymap-global-set   "M-o"       'other-window-reverse)
+(keymap-global-set "M-`" 'unfill-paragraph-xah)
+(keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
+(keymap-global-set   "C-c /"     'grep-buffer-qdw)
+(keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
+(keymap-global-set   "RET"       'my-enter)
+(keymap-global-set   "C-c g"     'search-in-buffers)
+(keymap-global-set   "C-c 1"     'async-shell-command)
+(keymap-global-set   "C-c :"     'eval-expression)
+(keymap-global-set   "C-h F"     'describe-face)
+(keymap-global-set   "C-c C-f"   'multi-occur-in-matching-buffers)
+(keymap-global-set   "C-c C-b"   'ibuffer)
+(keymap-global-set   "C-c c"     'comment-region)
+(keymap-global-set   "C-c f"     'origami-toggle-node)
+(keymap-global-set   "C-c C-c g"     'rg-in-current-directory-qdw)
+(keymap-global-set   "C-c i"     'indent-region)
+(keymap-global-set   "C-c C-c b" 'edit-bashrc)
+(keymap-global-set   "C-c C-c i" 'ini)
+(keymap-global-set   "C-c SPC"   'iterm2-here)
+(keymap-global-set   "C-c l"     'shell)
+(keymap-global-set   "C-c n"     'display-line-numbers-mode)
+(keymap-global-set   "C-c o"     'rotate-windows)
+(keymap-global-set   "C-c s"     'isearch-forward-regexp)
+(keymap-global-set   "C-c r"     'isearch-backward-regexp)
+(keymap-global-set   "C-c C-c C-t" 'switch-theme)
+(keymap-global-set   "C-c t"     'toggle-theme)
+(keymap-global-set   "C-c u"     'uncomment-region)
+(keymap-global-set   "C-c v"     'vscode)
+(keymap-global-set   "M-!"       'shell-command-qdw)
+(keymap-global-set   "M-("       'eval-expression)
+(keymap-global-set   "M-5"       'query-replace-regexp)
+(keymap-global-set   "M-o"       'other-window-reverse)
 
 ;;;; Experimental lyrics-downloading settings
 
@@ -1503,51 +1500,5 @@ Also, move the sections around a bit to suit my preferences.
  '(italic ((t (:underline t :slant normal :weight normal)))))
 
 (custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
-`
- ;; '(async-shell-command-buffer 'new-buffer)
- ;; '(column-number-mode t)
- ;; '(custom-enabled-themes (list other-theme))
- ;; '(custom-safe-themes t)
- ;; '(eldoc-idle-delay 0.15)
- ;; '(elpher-default-url-type "gemini")
- ;; '(exec-suffixes nil)
- ;; '(explicit-bash-args '("--noediting" "-i" "-l"))
- ;; '(ls-lisp-use-insert-directory-program nil)
- ;; '(mode-line-position-column-format '(" %C"))
- ;; '(mode-line-position-column-line-format '(" (%l,%C)"))
- ;; '(neo-cwd-line-style 'text)
- ;; '(neo-theme 'classic)
- ;; '(ns-alternate-modifier 'none)
- ;; '(ns-right-alternate-modifier 'meta)
- ;; '(org-agenda-files '("/Users/quinn.weaver/main.org"))
- ;; '(org-babel-load-languages '((shell . t) (emacs-lisp . t)))
- ;; '(org-emphasis-alist
- ;;   '(("*" bold) ("/" italic) ("_" underline) ("=" org-verbatim verbatim)
- ;;     ("`" org-code verbatim) ("~" (:strike-through t))))
- ;; '(osx-trash-command '("trash" "-F"))
- ;; '(package-selected-packages
- ;;   '(## ac-geiser ac-slime ack applescript-mode blacken company
- ;;     company-lua counsel-fd devil dired-sidebar dockerfile-mode
- ;;     dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil
- ;;     fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser
- ;;     geiser-chez geiser-chibi git-modes glue go-mode gptai gptel ivy
- ;;     jenkinsfile-mode jiralib2 json-mode logview lsp-origami lua-mode
- ;;     lyrics-fetcher macrostep-geiser magit magit-delta magithub
- ;;     markdown-mode multiple-cursors org org-bullets origami
- ;;     origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode
- ;;     paredit paredit-everywhere per-buffer-theme polymode slime
- ;;     slime-repl-ansi-color symbol-overlay terraform-mode tide
- ;;     titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode
- ;;     w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato))
- ;; '(safe-local-variable-values '((eval display-ansi-colors)))
- ;; '(sh-indent-statement-after-and nil)
- ;; '(shell-command-dont-erase-buffer nil)
- ;; '(shell-prompt-pattern "\"[[~].*$ "))
-
- '(custom-safe-themes 't)
  '(package-selected-packages
    '(exec-path-from-shell ## ac-geiser ac-slime ack applescript-mode blacken company company-lua counsel-fd devil dired-sidebar dockerfile-mode dumb-jump elfeed elisp-slime-nav elpher elpy elpygen elquery evil fd-dired fish-mode flymake flymake-lua flymake-yamllint geiser geiser-chez geiser-chibi git-modes glue go-mode ivy jenkinsfile-mode json-mode logview lsp-origami lua-mode macrostep-geiser markdown-mode multiple-cursors org org-bullets origami-predef osx-plist osx-trash outshine ox-jira pandoc-mode paredit paredit-everywhere per-buffer-theme slime slime-repl-ansi-color symbol-overlay terraform-mode tide titlecase tron-legacy-theme tt-mode typescript-mode vimrc-mode w3m wgrep xterm-color yaml-mode yaml-pro yaml-tomato)))
