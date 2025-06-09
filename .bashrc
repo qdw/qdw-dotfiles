@@ -2608,6 +2608,7 @@ function prl {
     if [[ -z "$URL" ]]; then
         complain "Looks like you don't have any PRs open in this repo"
     else
+        echo "$URL"
         open "$URL"
     fi
 }
