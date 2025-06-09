@@ -721,7 +721,7 @@ This command does the reverse of `fill-region'."
       (global-copilot-mode))))
       
 (define-key global-map (kbd "<backtab>") #'rk/copilot-change-activation)
-  
+
 ;;;; Shell-script-editing settings
 
 ;; (defun remove-annoying-sh-mode-map-bindings ()
@@ -1079,6 +1079,7 @@ which is its intended use."
 ;; Globally enable dumb-jump, an it-just-works way to jump
 ;; from functions' invocations to their definitions of those
 ;; functions, which supports many languages.
+
 (add-hook 'xref-backend-functions 'dumb-jump-xref-activate)
 
 (defun my-enter ()
@@ -1205,64 +1206,57 @@ which is its intended use."
 
 ;;;; Editor MACroS settings
 
-;;;; Global keybindings
+;;;; Global keybindings, overridable by major and minor modes
 
-(keymap-global-set "M-!" 'shell-command-qdw)
-(keymap-global-set "M-`" 'unfill-paragraph-xah)
-(keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
-(keymap-global-set   "C-c /"     'grep-buffer-qdw)
-(keymap-global-set   "C-c C-c /" 'grep-all-buffers-qdw)
-(keymap-global-set   "RET"       'my-enter)
-(keymap-global-set   "C-c g"     'search-in-buffers)
-(keymap-global-set   "C-c 1"     'async-shell-command)
-(keymap-global-set   "C-c :"     'eval-expression)
-(keymap-global-set   "C-h F"     'describe-face)
-(keymap-global-set   "C-c C-f"   'multi-occur-in-matching-buffers)
-(keymap-global-set   "C-c C-b"   'ibuffer)
-(keymap-global-set   "C-c c"     'comment-region)
-(keymap-global-set   "C-c C-c g"     'rg-in-current-directory-qdw)
-(keymap-global-set   "C-c i"     'indent-region)
-(keymap-global-set   "C-c C-c b" 'edit-bashrc)
-(keymap-global-set   "C-c C-c i" 'ini)
-(keymap-global-set   "C-c SPC"   'iterm2-here)
-(keymap-global-set   "C-c l"     'shell)
-(keymap-global-set   "C-c n"     'display-line-numbers-mode)
-(keymap-global-set   "C-c o"     'rotate-windows)
-(keymap-global-set   "C-c s"     'isearch-forward-regexp)
-(keymap-global-set   "C-c r"     'isearch-backward-regexp)
-(keymap-global-set   "C-c C-c C-t" 'switch-theme)
-(keymap-global-set   "C-c t"     'toggle-theme-qdw)
-(keymap-global-set   "C-c u"     'uncomment-region)
-(keymap-global-set   "C-c v"     'vscode)
-(keymap-global-set   "M-("       'eval-expression)
-(keymap-global-set   "M-5"       'query-replace-regexp)
-(keymap-global-set   "M-o"       'other-window-reverse)
+(global-set-key (kbd "RET") 'my-enter)
 
-;;;; Experimental lyrics-downloading settings
+;;;; Global keybindings, but make them override major and minor modes' bindings
 
-;; (defun munge-song-or-band-name (string)
-;;   "Prepare a STRING to be saved as a part of a filename."
-;;   (replace-regexp-in-string
-;;    (rx (or "<" ">" ":" "\"" "/" "\\" "|" "?" "*" " "))
-;;    "-"
-;;    string))
-;; (setq lyrics-fetcher-format-file-name-method
-;;       'munge-song-or-band-name)
+(defvar qdw-override-mode-map (make-sparse-keymap)
+  "Keymap for `qdw-override-mode', used to override other modes' keymaps.")
 
-;;;; Experimental settings to make Emacs's navigation commands work like vim's
-;;;; (cf. evil-mode)
+(mapc
+ (lambda (ls) (define-key qdw-override-mode-map
+                          (kbd (car ls))
+                          (cadr ls)))
 
-;; (defun evilmacs-forward-word ()
-;;   "Move point forward using Evil word motion."
-;;   (interactive)
-;;   (goto-char (evil-forward-word-begin 1)))
+ '(("M-!"         shell-command-qdw)
+   ("M-`"         unfill-paragraph-xah)
+   ("C-c u"       uncomment-region)
+   ("C-c ."       find-file-at-point-with-line-and-column-if-present)
+   ("C-c /"       grep-buffer-qdw)
+   ("C-c C-c /"   grep-all-buffers-qdw)
+   ("C-c g"       search-in-buffers)
+   ("C-c 1"       async-shell-command)
+   ("C-c :"       eval-expression)
+   ("C-h F"       describe-face)
+   ("C-c C-f"     multi-occur-in-matching-buffers)
+   ("C-c C-b"     ibuffer)
+   ("C-c c"       comment-region)
+   ("C-c C-c g"   rg-in-current-directory-qdw)
+   ("C-c i"       indent-region)
+   ("C-c C-c b"   edit-bashrc)
+   ("C-c C-c i"   ini)
+   ("C-c SPC"     iterm2-here)
+   ("C-c l"       shell)
+   ("C-c n"       display-line-numbers-mode)
+   ("C-c o"       rotate-windows)
+   ("C-c s"       isearch-forward-regexp)
+   ("C-c r"       isearch-backward-regexp)
+   ("C-c C-c C-t" switch-theme)
+   ("C-c t"       toggle-theme-qdw)
+   ("C-c u"       uncomment-region)
+   ("C-c v"       vscode)
+   ("M-("         eval-expression)
+   ("M-5"         query-replace-regexp)
+   ("M-o"         other-window-reverse)))
 
-;; (keymap-global-set "M-f" 'evilmacs-forward-word)
-      
-;; (defun evilmacs-backward-word ()
-;;   "Move point backward using Evil word motion."
-;;   (interactive)
-;;   (goto-char (evil-backward-word-begin 1)))
+(define-minor-mode qdw-keymap-override-mode
+  "Minor mode to override major and minor mode keybindings."
+  :global t
+  :keymap qdw-override-mode-map)
+
+(qdw-keymap-override-mode +1) ; enable the override mode
 
 ;;;; C settings
 
@@ -1294,6 +1288,32 @@ which is its intended use."
 (keymap-set org-mode-map "C-c ["   'org-table-move-column-left)
 (keymap-set org-mode-map "C-c ]"   'org-table-move-column-right)
 (keymap-set org-mode-map "C-c s"   'org-insert-slack-link)
+
+;;;; Experimental lyrics-downloading settings
+
+;; (defun munge-song-or-band-name (string)
+;;   "Prepare a STRING to be saved as a part of a filename."
+;;   (replace-regexp-in-string
+;;    (rx (or "<" ">" ":" "\"" "/" "\\" "|" "?" "*" " "))
+;;    "-"
+;;    string))
+;; (setq lyrics-fetcher-format-file-name-method
+;;       'munge-song-or-band-name)
+
+;;;; Experimental settings to make Emacs's navigation commands work like vim's
+;;;; (cf. evil-mode)
+
+;; (defun evilmacs-forward-word ()
+;;   "Move point forward using Evil word motion."
+;;   (interactive)
+;;   (goto-char (evil-forward-word-begin 1)))
+
+;; (keymap-global-set "M-f" 'evilmacs-forward-word)
+      
+;; (defun evilmacs-backward-word ()
+;;   "Move point backward using Evil word motion."
+;;   (interactive)
+;;   (goto-char (evil-backward-word-begin 1)))
 
 ;;;; shell-script-editing-mode keybindings
 
