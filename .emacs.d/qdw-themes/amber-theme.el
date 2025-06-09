@@ -50,7 +50,8 @@
             blue  "#B37700"   ;; Dark amber, almost brown
          magenta  "#CC9900"   ;; Golden-amber, muted warmth
             cyan  "#A66F00"   ;; Cooler amber, reduced intensity
-           white  "#663F00"   ;; Strong amber brown highlight (burnt)
+           ;; white  "#663F00"   ;; Strong amber brown highlight (burnt)
+           white magenta
   )
   
 (setq
@@ -61,7 +62,8 @@
      bright-blue  "#CC9900"   ;; Rich golden amber, brighter than base blue
   bright-magenta  "#DDAA33"   ;; Warm orange-gold pop
      bright-cyan  "#BB8800"   ;; Coolest usable amber variant
-    bright-white  "#663F00"   ;; Strong amber brown highlight (burnt)
+    ;; bright-white  "#663F00"   ;; Strong amber brown highlight (burnt)
+    bright-white magenta
  )
 
 ;; (setq
