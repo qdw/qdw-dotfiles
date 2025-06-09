@@ -8,13 +8,6 @@
         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
         ("melpa"  . "https://melpa.org/packages/")))
 
-;; Suppress noisy warnings about packages that use deprecated idioms.
-
-;; (setopt warning-minimum-level :error)
-;; (setopt warning-suppress-types '((comp) (obsolete)))
-;; (setopt warning-suppress-log-types '((comp) (obsolete)))
-;; (setopt byte-compile-warnings nil)
-
 ;; Hide window chrome
 
 (setopt inhibit-startup-screen 't)
@@ -184,6 +177,7 @@ but it calls defvar under the hood."
 
 (require 'ansi-color)
 (require 'cc-mode)
+(require 'copilot)
 (require 'comint)
 (require 'compile)
 (require 'dirtrack)
@@ -457,26 +451,15 @@ but it calls defvar under the hood."
   (interactive)
   (customize-variable 'custom-enabled-themes))
 
-;; (defun toggle-theme ()
-;;   "Toggle between my two favorite color themes, if applicable"
-;;   (interactive)
-;;   (letrec ((theme (car custom-enabled-themes))
-;;            (other-theme (cond ((> (length custom-enabled-themes) 1)
-;;                                nil)
-                              
-;;                               ((eq theme 'tritium)
-;;                                'mariana)
-                              
-;;                               ((eq theme 'mxariana)
-;;                                'tritium)
-                              
-;;                               ('t
-;;                                 nil))))
-;;     (when (and (boundp 'other-theme) other-theme)
-;;           (setopt custom-enabled-themes (list other-theme)
-;;                   per-buffer-theme-default-theme theme)
-;;           (overlay-org-colors-qdw))))
-
+(defun toggle-theme-qdw ()
+  "Toggle between my two favorite color themes, if applicable"
+  (interactive)
+  (let* ((theme (car custom-enabled-themes))
+         (other-theme (cond ((eq theme 'tritium) 'mariana)
+                            ((eq theme 'mariana) 'tritium)
+                            ('t nil))))
+    (when other-theme
+      (setopt custom-enabled-themes (list other-theme)))))
 
 (defun load-theme-wrapper-qdw (orig-fun theme &optional no-confirm no-enable)
   ;; Disable all currently enabled themes
@@ -624,7 +607,7 @@ use `dired-find-file' to open it in a new buffer."
 
 ;;;; GUI Emacs settings
 
-;;;; macOS settings
+;; Open PNGs in the Preview app, not in Emacs
 
 (when (string= system-type "darwin")
   ;; Open PNGs with the system PNG viewer, not in Emacs
@@ -698,8 +681,7 @@ This command does the reverse of `fill-region'."
                       ("=" org-verbatim verbatim)
                       ("`" org-code verbatim)
                       ("~" (:strike-through t)))
- recenter-positions '(top middle bottom)
- scroll-margin 13)
+ recenter-positions '(top middle bottom))
 
 ;;;; eBook/e-reader settings
 
@@ -710,7 +692,36 @@ This command does the reverse of `fill-region'."
      (add-to-list 'load-path (expand-file-name "~/src-3/nov.el") nil)
      (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
      (nov-mode))))
+     
+;;;; AI/LLM/genai settings
 
+(defun copilot-disable-p-qdw ()
+  "When copilot should not automatically show completions."
+  (not (derived-mode-p 'typescript-mode)))
+  
+(add-to-list 'copilot-disable-predicates 'copilot-disable-p-qdw)
+
+;; Adapted from https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup/
+(defun rk/copilot-change-activation ()
+  "Switch between three activation modes:
+  - automatic: copilot will automatically overlay completions
+  - manual: you need to press a key (M-C-<return>) to trigger completions
+  - off: copilot is completely disabled."
+  (interactive)
+  (if (and copilot-mode rk/copilot-manual-mode)
+      (progn
+        (message "deactivating copilot")
+        (global-copilot-mode -1)
+        (setq rk/copilot-manual-mode nil))
+    (if copilot-mode
+        (progn
+          (message "activating copilot manual mode")
+          (setq rk/copilot-manual-mode t))
+      (message "activating copilot mode")
+      (global-copilot-mode))))
+      
+(define-key global-map (kbd "<backtab>") #'rk/copilot-change-activation)
+  
 ;;;; Shell-script-editing settings
 
 ;; (defun remove-annoying-sh-mode-map-bindings ()
@@ -747,28 +758,28 @@ This command does the reverse of `fill-region'."
 
 ;;;; Shell settings
 
-;; (defun shell-command-qdw (&optional prefix)
-;;   "Prompt for a shell command. If there is a region selected, then insert it as the last argument in the prompt, with the point positioned immediately before that last argument. If PREFIX is non-nil, then insert the command output into in the current buffer at point."
-;;   (interactive "P")
-;;    (let* ((prompt
-;;            "Shell command: ")
+(defun shell-command-qdw (&optional prefix)
+  "Prompt for a shell command. If there is a region selected, then insert it as the last argument in the prompt, with the point positioned immediately before that last argument. If PREFIX is non-nil, then insert the command output into in the current buffer at point."
+  (interactive "P")
+   (let* ((prompt
+           "Shell command: ")
 
-;;           (final-arg
-;;            (if (not (use-region-p))
-;;                ""
-;;                (concat " " (shell-quote-argument
-;;                             (buffer-substring-no-properties
-;;                              (region-beginning)
-;;                              (region-end))))))
+          (final-arg
+           (if (not (use-region-p))
+               ""
+               (concat " " (shell-quote-argument
+                            (buffer-substring-no-properties
+                             (region-beginning)
+                             (region-end))))))
          
-;;           (command-string
-;;            (minibuffer-with-setup-hook
-;;                (lambda ()
-;;                  (goto-char (+ 1 (length prompt))))
-;;                (read-shell-command prompt final-arg))))
+          (command-string
+           (minibuffer-with-setup-hook
+               (lambda ()
+                 (goto-char (+ 1 (length prompt))))
+               (read-shell-command prompt final-arg))))
      
-;;      (shell-command
-;;       (concat "source ~/.bashrc && INSIDE_EMACS=1 " command-string))))
+     (shell-command
+      (concat "source ~/.bashrc && INSIDE_EMACS=1 " command-string))))
   
 ;; Don't prompt me about shell sessions, debug sessions, et cetera
 ;; when I quit Emacs. Just kill them.
@@ -962,6 +973,25 @@ which is its intended use."
     nil
     (concat "https://" slack-team ".slack.com/channels/#" channel-name)
     (concat "#" channel-name)))
+    
+;;;; Settings for org-babel (org's system for displaying code/command results inline)
+
+(setopt org-confirm-babel-evaluate nil
+        org-babel-load-languages
+        '((emacs-lisp . t)
+          (python . t)
+          (shell . t)))
+          
+(defun org-just-eval-blocks-qdw ()
+  "Automatically evaluate specific org-mode #+CALL: lines on buffer visit."
+  (interactive)
+  (when (derived-mode-p 'org-mode)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^#\\+CALL:" nil t)
+        (org-babel-lob-execute-maybe)))))
+
+(add-hook 'org-mode-hook #'org-just-eval-blocks-qdw)
 
 ;; (defun org-insert-pr-link-qdw (repo pr-number)
 ;;   (interactive "MRepo: \nnPR number: ")
@@ -1177,6 +1207,7 @@ which is its intended use."
 
 ;;;; Global keybindings
 
+(keymap-global-set "M-!" 'shell-command-qdw)
 (keymap-global-set "M-`" 'unfill-paragraph-xah)
 (keymap-global-set   "C-c ."     'find-file-at-point-with-line-and-column-if-present)
 (keymap-global-set   "C-c /"     'grep-buffer-qdw)
@@ -1200,7 +1231,7 @@ which is its intended use."
 (keymap-global-set   "C-c s"     'isearch-forward-regexp)
 (keymap-global-set   "C-c r"     'isearch-backward-regexp)
 (keymap-global-set   "C-c C-c C-t" 'switch-theme)
-(keymap-global-set   "C-c t"     'toggle-theme)
+(keymap-global-set   "C-c t"     'toggle-theme-qdw)
 (keymap-global-set   "C-c u"     'uncomment-region)
 (keymap-global-set   "C-c v"     'vscode)
 (keymap-global-set   "M-("       'eval-expression)
@@ -1296,8 +1327,6 @@ which is its intended use."
 
 ;;;; Git/Magit settings
 
-;; (require 'magit)
-
 ;; (defun gline-qdw ()
 ;;   (interactive)
 ;;   (let* ((dir (file-name-directory buffer-file-name))
@@ -1349,7 +1378,7 @@ which is its intended use."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit pandoc-mode osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
+   '(copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit pandoc-mode osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -1374,4 +1403,3 @@ which is its intended use."
  '(ansi-color-white ((t (:foreground "white") t)))
  '(ansi-color-yellow ((t (:foreground "yellow") t)))
  '(italic ((t (:underline t :slant normal :weight normal)))))
-
