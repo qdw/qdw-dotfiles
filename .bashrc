@@ -2652,8 +2652,7 @@ function pr {
         elif [[ "$1" =~ $PR_NUMBER_REGEX ]]; then
             gh pr view --web "$1"
         else
-            create_pr | tee >(pbcopy) ;; PR URL -> clipboard
-            # open "$URL"
+            create_pr
         fi
     }
 
