@@ -719,8 +719,6 @@ This command does the reverse of `fill-region'."
           (setq rk/copilot-manual-mode t))
       (message "activating copilot mode")
       (global-copilot-mode))))
-      
-(define-key global-map (kbd "<backtab>") #'rk/copilot-change-activation)
 
 ;;;; Shell-script-editing settings
 
@@ -1220,7 +1218,8 @@ which is its intended use."
                           (kbd (car ls))
                           (cadr ls)))
 
- '(("M-!"         shell-command-qdw)
+ '(("<backtab>"    rk/copilot-change-activation)
+   ("M-!"         shell-command-qdw)
    ("M-`"         unfill-paragraph-xah)
    ("C-c u"       uncomment-region)
    ("C-c ."       find-file-at-point-with-line-and-column-if-present)
