@@ -64,3 +64,5 @@ jenkins_output.*
 **/__snapshots__/**
 site.el
 
+
+**/.claude/settings.local.json
