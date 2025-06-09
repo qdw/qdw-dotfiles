@@ -80,10 +80,6 @@ function err {
     echo "$CALLER: error:" "$@" >&2
 }
 
-function warn {
-    echo "warning:" "$@" >&2
-}
-
 if [[ "$MY_DEBUG" ]]; then
     function debug {
         echo "Debug: $@" >&2
@@ -793,9 +789,9 @@ function g {
     local REGEX="$1"
     shift
     if [[ $# -eq 0 ]]; then
-        my-grep $GREP_RECURSE "$REGEX" "."
+        my-grep -i $GREP_RECURSE "$REGEX" "."
     else
-        my-grep $GREP_RECURSE "$REGEX" "$@"
+        my-grep -i $GREP_RECURSE "$REGEX" "$@"
     fi
 }
 
@@ -991,7 +987,10 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
 
         if [[ -f "$MY_FORKED_SCRIPT" ]]; then
             if [[ "$OPTIONAL_WORKTREE" ]]; then
+
+                # (function get-branch-name-bounds is defined in ~/.site.bash.d/preamble.bash)
                 local BOUNDS="$(get-branch-name-bounds "$OPTIONAL_WORKTREE")"
+            
                 if [[ "$BOUNDS" ]]; then
                     read OFFSET LIMIT <<< "$BOUNDS"
                     export GIT_PROMPT_BRANCH_OFFSET="$OFFSET"
@@ -1407,17 +1406,18 @@ function rm-bucket {
 
 #### Editor settings/Emacs settings
 
-if [[ "$HOMEBREW_BIN" ]]; then
-    set -a
-    EMACS_BINARY="$HOMEBREW_BIN/emacs"
-    EMACSCLIENT_BINARY="$HOMEBREW_BIN/emacsclient"
-    set +a
-else
-    EMACS_BINARY="$(which emacs)"
-    EMACSCLIENT_BINARY="$(which emacsclient)"
-fi
+function install-emacs-plus {
+    check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 29' "$@" || return 1
+    local VERSION_NUMBER="$1"
+    
+    set -euo pipefail
+    brew install --formula --build-from-source "emacs-plus@${VERSION_NUMBER}" \
+                                                   --with-mailutils \
+                                                   --with-modern-doom3-icon \
+                                                   --without-cocoa
+}
 
-function emk-clean {
+function emacs-package-clean {
     cd ~/.emacs.d \
         && fd --no-ignore '.el[cn]$' -x rm
 }
@@ -1460,13 +1460,13 @@ function emacs {
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
         if [[ $# -gt 0 ]]; then
-            "$EMACSCLIENT_BINARY" --no-wait "$@"
+            command emacsclient --no-wait "$@"
         else
             echo "You're already in emacs, genius" >&2
         fi
     else
         if the-emacs-daemon-is-running; then
-            "$EMACSCLIENT_BINARY" --tty "$@"
+            command emacsclient --tty "$@"
         else
             se "$@"
         fi
@@ -1818,8 +1818,8 @@ function func {
 # }
 
 # Save-to-file a function that you defined in an interactive shell
-function save-func {
-    check-args 1 1 'BASH_FUNCTION_NAME [FILENAME] # default: ~/.bashrc' "$@" \
+function save-function {
+    check-args 1 2 'BASH_FUNCTION_NAME [FILENAME] # default: ~/.bashrc' "$@" \
         || return 1;
 
     local FUNCTION_NAME="$1"
@@ -2348,7 +2348,7 @@ function gb {
     else
         local MAIN_BRANCH
         local NEW_BRANCH_NAME="$1"
-        MAIN_BRANCH="$(git main)" \
+        MAIN_BRANCH="$(get-main-branch-name)" \
             && git switch --quiet "$MAIN_BRANCH" \
             && git pull --quiet --ff-only  \
             && git switch --create "$NEW_BRANCH_NAME" "$MAIN_BRANCH" \
@@ -2506,7 +2506,7 @@ function repos {
 
     if [[ ! "$GITHUB_ORG" ]]; then
         complain "repos: error: env var GITHUB_ORG is not set. Set it to your team name"
-        return
+        return 1
     fi
         
     if [[ $# -eq 0 ]]; then
@@ -2525,17 +2525,23 @@ function repos {
     # Search in various places for repos matching PATTERN,
     # stopping at the first place where we find a match.
     {
-        verbose-print "searching $GITHUB_ORG repos"
+        verbose-print "Searching $GITHUB_ORG repos..."
+        verbose-print "------------------------------"
+        verbose-print
         gh repo list --limit 2000 "$GITHUB_ORG" | command grep -E "$PATTERN"
     } \
     || \
     {
-        verbose-print "searching personal repos"
+        verbose-print "Searching personal repos..."
+        verbose-print "---------------------------"
+        verbose-print
         gh repo list --limit 2000 | command grep -E "$PATTERN"
     } \
     || \
     {
-        verbose-print "opening a browser and searching all repos on github.com"
+        verbose-print "Searching all repos on github.com (in browser)..."
+        verbose-print "-------------------------------------------------"
+        verbose-print
         open "https://github.com/search?type=repositories&q=${PATTERN}"
     }
 }
@@ -2555,8 +2561,12 @@ function repo {
         if     ! gh repo view --web "$GITHUB_ORG/$REPO_NAME" >/dev/null 2>&1 \
             && ! gh repo view --web "$REPO_NAME" >/dev/null 2>&1; then
             
-            echo "repo: couldn't find a $GITHUB_ORG repo named '$REPO_NAME'; searching for similarly-named repos" >&2
-            repos "$REPO_NAME" true 1>&2 
+            echo "Couldn't find a $GITHUB_ORG repo named '$REPO_NAME'" >&2
+            echo "Searching for similarly-named repos..." >&2
+            echo "======================================" >&2
+            echo >&2
+            
+            repos "$REPO_NAME" true 1>&2
         fi
     fi
 }
@@ -2991,14 +3001,6 @@ PYTHON_INTERPRETER_PATH="$HOMEBREW_BIN"
 PYTHON_PIPX_PATH=~/.local/bin
 set +a
 
-function python {
-    python3 "$@"
-}
-
-function po {
-    python3 "$@"
-}
-
 function va {
     local VENV_NAME
     if [[ $# -ne 1 ]]; then
@@ -3288,7 +3290,7 @@ function chan {
 }
 
 SLACK_EXTRAS="$HOME/.site.bash.d/slack-urls.bash"
-if [[ -e "$SLACK_EXTRAS" ]]; then
+if [[ -f "$SLACK_EXTRAS" ]]; then
     source "$SLACK_EXTRAS"
 
     function msg {
@@ -3301,12 +3303,12 @@ if [[ -e "$SLACK_EXTRAS" ]]; then
 
     function slack-username2url {
         check-args 1 1 'SLACK_USERNAME # e.g. alice.hacker' "$@" || return 1
-        local SUSERNAME="$1"
+        local SLACK_USERNAME="$1"
 
-        local URL="${SLACK_USERNAME2URL["$SUSERNAME"]}"
+        local URL="${SLACK_USERNAME2URL["$SLACK_USERNAME"]}"
         if [[ -z "$URL" ]]; then
-            error "the URL for $SUSERNAME is unknown"
-            echo "Add it to the Bash env var SLACK_USERNAME2URL, an assoc array" >&2
+            error "the URL for $SLACK_USERNAME is unknown"
+            error "Add it to var SLACK_USERNAME2URL in file $SLACK_EXTRAS"
             return 2
         else
             echo "$URL"
@@ -3341,7 +3343,7 @@ function atom { newsboat "$@" ;}
 function news { cast-text "$@" ;}
 
 # cel FILE.el ("compile LISP") - byte-compile an emacs LISP file.
-function cel { "$EMACS_BINARY" -nw -q -batch -f batch-byte-compile "$@" ;}
+function cel { command emacs -nw -q -batch -f batch-byte-compile "$@" ;}
 
 # d ("date") - give today's date in YYYY-MM-DD format.
 function d {
@@ -3829,7 +3831,19 @@ function jmv { # change issue state (e.g. Planned -> Completed)
     fi
 }
 
+function jprog { # mark an issue as "in progress"
+    _j-check-env || return 2
+    check-args 1 1 'ISSUE' "$@" || return 1
+    local ISSUE="$1"
+
+    jmv "$ISSUE" "In Progress"
+}
+
 function jdone { # mark an issue as completed :)
+    _j-check-env || return 2
+    check-args 1 1 'ISSUE' "$@" || return 1
+    local ISSUE="$1"
+
     jmv "$ISSUE" "Completed"
 }
 
@@ -3841,9 +3855,7 @@ function jcancel { # mark issue Canceled (closest possible thing to deleting it)
     jmv "$ISSUE" "Canceled"
 }
 
-function jrm {
-    jcancel "$@"
-}
+function jrm { jcancel "$@" ;}
 
 function jas { # assign an existing issue
     _j-check-env || return 2
@@ -3903,6 +3915,8 @@ function jec { # create an epic
     fi
 }
 
+function jepic { jec "$@" ;}
+
 function jic { # create a "normal" issue, which in my workflow means a Task
     _j-check-env || return 2
     check-args 1 varargs 'SUMMARY_ONELINE [JIRA_CLI_ARGS...]' "$@" || return 1
@@ -3925,12 +3939,16 @@ function jic { # create a "normal" issue, which in my workflow means a Task
     return "$JIRA_CLI_EXIT_STATUS"
 }
 
+function jc { jic "$@" ;}
+
 function jls { # list issues (including epics)
     _j-check-env || return 2
     check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     
     jira issue list "$@"
 }
+
+function jil { jls "$@" ;}
 
 function jle { # list epics only
     _j-check-env || return 2
@@ -3951,6 +3969,12 @@ function jld { # list my Done issues
     _j-check-env || return 2
     check-args 0 0 "" "$@" || return 1
     jira issue list --assignee "$JIRA_USERNAME" --status "Done"
+}
+
+function jmine { # list my issues
+    _j-check-env || return 2
+    check-args 0 0 "" "$@" || return 1
+    jira issue list --assignee "$JIRA_USERNAME"
 }
 
 function _jql2url {
