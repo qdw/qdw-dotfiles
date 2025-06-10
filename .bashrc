@@ -797,10 +797,7 @@ function g {
 
 function gbr {
     check-args 1 varargs 'gbr [ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
-    command grep \
-        -RH \
-        --exclude '*archived*' \
-        --color=yes \
+    g \
         "$@" \
         ~/.bashr* \
         ~/.*profile* \
@@ -1089,7 +1086,7 @@ fi
 if [[ -d "/opt/scsh" ]]; then
     SCSH_PATH="/opt/scsh/bin"
     LATEST_SCSH_VERSION="$(ls /opt/scsh/lib | sort --general-numeric-sort | tail -1)"
-    SCSH_LDFLAGS="-L/opt/scsh/lib/scsh-${LATEST_SCSH_VERSION}"
+    SCSH_LDFLAGS="-L/opt/scsh/lib/${LATEST_SCSH_VERSION}"
 fi
 
 #### Unicode-related settings
@@ -3069,9 +3066,9 @@ export RUST_PATH=~/.cargo/bin
 if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
     set -a
     RUBYOPT=rubygems
-    RUBY_PATH=/usr/local/opt/ruby/bin
-    RUBY_LDFLAGS='-L/usr/local/opt/ruby/lib'
-    RUBY_CPPFLAGS='-I/usr/local/opt/ruby/include'
+    RUBY_PATH=$HOMEBREW_ROOT/opt/ruby/bin
+    RUBY_LDFLAGS='-L$HOMEBREW_ROOT/opt/ruby/lib'
+    RUBY_CPPFLAGS='-I$HOMEBREW_ROOT/opt/ruby/include'
     set +a
 fi
 
