@@ -1,4 +1,7 @@
+*.eln
+*.elc
 secrets.el
+site.el
 site-lisp.el
 site-lisp/**
 transient/**
