@@ -442,10 +442,6 @@ but it calls defvar under the hood."
 ;; T  birds-of-paradise-plus: very loud red theme,
 ;;    for use on production boxes
 ;; (load-theme 'birds-of-paradise-plus 't)
-;;
-;;; Light themes, for use outdoors
-;; T  almost-mono: light theme, okay for using outdoors, I guess?
-;; (load-theme 'almost-mono-cream 't)
 
 (defun switch-theme ()
   (interactive)
@@ -615,20 +611,20 @@ use `dired-find-file' to open it in a new buffer."
   (add-to-list 'org-file-apps
                (cons "png" "open %s"))
 
-  ;; When I delete files in dired, send them to the macOS Trash
+  When I delete files in dired, send them to the macOS Trash
 
-  ;; (osx-trash-setup)
-  ;; (setopt delete-by-moving-to-trash 't)
-  ;; (defun system-move-file-to-trash (path)
-  ;;   "Moves file at PATH to the macOS Trash
-  ;;   according to `move-file-to-trash' convention.
+  (osx-trash-setup)
+  (setopt delete-by-moving-to-trash 't)
+  (defun system-move-file-to-trash (path)
+    "Moves file at PATH to the macOS Trash
+    according to `move-file-to-trash' convention.
 
-  ;;   Relies on the command-line utility 'trash' to be installed.
-  ;;   Get it from:  <http://hasseg.org/trash/>"
-  ;;   (shell-command (concat "trash -vF \"" path "\""
-  ;;                          "| sed -e 's/^/Trashed: /'")
-  ;;                  nil ;; Name of output buffer
-  ;;                  "*Trash Error Buffer*"))
+    Relies on the command-line utility 'trash' to be installed.
+    Get it from:  <http://hasseg.org/trash/>"
+    (shell-command (concat "trash -vF \"" path "\""
+                           "| sed -e 's/^/Trashed: /'")
+                   nil ;; Name of output buffer
+                   "*Trash Error Buffer*"))
 
   ;; macOS's bundled BSD ls doesn't play well with Emacs,
   ;; so use Homebrewed GNU ls instead
@@ -1397,7 +1393,7 @@ which is its intended use."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit pandoc-mode osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
+   '(nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
