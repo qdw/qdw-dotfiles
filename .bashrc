@@ -41,6 +41,10 @@ function sb {
 
 #### Bash metaprogramming library settings
 
+function stderr {
+    echo "$@" >&2
+}
+
 # Check for functions, aliases, and executables.
 function command-exists {
     check-args 1 1 'COMMAND_NAME' "$@" || return 1
@@ -575,8 +579,6 @@ function cdd {
 }
 
 #### Homebrew settings
-
-export HOMEBREW_CASK_OPTS="--appdir=$HOME/Applications"
 
 if [[ -z "$PATHS_SET_AT" ]]; then
     for HDIR in "/opt/homebrew" "/usr/local"; do
@@ -2325,6 +2327,10 @@ function gists {
 function readme {
     check-args 0 varargs "readme [options to pass to 'gh repo view'" "$@" || return 1
     gh repo view "$@"
+}
+
+function REAMDE {
+    readme "$@"
 }
 
 function team {
@@ -4141,14 +4147,14 @@ if [[ -z "$PATHS_SET_AT" ]]; then
     PATHS_SET_AT="$(date)"
 
     ## executable PATH
-    PATH="/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin"
+    PATH="$SUBL_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin"
     
     ## C settings/dynamic library path settings
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
     LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
     PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
     if on-macos; then
-        export SDKROOT="`xcrun --show-sdk-path`"
+        export SDKROOT="$(xcrun --show-sdk-path)"
     fi
     
     # If some of those variables that I interpolated in my PATH are undefined,
