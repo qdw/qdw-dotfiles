@@ -1161,13 +1161,26 @@ function markdown2html {
 
 #### AI settings
 
-function hug {
-    huggingface-cli "$@"
-}
+for MODEL_DIR in "$HOME/ai/models"/*; do
+    MODEL_NAME="$(basename "$MODEL_DIR")"
+    if [[ $MODEL_NAME =~ [a-zA-Z]+ ]]; then
+        SHORT_NAME="${BASH_REMATCH[0]}"
+        LC="${SHORT_NAME,,}"
+    
+        OLLAMA_FUNCNAME="$LC-ollama"
+        LLAMAFILE_FUNCNAME="$LC-llamafile"
 
-function qw {
-    "$HOME/ai/llamafiles/Qwen2.5-Coder-14B-Instruct-Q6_K.llamafile"  "$@"
-}
+        eval "
+            function $OLLAMA_FUNCNAME {
+                ollama run $MODEL_NAME \"\$@\"
+            }
+
+            function $LLAMAFILE_FUNCNAME {
+                llamafile \"\$@\"
+            }
+        "
+    fi
+done
 
 #### Linker settings
 
@@ -4128,7 +4141,7 @@ if [[ -z "$PATHS_SET_AT" ]]; then
     PATHS_SET_AT="$(date)"
 
     ## executable PATH
-    PATH="/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
+    PATH="/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin"
     
     ## C settings/dynamic library path settings
     CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
