@@ -45,7 +45,7 @@ desktop
 
 # Other editor/IDE/OS droppings
 
-.DS_Store
+**/.DS_Store
 .idea
 *.sw?
 
@@ -64,6 +64,12 @@ jenkins_output.*
 **/__snapshots__/**
 site.el
 
+
+**/.claude/settings.local.json
+
+**/.claude/settings.local.json
+
+**/.claude/settings.local.json
 
 **/.claude/settings.local.json
 
