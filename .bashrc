@@ -580,30 +580,28 @@ function cdd {
 
 #### Homebrew settings
 
-if [[ -z "$PATHS_SET_AT" ]]; then
-    for HDIR in "/opt/homebrew" "/usr/local"; do
-        if [[ -x "$HDIR/bin/brew" ]]; then
-            set -a    
-            HOMEBREW_ROOT="$HDIR"
-            HOMEBREW_BIN="$HDIR/bin"
-            
-            PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
-            
-            MY_MANPATH="$HOME/share/man"
+for HDIR in "/opt/homebrew" "/usr/local"; do
+    if [[ -x "$HDIR/bin/brew" ]]; then
+        set -a    
+        HOMEBREW_ROOT="$HDIR"
+        HOMEBREW_BIN="$HDIR/bin"
+        
+        PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
+        
+        MY_MANPATH="$HOME/share/man"
 
-            # man pages for brew(1) itself
-            MY_MANPATH="$HDIR/manpages"           
-            
-            # man(1) and info(1) pages for software installed using brew
-            MY_MANPATH="$HDIR/share/man:$MY_MANPATH"
-            INFOPATH="$HDIR/share/info"
+        # man pages for brew(1) itself
+        MY_MANPATH="$HDIR/manpages"           
+        
+        # man(1) and info(1) pages for software installed using brew
+        MY_MANPATH="$HDIR/share/man:$MY_MANPATH"
+        INFOPATH="$HDIR/share/info"
 
-            PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
-            set +a
-            break
-        fi
-    done
-fi
+        PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
+        set +a
+        break
+    fi
+done
 
 ## If on macOS, use the Homebrew versions of common command-line utilities
 ## instead of the bundled macOS versions, as the Homebrewed versions
@@ -783,6 +781,22 @@ function my-grep {
 
 function grep {
     my-grep "$@"
+}
+
+function grep-terms {
+    check-args 2 varargs 'FILENAME PATTERN [PATTERN ...]' "$@" || return 1
+    local FILENAMES="$1"; shift
+    local REGEX=""
+
+    for TERM in "$@"; do
+        REGEX="${REGEX}(${TERM})|"
+    done
+    
+    # Remove trailing '|'
+    REGEX="${REGEX%|}"
+    
+    # echo "$REGEX" >&2 # for debugging
+    my-grep "$REGEX" $FILENAMES
 }
 
 function g {
@@ -1584,9 +1598,9 @@ PS1_LOGO=""
 # elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
 #     PS1_LOGO=$'\uF8FF' # Apple logo
 # fi
-# export PS1="\\[\\e[33;1m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
+# export PS1="\\[\\e[33m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
 
-export PS1="\\[\\e[33;1m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
+export PS1="\\[\\e[33m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
 export DEFAULT_PS1="$PS1"
 
 # macOS: suppress nag message about Bash being deprecated in favor of zsh
@@ -1822,9 +1836,17 @@ function save-function {
         || return 1;
 
     local FUNCTION_NAME="$1"
-    local DEST_FILE="${1:-$HOME/.bashrc}"
+    local DEST_FILE="${2:-$HOME/.bashrc}"
     
     func "$FUNCTION_NAME" | bnw >> "$DEST_FILE"
+}
+
+# Search for functions whose name match a regex
+function grep-function {
+    check-args 1 1 'REGEX' "$@" || return 1
+    local REGEX="$1"
+    
+    gbr "function.*${REGEX}.*[{]"
 }
 
 # bat-head FILENAME NUMBER: use color bat to show a file's first n lines
@@ -1906,7 +1928,9 @@ fi
 
 ### ls settings
 
-export LS_COLORS='rs=0:di=01;34:ln=01;33:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;91;01:mi=00:su=30;31:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:'
+## LS_COLORS is specific to GNU ls (macOS's built-in BSD ls uses LSCOLORS instead).
+
+export LS_COLORS='rs=0:di=34:ln=32:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;91;01:mi=00:su=30;31:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90'
 
 function ls {
     if [[ "$PWD" = "$HOME" ]] && [[ $# -eq 0 ]]; then
@@ -1933,8 +1957,8 @@ function dcc { colordiff -u "$@" | $PAGER ;}
 HOMEBREW_DIFF="$HOMEBREW_ROOT/opt/diffutils/bin/diff"
 if [[ -f "$HOMEBREW_DIFF" ]]; then
     WE_HAVE_GNU_DIFF=0
-    export PATH="/opt/homebrew/opt/diffutils/bin:$PATH"
-    # 
+    export DIFF_PATH="/opt/homebrew/opt/diffutils/bin"
+
     # Use custom colors, which are supported by GNU grep but not by macOS grep:
     # 
     # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
@@ -1944,12 +1968,11 @@ if [[ -f "$HOMEBREW_DIFF" ]]; then
     # rs - undocumented, but the default seems fine
     # 
     MY_GNU_DIFF_OPTIONS='--palette="ad=36:de=31:hd=35:ln=34:rs=0"'
-    function gdiff { /opt/homebrew/opt/diffutils/bin/diff "$@" ;}
+    function gdiff { "$DIFF_PATH/diff" "$@" ;}
     function diff-gnu { gdiff "$@" ;}
 else
     WE_HAVE_GNU_DIFF=1
 fi
-
 
 function diff-vanilla {
     local COMMON_DIFF_OPTIONS="-u --color=always"
@@ -2073,12 +2096,7 @@ function git-show-name-only-diffs {
 
 #### Git: general settings (not specific to GitHub)
 
-BREW_GIT_D="/opt/homebrew/bin"
-if [[ -d "$BREW_GIT_D" ]]; then
-    export PATH="$BREW_GIT_D:$PATH"
-fi
-
-export GIT_SHELL_PATH="$HOMEBREW_BIN/bash"
+export GIT_SHELL_PATH="$(which bash)"
 
 function branch-name {
     local PHRASE_STRING
@@ -2574,8 +2592,26 @@ function repo {
     fi
 }
 
+function actions {
+    local GIT_URL="$(gurl)"
+    local CANONICALIZED_URL=""
+    
+    if [[ -z "$GIT_URL" ]]; then
+        return 1
+    elif [[ "$GIT_URL" =~ ^https:[/][/]github.com[/] ]]; then
+        CANONICALIZED_URL="$GIT_URL"
+    elif [[ "$GIT_URL" =~ ^git@github\.com:([^/]+)/([^/]+)(\.git)?$ ]]; then
+        local OWNER="${BASH_REMATCH[1]}"
+        local REPO="${BASH_REMATCH[2]}"
+        CANONICALIZED_URL="https://github.com/${OWNER}/${REPO}"
+    fi
+    
+    local ACTIONS_URL="$CANONICALIZED_URL/actions"
+    open -u "$ACTIONS_URL"
+}
+
 # Open the latest GitHub action (or the main GitHub actions page if none found)
-function act {
+function action {
     check-args 0 0 'gac' "$@" || return 1
 
     local LATEST_ACTION_ID="$(gh run list --json databaseId --jq '.[0].databaseId')"
@@ -2716,9 +2752,7 @@ function minilube { minikube "$@" ;}
 # which means using MakeMaker directly).
 export PERL_MM_USE_DEFAULT=1
 
-# pb: because typing 'perlbrew' is too much work.
 function pb {
-    # Don't put this in PATH, because that would interfere with the system Perl.
     ~/perl5/perlbrew/bin/perlbrew "$@"
 }
 
@@ -2998,7 +3032,6 @@ MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 # Homebrew stable Python version
 
 set -a
-PYTHON_INTERPRETER_PATH="$HOMEBREW_BIN"
 PYTHON_PIPX_PATH=~/.local/bin
 set +a
 
@@ -3951,13 +3984,15 @@ function jls { # list issues (including epics)
 
 function jil { jls "$@" ;}
 
-function jle { # list epics only
+function jel { # list epics only
     _j-check-env || return 2
     check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     check-args 0 0 '[no arguments]' "$@" || return 1
     
     jls --type Epic "$@"
 }
+
+function jepics { jel "$@" ;}
 
 function jlt { # list tasks only
     _j-check-env || return 2
@@ -3968,14 +4003,16 @@ function jlt { # list tasks only
 
 function jld { # list my Done issues
     _j-check-env || return 2
-    check-args 0 0 "" "$@" || return 1
+    check-args 0 0 "[no arguments]" "$@" || return 1
+    
     jira issue list --assignee "$JIRA_USERNAME" --status "Done"
 }
 
-function jmine { # list my issues
+function jmine-epics {
     _j-check-env || return 2
-    check-args 0 0 "" "$@" || return 1
-    jira issue list --assignee "$JIRA_USERNAME"
+    check-args 0 0 "[no arguments]" "$@" || return 1
+
+    jira issue list --assignee "$JIRA_USERNAME" --type Epic --status Backlog --plain
 }
 
 function _jql2url {
@@ -4127,46 +4164,45 @@ function yaml2json {
     fi
 }
 
-#### path settings (global)
+function e-paper {
+    open -u "https://www.waveshare.com/catalogsearch/result/?q=e-paper"
+}
 
-if [[ -z "$PATHS_SET_AT" ]]; then
-    set -a
-    PATHS_SET_AT="$(date)"
+#### path settings
+set -a
 
-    ## executable PATH
-    PATH="$SUBL_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH"
-    
-    ## C settings/dynamic library path settings
-    CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
-    LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
-    PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
-    if on-macos; then
-        export SDKROOT="$(xcrun --show-sdk-path)"
-    fi
-    
-    # If some of those variables that I interpolated in my PATH are undefined,
-    # then I will wind up with '::' in my PATH. That's equivalent to having
-    # '.' (the current working directory) in one's path, which is a security
-    # risk, because there's a silly trick that hackers can use where they
-    # put a malicious binary named ls or grep or something inside a directory
-    # and a privileged user cd's there and accidentally runs it.
-    # So remove any instances of two (or more) consecutive colons.
-    # Same goes for a single trailing colon.
-    PATH="$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')"
+## executable PATH
+unset PATH
+GOPATH="$HOME/go"
+PATH="$HOME/bin/site/upsa:$HOME/bin/emacs:$HOME/bin/color:$HOME/bin/site:$HOME/bin:$HOME/bin/3:$SUBL_PATH:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$DIFF_PATH:$HOMEBREW_ROOT/sbin:$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:/usr/local/opt/ccache/libexec:$JPATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$GOPATH/bin:/usr/local/sbin:/usr/local/bin:/bin:/sbin:/usr/bin:/usr/sbin:$HOME/bin/iterm2:$HOME/bin/macos:$SCSH_PATH"
 
-    ## Places that man(1) will search for man pages:
-    MANPATH="$MY_MANPATH:$MANPATH"
+# If some of those variables that I interpolated in my PATH are undefined,
+# then I will wind up with '::' in my PATH. That's equivalent to having
+# '.' (the current working directory) in one's path, which is a security
+# risk, because there's a silly trick that hackers can use where they
+# put a malicious binary named ls or grep or something inside a directory
+# and a privileged user cd's there and accidentally runs it.
+# So remove any instances of two (or more) consecutive colons.
+# Same goes for a single trailing colon.
+PATH="$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')"
 
-    ## Dynamic library path settings
-    LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
-    CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
-    PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
-
-    ## golang path
-    GOPATH="$HOME/go"
-
-    set +a
+## C settings/dynamic library path settings
+CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
+LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
+PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+if on-macos; then
+    export SDKROOT="$(xcrun --show-sdk-path)"
 fi
+
+## Places that man(1) will search for man pages
+MANPATH="$MY_MANPATH:$MANPATH"
+
+## Dynamic library path settings
+LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
+CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
+PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+
+set +a
 
 source-if-exists ~/.site.bash.d/postamble.bash
 set +o pipefail
