@@ -13,7 +13,7 @@
 	<key>Custom Color Presets</key>
 	<dict/>
 	<key>Default Bookmark Guid</key>
-	<string>1402BFFC-DB48-4908-9FB4-A764FD7BF6EA</string>
+	<string>2454B24B-3846-4C84-9038-3A7AB065ECCA</string>
 	<key>DimInactiveSplitPanes</key>
 	<false/>
 	<key>DisableFullscreenTransparency</key>
@@ -5313,13 +5313,13 @@
 				<key>Alpha Component</key>
 				<real>1</real>
 				<key>Blue Component</key>
-				<real>0.0</real>
+				<real>0.27058823529411763</real>
 				<key>Color Space</key>
 				<string>P3</string>
 				<key>Green Component</key>
-				<real>0.0</real>
+				<real>0.27058823529411763</real>
 				<key>Red Component</key>
-				<real>0.0</real>
+				<real>0.27058823529411763</real>
 			</dict>
 			<key>Ansi 1 Color</key>
 			<dict>
@@ -5493,13 +5493,13 @@
 				<key>Alpha Component</key>
 				<real>1</real>
 				<key>Blue Component</key>
-				<real>0.20392156862745098</real>
+				<real>0.80000000000000004</real>
 				<key>Color Space</key>
 				<string>P3</string>
 				<key>Green Component</key>
-				<real>0.20392156862745098</real>
+				<real>0.0</real>
 				<key>Red Component</key>
-				<real>0.20392156862745098</real>
+				<real>0.0</real>
 			</dict>
 			<key>Ansi 9 Color</key>
 			<dict>
