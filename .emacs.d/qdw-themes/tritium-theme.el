@@ -49,8 +49,8 @@
       (string= "24bit" (getenv "COLORTERM")))
 
    (setq
-           ;; black  "#141414"  ;;      Grey15
-           black  "#000000"
+           black  "#141414"  ;;      Grey15
+           ;; black  "#000000"
     bright-black  "#343434"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
@@ -70,7 +70,6 @@
     bright-white  "#767676")  ;; "#aaaaaa"
   
    (setq
-extended-black bright-black
 extended-bright-black "#676767"
 extended-bright-red "#800000"
 extended-bright-white "#a6acb9"))
@@ -81,7 +80,7 @@ extended-bright-white "#a6acb9"))
    (setq
              black  "#141414"  ;; 235  Grey15
           ;; black  "#000000"  ;;  16  Terminal emulator's ANSI black
-          ;; black  "color-16" ;;   0  Terminal emulator's background
+             black  "color-16" ;;   0  Terminal emulator's background
       bright-black  "#5f5f5f"  ;;  59  Grey37
                red  "#af5f00"  ;; 130  DarkOrange3
         bright-red  "#ff7f00"  ;;  xx  DarkOrange1  ;; no X11 name
@@ -156,6 +155,16 @@ extended-bright-white "#a6acb9"))
            (desired-hex-value (symbol-value (intern color-name))))
       (set ansi-color-symbol desired-hex-value)
       (face-spec-set ansi-color-symbol `((t (:foreground ,desired-hex-value)))))))
+
+;; Then modify ANSI black and bright-black so that they're visible against a true
+;; black background (#000000). This doesn't change the global `black` var,
+;; only `ansi-color-black`.
+
+(set 'ansi-color-black "#454545") ;; dark grey
+(set 'ansi-color-bright-black "#0000cc") ;; dark blue
+
+(face-spec-set 'ansi-color-black `((t (:foreground ,ansi-color-black))))
+(face-spec-set 'ansi-color-bright-black `((t (:foreground ,ansi-color-bright-black))))
 
 (deftheme tritium
   "tritium emacs theme")
@@ -597,10 +606,10 @@ extended-bright-white "#a6acb9"))
       ((t (:foreground ,white))))
 
     `(outline-7
-      ((t (:foreground ,extended-bright-black))))
+      ((t (:foreground ,ansi-color-black))))
 
     `(outline-8
-      ((t (:foreground ,extended-black))))
+      ((t (:foreground ,ansi-color-bright-black))))
 
     ;;;; org-mode
     
@@ -667,7 +676,7 @@ extended-bright-white "#a6acb9"))
       ((t (:foreground ,bright-red))))
 
     `(org-document-info-keyword
-      ((t (:foreground ,extended-bright-black))))
+      ((t (:foreground ,white))))
 
     `(org-document-info
       ((t (:foreground ,blue))))
