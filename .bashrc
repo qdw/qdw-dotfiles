@@ -1177,13 +1177,26 @@ function markdown2html {
 
 #### AI settings
 
-function hug {
-    huggingface-cli "$@"
-}
+for MODEL_DIR in "$HOME/ai/models"/*; do
+    MODEL_NAME="$(basename "$MODEL_DIR")"
+    if [[ $MODEL_NAME =~ [a-zA-Z]+ ]]; then
+        SHORT_NAME="${BASH_REMATCH[0]}"
+        LC="${SHORT_NAME,,}"
+    
+        OLLAMA_FUNCNAME="$LC-ollama"
+        LLAMAFILE_FUNCNAME="$LC-llamafile"
 
-function qw {
-    "$HOME/ai/llamafiles/Qwen2.5-Coder-14B-Instruct-Q6_K.llamafile"  "$@"
-}
+        eval "
+            function $OLLAMA_FUNCNAME {
+                ollama run $MODEL_NAME \"\$@\"
+            }
+
+            function $LLAMAFILE_FUNCNAME {
+                llamafile \"\$@\"
+            }
+        "
+    fi
+done
 
 #### Linker settings
 
@@ -3111,6 +3124,10 @@ if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
     set +a
 fi
 
+#### golang settings
+
+export GOPATH="$HOME/go"
+
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
 function gemi {
     sudo gem install --remote \
@@ -4168,13 +4185,12 @@ function e-paper {
     open -u "https://www.waveshare.com/catalogsearch/result/?q=e-paper"
 }
 
-#### path settings
+#### #### path settings
 set -a
 
 ## executable PATH
-unset PATH
-GOPATH="$HOME/go"
-PATH="$HOME/bin/site/upsa:$HOME/bin/emacs:$HOME/bin/color:$HOME/bin/site:$HOME/bin:$HOME/bin/3:$SUBL_PATH:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$DIFF_PATH:$HOMEBREW_ROOT/sbin:$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:/usr/local/opt/ccache/libexec:$JPATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$GOPATH/bin:/usr/local/sbin:/usr/local/bin:/bin:/sbin:/usr/bin:/usr/sbin:$HOME/bin/iterm2:$HOME/bin/macos:$SCSH_PATH"
+
+PATH="$SUBL_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin"
 
 # If some of those variables that I interpolated in my PATH are undefined,
 # then I will wind up with '::' in my PATH. That's equivalent to having
@@ -4184,23 +4200,25 @@ PATH="$HOME/bin/site/upsa:$HOME/bin/emacs:$HOME/bin/color:$HOME/bin/site:$HOME/b
 # and a privileged user cd's there and accidentally runs it.
 # So remove any instances of two (or more) consecutive colons.
 # Same goes for a single trailing colon.
+
 PATH="$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')"
 
-## C settings/dynamic library path settings
-CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
-LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
-PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+#### C and C++ library settings
+
+LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS"
+PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}"
+
 if on-macos; then
     export SDKROOT="$(xcrun --show-sdk-path)"
 fi
 
-## Places that man(1) will search for man pages
-MANPATH="$MY_MANPATH:$MANPATH"
+#### man settings: where to search for man pages
+
+MANPATH="$MY_MANPATH"
 
 ## Dynamic library path settings
-LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS $LDFLAGS"
-CPPFLAGS="$RUBY_CPPFLAGS $CPPFLAGS"
-PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}:${PKG_CONFIG_PATH}"
+
+CPPFLAGS="$RUBY_CPPFLAGS"
 
 set +a
 
