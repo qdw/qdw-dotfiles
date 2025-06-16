@@ -77,6 +77,7 @@
 	ff = pull --ff-only
 	ignored = "!f() { /bin/echo -n \"$1\" 'is'; git check-ignore --quiet \"$1\"; if [[ $? = 1 ]]; then /bin/echo -n ' not'; fi; /bin/echo ' ignored by git'; }; f "
 	main = "!f() { git switch "$(get-main-branch-name)"; }; f "
+    master = main
 	em = commit --allow-empty-message -m ''
 	no = diff --name-only
 	s = status
