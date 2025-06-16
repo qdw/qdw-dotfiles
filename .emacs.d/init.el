@@ -789,7 +789,6 @@ This command does the reverse of `fill-region'."
 ;;   (not (derived-mode-p 'typescript-mode)))
   
 ;; (add-to-list 'copilot-disable-predicates 'copilot-disable-p-qdw)
-<<<<<<< HEAD
 
 ;; ;; Adapted from https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup/
 
@@ -810,12 +809,6 @@ This command does the reverse of `fill-region'."
 ;;           (setq rk/copilot-manual-mode t))
 ;;       (message "activating copilot mode")
 ;;       (global-copilot-mode))))
-
-;;; llm.el settings
-
-=======
->>>>>>> d14d0000bcaa27bae07611cecf3b44ad318fe632
-
 
 ;;;; Shell-script-editing settings
 
@@ -1495,11 +1488,7 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(tritium))
  '(package-selected-packages
-<<<<<<< HEAD
    '(llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
-=======
-   '(nushell-mode zig-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit pandoc-mode osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
->>>>>>> d14d0000bcaa27bae07611cecf3b44ad318fe632
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
