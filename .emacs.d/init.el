@@ -177,7 +177,7 @@ but it calls defvar under the hood."
 
 (require 'ansi-color)
 (require 'cc-mode)
-(require 'copilot)
+;; (require 'copilot)
 (require 'comint)
 (require 'compile)
 (require 'dirtrack)
@@ -549,7 +549,7 @@ use `dired-find-file' to open it in a new buffer."
 (defun subl ()
   (interactive)
     (alt-editor
-     "/opt/homebrew/bin/subl"
+     "subl"
      (file-line-column-colon-separated)))
 
 (defun vscode ()
@@ -611,7 +611,7 @@ use `dired-find-file' to open it in a new buffer."
   (add-to-list 'org-file-apps
                (cons "png" "open %s"))
 
-  When I delete files in dired, send them to the macOS Trash
+  ;; When I delete files in dired, send them to the macOS Trash
 
   (osx-trash-setup)
   (setopt delete-by-moving-to-trash 't)
@@ -689,32 +689,120 @@ This command does the reverse of `fill-region'."
      (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
      (nov-mode))))
      
-;;;; AI/LLM/genai settings
+;;;; AI settings == LLM settings == genai settings
 
-(defun copilot-disable-p-qdw ()
-  "When copilot should not automatically show completions."
-  (not (derived-mode-p 'typescript-mode)))
+;;; emacs-copilot by jart: code completion using an open-source, local LLM
+
+;; From https://github.com/jart/emacs-copilot/blob/main/README.md
+ 
+;; (defun copilot-complete ()
+;;   (interactive)
+;;   (let* ((spot (point))
+;;          (inhibit-quit 't)
+;;          (current-file (buffer-file-name))
+;;          (cash (concat current-file ".cache"))
+;;          (hist (concat current-file ".prompt"))
+;;          (lang (file-name-extension current-file))
+
+;;          ;; extract current line, to left of the caret
+;;          ;; plus the previous line. We will pass
+;;          ;; these to the LLM.
+;;          (code (save-excursion
+;;                  (dotimes (i 2)
+;;                    (when (> (line-number-at-pos) 1)
+;;                      (previous-line)))
+;;                  (beginning-of-line)
+;;                  (buffer-substring-no-properties (point) spot)))
+
+;;          ;; create an English-langiage prompt for this interaction
+;;          (system "\
+;; You are an Emacs code generator. \
+;; Writing comments is forbidden. \
+;; Writing test code is forbidden. \
+;; Writing English explanations is forbidden. ")
+;;          (prompt (format
+;;                   "[INST]%sGenerate %s code to complete:[/INST]\n```%s\n%s"
+;;                   (if (file-exists-p cash) "" system) lang lang code)))
+
+;;     ;; iterate text deleted within editor then purge it from prompt
+;;     (when kill-ring
+;;       (save-current-buffer
+;;         (find-file hist)
+;;         (dotimes (i 10)
+;;           (let ((substring (current-kill i t)))
+;;             (when (and substring (string-match-p "\n.*\n" substring))
+;;               (goto-char (point-min))
+;;               (while (search-forward substring nil t)
+;;                 (delete-region (- (point) (length substring)) (point))))))
+;;         (save-buffer 0)
+;;         (kill-buffer (current-buffer))))
+
+;;     ;; append prompt for current interaction to the big old prompt
+;;     (write-region prompt nil hist 'append 'silent)
+
+;;     ;; run llamafile streaming stdout into buffer catching ctrl-g
+;;     (with-local-quit
+;;       (call-process "wizardcoder-python-34b-v1.0.Q5_K_M.llamafile"
+;;                     nil (list (current-buffer) nil) t
+;;                     "--prompt-cache" cash
+;;                     "--prompt-cache-all"
+;;                     "--silent-prompt"
+;;                     "--temp" "0"
+;;                     "-c" "1024"
+;;                     "-ngl" "35"
+;;                     "-r" "```"
+;;                     "-r" "\n}"
+;;                     "-f" hist))
+
+;;     ;; get rid of most markdown syntax
+;;     (let ((end (point)))
+;;       (save-excursion
+;;         (goto-char spot)
+;;         (while (search-forward "\\_" end t)
+;;           (backward-char)
+;;           (delete-backward-char 1 nil)
+;;           (setq end (- end 1)))
+;;         (goto-char spot)
+;;         (while (search-forward "```" end t)
+;;           (delete-backward-char 3 nil)
+;;           (setq end (- end 3))))
+
+;;       ;; append generated code to prompt
+;;       (write-region spot end hist 'append 'silent))))
+
+;;;; ^ End of jart's emacs-copilot settings
+
+;; ;;;; GitHub Copilot settings (slower than emacs-copilot; not yet working)
+
+;; (defun copilot-disable-p-qdw ()
+;;   "When copilot should not automatically show completions."
+;;   (not (derived-mode-p 'typescript-mode)))
   
-(add-to-list 'copilot-disable-predicates 'copilot-disable-p-qdw)
+;; (add-to-list 'copilot-disable-predicates 'copilot-disable-p-qdw)
 
-;; Adapted from https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup/
-(defun rk/copilot-change-activation ()
-  "Switch between three activation modes:
-  - automatic: copilot will automatically overlay completions
-  - manual: you need to press a key (M-C-<return>) to trigger completions
-  - off: copilot is completely disabled."
-  (interactive)
-  (if (and copilot-mode rk/copilot-manual-mode)
-      (progn
-        (message "deactivating copilot")
-        (global-copilot-mode -1)
-        (setq rk/copilot-manual-mode nil))
-    (if copilot-mode
-        (progn
-          (message "activating copilot manual mode")
-          (setq rk/copilot-manual-mode t))
-      (message "activating copilot mode")
-      (global-copilot-mode))))
+;; ;; Adapted from https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup/
+
+;; (defun rk/copilot-change-activation ()
+;;   "Switch between three activation modes:
+;;   - automatic: copilot will automatically overlay completions
+;;   - manual: you need to press a key (M-C-<return>) to trigger completions
+;;   - off: copilot is completely disabled."
+;;   (interactive)
+;;   (if (and copilot-mode rk/copilot-manual-mode)
+;;       (progn
+;;         (message "deactivating copilot")
+;;         (global-copilot-mode -1)
+;;         (setq rk/copilot-manual-mode nil))
+;;     (if copilot-mode
+;;         (progn
+;;           (message "activating copilot manual mode")
+;;           (setq rk/copilot-manual-mode t))
+;;       (message "activating copilot mode")
+;;       (global-copilot-mode))))
+
+;;; llm.el settings
+
+
 
 ;;;; Shell-script-editing settings
 
@@ -1392,8 +1480,9 @@ which is its intended use."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-enabled-themes '(tritium))
  '(package-selected-packages
-   '(nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
+   '(llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
