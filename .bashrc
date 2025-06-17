@@ -3589,6 +3589,16 @@ function goog {
     open "${BASE_URL}${URLENCODED_QUERY}"
 }
 
+function wayback {
+    check-args 1 1 "DESIRED_URL" "$@" || return 1
+    local DESIRED_URL="$1"
+
+    local THIS_YEAR="$(date '+%Y')"
+    local WAYBACK_VERSION="${THIS_YEAR}0000000000\*"
+
+    open "https://web.archive.org/web/$WAYBACK_VERSION/$DESIRED_URL"
+}
+
 function ddg {
     check-args 1 1 'QUERY_STRING # no need to URL-encode'
     local QUERY="$1"
