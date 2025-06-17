@@ -49,25 +49,23 @@
       (string= "24bit" (getenv "COLORTERM")))
 
    (setq
-           black  "#141414"  ;;      Grey15
-           ;; black  "#000000"
+           ;; black  "#141414"  ;;      Grey15
+           black  "#000000"  ;; actually uses the terminal's bg color
     bright-black  "#343434"
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
            green  "#3b8560"
-    bright-green  "#00a700"  ;; bright green ("#00ff00" = brightest possible green)
-          yellow  "#9164ff"  ;;      actually purple
-   bright-yellow  "#b5b500"  ;; bright yellow; "#ffff00"= brightest possible yellow
-            blue  "#6495ed"  ;; decent darker blue (from iTerm): "#0d22b9"
-
-            
+    bright-green  "#00a700"
+          yellow  "#9164ff"  ;; actually purple
+   bright-yellow  "#b5b500"  ;; bright yellow
+            blue  "#6495ed"            
      bright-blue  "#5172d3"
          magenta  "#af5faf"
   bright-magenta  "#d8a0d0"
             cyan  "#028080"
      bright-cyan  "#4bbfc4"
            white  "#767676"
-    bright-white  "#767676")  ;; "#aaaaaa"
+    bright-white  "#767676")
   
    (setq
 extended-bright-black "#676767"
@@ -139,7 +137,12 @@ extended-bright-white "#a6acb9"))
 ;;           white  ????       ;;   ?
 ;;    bright-white  white
 ;;  ))
-) ;; cond
+   ) ;; cond
+
+
+;; Set ANSI colors (as shown in *shell* == shell-mode sessions)
+
+(setopt ansi-color-bold-is-bright 't)
 
 (dolist (prefix '("" "bright-"))
   (dolist (color-name '("black"
