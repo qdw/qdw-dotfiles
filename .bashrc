@@ -1,22 +1,7 @@
-unset PROMPT_COMMAND
-
 umask 0022
-export CLICOLOR=1
-
 set -o pipefail
 
 #### Bash debugging settings
-
-function enva {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    env | grep '^AWS' | sort
-}
-
-function envap {
-    enva
-    echo
-    env | grep '^PG' | sort
-}
 
 # Uncomment this to enable various hackish debugging statements in this file.
 # export MY_DEBUG=true
@@ -37,6 +22,139 @@ fi
 
 function sb {
     source ~/.bashrc
+}
+
+#### Color settings
+
+export COLORTERM="truecolor"
+export CLICOLOR=1
+
+## ANSI SGR 4-bit color codes
+
+set -a
+QANSI='\033['
+QRESET='\033[0m'
+
+set +a
+
+function color-printf {
+    local HELP="COLOR_NAME [STRING ...]
+
+For example, color-printf bright-cyan 'Color text' 'and more color text\n'.
+"
+
+    check-args 2 varargs "$HELP" "$@" || return 1
+    local COLOR_NAME="$1"
+    shift
+
+    local COLORCODE BRIGHTNESS
+    case "$COLOR_NAME" in
+        black)    COLORCODE=30; BRIGHTNESS=0;;
+        red)      COLORCODE=31; BRIGHTNESS=0;;
+        green)    COLORCODE=32; BRIGHTNESS=0;;
+        yellow)   COLORCODE=33; BRIGHTNESS=0;;
+        blue)     COLORCODE=34; BRIGHTNESS=0;;
+        magenta)  COLORCODE=35; BRIGHTNESS=0;;
+        cyan)     COLORCODE=36; BRIGHTNESS=0;;
+        white)    COLORCODE=37; BRIGHTNESS=0;;
+  
+        bright-black)    COLORCODE=90; BRIGHTNESS=1;;
+        bright-red)      COLORCODE=91; BRIGHTNESS=1;;
+        bright-green)    COLORCODE=92; BRIGHTNESS=1;;
+        bright-yellow)   COLORCODE=93; BRIGHTNESS=1;;
+        bright-blue)     COLORCODE=94; BRIGHTNESS=1;;
+        bright-magenta)  COLORCODE=95; BRIGHTNESS=1;;
+        bright-cyan)     COLORCODE=96; BRIGHTNESS=1;;
+        bright-white)    COLORCODE=96; BRIGHTNESS=1;;
+  
+        *) echo "Unsupported color '$COLOR_NAME'" >&2; return 2;;
+    esac
+
+    printf '\e[%d;%dm' "$BRIGHTNESS" "$COLORCODE"
+    echo -n "$@"
+    printf '\033[0m'
+}
+
+function bash-color-test-pattern {
+    for COLORNAME in black red green yellow blue magenta cyan white; do
+        for PREFIX in "" "bright-"; do
+            FULLCOLORNAME="${PREFIX}${COLORNAME}"
+            color-printf "$FULLCOLORNAME" "$FULLCOLORNAME"
+            echo
+        done
+    done
+}
+
+# bnw (Black 'n' White): remove non-printable chars,
+# such as ANSI color codes
+
+function bnw {
+    while IFS= read -r LINE; do
+
+        # Strip ANSI color codes
+        CLEAN_LINE=$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')
+
+        # Strip control characters
+        CLEAN_LINE=$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')
+        
+        echo "$CLEAN_LINE"
+    done
+}
+
+# Take a hex triplet, and print it in the indicated color.
+# Requires a terminal that supports (ANSI SGR) 24-bit color,
+# a.k.a. true color
+function hex {
+    if [[ $# -ne 1 ]]; then
+        complain "Wrong number of arguments. Usage: hex RRGGBB"
+        return 1
+    else
+        # Extract the RGB values from the hex color code
+        local hex=${1#"#"}
+        local r=$(printf '0x%0.2s' "$hex")
+        local g=$(printf '0x%0.2s' "${hex#??}")
+        local b=$(printf '0x%0.2s' "${hex#????}")
+        
+        # Convert the hex values to decimal
+        local R=$(printf '%d' "$r")
+        local G=$(printf '%d' "$g")
+        local B=$(printf '%d' "$b")
+    
+        # Print the string in the specified color
+        printf "\e[38;2;%d;%d;%dm%s\e[0m\n" "$R" "$G" "$B" "$hex"
+    fi
+}
+
+#### Bash prompt settings
+
+unset PROMPT_COMMAND
+PS1_LOGO=""
+
+# # Use Unicode emoji as visual cues for different hosts/apps
+# if [[ "$INSIDE_EMACS" ]]; then
+#     PS1_LOGO=$'\u2130' # Cursive uppercase E
+# elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
+#     PS1_LOGO=$'\uF8FF' # Apple logo
+# fi
+# export PS1="\\[\\e[33m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
+
+export PS1="\\[\\e[33m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
+export DEFAULT_PS1="$PS1"
+
+# macOS: suppress nag message about Bash being deprecated in favor of zsh
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
+#### Bash debugging settings
+
+function enva {
+    check-args 0 0 "[no arguments]" "$@" || return 1
+    env | grep '^AWS' | sort
+}
+
+function envap {
+    enva
+    echo
+    env | grep '^PG' | sort
 }
 
 #### Bash metaprogramming library settings
@@ -112,7 +230,8 @@ function check-args {
         complain "check-args: error: $FUNCTION passed the wrong number of arguments to check-args itself" \
                  "($FUNCTION called check-args with $# $ARGUMENTS_INFLECTED, but it requires" \
                  "at least 3.)" \
-                 "usage: checks_args MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
+                 "" \
+                 "Usage: checks_args MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
         return 250
     else
         # The caller passed the correct number of args to check-args itself.
@@ -130,11 +249,13 @@ function check-args {
                 VARAGS_CLAUSE=""
             fi
             complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARAGS_CLAUSE} required)." \
-                     "usage: $FUNCTION $USAGE"
+                     "" \
+                     "Usage: $FUNCTION $USAGE"
             return 1
         elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
             complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
-                     "usage: $FUNCTION $USAGE"
+                     "" \
+                     "Usage: $FUNCTION $USAGE"
             return 2
         else
             return 0
@@ -161,7 +282,6 @@ function dirnam {
 function which {
     type -P "$@"
 }
-
 
 ## Array helper functions
 
@@ -391,154 +511,6 @@ else
     fi
 
 fi
-
-#### Color settings
-
-function color-printf {
-  local COLOR_NAME="$1"
-  shift
-
-  local COLOR BRIGHT
-  case "$COLOR_NAME" in
-      black) COLOR=30; BRIGHT=0;;
-      red) COLOR=31; BRIGHT=0;;
-      green) COLOR=32; BRIGHT=0;;
-      yellow) COLOR=33; BRIGHT=0;;
-      blue) COLOR=34; BRIGHT=0;;
-      magenta) COLOR=35; BRIGHT=0;;
-      cyan) COLOR=36; BRIGHT=0;;
-      white) COLOR=37; BRIGHT=0;;
-      bright-black) COLOR=90; BRIGHT=1;;
-      bright-red) COLOR=91;  BRIGHT=1;;
-      bright-green) COLOR=92; BRIGHT=1;;
-      bright-yellow) COLOR=93; BRIGHT=1;;
-      bright-blue) COLOR=94; BRIGHT=1;;
-      bright-magenta) COLOR=95; BRIGHT=1;;
-      bright-cyan) COLOR=96; BRIGHT=1;;
-      bright-white) COLOR=97; BRIGHT=1;;
-      *) echo "Invalid color name '$COLOR_NAME'" >/dev/stderr; return 1;;
-  esac
-
-  # # No
-  # echo "${START}${BRIGHT}$@${COLOR}${RESET}"
-  
-  printf '\033[%d;%dm%s\033[0m\n' \
-         "$BRIGHT" \
-         "$COLOR" \
-         "$@"
-}
-
-# function word_wrap {
-#     local STRING
-#     if [[ $# -eq 1 ]]; then
-#         STRING="$1"
-#         ...
-
-function okl {
-    local RGB="$1"
-    if [[ -n "$RGB" ]]; then
-        complain "Sorry, RGB -> Oklch conversion isn't implemented yet. Try 'okl'"
-    else
-        open "https://oklch.com/"
-    fi
-}
-
-## ANSI SGR 4-bit color codes
-
- ANSI='\033['
-RESET='\033[0m'
-
-function color {
-    # check-args 2 2 "color STRING_TO_DISPLAY COLOR_NAME_IN_ALL_CAPS"
-    local STRING="$1"
-    local COLORNAME="$2"
-    local COLORCODE
-    
-    case "$COLORNAME" in
-        black)
-            COLORCODE="30m";;
-        red)
-            COLORCODE="31m";;
-        green)
-            COLORCODE="32m";;
-        yellow)
-            COLORCODE="33m";;
-        blue)
-            COLORCODE="34m";;
-        magenta)
-            COLORCODE="35m";;
-        cyan)
-            COLORCODE="36m";;
-        white)
-            COLORCODE="37m";;
-        brightblack|bblack|Bblack)
-            COLORCODE="90?m";;
-        brightred|bred|Bred)
-            COLORCODE="91m";;
-        brightgreen|bgreen|Bgreen)
-            COLORCODE="92m";;
-        brightyellow|byellow|Byellow)
-            COLORCODE="93m";;
-        brightblue|bblue|Bblue)
-            COLORCODE="94m";;
-        brightmagenta|bmagenta|Bmagenta)
-            COLORCODE="95m";;
-        brightcyan|bcyan|Bcyan)
-            COLORCODE="96m";;
-        brightwhite|bwhite|Bwhite)
-            COLORCODE="97m";;
-        *)
-            complain "Unsupport color name $COLORNAME"
-            return 1;;
-    esac
-        
-    echo -e "${ANSI}${COLORCODE}${STRING}${RESET}"
-}
-
-# bnw (Black 'n' White): remove non-printable chars,
-# such as ANSI color codes
-# function bnw {
-#     for ARG in <<< "$@"; do
-#         echo "$ARG" | tr -d '[:cntrl:]'
-#     done
-# }
-
-function bnw {
-    while IFS= read -r LINE; do
-
-        # Strip ANSI color codes
-        CLEAN_LINE=$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')
-
-        # Strip control characters
-        CLEAN_LINE=$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')
-        
-        echo "$CLEAN_LINE"
-    done
-}
-
-# Take a hex triplet, and print it in the indicated color.
-# Requires a terminal that supports (ANSI SGR) 24-bit color,
-# a.k.a. true color
-function hex {
-    if [[ $# -ne 1 ]]; then
-        complain "Wrong number of arguments. Usage: hex RRGGBB"
-        return 1
-    else
-        # Extract the RGB values from the hex color code
-        local hex=${1#"#"}
-        local r=$(printf '0x%0.2s' "$hex")
-        local g=$(printf '0x%0.2s' "${hex#??}")
-        local b=$(printf '0x%0.2s' "${hex#????}")
-        
-        # Convert the hex values to decimal
-        local R=$(printf '%d' "$r")
-        local G=$(printf '%d' "$g")
-        local B=$(printf '%d' "$b")
-    
-        # Print the string in the specified color
-        printf "\e[38;2;%d;%d;%dm%s\e[0m\n" "$R" "$G" "$B" "$hex"
-    fi
-}
 
 #### Filename/path/dir/cd-related functions
 
@@ -1569,8 +1541,6 @@ function update_terminal_cwd {
 
 #### Terminal emulator settings
 
-export COLORTERM="truecolor"
-
 function strip_control_characters_from {
     local STRING
     if [[ $# -eq 1 ]]; then
@@ -1600,24 +1570,6 @@ function activate-iTerm2-integration {
     # can call explicitly when you want it.
     my-source ~/.iterm2_shell_integration.bash
 }
-
-## Bash prompt settings
-
-PS1_LOGO=""
-
-# # Use Unicode emoji as visual cues for different hosts/apps
-# if [[ "$INSIDE_EMACS" ]]; then
-#     PS1_LOGO=$'\u2130' # Cursive uppercase E
-# elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
-#     PS1_LOGO=$'\uF8FF' # Apple logo
-# fi
-# export PS1="\\[\\e[33m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
-
-export PS1="\\[\\e[33m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
-export DEFAULT_PS1="$PS1"
-
-# macOS: suppress nag message about Bash being deprecated in favor of zsh
-export BASH_SILENCE_DEPRECATION_WARNING=1
 
 #### Homebrew settings
 
@@ -1820,28 +1772,6 @@ function func {
         return 1
     fi
 }
-
-# function funcs { # function search (by regex); display color defn if found
-#     check-args 1 1 'FUNCTION_NAME_REGEX' "$@" || return 1
-#     local REGEX="$1"
-    
-    
-#     for FUNCTION_NAME in $(awk \
-# '/function[[:space:]]*[[:alpha:]_][[:alnum:]_-]*[[:space:]]*{/ {print $2}' \
-# "$HOME/.bashr"*
-# ~/.*profile*
-# ~/.site.bash*
-     
-    
-#     )
-    
-# )
-#     do
-    
-#     | sed -n 's/^function[[:space:]]\+\([[:alpha:]_][[:alnum:]_]*\)[[:space:]]*{.*/\1/p'); do
-#         echo "$FUNCTION_NAME"
-#     done
-# }
 
 # Save-to-file a function that you defined in an interactive shell
 function save-function {
@@ -3800,6 +3730,12 @@ function jenkins-branch {
     else
         echo "jenkins-branch: error: too many arguments" >&2
     fi
+}
+
+#### Confluence settings
+
+function confluence-docs-by-me {
+    open "https://$JIRA_TEAM.atlassian.net/wiki/search?cql=creator%3DcurrentUser()"
 }
 
 #### Jira settings
