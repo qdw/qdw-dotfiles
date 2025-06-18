@@ -202,22 +202,22 @@ extended-bright-white "#a6acb9"))
      ((t (:background ,cyan :foreground ,black))))
 
    `(show-paren-match-face
-     ((t (:background ,bright-magenta :foreground ,black :bold nil))))
+     ((t (:background ,blue :foreground ,black :bold nil))))
 
    `(show-paren-mismatch-face
-     ((t (:foreground ,red :bold nil))))
+     ((t (:background magenta :foreground ,black :bold nil))))
 
    `(isearch
      ((t (:background ,bright-yellow :foreground ,black :bold nil))))
 
    `(isearch-fail
-     ((t (:background ,cyan :foreground ,black :bold nil))))
+     ((t (:background ,magenta :foreground ,black :bold nil))))
 
    `(lazy-highlight
-     ((t (:background ,bright-yellow :foreground ,black :bold nil))))
+     ((t (:background ,cyan :foreground ,black :bold nil))))
 
    `(query-replace
-     ((t (:inherit lazy-highlight))))
+     ((t (:inherit isearch))))
 
    `(minibuffer-prompt
      ;; ((t (:foreground ,bright-magenta))))
