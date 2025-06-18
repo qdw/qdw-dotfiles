@@ -1,14 +1,6 @@
-(setopt vc-follow-symlinks 't)
-(setopt load-prefer-newer 't)
-
-;; Settings for the Emacs package system
-
-(setq package-archives
-      '(("gnu"    . "https://elpa.gnu.org/packages/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-        ("melpa"  . "https://melpa.org/packages/")))
-
-;; Hide window chrome
+;;;; Basic UI settings
+  ;; (placed early in the file in order to banish unwanted chrome
+  ;; before we can see it).
 
 (setopt inhibit-startup-screen 't)
 (require 'tool-bar)
@@ -27,7 +19,7 @@
                                  (set-face-foreground 'mode-line fg))
                                orig-fg))))
 
-;; Settings for GUI Emacs versus terminal Emacs
+;;;; Settings for GUI Emacs versus terminal Emacs
 
 (defun initialize-ui ()
   (interactive)
@@ -45,28 +37,105 @@
       (defun track-mouse (e))
       (setopt mouse-sel-mode 't))))
 
+;; Apply the settings to the currently visible window.
+
+(initialize-ui)
+      
+;; (For GUI Emacs): apply the above settings to *every* new window,
+;; not just the initial window.
 (add-hook 'after-make-frame-functions
           (lambda (frame)
             (initialize-ui)))
+            
+;;;; Settings for managing viewports (a.k.a. windows)
+  ;; These apply to TUI mode as well as GUI mode.
 
-(initialize-ui)
+(defun other-window-reverse ()
+  (interactive)
+  (other-window -1))
 
-;;;; Typesettings: disable bold type
+;; Cycle through viewports.
+
+(defun rotate-windows () ;; from whattheemacsd.com
+  "Rotate your windows"
+  (interactive)
+  (cond ((not (> (count-windows) 1))
+         (message "You can't rotate a single window!"))
+        ('t
+         (setq i 1)
+         (setq numWindows (count-windows))
+         (while  (< i numWindows)
+           (let* (
+                  (w1 (elt (window-list) i))
+                  (w2 (elt (window-list) (+ (% i numWindows) 1)))
+
+                  (b1 (window-buffer w1))
+                  (b2 (window-buffer w2))
+
+                  (s1 (window-start w1))
+                  (s2 (window-start w2))
+                  )
+             (set-window-buffer w1  b2)
+             (set-window-buffer w2 b1)
+             (set-window-start w1 s2)
+             (set-window-start w2 s1)
+             (setq i (1+ i))))))
+             
+  (other-window -1))
+
+;;;; Typesetting settings: disable bold type
 
 (mapc
  (lambda (face)
    (set-face-attribute face nil :weight 'normal))
  (face-list))
+ 
+;;;; Text-entry settings: overwrite the region (selection) when I type.
+  ;; This is how modern GUIs work.
+
+(delete-selection-mode 1)
+
+;;;; Dependency settings
+
+;; Settings for the Emacs package system
+
+(setq package-archives
+      '(("gnu"    . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa"  . "https://melpa.org/packages/")))
+
+;; I'm running emacs as a daemon,
+;; so just require all these modules at once;
+;; don't get clever with lazy-loading.
+
+(require 'ansi-color)
+(require 'cc-mode)
+;; (require 'copilot)
+(require 'comint)
+(require 'compile)
+(require 'dirtrack)
+(require 'json)
+(require 'menu-bar)
+(require 'mouse)
+(require 'org)
+(require 'recentf)
+(require 'ruby-mode)
+(require 'scroll-bar)
+(require 'sh-script)
+(require 'tool-bar)
+(require 'whitespace)
+    
+(setopt vc-follow-symlinks 't)
+(setopt load-prefer-newer 't)
 
 ;;;; Basic comfort
 
-(put 'narrow-to-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
 
+(put 'narrow-to-region 'disabled nil)
 
-;; Overwrite the region (selection) when I type. This is how modern GUIs work.
-(delete-selection-mode 1)
+(setopt word-wrap nil)
 
 (setq-default
  ;; If I write non-ASCII chars in a buffer, then save the file as Unicode
@@ -79,19 +148,16 @@
  elisp-indent-level 2
  json-encoding-default-indentation "  "
  org-indent-indentation-per-level 4)
-
-
+ 
 (setopt
- word-wrap nil
-   
  ;; Consider filenames case-sensitive (needed on macOS)
  read-file-name-completion-ignore-case nil 
  
- ;; Warn when opening large files
+ ;; Warn only when opening really large files
  large-file-warning-threshold 100000000
 
- ;; Some Unix command-line utilities require a final newline
- ;; (e.g. 'wc -l')
+ ;; Some Unix command-line utilities work properly only when files
+ ;; end in a newline, for example, 'wc -l'
  require-final-newline 't
 
  ;; Single-space: always.
@@ -100,9 +166,7 @@
  ;; Single-space. Always.
  sentence-end-double-space nil
 
- ;; Auto-indentation settings
-
- ;; Use spaces, not tabs.
+ ;; Indentation: use spaces, not tabs.
  indent-tabs-mode nil
  
  ;; The first day of the week is Monday.
@@ -112,19 +176,95 @@
  ;; operate on that region only
  transient-mark-mode 't
 
+ ;; Don't leave *~ droppings.
  make-backup-files nil
  
  cursor-type 'box
  column-number-mode nil
  
- ; 't means always highlight as much distinct syntax as is supported
+ ;; 't means always highlight as much distinct syntax as is supported
  global-font-lock-mode 't
 
- ; Instead of beeping, flash screen
+ ;; Instead of beeping, flash screen
  visible-bell 't
- )
- 
-;;;; Emacs Lisp helper settings
+
+ ;; Make tabs-as-indentation visible, so I can eliminate them
+ tab-width 4
+ whitespace-style '(face
+                    ;; empty
+                    indentation
+                    ;; trailing
+                    ;; lines-tail
+                    missing-newline-at-eof)
+
+ whitespace-display-mappings '((tab-mark 9 [187 9] [92 9])))
+
+;; Actually, turn off the foregoing for now; I haven't yet found
+;; a way of displaying these things that I actually like.
+
+(global-whitespace-mode -1)
+
+;;;; Settings for viewing binary files
+
+(defun use-hexl-mode-if-binary ()
+  "If the current buffer is a binary file, switch to `hexl-mode'."
+    (when (string-match-p "\0" (buffer-string))
+        (hexl-mode)))
+       
+(add-hook 'find-file-hook #'use-hexl-mode-if-binary)
+
+;;;; Git/Magit settings. Re-enable now that that bug is fixed!
+
+;; (defun gline-qdw ()
+;;   (interactive)
+;;   (let* ((dir (file-name-directory buffer-file-name))
+;;          (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
+;;     (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)
+;;     (if (not git-working-copy-root-dir)
+;;         (message (format "Not a Git working copy: %s"
+;;                          (file-name-directory buffer-file-name)))
+;;         (replace-regexp git-working-copy-root-dir "" dir)
+;;         (message (format "About to run gline in dir '%s':" git-working-copy-root-dir))
+;;         ;; (shell-command-qdw
+;;         (message
+;;          (format "gline %s %s" buffer-file-name (line-number-at-pos))))))
+
+;; In the default view, show stashes and local branches.
+;; Also, move the sections around a bit to suit my preferences.
+
+;; (setq-default magit-section-initial-visibility-alist
+;;               '((stashes . show)))
+              
+;; (setq-default magit-status-sections-hook
+;;               '(magit-insert-status-headers
+;;                 magit-insert-merge-log
+;;                 magit-insert-rebase-sequence
+;;                 magit-insert-am-sequence
+;;                 magit-insert-sequencer-sequence
+;;                 magit-insert-bisect-output
+;;                 magit-insert-bisect-rest
+;;                 magit-insert-bisect-log
+;;                 magit-insert-untracked-files
+;;                 magit-insert-stashes
+;;                 magit-insert-unstaged-changes
+;;                 magit-insert-staged-changes
+;;                 magit-insert-local-branches
+;;                 magit-insert-unpushed-to-pushremote
+;;                 magit-insert-unpushed-to-upstream-or-recent
+;;                 magit-insert-unpulled-from-pushremote
+;;                 magit-insert-unpulled-from-upstream))
+
+;; (defun magit-try ()
+;;   (interactive)
+;;   (magit-stage-modified)
+;;   (magit-commit)
+;;   (magit-push))
+
+;;;; General coding settings
+
+(electric-indent-mode +1)
+
+;;;; Emacs Lisp settings
 
 (defun lfi ()
   (interactive)
@@ -151,14 +291,37 @@ but it calls defvar under the hood."
   "Return \=t if any member of a ls matches string; else return nil"
   (seq-some (lambda (s) (string= str s)) ls))
   
-;;;; .ignore settings
-;;;; This file is formatted exactly like .gitignore,
-;;;; and is honored by fd, rg, and maybe others.
+;; Make the contents of *scratch* persist across Emacs sessions
 
-;; (add-to-list 'auto-mode-alist
-;;              '("\\.ignore\\'" . gitignore-mode))
+(setq scratch-buffer-file (expand-file-name "~/tmp/scratch.el"))
 
-;;;; Some Lisp I wrote, or adapted, or adopted
+(defun save-scratch-buffer-to-file ()
+  (with-current-buffer "*scratch*"
+    (write-region (point-min) (point-max) scratch-buffer-file)))
+
+(defun load-scratch-buffer-from-file ()
+  (if (file-exists-p scratch-buffer-file)
+      (with-current-buffer "*scratch*"
+        (erase-buffer)
+        (insert-file-contents scratch-buffer-file))))
+
+(add-hook 'kill-emacs-hook #'save-scratch-buffer-to-file)
+
+(add-hook 'emacs-startup-hook #'load-scratch-buffer-from-file)
+
+(setopt lisp-indent-function #'common-lisp-indent-function)
+(add-hook 'lisp-mode-hook (lambda ()
+                            (eldoc-mode +1)))
+
+;; When I run C-(
+;; (which lets me write and eval a quick Lisp expression
+;; in the minibuffer),
+;; add the opening parenthesis for me.
+(add-hook 'eval-expression-minibuffer-setup-hook
+	  (lambda ()
+	    (insert "(")))
+  
+;;;; Settings (?) for Emacs Lisp I wrote
 
 (add-to-list 'load-path
              (expand-file-name "qdw-themes" user-emacs-directory))
@@ -173,34 +336,48 @@ but it calls defvar under the hood."
 (defvar jira-default-project-qdw (getenv "JIRA_DEFAULT_PROJECT"))
 (defvar slack-team (getenv "SLACK_TEAM"))
 
-;;;; Dependency settings
+;;;; Python settings
 
-;; I'm running emacs as a daemon,
-;; so just require all these modules at once;
-;; don't get clever with lazy-loading.
+(add-hook 'python-mode-hook (lambda () (blacken-mode nil)))
 
-(require 'ansi-color)
-(require 'cc-mode)
-;; (require 'copilot)
-(require 'comint)
-(require 'compile)
-(require 'dirtrack)
-(require 'json)
-(require 'menu-bar)
-(require 'mouse)
-(require 'org)
-(require 'recentf)
-(require 'ruby-mode)
-(require 'scroll-bar)
-(require 'sh-script)
-(require 'tool-bar)
-(require 'whitespace)
+;;;; Javascript settings, TypeScript settings, JSON settings
 
-;; I'm running emacs as a daemon,
-;; so just require all these modules at once;
-;; don't get clever with lazy-loading.
+(let ((desired-indent-level 2))
+  (setopt
+        typescript-indent-level desired-indent-level)
+  (setq js-indent-level desired-indent-level
+        js-switch-indent-offset desired-indent-level))
 
-;;;; Buffer-management functions
+;; eslint (JavaScript/TypeScript linter) settings
+(defun seteslintrc ()
+  "Returns the location of nearest eslintrc"
+  (interactive)
+    (setq flycheck-eslintrc
+          (locate-dominating-file "~/" ".eslintrc.json")))
+
+(defun configure-typescript ()
+  (interactive)
+  (tide-setup)
+  (setq fill-column 120)
+  (company-mode +1)
+  (eldoc-mode +1)
+  (flycheck-mode +1)
+  (column-number-mode +1)
+  (seteslintrc)
+  (setq flycheck-check-syntax-automatically '(save mode-enabled)
+        typescript-auto-indent-flag nil
+        company-tooltip-align-annotations t)
+  (tide-hl-identifier-mode +1))
+
+(add-hook 'typescript-mode-hook #'configure-typescript)
+  
+;;;; .ignore settings
+;;;; This file is formatted exactly like .gitignore,
+;;;; and is honored by fd, rg, and maybe others.
+;; (add-to-list 'auto-mode-alist
+;;              '("\\.ignore\\'" . gitignore-mode))
+
+;;;; Buffer-management settings
 
 (defun buffer-saver-killer-helper (prompt-bool)
   (save-some-buffers prompt-bool)
@@ -304,7 +481,7 @@ but it calls defvar under the hood."
 
 (overlay-org-colors-qdw)
 
-;;;; Theme-related utility functions
+;;;; Color-theme-related utility functions
 
 (defun if-file-is-theme-reload-theme ()
   (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
@@ -480,18 +657,17 @@ but it calls defvar under the hood."
 
 (advice-add 'load-theme :around 'load-theme-wrapper-qdw)
 
-;;;; Third-party themes that I like okay:
-;;
-;;; Light mode:
-;; Bundled with Emacs:
-;; (load-theme 'modus-operandi) ;; max-contrast light theme
-;; (load-theme 'modus-operandi-tinted)
-;; (load-theme 'modus-vivendi)  ;; max-contrast dark theme (good in sunlight)
+;;;; Other themes that I like okay:
 
-;; (load-theme 'hydandata)
-;; (load-theme 'solo-jazz)
-;; (load-theme 'infodoc)
-;; (load-theme 'organic-green)
+;;; Light mode:
+
+;; (load-theme 'modus-operandi) ;; max-contrast light theme (good in sunlight)
+
+;;; Dark mode:
+
+;; (load-theme 'modus-vivendi)  ;; max-contrast dark theme
+
+;;;; dired settings
 
 (defun dired-find-file-qdw ()
   "In Dired, visit the file or directory on the cursor.
@@ -611,7 +787,7 @@ use `dired-find-file' to open it in a new buffer."
 
 (defalias 'dwim 'find-file-at-point-with-line-and-column-if-present)
 
-;;;; GUI Emacs settings
+;;;; Settings specific to GUI Emacs
 
 ;; Open PNGs in the Preview app, not in Emacs
 
@@ -652,7 +828,8 @@ use `dired-find-file' to open it in a new buffer."
 
 ;;;; Human-language settings (including English)
 
-;; From xahlee.org
+;; Adapted from xahlee.org
+
 (defun unfill-paragraph-xah ()
   "Replace newline chars in current paragraph by single spaces.
 This command does the reverse of `fill-paragraph'."
@@ -699,152 +876,21 @@ This command does the reverse of `fill-region'."
      (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
      (nov-mode))))
      
-;;;; AI settings == LLM settings == genai settings
 
-;;; emacs-copilot by jart: code completion using an open-source, local LLM
+;;;; Settings for writing shell scripts
 
-;; From https://github.com/jart/emacs-copilot/blob/main/README.md
- 
-;; (defun copilot-complete ()
-;;   (interactive)
-;;   (let* ((spot (point))
-;;          (inhibit-quit 't)
-;;          (current-file (buffer-file-name))
-;;          (cash (concat current-file ".cache"))
-;;          (hist (concat current-file ".prompt"))
-;;          (lang (file-name-extension current-file))
+;; Automatically make files executable if they start with a shebang
 
-;;          ;; extract current line, to left of the caret
-;;          ;; plus the previous line. We will pass
-;;          ;; these to the LLM.
-;;          (code (save-excursion
-;;                  (dotimes (i 2)
-;;                    (when (> (line-number-at-pos) 1)
-;;                      (previous-line)))
-;;                  (beginning-of-line)
-;;                  (buffer-substring-no-properties (point) spot)))
+(add-hook 'after-save-hook
+          'executable-make-buffer-file-executable-if-script-p)
 
-;;          ;; create an English-langiage prompt for this interaction
-;;          (system "\
-;; You are an Emacs code generator. \
-;; Writing comments is forbidden. \
-;; Writing test code is forbidden. \
-;; Writing English explanations is forbidden. ")
-;;          (prompt (format
-;;                   "[INST]%sGenerate %s code to complete:[/INST]\n```%s\n%s"
-;;                   (if (file-exists-p cash) "" system) lang lang code)))
+;; Don't auto-insert '<< EOF'-style heredocs when I type '<<',
+;; since I have my own preferred way of writing heredocs.
+(add-hook 'sh-mode-hook
+          (lambda ()
+            (setq sh-electric-here-document-mode nil)))
 
-;;     ;; iterate text deleted within editor then purge it from prompt
-;;     (when kill-ring
-;;       (save-current-buffer
-;;         (find-file hist)
-;;         (dotimes (i 10)
-;;           (let ((substring (current-kill i t)))
-;;             (when (and substring (string-match-p "\n.*\n" substring))
-;;               (goto-char (point-min))
-;;               (while (search-forward substring nil t)
-;;                 (delete-region (- (point) (length substring)) (point))))))
-;;         (save-buffer 0)
-;;         (kill-buffer (current-buffer))))
-
-;;     ;; append prompt for current interaction to the big old prompt
-;;     (write-region prompt nil hist 'append 'silent)
-
-;;     ;; run llamafile streaming stdout into buffer catching ctrl-g
-;;     (with-local-quit
-;;       (call-process "wizardcoder-python-34b-v1.0.Q5_K_M.llamafile"
-;;                     nil (list (current-buffer) nil) t
-;;                     "--prompt-cache" cash
-;;                     "--prompt-cache-all"
-;;                     "--silent-prompt"
-;;                     "--temp" "0"
-;;                     "-c" "1024"
-;;                     "-ngl" "35"
-;;                     "-r" "```"
-;;                     "-r" "\n}"
-;;                     "-f" hist))
-
-;;     ;; get rid of most markdown syntax
-;;     (let ((end (point)))
-;;       (save-excursion
-;;         (goto-char spot)
-;;         (while (search-forward "\\_" end t)
-;;           (backward-char)
-;;           (delete-backward-char 1 nil)
-;;           (setq end (- end 1)))
-;;         (goto-char spot)
-;;         (while (search-forward "```" end t)
-;;           (delete-backward-char 3 nil)
-;;           (setq end (- end 3))))
-
-;;       ;; append generated code to prompt
-;;       (write-region spot end hist 'append 'silent))))
-
-;;;; ^ End of jart's emacs-copilot settings
-
-;; ;;;; GitHub Copilot settings (slower than emacs-copilot; not yet working)
-
-;; (defun copilot-disable-p-qdw ()
-;;   "When copilot should not automatically show completions."
-;;   (not (derived-mode-p 'typescript-mode)))
-  
-;; (add-to-list 'copilot-disable-predicates 'copilot-disable-p-qdw)
-
-;; ;; Adapted from https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup/
-
-;; (defun rk/copilot-change-activation ()
-;;   "Switch between three activation modes:
-;;   - automatic: copilot will automatically overlay completions
-;;   - manual: you need to press a key (M-C-<return>) to trigger completions
-;;   - off: copilot is completely disabled."
-;;   (interactive)
-;;   (if (and copilot-mode rk/copilot-manual-mode)
-;;       (progn
-;;         (message "deactivating copilot")
-;;         (global-copilot-mode -1)
-;;         (setq rk/copilot-manual-mode nil))
-;;     (if copilot-mode
-;;         (progn
-;;           (message "activating copilot manual mode")
-;;           (setq rk/copilot-manual-mode t))
-;;       (message "activating copilot mode")
-;;       (global-copilot-mode))))
-
-;;;; Shell-script-editing settings
-
-;; (defun remove-annoying-sh-mode-map-bindings ()
-;;   "C-c is supposed to be the prefix for user-defined keybindings, generally speaking, but shell-script-mode sets a bunch of C-c bindings that do dumb stuff like inserting syntactic constructs like case statements, for loops, and so on. I'm fine with typing those out like a normal person, so I don't want these features, and they're clobbering my personal keybindings. So unmap them."
-;;   (interactive)
-;;   (let ((c-c-bindings
-;;          (list "C-c C-d"  ;; sh-cd-here             
-;;                "C-c C-f"  ;; sh-for                 
-;;                "C-c TAB"  ;; sh-if                  
-;;                "C-c C-l"  ;; sh-indexed-loop        
-;;                "C-c C-n"  ;; sh-send-line-or-region-
-;;                "C-c C-o"  ;; sh-while-getopts       
-;;                "C-c C-r"  ;; sh-repeat              
-;;                "C-c C-s"  ;; sh-select              
-;;                "C-c C-t"  ;; sh-tmp-file            
-;;                "C-c C-u"  ;; sh-until               
-;;                "C-c C-w"  ;; sh-while               
-;;                "C-c C-x"  ;; executable-interpret   
-;;                "C-c C-z"  ;; sh-show-shell          
-;;                "C-c C-\\" ;; sh-backslash-region    
-;;                "C-c ("    ;; sh-function            
-;;                "C-c +"    ;; sh-add                 
-;;                "C-c :"    ;; sh-set-shell
-;;                "C-c <"    ;; }
-;;                "C-c ="    ;; }}
-;;                "C-c >"    ;; }}} indentation-related functions
-;;                "C-c ?"    ;; }}
-;;                           ;; }
-;;                )))
-;;     (dolist (binding c-c-bindings)
-;;       (keymap-unset sh-mode-map binding))))
-      
-;; (remove-annoying-sh-mode-map-bindings)
-
-;;;; Shell settings
+;;;; Settings for running shell commands from Emacs
 
 (defun shell-command-qdw (&optional prefix)
   "Prompt for a shell command. If there is a region selected, then insert it as the last argument in the prompt, with the point positioned immediately before that last argument. If PREFIX is non-nil, then insert the command output into in the current buffer at point."
@@ -868,6 +914,17 @@ This command does the reverse of `fill-region'."
      
      (shell-command
       (concat "source ~/.bashrc && INSIDE_EMACS=1 " command-string))))
+      
+;;;; Settings for running interactive shells inside Emacs (via `M-x shell`)
+
+(setq-default shell-prompt-regexp "[~][/].*[$][ ]")
+
+(defun shell-dirstack-update (output)
+  (when (string-match-p comint-prompt-regexp output)
+    (comint-send-string (get-buffer-process (current-buffer)) "dirs\n")))
+
+(add-hook 'comint-output-filter-functions 'shell-dirstack-update nil t)
+
   
 ;; Don't prompt me about shell sessions, debug sessions, et cetera
 ;; when I quit Emacs. Just kill them.
@@ -970,40 +1027,17 @@ which is its intended use."
   (replace-regexp "^" "[[")
   (goto-char (point-min))
   (replace-regexp "$" "]]"))
+  
+;; Settings for org-babel
+;; (org's system for displaying code/command results inline)
 
-;; This regexp is correct...
-;; (setq jira-ticket-regexp-qdw
-;;       "\\b[[:upper:]]\\{2,10\\}-[[:digit:]]-\\{2,\\9}")
+(setopt org-confirm-babel-evaluate nil
+        org-babel-load-languages
+        '((emacs-lisp . t)
+          (python . t)
+          (shell . t)))
 
-;; ... but this function is broken       
-;; (defun qdw-isearch-forward-jira-ticket
-;;   (interactive)
-;;   (isearch-resume jira-ticket-regexp-qdw 't nil 't nil 't))
-    
-;; (defun org-insert-pr-link-qdw (repo pr-number)
-;;   "Insert a link to a GitHub pull request.
-;;   REPO is the name of the repository,
-;;   and PR-NUMBER is, well, what it sounds like."
-;;   (interactive "MRepo: \nnPR number: ")
-;;   (org-insert-link nil
-;;                    (format "https://github.com/%s/%s/pull/%s"
-;;                            getenv("GITHUB_ORG")
-;;                            repo
-;;                            pr-number)))
-
-;;;; Experimental org-mode settings
-
-;; ;; Generated by bing; read, debug, and test
-;; 
-;; (defun org-insert-subheading-with-todo-qdw ()
-;;   "Insert a subheading with the same TODO state as the current heading."
-;;   (interactive)
-;;   (let ((current-todo (org-get-todo-state)))
-;;     (org-insert-subheading nil)
-;;     (when current-todo
-;;       (org-todo current-todo))))
-
-;;;; org-mode: Jira-related settings
+;; org-mode: Jira-related settings
 
 (defun org-insert-jira-link-qdw ()
   (interactive)
@@ -1025,18 +1059,6 @@ which is its intended use."
     (org-insert-link nil
                      (concat jira-base-url "/browse/" issue-name)
                      issue-name)))
-
-;; FIXME: doesn't work
-;; (defun jira-issue-create-from-region-qdw ()
-;;   (interactive)
-;;   (if (use-region-p)
-;;       (let ((summary (shell-quote-argument (buffer-substring-no-properties
-;;                                              (region-beginning)
-;;                                              (region-end)))))
-;;         (shell-command (concat
-;;           "source ~/.bashrc && INSIDE_EMACS=1 jic "
-;;           summary)))
-;;       (error "No selection")))
 
 (defun org-fold-qdw ()
   "In org-mode, set the VISIBILITY property of the element at point
@@ -1061,14 +1083,6 @@ which is its intended use."
     nil
     (concat "https://" slack-team ".slack.com/channels/#" channel-name)
     (concat "#" channel-name)))
-    
-;;;; Settings for org-babel (org's system for displaying code/command results inline)
-
-(setopt org-confirm-babel-evaluate nil
-        org-babel-load-languages
-        '((emacs-lisp . t)
-          (python . t)
-          (shell . t)))
           
 (defun org-just-eval-blocks-qdw ()
   "Automatically evaluate specific org-mode #+CALL: lines on buffer visit."
@@ -1081,14 +1095,6 @@ which is its intended use."
 
 (add-hook 'org-mode-hook #'org-just-eval-blocks-qdw)
 
-;; (defun org-insert-pr-link-qdw (repo pr-number)
-;;   (interactive "MRepo: \nnPR number: ")
-;;   (org-insert-link nil
-;;                    (format "https://github.com/%s/%s/pull/%s"
-;;                            getenv("GITHUB_ORG")
-;;                            repo
-;;                            pr-number)))
-
 (defun org-insert-subheading-respect-content-qdw (arg)
   (interactive "P")
   (org-insert-todo-subheading-respect-content arg)
@@ -1096,40 +1102,6 @@ which is its intended use."
       ((org-at-heading-p) (org-do-demote))
       ((org-at-item-p) (org-indent-item))))
 
-;; Viewport management
-
-(defun other-window-reverse ()
-  (interactive)
-  (other-window -1))
-
-;; Cycle through viewports.
-
-(defun rotate-windows () ;; from whattheemacsd.com
-  "Rotate your windows"
-  (interactive)
-  (cond ((not (> (count-windows) 1))
-         (message "You can't rotate a single window!"))
-        ('t
-         (setq i 1)
-         (setq numWindows (count-windows))
-         (while  (< i numWindows)
-           (let* (
-                  (w1 (elt (window-list) i))
-                  (w2 (elt (window-list) (+ (% i numWindows) 1)))
-
-                  (b1 (window-buffer w1))
-                  (b2 (window-buffer w2))
-
-                  (s1 (window-start w1))
-                  (s2 (window-start w2))
-                  )
-             (set-window-buffer w1  b2)
-             (set-window-buffer w2 b1)
-             (set-window-start w1 s2)
-             (set-window-start w2 s1)
-             (setq i (1+ i))))))
-             
-  (other-window -1))
 
 ;;;; tail settings
 
@@ -1137,37 +1109,6 @@ which is its intended use."
   (interactive)
   (auto-revert-tail-mode))
   
-;;;; diff, merge, and git settings
-
-;; (defun open-current-line-in-github-web-ui-qdw ()
-;;   (interactive)
-;;   (let*
-;;     ((filename
-;;       (file-name-nondirectory (buffer-file-name)))
-;;      (line
-;;       (number-to-string (line-number-at-pos))))
-;;     ;; (src-dir-regexp
-;;     ;; (concat home "/src.*/")
-;;     ;; 
-;;     ;; (truncated-filename
-;;     ;; (replace-regexp-in-string src-dir-regexp "" filename 't 't))
-;;     ;; 
-;;     ;; (print (concat filename ":" line))))
-;;     (async-shell-command (concat "gh browse " filename ":" line)
-;;                          "emacs-gh-stdout"
-;;                           "emacs-gh-stderr")))
-
-;;;; Executable-script settings
-
-;; ... files that start with a shebang line
-
-(add-hook 'after-save-hook
-          'executable-make-buffer-file-executable-if-script-p)
-
-;; Globally enable dumb-jump, an it-just-works way to jump
-;; from functions' invocations to their definitions of those
-;; functions, which supports many languages.
-
 (add-hook 'xref-backend-functions 'dumb-jump-xref-activate)
 
 (defun my-enter ()
@@ -1192,105 +1133,6 @@ which is its intended use."
           (goto-char start)
           (while (re-search-forward "-" end t)
             (replace-match "" t t)))))))
-
-;;;; Interactive-shell settings
-
-(setq-default shell-prompt-regexp "[~][/].*[$][ ]")
-
-(defun shell-dirstack-update (output)
-  (when (string-match-p comint-prompt-regexp output)
-    (comint-send-string (get-buffer-process (current-buffer)) "dirs\n")))
-
-(add-hook 'comint-output-filter-functions 'shell-dirstack-update nil t)
-
-;;;; Settings for writing shell scripts
-
-;; Don't auto-insert '<< EOF'-style heredocs when I type '<<',
-;; since I have my own preferred way of writing heredocs.
-(add-hook 'sh-mode-hook
-          (lambda ()
-            (setq sh-electric-here-document-mode nil)))
-
-;;;; Lisp settings
-
-;; Make the contents of *scratch* persist across Emacs sessions
-
-(setq scratch-buffer-file (expand-file-name "~/tmp/scratch.el"))
-
-(defun save-scratch-buffer-to-file ()
-  (with-current-buffer "*scratch*"
-    (write-region (point-min) (point-max) scratch-buffer-file)))
-
-(defun load-scratch-buffer-from-file ()
-  (if (file-exists-p scratch-buffer-file)
-      (with-current-buffer "*scratch*"
-        (erase-buffer)
-        (insert-file-contents scratch-buffer-file))))
-
-(add-hook 'kill-emacs-hook #'save-scratch-buffer-to-file)
-
-(add-hook 'emacs-startup-hook #'load-scratch-buffer-from-file)
-
-(setopt lisp-indent-function #'common-lisp-indent-function)
-(add-hook 'lisp-mode-hook (lambda ()
-                            (eldoc-mode +1)))
-
-;; When I run C-(
-;; (which lets me write and eval a quick Lisp expression
-;; in the minibuffer),
-;; add the opening parenthesis for me.
-(add-hook 'eval-expression-minibuffer-setup-hook
-	  (lambda ()
-	    (insert "(")))
-            
-;;;; Settings > Hacking > General
-
-;; Make tabs-as-indentation visible, so I can eliminate them
-
-(setopt whitespace-style
-        '(face
-          ;; empty
-          indentation
-          ;; trailing
-          ;; lines-tail
-          missing-newline-at-eof)
-
-        whitespace-display-mappings
-        '((tab-mark 9 [187 9] [92 9]))) ;; Optional: Customize tab display
-
-(global-whitespace-mode -1)
-(setq-default tab-width 4)
-
-;;;; Settings > Hacking > JavaScript/TypeScript/JSON
-
-(let ((desired-indent-level 2))
-  (setopt
-        typescript-indent-level desired-indent-level)
-  (setq js-indent-level desired-indent-level
-        js-switch-indent-offset desired-indent-level))
-
-;; eslint (JavaScript/TypeScript linter) settings
-(defun seteslintrc ()
-  "Returns the location of nearest eslintrc"
-  (interactive)
-    (setq flycheck-eslintrc
-          (locate-dominating-file "~/" ".eslintrc.json")))
-
-(defun configure-typescript ()
-  (interactive)
-  (tide-setup)
-  (setq fill-column 120)
-  (company-mode +1)
-  (eldoc-mode +1)
-  (flycheck-mode +1)
-  (column-number-mode +1)
-  (seteslintrc)
-  (setq flycheck-check-syntax-automatically '(save mode-enabled)
-        typescript-auto-indent-flag nil
-        company-tooltip-align-annotations t)
-  (tide-hl-identifier-mode +1))
-
-(add-hook 'typescript-mode-hook #'configure-typescript)
 
 ;;;; Editor MACroS settings
 
@@ -1347,11 +1189,12 @@ which is its intended use."
 
 (qdw-keymap-override-mode +1) ; enable the override mode
 
-;;;; C settings
+;;;; C keybdindings
 
 (keymap-set c-mode-map "RET" 'electric-newline-and-maybe-indent)
 (keymap-set c-mode-map "C-c {" 'beginning-of-defun)
 (keymap-set c-mode-map "C-c }" 'end-of-defun)
+
 
 ;;;; dired-mode keybindings
 
@@ -1378,108 +1221,11 @@ which is its intended use."
 (keymap-set org-mode-map "C-c ]"   'org-table-move-column-right)
 (keymap-set org-mode-map "C-c s"   'org-insert-slack-link)
 
-;;;; Experimental lyrics-downloading settings
-
-;; (defun munge-song-or-band-name (string)
-;;   "Prepare a STRING to be saved as a part of a filename."
-;;   (replace-regexp-in-string
-;;    (rx (or "<" ">" ":" "\"" "/" "\\" "|" "?" "*" " "))
-;;    "-"
-;;    string))
-;; (setq lyrics-fetcher-format-file-name-method
-;;       'munge-song-or-band-name)
-
-;;;; Experimental settings to make Emacs's navigation commands work like vim's
-;;;; (cf. evil-mode)
-
-;; (defun evilmacs-forward-word ()
-;;   "Move point forward using Evil word motion."
-;;   (interactive)
-;;   (goto-char (evil-forward-word-begin 1)))
-
-;; (keymap-global-set "M-f" 'evilmacs-forward-word)
-      
-;; (defun evilmacs-backward-word ()
-;;   "Move point backward using Evil word motion."
-;;   (interactive)
-;;   (goto-char (evil-backward-word-begin 1)))
-
 ;;;; shell-script-editing-mode keybindings
 
 ;; (define-prefix-command 'sh-mode-prefix-map)
 ;; (define-key sh-mode-map (kbd "C-c C-c") 'sh-mode-prefix-map)
 ;; (keymap-unset sh-mode-map "C-c C-c i")
-
-;;;; Binary-file-viewing settings
-
-(defun use-hexl-mode-if-binary ()
-  "If the current buffer is a binary file, switch to `hexl-mode'."
-    (when (string-match-p "\0" (buffer-string))
-        (hexl-mode)))
-       
-(add-hook 'find-file-hook #'use-hexl-mode-if-binary)
-
-;;;; Usenet settings
-
-;; (setopt gnus-select-method '(nntp "news.eternal-september.org")
-;;         gnus-secondary-select-methods '((nntp "news.sonic.net"))
-;;         gnus-newsgroup-maximum-articles nil
-;;         gnus-thread-hide-subtree 't)
-
-;; Prominently highlight any tabs used for indentation in source code,
-;; (but not in the PostgreSQL source code or in Go, because
-;; tabs are the convention there).
-
-;; (set-face-attribute 'whitespace-tab nil
-;;                     :background red
-;;                     :foreground black)
-
-;;;; Git/Magit settings
-
-;; (defun gline-qdw ()
-;;   (interactive)
-;;   (let* ((dir (file-name-directory buffer-file-name))
-;;          (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
-;;     (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)
-;;     (if (not git-working-copy-root-dir)
-;;         (message (format "Not a Git working copy: %s"
-;;                          (file-name-directory buffer-file-name)))
-;;         (replace-regexp git-working-copy-root-dir "" dir)
-;;         (message (format "About to run gline in dir '%s':" git-working-copy-root-dir))
-;;         ;; (shell-command-qdw
-;;         (message
-;;          (format "gline %s %s" buffer-file-name (line-number-at-pos))))))
-
-;; In the default view, show stashes and local branches.
-;; Also, move the sections around a bit to suit my preferences.
-
-;; (setq-default magit-section-initial-visibility-alist
-;;               '((stashes . show)))
-              
-;; (setq-default magit-status-sections-hook
-;;               '(magit-insert-status-headers
-;;                 magit-insert-merge-log
-;;                 magit-insert-rebase-sequence
-;;                 magit-insert-am-sequence
-;;                 magit-insert-sequencer-sequence
-;;                 magit-insert-bisect-output
-;;                 magit-insert-bisect-rest
-;;                 magit-insert-bisect-log
-;;                 magit-insert-untracked-files
-;;                 magit-insert-stashes
-;;                 magit-insert-unstaged-changes
-;;                 magit-insert-staged-changes
-;;                 magit-insert-local-branches
-;;                 magit-insert-unpushed-to-pushremote
-;;                 magit-insert-unpushed-to-upstream-or-recent
-;;                 magit-insert-unpulled-from-pushremote
-;;                 magit-insert-unpulled-from-upstream))
-
-;; (defun magit-try ()
-;;   (interactive)
-;;   (magit-stage-modified)
-;;   (magit-commit)
-;;   (magit-push))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1488,7 +1234,7 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(tritium))
  '(package-selected-packages
-   '(llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
+   '(blacken llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
