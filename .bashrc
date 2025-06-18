@@ -148,7 +148,7 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 
 function enva {
     check-args 0 0 "[no arguments]" "$@" || return 1
-    env | grep '^AWS' | sort
+    env | command grep -E '^AWS' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
 }
 
 function envap {
@@ -1322,15 +1322,31 @@ function rds-ls {
 
 function list-rds-instances { rds-ls "$@" ;}
 
-function list-secrets { aws secretsmanager list-secrets ;}
-function list-secret-ids { list-secrets | jq --raw-output '.SecretList[].Name' | sort ;}
+#### AWS SSM (a.k.a. Secrets Manager) settings
 
-### AWS SSM (a.k.a. Secrets Manager) settings
+function list-secrets {
+    check-args 0 varargs '[GREP_REGEX]' "$@" || return 1
+    local REGEX="$1" # may be ""
+    shift # remaining arguments (if any) are flags to pass to grep
+
+    function list-all-secrets {
+        aws secretsmanager list-secrets \
+            | jq -r '.SecretList[].Name' \
+            | sort -u
+    }
+
+    if [[ "$REGEX" ]]; then
+        list-all-secrets | command grep -E "$@" "$REGEX"
+    else
+        list-all-secrets
+    fi
+}
 
 function get-secret {
     aws secretsmanager get-secret-value --secret-id "$1" \
         | jq '.SecretString | fromjson'
 }
+
 function secret { get-secret "$@" ;}
 
 ### AWS logs/CloudWatch/LogGroup/log group settings
@@ -2207,16 +2223,16 @@ function branchify {
 
 function gnb {
     check-args 1 1 'TINY_SUMMARY' "$@" || return 1
-    local SCRIBBLE="$1";
+    local SUMMARY="$1";
     if [[ -z "$GITHUB_USERNAME" ]]; then
         carp "You must set the GITHUB_USERNAME env var" >&2
         return 2
     fi
 
     local ISSUE DESC BRANCH_NAME
-    ISSUE="$(jis "$SCRIBBLE")" || return 3
-    DESC="$(branchify "$SCRIBBLE")" || return 4
-    BRANCH_NAME="$GITHUB_USERNAME/$ISSUE/$DESC"    
+    ISSUE="$(jis "$SUMMARY")" || return 3
+    DESC="$(branchify "$SUMMARY")" || return 4
+    BRANCH_NAME="$GITHUB_USERNAME/$ISSUE/$DESC"
     gb "$BRANCH_NAME"
     echo "$ISSUE" | pbcopy
 }
