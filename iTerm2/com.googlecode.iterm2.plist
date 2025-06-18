@@ -394,7 +394,7 @@
 		</dict>
 	</dict>
 	<key>Default Bookmark Guid</key>
-	<string>2454B24B-3846-4C84-9038-3A7AB065ECCA</string>
+	<string>1402BFFC-DB48-4908-9FB4-A764FD7BF6EA</string>
 	<key>DeleteProfile_SilenceUntil</key>
 	<real>771803704.51575303</real>
 	<key>DeleteProfile_selection</key>
@@ -6656,15 +6656,15 @@
 			<key>HotKey Alternate Shortcuts</key>
 			<array/>
 			<key>HotKey Characters</key>
-			<string>t</string>
+			<string> </string>
 			<key>HotKey Characters Ignoring Modifiers</key>
-			<string>T</string>
+			<string> </string>
 			<key>HotKey Key Code</key>
-			<integer>17</integer>
+			<integer>49</integer>
 			<key>HotKey Modifier Activation</key>
 			<integer>0</integer>
 			<key>HotKey Modifier Flags</key>
-			<integer>1179648</integer>
+			<integer>1310720</integer>
 			<key>HotKey Window Animates</key>
 			<false/>
 			<key>HotKey Window AutoHides</key>
