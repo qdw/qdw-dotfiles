@@ -114,6 +114,7 @@
 (require 'comint)
 (require 'compile)
 (require 'dirtrack)
+(require 'imenu)
 (require 'json)
 (require 'markdown-mode)
 (require 'menu-bar)
@@ -264,6 +265,7 @@
 ;;;; General coding settings
 
 (electric-indent-mode +1)
+(setopt imenu-list-auto-resize 't)
 
 ;;;; Emacs Lisp settings
 
@@ -1160,7 +1162,7 @@ which is its intended use."
                           (kbd (car ls))
                           (cadr ls)))
 
- '(("<backtab>"    rk/copilot-change-activation)
+ '(("<backtab>"   rk/copilot-change-activation)
    ("M-!"         shell-command-qdw)
    ("M-`"         unfill-paragraph-xah)
    ("C-c u"       uncomment-region)
@@ -1179,6 +1181,7 @@ which is its intended use."
    ("C-c C-c b"   edit-bashrc)
    ("C-c C-c i"   ini)
    ("C-c SPC"     iterm2-here)
+   ("C-c m"       imenu-list-smart-toggle)
    ("C-c l"       shell)
    ("C-c n"       display-line-numbers-mode)
    ("C-c o"       rotate-windows)
@@ -1244,7 +1247,7 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(tritium))
  '(package-selected-packages
-   '(blacken llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
+   '(imenu-list blacken llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
