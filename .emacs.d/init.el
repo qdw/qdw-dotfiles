@@ -115,6 +115,7 @@
 (require 'compile)
 (require 'dirtrack)
 (require 'json)
+(require 'markdown-mode)
 (require 'menu-bar)
 (require 'mouse)
 (require 'org)
@@ -376,6 +377,15 @@ but it calls defvar under the hood."
 ;;;; and is honored by fd, rg, and maybe others.
 ;; (add-to-list 'auto-mode-alist
 ;;              '("\\.ignore\\'" . gitignore-mode))
+
+
+;;;; Markdown settings
+
+;; Treat all Markdown as GitHub-Flavored Markdown ("gfm").
+;; Its main advantage over the original Markdown standard
+;; is that medial underscores no longer toggle italics.
+
+(add-to-list 'auto-mode-alist '("\\.markdown\\'" . gfm-mode))
 
 ;;;; Buffer-management settings
 
