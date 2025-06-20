@@ -10,7 +10,7 @@
   },
   "Disable Smcup Rmcup" : true,
   "Use Bright Bold" : true,
-  "Columns" : 80,
+  "Columns" : 118,
   "Background Color" : {
     "Red Component" : 0.18823529779911041,
     "Color Space" : "P3",
@@ -33,7 +33,7 @@
   "Use Underline Color" : true,
   "Space" : 0,
   "Use Tab Color" : false,
-  "HotKey Modifier Flags" : 1179648,
+  "HotKey Modifier Flags" : 1310720,
   "Place Prompt at First Column" : false,
   "Keyboard Map" : {
 
@@ -212,7 +212,7 @@
     "Alpha Component" : 0.5,
     "Green Component" : 0.25273144245147705
   },
-  "HotKey Key Code" : 17,
+  "HotKey Key Code" : 49,
   "Idle Code" : 0,
   "Ansi 4 Color" : {
     "Red Component" : 0.40000000596046448,
@@ -289,7 +289,7 @@
     "Alpha Component" : 1,
     "Green Component" : 0.61960786581039429
   },
-  "HotKey Characters Ignoring Modifiers" : "T",
+  "HotKey Characters Ignoring Modifiers" : " ",
   "Status Bar Layout" : {
     "components" : [
 
@@ -303,7 +303,7 @@
   },
   "Blur" : true,
   "Session Close Undo Timeout" : 30,
-  "HotKey Characters" : "t",
+  "HotKey Characters" : "\u0000",
   "Initial Use Transparency" : false,
   "Scrollback in Alternate Screen" : false,
   "Terminal Type" : "xterm-256color",
