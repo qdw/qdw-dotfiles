@@ -43,7 +43,7 @@
 (defvar bright-white)
 
 (setq
-           black  "#000000"   ;; True black
+           black  "#000000"
              red  "#FFB300"   ;; Bright amber (most intense)
            green  "#E69500"   ;; Slightly dimmer amber
           yellow  "#FFC04D"   ;; Pale, glowing amber
@@ -62,7 +62,7 @@
      bright-blue  "#CC9900"   ;; Rich golden amber, brighter than base blue
   bright-magenta  "#DDAA33"   ;; Warm orange-gold pop
      bright-cyan  "#BB8800"   ;; Coolest usable amber variant
-    ;; bright-white  "#663F00"   ;; Strong amber brown highlight (burnt)
+    ;; bright-white  "#"   ;; Strong amber brown highlight (burnt)
     bright-white magenta
  )
 
@@ -159,31 +159,34 @@
    `(link
      ((t (:foreground ,yellow :underline t))))
      
-   ;;;; ANSI colors (used in shell-mode)
-   
-   `(ansi-color-black ((t (:background ,black :foreground ,black :underline nil))))
-   `(ansi-color-bright-black ((t (:background ,bright-black :foreground ,bright-black :underline nil))))
-   
-   `(ansi-color-red ((t (:background ,red :foreground ,red :underline nil))))
-   `(ansi-color-bright-red ((t (:background ,bright-red :foreground ,bright-red :underline nil))))
-   
-   `(ansi-color-green ((t (:background ,green :foreground ,green :underline nil))))
-   `(ansi-color-bright-green ((t (:background ,bright-green :foreground ,bright-green :underline nil))))
-   
-   `(ansi-color-yellow ((t (:background ,yellow :foreground ,yellow :underline nil))))
-   `(ansi-color-bright-yellow ((t (:background ,bright-yellow :foreground ,bright-yellow :underline nil))))
-   
-   `(ansi-color-blue ((t (:background ,blue :foreground ,blue :underline nil))))
-   `(ansi-color-bright-blue ((t (:background ,bright-blue :foreground ,bright-blue :underline nil))))
+   ;;;; Set ANSI colors (as shown in *shell* == shell-mode sessions)
 
-   `(ansi-color-magenta ((t (:background ,magenta :foreground ,magenta :underline nil))))
-   `(ansi-color-bright-magenta ((t (:background ,bright-magenta :foreground ,bright-magenta :underline nil))))
+   (setopt ansi-color-bold-is-bright 't)
 
-   `(ansi-color-cyan ((t (:background ,cyan :foreground ,cyan :underline nil))))
-   `(ansi-color-bright-cyan ((t (:background ,bright-cyan :foreground ,bright-cyan :underline nil))))
-      
-   `(ansi-color-white ((t (:background ,white :foreground ,white :underline nil))))
-   `(ansi-color-bright-white ((t (:background ,bright-white :foreground ,bright-white :underline nil))))
+   (dolist (prefix '("" "bright-"))
+     (dolist (color-name '("black"
+                           "red"
+                           "green"
+                           "yellow"
+                           "blue"
+                           "magenta"
+                           "cyan"
+                           "white"))
+       (let* ((ansi-color-name (concat "ansi-color-" prefix color-name))
+              (ansi-color-symbol (intern ansi-color-name))
+              (desired-hex-value (symbol-value (intern color-name))))
+         (set ansi-color-symbol desired-hex-value)
+         (face-spec-set ansi-color-symbol `((t (:foreground ,desired-hex-value)))))))
+
+   ;; Then modify ANSI black and bright-black so that they're visible against a true
+   ;; black background (#000000). This doesn't change the global `black` var,
+   ;; only `ansi-color-black`.
+
+   (set 'ansi-color-black "#4a2f19")
+   (face-spec-set 'ansi-color-black `((t (:foreground ,ansi-color-black))))
+
+   (set 'ansi-color-bright-black "#663f00")
+   (face-spec-set 'ansi-color-bright-black `((t (:foreground ,ansi-color-bright-black))))
    
    ;;;; customize
 

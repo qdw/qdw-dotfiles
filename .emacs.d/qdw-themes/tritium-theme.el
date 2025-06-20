@@ -55,7 +55,7 @@
              red  "#af5f00"  ;;      actually orange
       bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
            green  "#3b8560"
-    bright-green  "#00a700"
+    bright-green  "#00a400"
           yellow  "#9164ff"  ;; actually purple
    bright-yellow  "#b5b500"  ;; bright yellow
             blue  "#6495ed"            
