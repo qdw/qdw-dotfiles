@@ -1126,9 +1126,6 @@ ACK_PAGER="$PAGER"
 BAT_PAGER="$PAGER"
 MANPAGER="$PAGER"
 
-# PAGER="bat"
-# BAT_PAGER="batless"
-
 set +a
 
 #### Makefile settings
@@ -1591,7 +1588,7 @@ function activate-iTerm2-integration {
 
 set -a
 HOMEBREW_BAT=1
-HOMEBREW_BAT_CONFIG_PATH=~/.config/bat/homebrew.config
+HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
 
 HOMEBREW_NO_ANALYTICS=1
 HOMEBREW_NO_ENV_HINTS=1
@@ -1765,7 +1762,8 @@ function mac-enable-cmd-ctrl-click-to-drag-windows {
 
 #### Settings for bat, a colorizing cat(1) that understands many file formats
 
-export BAT_THEME='base16'
+# export BAT_THEME="tritium" # can't get 'bat cache --build' to work
+export BAT_THEME="base16"
 function bat {
     command bat \
         --color always \
@@ -2013,6 +2011,18 @@ set +a
 
 #### Git setttings
 
+function git-hist-grep {
+    check-args 2 2 'REGEX FILENAME' "$@" || return 1
+    local REGEX="$1"
+    local FILENAME="$2"
+
+    git log --format='%H' -- "$FILENAME" \
+        | while read COMMIT; do
+              git show "$COMMIT:path/to/file" 2>/dev/null \
+                  | grep -HnE "$REGEX" && echo "There was a match in commit '$COMMIT'"
+          done
+}
+
 function git-latest-commits {
     (
         for DIR in "$@"; do
@@ -2165,6 +2175,27 @@ function git-backup {
     fi
 }
 
+function cursor-settings-backup {
+    set -o pipefail
+    local GIT_WORKING_COPY="$HOME/src/1/qdw-dotfiles"
+    local FILENAME_IN_GIT="Cursor/user-settings.json"
+    
+    cd "$GIT_WORKING_COPY" || return 1
+
+    git status | grep "$FILENAME_IN_GIT"
+    if [[ $? -eq 0 ]]; then
+        echo "You have uncommitted changes to $FILENAME_IN_GIT. Commit them, then rerun." >&2
+        return 2
+    fi
+    
+    cp -p "$HOME/Library/Application Support/Cursor/User/settings.json" \
+          "$FILENAME_IN_GIT"
+    git add "$FILENAME_IN_GIT"
+    echo "Okay, now do a git commit in $GIT_WORKING_COPY." >&2
+    
+    set +o pipefail
+}
+    
 # gbs (Git Branches) - list (local) git branches
 function gbs { git branch ;}
 
@@ -3954,24 +3985,32 @@ function jic { # create a "normal" issue, which in my workflow means a Task
 
 function jc { jic "$@" ;}
 
-function jls { # list issues (including epics)
+function jil { # list issues (including epics)
     _j-check-env || return 2
     check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     
     jira issue list "$@"
 }
-
-function jil { jls "$@" ;}
+function jls { jil "$@" ;}
 
 function jel { # list epics only
     _j-check-env || return 2
     check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
-    check-args 0 0 '[no arguments]' "$@" || return 1
-    
-    jls --type Epic "$@"
+    jira epic list "$@"
 }
 
+function jelm {
+    _j-check-env || return 2
+    check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
+    jel --plain --jql "assignee='$JIRA_USERNAME' and state in ('Backlog')"
+}
+
+function jepics { jelm "$@" ;}
+function epics  { jelm "$@" ;}
+
 function jepics { jel "$@" ;}
+
+function epics { jel "$@" ;}
 
 function jlt { # list tasks only
     _j-check-env || return 2
@@ -4152,7 +4191,7 @@ set -a
 
 ## executable PATH
 
-PATH="$SUBL_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$RUST_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin"
+PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin"
 
 # If some of those variables that I interpolated in my PATH are undefined,
 # then I will wind up with '::' in my PATH. That's equivalent to having
