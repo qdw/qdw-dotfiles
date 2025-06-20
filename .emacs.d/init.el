@@ -423,7 +423,18 @@ but it calls defvar under the hood."
   (interactive)
   (find-file (expand-file-name "~/.bashrc")))
 
-;;;; Color-theme settings (plus site-specific settings)
+;;;; Theme settings
+
+(defun if-file-is-theme-reload-theme ()
+  (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
+    (when (string-match "\\(.*\\)-theme\\.el$" base-name)
+      (let ((theme-name (match-string 1 base-name)))
+        ;; (message "theme-name: %s; qdw-themes: %s" theme-name qdw-themes)
+        (when (string-in theme-name custom-enabled-themes)
+          ;; (message "theme name is in custom-enabled-themes")
+          (load-theme (intern theme-name) 't 't))))))
+
+(add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
 
 ;; Always use the same cursor color, no matter what theme I use.
 
@@ -513,7 +524,7 @@ but it calls defvar under the hood."
                               'face `(:foreground ,hex-string)))
           (insert (concat "  " color-name "\n")))))
 
-(defun theme-test-pattern (&rest additional-colors)
+(defun test-pattern-qdw (&rest additional-colors)
   (interactive)
   (let*
       ((buffer
@@ -546,7 +557,7 @@ but it calls defvar under the hood."
                         "extended-black"
                         "extended-bright-red"))
 
-(defun theme-test-pattern-interleaved ()
+(defun test-pattern-brights-interleaved-qdw ()
   (interactive)
   (let* 
       ((buffer (get-buffer-create "*theme colors*"))
@@ -1245,7 +1256,7 @@ which is its intended use."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(tritium))
+ '(custom-enabled-themes nil)
  '(package-selected-packages
    '(imenu-list blacken llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
 
