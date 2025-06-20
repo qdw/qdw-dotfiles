@@ -2175,7 +2175,7 @@ function git-backup {
     fi
 }
 
-function cursor-settings-backup {
+function back-up-cursor-settings {
     set -o pipefail
     local GIT_WORKING_COPY="$HOME/src/1/qdw-dotfiles"
     local FILENAME_IN_GIT="Cursor/user-settings.json"
