@@ -1,11 +1,11 @@
 {
+    "workbench.statusBar.visible": false,
     "window.commandCenter": true,
     "editor.fontFamily": "Menlo",
     "editor.cursorStyle": "block",
     "cursor.chat.terminalShowHoverHint": false,
     "cursor.composer.shouldAllowCustomModes": true,
     "cursor.composer.shouldAutoAcceptDiffs": false,
-    "cursor.composer.shouldAutoScrollToBottom": false,
     "cursor.composer.shouldQueueWhenGenerating": true,
     "cursor.diffs.useCharacterLevelDiffs": true,
     "cursor.terminal.usePreviewBox": true,
@@ -25,7 +25,6 @@
     "notebook.output.fontSize": 17,
     "chat.editor.fontSize": 17,
     "markdown.preview.fontSize": 17,
-    "editor.suggestFontSize": 17,
     "screencastMode.fontSize": 20,
     "workbench.preferredDarkColorTheme": "Cursor Dark Midnight",
     "workbench.colorCustomizations": {
@@ -143,7 +142,7 @@
             "meta.function.decorator.python"
           ],
           "settings": { "fontStyle": ""  }// "foreground": "#" }
-        }
+        },
         {
           "scope": [
             "function",
@@ -191,8 +190,8 @@
             "storage.name.function.python",
             "storage.type.class.python",
           ],
-          "settings": { "foreground": "#767676", "fontStyle": "" },
-        }
+          "settings": { "foreground": "#767676", "fontStyle": "" }
+        },
         {
           "scope": "entity.name.type",
           "settings": { "foreground": "#af5faf" }
@@ -292,21 +291,85 @@
         // "variable.defaultLibrary": { "foreground": "#ff7f00", "fontStyle": "" }
       }
     },
-    "workbench.statusBar.visible": false,
-    "cursor.experimental.inlineSuggest.enabled": false,
-    "cursor.suggest.autoTrigger": false,
+    "editor.dragAndDrop": false,
+    "files.autoSave": "afterDelay",
+    "editor.acceptSuggestionOnCommitCharacter": false,
     "editor.acceptSuggestionOnEnter": "off",
-    "editor.inlineSuggest.enabled": false,
     "editor.inlineSuggest.showToolbar": "always",
+    "editor.inlineSuggest.suppressSuggestions": true,
     "editor.inlineSuggest.syntaxHighlightingEnabled": true,
-    "editor.quickSuggestionsDelay": 50,
     "editor.quickSuggestions": {
-      "comments": "off",
-      "other": "off",
-      "strings": "off"
+      "other": "off"
     },
     "editor.screenReaderAnnounceInlineSuggestion": false,
-    "editor.suggest.preview": false,
-    "editor.suggest.shareSuggestSelections": false,
-    "editor.cursorBlinking": "solid",
+    "editor.snippetSuggestions": "none",
+    "editor.suggest.selectionMode": "never",
+    "editor.suggest.shareSuggestSelections": true,
+    "editor.suggest.preview": true,
+    "editor.suggest.showIcons": false,
+    "editor.suggestOnTriggerCharacters": false,
+    "accessibility.signals.lineHasInlineSuggestion": {
+      "sound": "off"
+    },
+    "terminal.integrated.suggest.quickSuggestions": false,
+    "terminal.integrated.suggest.suggestOnTriggerCharacters": false,
+    "emmet.showExpandedAbbreviation": "inMarkupAndStylesheetFilesOnly",
+    "typescript.suggest.jsdoc.generateReturns": false,
+    "typescript.suggest.completeFunctionCalls": true,
+    "javascript.suggest.completeFunctionCalls": true,
+    "javascript.suggest.classMemberSnippets.enabled": false,
+    "git.suggestSmartCommit": false,
+    "markdown.suggest.paths.includeWorkspaceHeaderCompletions": "never",
+    "editor.suggest.insertMode": "replace",
+    "editor.wordBasedSuggestions": "allDocuments",
+    "cursor.composer.cmdPFilePicker2": true,
+    "cursor.composer.shouldChimeAfterChatFinishes": true,
+    "cursor.composer.shouldShowMarkdownHoverParticipantActions2": true,
+    "cursor.cpp.enablePartialAccepts": true,
+    "cursor.general.enableShadowWorkspace": true,
+    "cursor.general.gitGraphIndexing": "enabled",
+    "cursor.preferNotificationsSameAsChat": true,
+    "cursor.semanticSearch.includeCommitsWithFiles": true,
+    "cursor.semanticSearch.includePullRequests": false,
+    "editor.accessibilitySupport": "off",
+    "editor.autoClosingBrackets": "never",
+    "editor.autoClosingComments": "never",
+    "editor.autoSurround": "never",
+    "editor.codeActionsOnSave": {},
+    "editor.bracketPairColorization.enabled": false,
+    "editor.language.colorizedBracketPairs": [
+      ["{", "}"],
+      ["[", "]"]
+    ],
+    "editor.codeActionWidget.includeNearbyQuickFixes": false,
+    "editor.codeActionWidget.showHeaders": false,
+    "editor.colorDecoratorsActivatedOn": "click",
+    "editor.codeLens": false,
+    "editor.comments.ignoreEmptyLines": false,
+    "editor.copyWithSyntaxHighlighting": false,
+    "editor.fastScrollSensitivity": 1,
+    "editor.definitionLinkOpensInPeek": true,
+    "editor.glyphMargin": false,
+    "editor.guides.bracketPairsHorizontal": false,
+    "editor.guides.highlightActiveIndentation": false,
+    "editor.guides.indentation": false,
+    "editor.hover.delay": 250,
+    "editor.hover.hidingDelay": 3500,
+    "editor.indentSize": 4,
+    "editor.largeFileOptimizations": false,
+    "editor.matchBrackets": "near",
+    "editor.occurrencesHighlight": "off",
+    "editor.parameterHints.enabled": false,
+    "editor.pasteAs.preferences": [],
+    "editor.pasteAs.showPasteSelector": "never",
+    "editor.peekWidgetDefaultFocus": "editor",
+    "accessibility.signals.chatRequestSent": {
+      "sound": "off",
+      "announcement": "off"
+    },
+    "terminal.integrated.shellIntegration.enabled": false,
+    "cursor.composer.shouldAutoScrollToBottom": false,
+    "cursor.composer.backspaceRemoveContext": false,
+    "update.releaseTrack": "prerelease",
+    "editor.insertSpaces": false
 }
