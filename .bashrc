@@ -2177,23 +2177,22 @@ function git-backup {
 
 function back-up-cursor-settings {
     set -o pipefail
-    local GIT_WORKING_COPY="$HOME/src/1/qdw-dotfiles"
-    local FILENAME_IN_GIT="Cursor/user-settings.json"
     
+    local GIT_WORKING_COPY="$HOME/src/1/qdw-dotfiles"
+    local FILENAME_IN_GIT="Cursor/user-settings.json"    
     cd "$GIT_WORKING_COPY" || return 1
-
-    git status | grep "$FILENAME_IN_GIT"
+    git status | command grep "$FILENAME_IN_GIT"
     if [[ $? -eq 0 ]]; then
         echo "You have uncommitted changes to $FILENAME_IN_GIT. Commit them, then rerun." >&2
         return 2
     fi
-    
+ 
     cp -p "$HOME/Library/Application Support/Cursor/User/settings.json" \
           "$FILENAME_IN_GIT"
     git add "$FILENAME_IN_GIT"
     echo "Okay, now do a git commit in $GIT_WORKING_COPY." >&2
-    
-    set +o pipefail
+
+    set -o pipefail
 }
     
 # gbs (Git Branches) - list (local) git branches
