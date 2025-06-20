@@ -1,3 +1,5 @@
+# -*- mode: conf-unix -*-
+    
 # Git: hooks and meta-stuff
 
 bypass-husky

@@ -2158,7 +2158,6 @@ function git-backup-helper {
     fi
 }
 
-
 function git-backup {
     check-args 0 1  'git-backup [REPO_NAME]'  "$@" || return 1
     if [[ $# -eq 1 ]]; then
@@ -2175,24 +2174,31 @@ function git-backup {
     fi
 }
 
+function back-up-git-working-copy {
+    git-backup "$@"
+}
+
 function back-up-cursor-settings {
     set -o pipefail
     
-    local GIT_WORKING_COPY="$HOME/src/1/qdw-dotfiles"
-    local FILENAME_IN_GIT="Cursor/user-settings.json"    
+    local GIT_WORKING_COPY_ROOT="$HOME/src/1/qdw-dotfiles"
+    local CURSOR_SUBDIR="Cursor"
+    local FULL_CURSOR_PATH="$GIT_WORKING_COPY_ROOT/$CURSOR_SUBDIR"
     cd "$GIT_WORKING_COPY" || return 1
-    git status | command grep "$FILENAME_IN_GIT"
+    git status | command grep "$CURSOR_SUBDIR"
     if [[ $? -eq 0 ]]; then
-        echo "You have uncommitted changes to $FILENAME_IN_GIT. Commit them, then rerun." >&2
+        echo "You have uncommitted changes in $FULL_CURSOR_PATH/." >&2
+        echo "Commit those, then rerun." >&2
         return 2
+    else
+        cp -vp \
+            "$HOME/Library/Application Support/Cursor/User/settings.json" \
+            "$HOME/Library/Application Support/Cursor/User/keybindings.json" \
+            "$CURSOR_SUBDIR" \
+          && git add "$CURSOR_SUBDIR"
+        
+        echo "Okay, now do a git commit in $GIT_WORKING_COPY." >&2
     fi
- 
-    cp -p "$HOME/Library/Application Support/Cursor/User/settings.json" \
-          "$FILENAME_IN_GIT"
-    git add "$FILENAME_IN_GIT"
-    echo "Okay, now do a git commit in $GIT_WORKING_COPY." >&2
-
-    set -o pipefail
 }
     
 # gbs (Git Branches) - list (local) git branches
