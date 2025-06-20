@@ -326,7 +326,7 @@ extended-bright-white "#a6acb9"))
      ((t (:foreground ,magenta))))
 
    `(font-lock-variable-name-face
-     ((t (:foreground ,blue))))
+     ((t (:foreground ,magenta))))
 
    `(font-lock-variable-use-face
      ((t (:foreground ,magenta))))
