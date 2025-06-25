@@ -50,6 +50,7 @@ desktop
 **/.DS_Store
 .idea
 *.sw?
+.cursorignore
 
 # Cruft-filenames idiosyncratic to me
 
