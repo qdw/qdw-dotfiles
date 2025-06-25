@@ -80,6 +80,7 @@
     master = main
 	em = commit --allow-empty-message -m ''
 	no = diff --name-only
+    remote-counterpart = "!f() { git branch -r | grep \"$(git branch --show-current)\"; }; f "
 	s = status
 	stat = status
 	tg = "!f() { git tag | sort -g; }; f "
