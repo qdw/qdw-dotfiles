@@ -49,16 +49,15 @@
       (string= "24bit" (getenv "COLORTERM")))
 
    (setq
-           ;; black  "#141414"  ;;      Grey15
-           black  "#000000"  ;; actually uses the terminal's bg color
+           black  "#000000"  ;; in iTerm2, displayed as the terminal's bg color
     bright-black  "#343434"
-             red  "#af5f00"  ;;      actually orange
-      bright-red  "#ff7f00"  ;;      bright orange; used for the cursor &c.
+             red  "#af5f00"  ;; orange
+      bright-red  "#ff7f00"  ;; bright orange
            green  "#3b8560"
     bright-green  "#00a400"
-          yellow  "#9164ff"  ;; actually purple
+          yellow  "#9164ff"  ;; purple
    bright-yellow  "#b5b500"  ;; bright yellow
-            blue  "#6495ed"            
+            blue  "#6495ed"
      bright-blue  "#5172d3"
          magenta  "#af5faf"
   bright-magenta  "#d8a0d0"
@@ -75,9 +74,8 @@ extended-bright-white "#a6acb9"))
   ;;; For terminals that support only 256 colors
   ;;; (i.e., almost every other terminal in use today)
    ('t 
-   (setq
-             black  "#141414"  ;; 235  Grey15
-          ;; black  "#000000"  ;;  16  Terminal emulator's ANSI black
+   (setqu
+             black  "#000000"  ;;  16  Terminal emulator's ANSI black
              black  "color-16" ;;   0  Terminal emulator's background
       bright-black  "#5f5f5f"  ;;  59  Grey37
                red  "#af5f00"  ;; 130  DarkOrange3
@@ -137,8 +135,7 @@ extended-bright-white "#a6acb9"))
 ;;           white  ????       ;;   ?
 ;;    bright-white  white
 ;;  ))
-   ) ;; cond
-
+) ;; cond
 
 ;; Set ANSI colors (as shown in *shell* == shell-mode sessions)
 

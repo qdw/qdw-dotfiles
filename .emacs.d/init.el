@@ -49,6 +49,17 @@
             
 ;;;; Settings for managing viewports (a.k.a. windows)
   ;; These apply to TUI mode as well as GUI mode.
+  
+(defun split-window-into-thirds ()
+  "Split the current frame into three equal-width vertical windows."
+  (interactive)
+  (delete-other-windows)
+  (let* ((total-width (window-total-width))
+         (third (/ total-width 3)))
+    (split-window-right third)
+    (other-window 1)
+    (split-window-right third)
+    (balance-windows)))
 
 (defun other-window-reverse ()
   (interactive)
@@ -341,7 +352,16 @@ but it calls defvar under the hood."
 
 ;;;; Python settings
 
-(add-hook 'python-mode-hook (lambda () (blacken-mode nil)))
+(add-hook 'python-mode-hook
+          (lambda ()
+          
+            ;; Auto-indent my own code, but not third-party code!
+            ;; In this case, "my own code" means any file
+            ;; whose path starts with ~/src/1/
+            (if (string-match (concat "^" (file-truename (expand-file-name "~/src/1/"))) ;; regexp
+                              (file-truename buffer-file-name))
+                (blacken-mode +1)
+                (blacken-mode -1))))
 
 ;;;; Javascript settings, TypeScript settings, JSON settings
 
@@ -1202,6 +1222,7 @@ which is its intended use."
    ("C-c t"       toggle-theme-qdw)
    ("C-c u"       uncomment-region)
    ("C-c v"       vscode)
+   ("C-x 6"       split-window-into-thirds)
    ("M-("         eval-expression)
    ("M-5"         query-replace-regexp)
    ("M-o"         other-window-reverse)))
@@ -1256,7 +1277,7 @@ which is its intended use."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes nil)
+ '(custom-enabled-themes '(tritium))
  '(package-selected-packages
    '(imenu-list blacken llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
 
