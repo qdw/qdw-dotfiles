@@ -1,22 +1,28 @@
 // Place your key bindings in this file to override the defaults
 [
     {
-        "key": "cmd+i",
+        "key": "cmd+shift+1",
         "command": "composerMode.agent"
     },
+    {
+        "key": "cmd+shift+2",
+        "command": "composerMode.edit"
+    },
+    {
+        "key": "cmd+shift+3",
+        "command": "composerMode.chat"
+    },
+    {
+        "key": "cmd+shift+4",
+        "command": "composerMode.ask"
+    }
     // {
-    //     "key": "tab",
+    //     "key": "cmd+return",
     //     "command": "editor.action.inlineSuggest.commit",
-    //     "when": "inlineSuggestionVisible && editorTextFocus"
+    //     "when": "inlineSuggestionVisible && editorTextFocus && !editorHasSelection && !hasSnippetCompletions"
     // },
     // {
-    //     "key": "tab",
-    //     "command": "-acceptSelectedSuggestion",
-    //     "when": "suggestWidgetVisible && suggestionMakesTextEdit && editorTextFocus"
-    // },
-    // {
-    //     "key": "tab",
-    //     "command": "-tab",
-    //     "when": "editorTextFocus && !editorHasSelection && !hasSnippetCompletions"
+    //     "key": "shift+cmd+g",
+    //     "command": "editor.action.updateGhostText"
     // }
 ]
