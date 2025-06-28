@@ -21,7 +21,7 @@ if [[ "$MY_DEBUG" ]]; then
 fi
 
 function sb {
-    source ~/.bashrc
+    source "$HOME/.bashrc"
 }
 
 #### Color settings
@@ -148,13 +148,18 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 
 function enva {
     check-args 0 0 "[no arguments]" "$@" || return 1
-    env | command grep -E '^AWS' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
+    env | ggrep --color=always -P '^AWS_[^=]*' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
+}
+
+function envp {
+    check-args 0 0 "[no arguments]" "$@" || return 1
+    env | ggrep --color=always -P '^PG_[^=]*' | sort
 }
 
 function envap {
+    check-args 0 0 "[no arguments]" "$@" || return 1
     enva
-    echo
-    env | grep '^PG' | sort
+    envp
 }
 
 #### Bash metaprogramming library settings
@@ -560,14 +565,8 @@ for HDIR in "/opt/homebrew" "/usr/local"; do
         
         PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
         
-        MY_MANPATH="$HOME/share/man"
-
-        # man pages for brew(1) itself
-        MY_MANPATH="$HDIR/manpages"           
-        
-        # man(1) and info(1) pages for software installed using brew
-        MY_MANPATH="$HDIR/share/man:$MY_MANPATH"
-        INFOPATH="$HDIR/share/info"
+        HOMEBREW_MANPATH="$HDIR/manpages:$HDIR/share/man"
+        HOMEBREW_INFOPATH="$HDIR/share/info"
 
         PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
         set +a
@@ -645,13 +644,9 @@ function ignorefiles-show-all-patterns-by-file {
 
 function fdd {
     command fd \
-        --exclude .git \
-        --exclude .github \
-        --exclude node_modules \
+        --follow \
         --full-path \
         --hidden \
-        --no-ignore-vcs \
-        --follow \
         "$@"
 }
 
@@ -691,7 +686,7 @@ function fdoccur {
     fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
 }
 
-function file-types {
+function _file-types {
     fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
         | uniq \
         | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
@@ -1505,7 +1500,7 @@ function re {
     se
 }
 
-MY_EDITOR="$HOME/bin/emacs-function"
+MY_EDITOR="$HOME/bin/emacs-wrapper"
 
 set -a
 GIT_EDITOR="$MY_EDITOR"
@@ -1799,12 +1794,15 @@ function save-function {
 }
 
 # Search for functions whose name match a regex
-function grep-function {
-    check-args 1 1 'REGEX' "$@" || return 1
-    local REGEX="$1"
-    
-    gbr "function.*${REGEX}.*[{]"
+function gfunc {
+    check-args 1 varargs '[GREP_FLAGS ...] REGEX' "$@" || return 1
+    local -a ARGS=("$@")
+    local REGEX="${ARGS[-1]}"
+    unset ARGS[-1]
+    gbr ${ARGS[@]} "function.*${REGEX}.*[{]"
 }
+
+function g-funk { gfunc "$@" ;}
 
 # bat-head FILENAME NUMBER: use color bat to show a file's first n lines
 function bat-head {
@@ -2179,28 +2177,39 @@ function back-up-git-working-copy {
 }
 
 function back-up-cursor-settings {
-    set -o pipefail
-    
     local GIT_WORKING_COPY_ROOT="$HOME/src/1/qdw-dotfiles"
-    local CURSOR_SUBDIR="Cursor"
-    local FULL_CURSOR_PATH="$GIT_WORKING_COPY_ROOT/$CURSOR_SUBDIR"
-    cd "$GIT_WORKING_COPY" || return 1
-    git status | command grep "$CURSOR_SUBDIR"
-    if [[ $? -eq 0 ]]; then
-        echo "You have uncommitted changes in $FULL_CURSOR_PATH/." >&2
-        echo "Commit those, then rerun." >&2
+    local GIT_CURSOR_SUBDIR="Cursor"
+    local GIT_FULL_CURSOR_PATH="$GIT_WORKING_COPY_ROOT/$GIT_CURSOR_SUBDIR"
+    cd "$GIT_WORKING_COPY_ROOT" || return 1
+    local -a CHCHCHCHCHANGES=( "$(git status | grep "$GIT_CURSOR_SUBDIR.*")" )
+
+    if [[ "$CHCHCHCHCHANGES" ]]; then
+        echo "You have uncommitted changes in $GIT_FULL_CURSOR_PATH/" >&2
+        echo "Commit these, then rerun:" >&2
+        echo "$CHCHCHCHCHANGES" >&2
         return 2
     else
-        cp -vp \
+        local FILES_DIFFER=""
+        for FILE in \
             "$HOME/Library/Application Support/Cursor/User/settings.json" \
-            "$HOME/Library/Application Support/Cursor/User/keybindings.json" \
-            "$CURSOR_SUBDIR" \
-          && git add "$CURSOR_SUBDIR"
-        
-        echo "Okay, now do a git commit in $GIT_WORKING_COPY." >&2
+            "$HOME/Library/Application Support/Cursor/User/keybindings.json"
+        do
+            local PATH_IN_GIT="$GIT_FULL_CURSOR_PATH/$(basename "$FILE")"
+            if ! cmp --silent "$FILE" "$PATH_IN_GIT"; then
+                FILES_DIFFER="yup"
+                echo command cp -pv "$FILE" "$PATH_IN_GIT"
+            fi
+        done
+
+        if [[ $FILES_DIFFER ]]; then
+            git add "$GIT_CURSOR_SUBDIR"
+            echo "Okay, now do a git commit in $GIT_WORKING_COPY_ROOT." >&2
+        else
+            echo "No differences to back up" >&2
+        fi
     fi
 }
-    
+
 # gbs (Git Branches) - list (local) git branches
 function gbs { git branch ;}
 
@@ -2474,9 +2483,11 @@ function gcl {
     shift
     
     cd "$SRC_DIR" >/dev/null \
-        && git clone "git@github.com:${GITHUB_ORG}/${REPO}" "$@" \
-        && git-configure-email 2>/dev/null
-    cd - >/dev/null
+        && { git clone "git@github.com:${GITHUB_ORG}/${REPO}" "$@" \
+                 && cd "$REPO" >/dev/null \
+                 && git config user.email "$EMAIL"
+             cd - >/dev/null
+           }
 }
 
 function clone { gcl "$@" ;}
@@ -2544,14 +2555,14 @@ function repos {
         verbose-print "Searching $GITHUB_ORG repos..."
         verbose-print "------------------------------"
         verbose-print
-        gh repo list --limit 2000 "$GITHUB_ORG" | command grep -E "$PATTERN"
+        gh repo list --no-archived --limit 2000 "$GITHUB_ORG" | command grep -E "$PATTERN"
     } \
     || \
     {
         verbose-print "Searching personal repos..."
         verbose-print "---------------------------"
         verbose-print
-        gh repo list --limit 2000 | command grep -E "$PATTERN"
+        gh repo list --no-archived --limit 2000 | command grep -E "$PATTERN"
     } \
     || \
     {
@@ -2668,13 +2679,14 @@ function pr {
         else
             push_it
             
-            local URL=""
+            local CMD
             if [[ -n "$PR_TITLE" ]]; then
-                gh pr create --title "$PR_TITLE"
+                CMD="gh pr create --title '$PR_TITLE'"
             else
-                gh pr create --fill
+                CMD="gh pr create --fill"
             fi
-            list_my_prs
+
+            $CMD 2>&1 | tail -1
         fi
     }
     
@@ -2850,17 +2862,19 @@ function qql {
     else
         SERVICE="$1"; shift
         
-        if [[ -n ${pgpasses["$SERVICE"]} ]]; then
-            PASSWORD=${pgpasses["$SERVICE"]}
-        else
+        # Disable cacheing logic; it's confusing when the password in the hash is wrong
+        # 
+        # if [[ -n ${pgpasses["$SERVICE"]} ]]; then
+        #     PASSWORD=${pgpasses["$SERVICE"]}
+        # else
             PASSWORD="$("$MY_VIRTUALENV_DIR//qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")"
             if [[ $? -ne 0 ]]; then
                 echo "pql couldn't retrieve the AWS secret for $SERVICE" >&2
-                return
-            else
-                pgpasses["$SERVICE"]="$PASSWORD"
+                return 2
+        #     else
+        #         pgpasses["$SERVICE"]="$PASSWORD"
             fi
-        fi
+        # fi
 
         PGSERVICE="$SERVICE" PGPASSWORD="$PASSWORD" psql "$@"
     fi
@@ -3323,7 +3337,7 @@ function chan {
 }
 
 SLACK_EXTRAS="$HOME/.site.bash.d/slack-urls.bash"
-if [[ -f "$SLACK_EXTRAS" ]]; then
+if [[ -f "$SLACK_EXTRAS" ]] && (( BASH_VERSINFO[0] >= 5 )); then
     source "$SLACK_EXTRAS"
 
     function msg {
@@ -3668,77 +3682,107 @@ function sheet {
     sheets "$@"
 }
 
-#### Java settings
-
-export JPATH="/usr/local/opt/openjdk/bin"
-
-#### JavaScript settings
-
-export NODE_PATH="/opt/node/bin"
-export NODE_MANPATH="/opt/node/share/man:/opt/node/lib/node_modules/npm/man"
-MY_MANPATH="$NODE_MANPATH:$MY_MANPATH"
-
 #### Jenkins settings
 
-function jenkins {
-    local  REPO  BRANCH  JENKINS_OUTPUT_FILENAME  JENKINS_OUTPUT_URL  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
+# function jenkins {
+#     local  REPO  BRANCH  JENKINS_OUTPUT_FILENAME  JENKINS_OUTPUT_URL  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
     
-    if [[ "$1" = "--no-sms" ]] || [[ "$JENKINS_NO_SMS" ]]; then
-        function sms {
-            : # no-op
-        }
-    else
-        function sms {
-            ~/...sms-me "$@"
-        }
-    fi
+#     if [[ "$1" = "--no-sms" ]] || [[ "$JENKINS_NO_SMS" ]]; then
+#         function sms {
+#             : # no-op
+#         }
+#     else
+#         function sms {
+#             ~/...sms-me "$@"
+#         }
+#     fi
 
-    REPO="$(jenkins-repo)"
-    BRANCH="$(jenkins-branch)"
+#     REPO="$(jenkins-repo)"
+#     BRANCH="$(jenkins-branch)"
     
-    if [[ -z "$JENKINS_BASE_URL" ]]; then
-        echo 'jenkins: error: first export JENKINS_BASE_URL=[your URL]'
-    elif [[ -z "$REPO" ]]; then
-        echo 'jenkins: error: first call jenkins-repo $REPO_NAME'
-    elif [[ -z "$BRANCH" ]]; then
-        echo 'jenkins: error: first call jenkins-branch $BRANCH_NAME'
-    else
-        JENKINS_OUTPUT_URL="$JENKINS_BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
+#     if [[ -z "$JENKINS_BASE_URL" ]]; then
+#         echo 'jenkins: error: first export JENKINS_BASE_URL=[your URL]'
+#     elif [[ -z "$REPO" ]]; then
+#         echo 'jenkins: error: first call jenkins-repo $REPO_NAME'
+#     elif [[ -z "$BRANCH" ]]; then
+#         echo 'jenkins: error: first call jenkins-branch $BRANCH_NAME'
+#     else
+#         JENKINS_OUTPUT_URL="$JENKINS_BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
         
-        JENKINS_OUTPUT_FILENAME="$(mktemp "$HOME/tmp/jenkins-log--$REPO--$BRANCH.XXXXXX")"
-        osascript ~/bin/jenkins-fetch-console-output.osascript "$JENKINS_OUTPUT_URL" \
-            | tee "$JENKINS_OUTPUT_FILENAME" \
-            | tee >(command grep -m 1 -o "docker://.*" | sed 's/docker:[/][/]//' | tee pbcopy) \
-            2>&1
+#         JENKINS_OUTPUT_FILENAME="$(mktemp "$HOME/tmp/jenkins-log--$REPO--$BRANCH.XXXXXX")"
+#         osascript ~/bin/jenkins-fetch-console-output.osascript "$JENKINS_OUTPUT_URL" \
+#             | tee "$JENKINS_OUTPUT_FILENAME" \
+#             | tee >(command grep -m 1 -o "docker://.*" | sed 's/docker:[/][/]//' | tee pbcopy) \
+#             2>&1
 
-        sms "Jenkins finished the build"
-        # # This logfile-parsing code is brittle, so disable it for now
-        # if command grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
-        #     SHORT_MESSAGE="Successfully built repo '$REPO', branch '$BRANCH'"
-        #     DOCKER_IMAGE_URL="$(command grep --color=never --only-matching 'harbor.*:git-.*$' "$LOGFILE" | command uniq)"
-        #     echo "$SHORT_MESSAGE"
-        #     echo "Docker image URL copied to clipboard:"            
-        #     echo "$DOCKER_IMAGE_URL" | tee >(pbcopy)
-        # elif command grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
-        #     SHORT_MESSAGE="Jenkins login needed"
-        #     echo "First log in at $JENKINS_BASE_URL"; open "$JENKINS_BASE_URL"
-        # elif command grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
-        #     SHORT_MESSAGE="Failed to build repo '$REPO', branch '$BRANCH'"
-        #     cat "$LOGFILE"
-        #     echo
-        #     echo "$SHORT_MESSAGE"
-        # else
-        #     SHORT_MESSAGE="Unrecognized Jenkins output for repo '$REPO', branch '$BRANCH'"
-        #     cat "$LOGFILE"
-        #     echo
-        #     echo "^ $SHORT_MESSAGE"
-        # fi
+#         sms "Jenkins finished the build"
+#         # # This logfile-parsing code is brittle, so disable it for now
+#         # if command grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
+#         #     SHORT_MESSAGE="Successfully built repo '$REPO', branch '$BRANCH'"
+#         #     DOCKER_IMAGE_URL="$(command grep --color=never --only-matching 'harbor.*:git-.*$' "$LOGFILE" | command uniq)"
+#         #     echo "$SHORT_MESSAGE"
+#         #     echo "Docker image URL copied to clipboard:"            
+#         #     echo "$DOCKER_IMAGE_URL" | tee >(pbcopy)
+#         # elif command grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
+#         #     SHORT_MESSAGE="Jenkins login needed"
+#         #     echo "First log in at $JENKINS_BASE_URL"; open "$JENKINS_BASE_URL"
+#         # elif command grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
+#         #     SHORT_MESSAGE="Failed to build repo '$REPO', branch '$BRANCH'"
+#         #     cat "$LOGFILE"
+#         #     echo
+#         #     echo "$SHORT_MESSAGE"
+#         # else
+#         #     SHORT_MESSAGE="Unrecognized Jenkins output for repo '$REPO', branch '$BRANCH'"
+#         #     cat "$LOGFILE"
+#         #     echo
+#         #     echo "^ $SHORT_MESSAGE"
+#         # fi
             
-        # if [[ -n "$JENKINS_SMS_ME" ]]; then
-        #     sms "$SHORT_MESSAGE"
-        # fi
-    fi
-}
+#         # if [[ -n "$JENKINS_SMS_ME" ]]; then
+#         #     sms "$SHORT_MESSAGE"
+#         # fi
+#     fi
+# }
+
+# function jthis {
+#     local REPO  BRANCH
+#     REPO="$(gr)"
+#     if [[ $? -eq 0 ]]; then
+#         BRANCH="$(gb)"
+#         if [[ $? -eq 0 ]]; then
+#             jenkins-repo "$REPO"
+#             jenkins-branch "$BRANCH"
+#         fi
+#     fi
+#     j
+# }
+
+# function jenkins-repo {
+#     local REPOFILE
+#     REPOFILE="/tmp/jenkins-repo"
+
+#     if [[ $# -eq 0 ]]; then
+#         cat "$REPOFILE"
+#     elif [[ $# -eq 1 ]]; then
+#         echo "$1" > "$REPOFILE"
+#     else
+#         echo "jenkins-repo: error: too many arguments" >&2
+#     fi
+# }
+
+# function jenkins-branch {
+#     local BRANCHFILE
+#     BRANCHFILE="/tmp/jenkins-branch"
+
+#     if [[ $# -eq 0 ]]; then
+#         cat "$BRANCHFILE"
+#     elif [[ $# -eq 1 ]]; then
+#         echo "$1" > "$BRANCHFILE"
+#     else
+#         echo "jenkins-branch: error: too many arguments" >&2
+#     fi
+# }
+
 
 #### JSON settings
 
@@ -3750,47 +3794,6 @@ function json-key {
         grep -i -R "\"$KEY_NAME\":"  "."
     else
         grep -i "\"$KEY_NAME\":"  "$@"
-    fi
-}
-
-#### Jenkins settings
-
-function jthis {
-    local REPO  BRANCH
-    REPO="$(gr)"
-    if [[ $? -eq 0 ]]; then
-        BRANCH="$(gb)"
-        if [[ $? -eq 0 ]]; then
-            jenkins-repo "$REPO"
-            jenkins-branch "$BRANCH"
-        fi
-    fi
-    j
-}
-
-function jenkins-repo {
-    local REPOFILE
-    REPOFILE="/tmp/jenkins-repo"
-
-    if [[ $# -eq 0 ]]; then
-        cat "$REPOFILE"
-    elif [[ $# -eq 1 ]]; then
-        echo "$1" > "$REPOFILE"
-    else
-        echo "jenkins-repo: error: too many arguments" >&2
-    fi
-}
-
-function jenkins-branch {
-    local BRANCHFILE
-    BRANCHFILE="/tmp/jenkins-branch"
-
-    if [[ $# -eq 0 ]]; then
-        cat "$BRANCHFILE"
-    elif [[ $# -eq 1 ]]; then
-        echo "$1" > "$BRANCHFILE"
-    else
-        echo "jenkins-branch: error: too many arguments" >&2
     fi
 }
 
@@ -4196,7 +4199,7 @@ set -a
 
 ## executable PATH
 
-PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin"
+PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin:$HOMEBREW_ROOT/sbin:$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin"
 
 # If some of those variables that I interpolated in my PATH are undefined,
 # then I will wind up with '::' in my PATH. That's equivalent to having
@@ -4220,7 +4223,7 @@ fi
 
 #### man settings: where to search for man pages
 
-MANPATH="$MY_MANPATH"
+MANPATH="$HOME/share/man:$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/man:/usr/share/openssl/man:/usr/local/share/man:/usr/local/man"
 
 ## Dynamic library path settings
 
