@@ -51,6 +51,7 @@ desktop
 .idea
 *.sw?
 .cursorignore
+*.code-workspace
 
 # Cruft-filenames idiosyncratic to me
 
