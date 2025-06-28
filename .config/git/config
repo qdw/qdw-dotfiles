@@ -14,8 +14,6 @@
 [includeif "gitdir:blue-shaper"]
 	path = ~/.blue-shaper-gitconfig
 
-
-
 [blame]
 	coloring = highlightRecent
 
@@ -67,7 +65,7 @@
 	added = diff --diff-filter=A	
 	branch = branch --quiet
 	char-diff = diff --word-diff-regex=.
-	co = switch
+	co = switch --quiet
 	prev = "!f() { local FILE=\"$HOME/tmp/$(basename $(git rev-parse --show-toplevel))-$(basename $(tty))\"; echo \"old: \"$(cat $FILE)\"; new: $1\"; /bin/echo \"$1\" > \"$FILE\"; }; f "
 	comp = diff --compact-summary
 	delete-remote-branch = push origin --delete
@@ -76,7 +74,7 @@
 	dry = merge --no-commit --no-ff
 	ff = pull --ff-only
 	ignored = "!f() { /bin/echo -n \"$1\" 'is'; git check-ignore --quiet \"$1\"; if [[ $? = 1 ]]; then /bin/echo -n ' not'; fi; /bin/echo ' ignored by git'; }; f "
-	main = "!f() { git switch "$(get-main-branch-name)"; }; f "
+	main = "!f() { git switch --quiet "$(get-main-branch-name)"; }; f "
     master = main
 	em = commit --allow-empty-message -m ''
 	no = diff --name-only
