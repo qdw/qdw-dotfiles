@@ -50,7 +50,7 @@
 
    (setq
            black  "#000000"  ;; in iTerm2, displayed as the terminal's bg color
-    bright-black  "#343434"
+    bright-black  "#333333"
              red  "#af5f00"  ;; orange
       bright-red  "#ff7f00"  ;; bright orange
            green  "#3b8560"
@@ -156,12 +156,12 @@ extended-bright-white "#a6acb9"))
       (set ansi-color-symbol desired-hex-value)
       (face-spec-set ansi-color-symbol `((t (:foreground ,desired-hex-value)))))))
 
-;; Then modify ANSI black and bright-black so that they're visible against a true
-;; black background (#000000). This doesn't change the global `black` var,
+;; Then modify ANSI black so that it's visible against a true black
+;; background (#000000). This doesn't change the global `black` var,
 ;; only `ansi-color-black`.
 
-(set 'ansi-color-black "#454545") ;; dark grey
-(set 'ansi-color-bright-black "#0000cc") ;; dark blue
+(set 'ansi-color-bright-black "#0000dd")
+(set 'ansi-color-black "#333333") ;; dark grey
 
 (face-spec-set 'ansi-color-black `((t (:foreground ,ansi-color-black))))
 (face-spec-set 'ansi-color-bright-black `((t (:foreground ,ansi-color-bright-black))))
