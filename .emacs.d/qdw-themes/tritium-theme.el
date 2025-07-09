@@ -789,7 +789,11 @@ extended-bright-white "#a6acb9"))
     
     `(markdown-language-keyword-face
       ((t (:foreground ,bright-red))))
-    
+
+    ;; Bullets, meaning either '-' or '*'
+    `(markdown-list-face
+      ((t (:foreground ,red))))
+
     `(markdown-code-face
       ((t (:foreground ,cyan))))
 
