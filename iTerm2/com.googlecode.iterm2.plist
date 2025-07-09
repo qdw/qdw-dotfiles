@@ -5627,6 +5627,8 @@
 			<true/>
 			<key>Draw Powerline Glyphs</key>
 			<false/>
+			<key>Enable Triggers in Interactive Apps</key>
+			<false/>
 			<key>Faint Text Alpha</key>
 			<real>0.51000000000000001</real>
 			<key>Flashing Bell</key>
