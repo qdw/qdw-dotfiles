@@ -842,18 +842,18 @@ use `dired-find-file' to open it in a new buffer."
 
   ;; When I delete files in dired, send them to the macOS Trash
 
-  (osx-trash-setup)
-  (setopt delete-by-moving-to-trash 't)
-  (defun system-move-file-to-trash (path)
-    "Moves file at PATH to the macOS Trash
-    according to `move-file-to-trash' convention.
+  ;; (osx-trash-setup)
+  ;; (setopt delete-by-moving-to-trash 't)
+  ;; (defun system-move-file-to-trash (path)
+  ;;   "Moves file at PATH to the macOS Trash
+  ;;   according to `move-file-to-trash' convention.
 
-    Relies on the command-line utility 'trash' to be installed.
-    Get it from:  <http://hasseg.org/trash/>"
-    (shell-command (concat "trash -vF \"" path "\""
-                           "| sed -e 's/^/Trashed: /'")
-                   nil ;; Name of output buffer
-                   "*Trash Error Buffer*"))
+  ;;   Relies on the command-line utility 'trash' to be installed.
+  ;;   Get it from:  <http://hasseg.org/trash/>"
+  ;;   (shell-command (concat "trash -vF \"" path "\""
+  ;;                          "| sed -e 's/^/Trashed: /'")
+  ;;                  nil ;; Name of output buffer
+  ;;                  "*Trash Error Buffer*"))
 
   ;; macOS's bundled BSD ls doesn't play well with Emacs,
   ;; so use Homebrewed GNU ls instead
