@@ -173,6 +173,7 @@ function command-exists {
     check-args 1 1 'COMMAND_NAME' "$@" || return 1
     local COMMAND="$1"
     command -v "$COMMAND" >/dev/null 2>&1
+    return $?
 }
 
 # Check for executables only.
@@ -1077,9 +1078,11 @@ fi
 function zero-width-joiner {
     echo -en '\u200D' | pbcopy
 }
+
 function zwj {
     zero-width-joiner "$@"
 }
+
 function nbsp {
     zero-width-joiner "$@"
 }
@@ -1275,7 +1278,7 @@ function wait_for_proxy_to_come_up {
         echo "wait_for_proxy_to_come_up: wrong number of arguments. Usage: wait_for_proxy_to_come_up PROXY_NAME"
     fi
 }
-            
+           
 
 function rds {
     function usage {
@@ -1504,11 +1507,12 @@ MY_EDITOR="$HOME/bin/emacs-wrapper"
 
 set -a
 GIT_EDITOR="$MY_EDITOR"
-HOMEBREW_EDITOR="subl -w"
 EDITOR="$MY_EDITOR"
 VISUAL="$MY_EDITOR"
-if command-exists subl; then
+
+if [[ -x "$SUBL_PATH" ]]; then 
     PSQL_EDITOR="subl -w"
+    HOMEBREW_EDITOR="subl -w"
 else
     PSQL_EDITOR="$MY_EDITOR"
 fi
@@ -1638,9 +1642,9 @@ function brew-next-leaf {
         echo "$LEAF_NUM" > "$LEAF_FILE"
     fi
 }
+
 function bnl()  { brew-next-leaf "$@" ;}
 function leaf { brew-next-leaf "$@" ;}
-
 
 function be { EDITOR=vim brew edit "$@" ;}
 function bh { brew home "$@" ;}
@@ -1938,7 +1942,6 @@ function diff-vanilla {
     fi
 }
 
-
 function diff-cdk-code {
     diff-vanilla -Nur \
         --exclude 'node_modules' \
@@ -1959,31 +1962,28 @@ function diff-cdk-code {
      "$@"
 }
 
-
-function diff-git {
-    ####### Git diff ##############################
-    git diff --no-index "$@"
+# function alt-diff
+#     # Git diff
+#     git diff --no-index "$@"
     
-    ####### Other diff tools ######################
-    # local COMMON_DIFF_OPTIONS="-u --color=always"
-    # 
-    ####### GNU diff ##############################
-    # 
-    # Color legend:
-    # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
-    # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
-    # hd - header        (35 is SGR magenta, which shows as magenta in my term)
-    # ln - line numbers  (34 is SGR blue, which shows as blue in my term)
-    # rs - undocumented, but the default seems fine
-    # 
-    # command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
-    # 
-    ####### macOS diff ############################
-    #
-    # command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
-    #
-    ###############################################
-}
+#     ### Other available diff tools, FYI
+#     ### local COMMON_DIFF_OPTIONS="-u --color=always"
+#     # 
+#     ## Recent GNU diff
+#     # 
+#     #   Color legend:
+#     #   ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
+#     #   de - deleted lines (31 is SGR red, which shows as orange in my terminal)
+#     #   hd - header        (35 is SGR magenta, which shows as magenta in my term)
+#     #   ln - line numbers  (34 is SGR blue, which shows as blue in my term)
+#     #   rs - undocumented, but the default seems fine
+#     # 
+#     # command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
+#     # 
+#     ## Old GNU diff (shipped with macOS as /usr/bin/diff)
+#     #
+#     # command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
+# }
 
 GIT_MERGE_HELP_URL="https://howchoo.com/git/git-merge-conflicts-rebase-ours-theirs"
 
@@ -1996,7 +1996,11 @@ function theirs {
 }
 
 function diff {
-    diff-git "$@"
+    # I just like git diff's syntax coloring better.
+    # --no-index allows you to use it anywhere on files,
+    # without regard to their history, just like
+    # regular diff.
+    git diff --no-index "$@"
 }
 
 #### FTP settings
@@ -2064,6 +2068,8 @@ function git-show-name-only-diffs {
 #### Git: general settings (not specific to GitHub)
 
 export GIT_SHELL_PATH="$(which bash)"
+
+function gs { git status "$@" ;}
 
 function branch-name {
     local PHRASE_STRING
@@ -2266,7 +2272,7 @@ function branchify {
     echo "$DESTR" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr '[[:punct:]]' '-'
 }
 
-function gnb {
+function gb-jira {
     check-args 1 1 'TINY_SUMMARY' "$@" || return 1
     local SUMMARY="$1";
     if [[ -z "$GITHUB_USERNAME" ]]; then
@@ -2275,7 +2281,7 @@ function gnb {
     fi
 
     local ISSUE DESC BRANCH_NAME
-    ISSUE="$(jis "$SUMMARY")" || return 3
+    ISSUE="$(jic "$SUMMARY")" || return 3
     DESC="$(branchify "$SUMMARY")" || return 4
     BRANCH_NAME="$GITHUB_USERNAME/$ISSUE/$DESC"
     gb "$BRANCH_NAME"
@@ -2324,10 +2330,6 @@ function git-https-to-ssh {
     local HTTPS_URL="$1"
     echo "$HTTPS_URL" | sed -e s'|^https://|git@github.com:|'
 }
-
-# function all-gists {
-#     gists --limit -1
-# }
 
 function gists {
     gh git list "$@"
@@ -2434,7 +2436,8 @@ function gtr {
     else
         echo "gtr: error: couldn't parse URL '$REPO_URL'" 2> /dev/null
     fi
-}   
+}
+   
 
 # gline (Git Line) - open a file in GitHub's web UI, at a given line
 function gline {
@@ -2442,13 +2445,11 @@ function gline {
     local FILENAME="$1"
     local LINENO="${2:-1}"
     
-    set -x
     local GIT_WORKING_COPY_ROOT_DIR="$(git rev-parse --show-toplevel)"
     FILENAME="${FILENAME/$GIT_WORKING_COPY_ROOT_DIR\//}"
 
     local BRANCH="$(git branch --show-current)"    
     gh browse --branch "$BRANCH" "${FILENAME}:${LINENO}"
-    set +x
 }
 
 function lst {
@@ -2489,11 +2490,6 @@ function gcl {
              cd - >/dev/null
            }
 }
-
-function clone { gcl "$@" ;}
-function gdo { git diff origin HEAD ;}
-function gn { git diff --name-only "$@" ;}
-function gs { git status "$@" ;}
 
 # gi ("git init") - go through the multi-command dance to create a local git repo
 function gi {
@@ -2724,6 +2720,50 @@ function pulls {
     open "https://github.com/pulls"
 }
 
+function git-list-all-repos-in-org {
+    while true; do
+        gh api "/orgs/$GITHUB_ORG/repos" \
+            --paginate \
+            --jq '.[] | [.name, .updated_at] | @tsv' \
+            -F per_page=$PER_PAGE \
+            -F sort=updated \
+            -F direction=desc \
+            -F page=$PAGE || break
+        ((PAGE++))
+    done
+}
+
+function git-e {
+    check-args 2 2 'REPO FILENAME' "$@" || return 1
+    local REPO="GITHUB_ORG/$1"
+    local FILENAME="$2"
+
+    STATUS=$(gh api "/repos/$REPO/contents/$DIRECTORY" \
+       -H "Accept: application/vnd.github.v3+json" \
+        --silent \
+        --method GET \
+        --output /dev/null
+        --show-response-status \
+            | tail -1)
+                
+    if [[ "$STATUS" == *"200"* ]]; then
+        echo "$REPO has $DIRECTORY"
+    else
+        echo "$REPO missing $DIRECTORY"
+    fi
+}
+
+function git-infra-dirs {
+    for REPO in $(git-list-all-repos-in-org); do
+        git-e "$REPO" "infra"
+    done
+}
+
+function t {
+    git-e "cass-api" \
+          "infra"
+}
+
 #### Kubernetes (and OpenShift) settings
 
 function oc {
@@ -2788,6 +2828,8 @@ function csview { command csview "$@" | $PAGER ;}
 ####     ~/.psqlrc*
 ####     ~/.pg_service
 ####     ~/.pgpass
+
+
 
 function pg {
     local  VERSION  PROGRAM_NAME  BINARY_PATH  COMMAND
@@ -3069,6 +3111,7 @@ function mkvirtualenv {
             && pip install --upgrade pip
     fi
 }
+
 function ve { mkvirtualenv "$@" ;}
 
 function venvs {
@@ -3160,7 +3203,6 @@ function bghex {
     # Example: 'bghex ff0000' to use a red background.
     printf '\e]11;%s\a' "#${1}"
 }
-
 
 # flast - print the first and last lines of a file
 function flast {
@@ -3332,7 +3374,7 @@ function slack-channel {
     fi
 }
 
-function chan {
+function channel {
     slack-channel "$@"
 }
 
@@ -3459,7 +3501,8 @@ function rmds {
 
 function rot13 {
     echo "$1" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
-}        
+}
+        
 
 # Invoke strings(1) safely, because http://www.jwz.org/blog/2014/10/we-live-in-a-magical-future-where-strings-is-exploitable/
 function strings { command strings -a "$@"  | $PAGER ;}
@@ -3591,6 +3634,7 @@ function mutt { neomutt "$@" ;}
 function sd2lcompile {
     gcc -o "$@"  `sdl2-config --cflags --libs`
 }
+
 function sdd { sdl2compile "$@" ;}
 
 #### Web settings
@@ -3782,7 +3826,6 @@ function sheet {
 #         echo "jenkins-branch: error: too many arguments" >&2
 #     fi
 # }
-
 
 #### JSON settings
 
@@ -3998,27 +4041,13 @@ function jil { # list issues (including epics)
     check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     
     jira issue list "$@"
-}
-function jls { jil "$@" ;}
+}; function jls { jil "$@" ;}
 
 function jel { # list epics only
     _j-check-env || return 2
     check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
     jira epic list "$@"
 }
-
-function jelm {
-    _j-check-env || return 2
-    check-args 0 varargs '[jira-cli arguments]' "$@" || return 1
-    jel --plain --jql "assignee='$JIRA_USERNAME' and state in ('Backlog')"
-}
-
-function jepics { jelm "$@" ;}
-function epics  { jelm "$@" ;}
-
-function jepics { jel "$@" ;}
-
-function epics { jel "$@" ;}
 
 function jlt { # list tasks only
     _j-check-env || return 2
@@ -4032,6 +4061,13 @@ function jld { # list my Done issues
     check-args 0 0 "[no arguments]" "$@" || return 1
     
     jira issue list --assignee "$JIRA_USERNAME" --status "Done"
+}
+
+function jmine {
+    _j-check-env || return 2
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    local JQL="assignee = '$JIRA_USERNAME' or creator = '$JIRA_USERNAME' ORDER BY updated DESC"
+    open -u "$(_jql2url "$JQL")"
 }
 
 function jmine-epics {
@@ -4179,6 +4215,7 @@ function json2yaml {
         yq eval -p json -o yaml "$JSON_FILENAME" "$@"
     fi
 }
+
     
 function yaml2json {
     if [[ $# -eq 0 ]]; then
@@ -4199,7 +4236,7 @@ set -a
 
 ## executable PATH
 
-PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin:$HOMEBREW_ROOT/sbin:$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin"
+PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin:$HOMEBREW_ROOT/sbin:$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$HOME/projects/log_duration/bin"
 
 # If some of those variables that I interpolated in my PATH are undefined,
 # then I will wind up with '::' in my PATH. That's equivalent to having
