@@ -57,6 +57,7 @@ desktop
 
 bad-*
 cuts*
+dev-notes
 simplified-*
 example-*
 gitignore.d
@@ -67,18 +68,5 @@ jenkins_output.*
 **/docs/**
 **/__snapshots__/**
 site.el
-
-
-**/.claude/settings.local.json
-
-**/.claude/settings.local.json
-
-**/.claude/settings.local.json
-
-**/.claude/settings.local.json
-
-**/.claude/settings.local.json
-
-**/.claude/settings.local.json
 
 **/.claude/settings.local.json

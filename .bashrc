@@ -3135,6 +3135,8 @@ function torcurl { tor-curl "$@" ;}
 
 #### TypeScript settings/Deno settings
 
+export CDK_DISABLE_CLI_TELEMETRY=true
+
 # (You can't do this with a shebang, hence the need for a function):
 # dr ("Deno Run") - run some code via the Deno runtime.
 function dr { deno run --quiet "$@" ;}
@@ -3573,6 +3575,7 @@ function tn {
 
 # tl ("Tmux List") - list running tmux sessions.
 function tl {
+    check-args 0 0 '[no arguments]' "$@" || return 1
     tmux list-sessions 2>/dev/null
 }
 
