@@ -656,17 +656,9 @@ function fd {
 }
 
 function gfd {
-    local GFD_REGEX USAGE
-    USAGE="Usage: gfd GFD_REGEX"
-    
-    if [[ $# -eq 0 ]]; then
-	echo "gfd: error: missing argument. $USAGE"
-    elif [[ $# -eq 1 ]]; then
-	GFD_REGEX="$1"
-	(fd "$GFD_REGEX"; g "$GFD_REGEX";) | $PAGER
-    else
-        echo "gfd: error: wrong number of arguments. $USAGE"
-    fi
+    check-args 1 1 'gfd REGEX' "$@" || return 1
+	local GFD_REGEX="$1"
+	(fd -i "$GFD_REGEX"; g -i "$GFD_REGEX") | $PAGER
 }
 
 function fdgrep {
@@ -749,6 +741,10 @@ function my-grep {
 
 function grep {
     my-grep "$@"
+}
+
+function gi {
+    my-grep -i "$@"
 }
 
 function grep-terms {
@@ -1164,6 +1160,10 @@ for MODEL_DIR in "$HOME/ai/models"/*; do
         "
     fi
 done
+
+function mistral {
+    Mistral-7B-Instruct-v0.3.Q4_0-ollama "$@"
+}
 
 #### Linker settings
 
@@ -2491,8 +2491,8 @@ function gcl {
            }
 }
 
-# gi ("git init") - go through the multi-command dance to create a local git repo
-function gi {
+# ginit ("git init") - go through the multi-command dance to create a local git repo
+function ginit {
     if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         echo "gi: error: $(pwd) is already under git control"
     else
