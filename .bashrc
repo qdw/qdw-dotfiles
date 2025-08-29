@@ -285,10 +285,6 @@ function dirnam {
     echo "${path%/*}"
 }
 
-function which {
-    type -P "$@"
-}
-
 ## Array helper functions
 
 function member {
@@ -409,7 +405,9 @@ function on-macos {
     [[ "$MY_OS" = "Darwin" ]]
 }
 
-if on-macos; then # (on other Unix OS's these are set automatically)
+if on-macos; then
+
+    # (on other Unix OS's these are set automatically)
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
     XDG_CACHE_HOME="$HOME/.cache"
@@ -422,6 +420,28 @@ if on-macos; then # (on other Unix OS's these are set automatically)
             trash "$@"
         }
     fi
+    
+    function dark {
+        darken "true"
+    }
+    
+    function light {
+        darken "false"
+    }
+    
+    function left {
+        dock "left"
+    }
+
+    function right {
+        dock "right"
+    }
+
+    function darken {
+        check-args 1 1 'true|false' "$@" || return 1
+        local BOOL="$1"
+        osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
+    }
     
     function dock {
         local VALID_ARGS="left|right|bottom"
@@ -436,28 +456,6 @@ if on-macos; then # (on other Unix OS's these are set automatically)
         esac
         defaults write com.apple.dock orientation "$SIDE" \
             && killall Dock
-    }
-    
-    function darken {
-        check-args 1 1 'true|false' "$@" || return 1
-        local BOOL="$1"
-        osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
-    }
-
-    function left {
-        dock "left"
-    }
-
-    function right {
-        dock "right"
-    }
-    
-    function dark {
-        darken "true"
-    }
-    
-    function light {
-        darken "false"
     }
     
     function wallpaper {
@@ -477,45 +475,92 @@ if on-macos; then # (on other Unix OS's these are set automatically)
         fi
     }
     
-    function ldd-app {
-        local APP_NAME EXECUTABLE_PATH
-    
-        check-args 1 1 'APP_NAME' "$@" || return 1
-        local APP_NAME="$1"
-        local EXECUTABLE_PATH="$(bin "$APP_NAME")"
-        local BIN_FUNC_EXIT_STATUS=$?
-        if [[ $BIN_FUNC_EXIT_STATUS -ne 0 ]]; then
-            return $BIN_FUNC_EXIT_STATUS
+    function which {
+        check-args 1 1 'COMMAND' "$@" || return 1
+
+        local PROGRAM_NAME="$1"
+        if [[ "$PROGRAM_NAME" =~ [.]app$ ]]; then
+            macwhich "$PROGRAM_NAME"
         else
-            otool -L "$EXECUTABLE_PATH"
+            type -P "$PROGRAM_NAME"
+        fi
+    }
+    
+    function macwhich {
+        local -a DIRS_TO_SEARCH=("$HOME/Applications" "/Applications")
+        
+        check-args 1 1 'FOO.app' "$@" || return 1
+        local APP_NAME="$1"
+        if [[ ! "$APP_NAME" =~ [.]app$ ]]; then
+            err "'$APP_NAME' does not end in '.app'.
+Maybe you meant 'which \"$APP_NAME\"?'"
+            return 1
+        else
+            for DIR in "${DIRS_TO_SEARCH[@]}"; do
+                local QUALIFIED_APP_NAME="$DIR/$APP_NAME"
+                if [[ -d "$QUALIFIED_APP_NAME" ]]; then
+                    echo "$QUALIFIED_APP_NAME"
+                    return 0
+                fi
+            done
+            
+            complain "macwhich: error: couldn't find '$APP_NAME'. Search path:"
+            printf "%s\n" "${DIRS_TO_SEARCH[@]}" >&2
+            return 2
         fi
     }
     
     # Given an app name, find the path to its executable
-    function bin {
+    function mac-app-binpath {
         check-args 1 1 'APP' "$@" || return 1
-        local APP="$1"
-    
-        set -o pipefail
-        for DIR in "/Applications" "$HOME/Applications"; do
-            local EXC="$(command ls "$DIR/$APP/Contents/MacOS" | command ls -a "$APP")"
-            if [[ "$PTH" ]]; then
-                echo "$DIR/$EXC"
-                return
+
+        local APP_NAME="$1"
+        
+        local APP_DIR="$(macwhich "$APP_NAME")"
+        local MACWHICH_EXIT_STATUS=$?
+        if [[ $MACWHICH_EXIT_STATUS -ne 0 ]]; then
+            return $MACWHICH_EXIT_STATUS
+        else
+            local EXPECTED_EXECUTABLE="$APP_BASE_DIR/Contents/MacOS/$APP"
+            if [[ ! -f "$EXPECTED_EXECUTABLE" ]]; then
+                err "'$APP' exists,
+but '$EXPECTED_EXECUTABLE' does not exist.
+Try checking manually"
+                return 3
+            else
+                echo "$EXPECTED_EXECUTABLE"
             fi
-        done
-        complain "couldn't find '$APP' in applications"
-        return 1
+        fi
     }
-else
-    # Special code for non-macOS platforms:
+    
+    # Open a Mac app by name, e.g. 'opa Steam.app'
+    function opa {
+        local APP_NAME  APP_DIR  MACWHICH_EXIT_STATUS
+        check-args 1 1 'FOO.app' "$@" || return 1
+        APP_NAME="$1"
+        
+        APP_DIR="$(macwhich "$APP_NAME")"
+        MACWHICH_EXIT_STATUS=$?
+        if [[ $MACWHICH_EXIT_STATUS -ne 0 ]]; then
+            return $MACWHICH_EXIT_STATUS
+        else
+            open "$APP_DIR"
+        fi
+    }
+
+
+else # for non-macOS Unixes:
+
+
+    function which {
+        type -P "$@"
+    }
 
     if command-exists xdg-open; then
         function open {
             xdg-open "$@"
         }
     fi
-
 fi
 
 #### Filename/path/dir/cd-related functions
