@@ -89,13 +89,13 @@ function bash-color-test-pattern {
 # such as ANSI color codes
 
 function bnw {
-    while IFS= read -r LINE; do
+    while IFS="" read -r LINE; do
 
         # Strip ANSI color codes
-        CLEAN_LINE=$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')
+        CLEAN_LINE="$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')"
 
         # Strip control characters
-        CLEAN_LINE=$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')
+        CLEAN_LINE="$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')"
         
         echo "$CLEAN_LINE"
     done
@@ -575,7 +575,7 @@ function dashify-path {
         local ABSOLUTE="$(realpath "$1")"
     fi
     
-    local DASHIFIED=$(echo "$ABSOLUTE" | sed 's|^/|| ; s|[/]|---|g')
+    local DASHIFIED="$(echo "$ABSOLUTE" | sed 's|^/|| ; s|[/]|---|g')"
     echo "$DASHIFIED"
 }
 
@@ -1493,12 +1493,22 @@ function the-emacs-daemon-is-running {
 
 # ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
 function ke {
+    check-args 0 1 '[SIGNAL]' "$@" || return 1
+    local ARG=""
+
+    if [[ $# -eq 1 ]]; then
+        case "$1" in
+            "-9" | "-KILL") :;;
+            *) err "Invalid signal '$1'"; return 1;;
+        esac
+    fi
+
     local PID="$(emacs-daemon-pid)"
     if [[ -n "$PID" ]]; then
-        kill "$PID"
+        kill $ARG "$PID"
     else
         complain "It doesn't look like the emacs daemon is running"
-        return 1
+        return 2
     fi
 }
 
