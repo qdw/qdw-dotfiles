@@ -323,13 +323,20 @@ extended-bright-white "#a6acb9"))
      ((t (:foreground ,magenta))))
 
    `(font-lock-variable-name-face
-     ((t (:foreground ,magenta))))
+     ;; ((t (:foreground ,magenta))))
+     ((t (:inherit default-face))))
 
    `(font-lock-variable-use-face
-     ((t (:foreground ,magenta))))
+     ((t (:inherit font-lock-variable-name-face))))
 
    `(font-lock-warning-face
      ((t ((:foreground ,bright-magenta :underline (:style wave :color bright-red))))))
+     
+   `(sh-quoted-exec-face
+     ((t ((:foreground ,bright-magenta)))))
+     
+   `(sh-font-lock-quoted-subshell-face
+     ((t (:inherit sh-quoted-exec-face))))
      
    ;;;; flycheck/flymake
    
