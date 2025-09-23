@@ -584,7 +584,7 @@ function cdq { cd ~/src/1/qdw-dotfiles ;}
 function cd3 { cd ~/src-3 ;}
 function cd1 { cd ~/src/1 ;}
 
-# cdd - cd to the enclosing dir of a file/dir.
+# cdd - cd to the enclosing dir of a file.
 #
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
@@ -592,13 +592,26 @@ function cd1 { cd ~/src/1 ;}
 # If the user passes no arguments, then do that to the directory portion
 # of the previous argument passed ($_).
 function cdd {
-    local DIR="$_"
-    check-args 0 1 'cdd DIR' "$@" || return 1
-    if [[ $# -eq 1 ]]; then
-        DIR="$1"
-    fi
+    setx
+    local ARG  REALPATH
         
-    cd "$(dirname "$(realpath "$DIR")")"
+    check-args 0 1 'cdd TARGET_FILE' "$@" || return 1
+    if [[ $# -eq 0 ]]; then
+        ARG="$_"
+    else
+        ARG="$1"
+    fi
+    
+    REALPATH="$(realpath "$ARG")"
+    if [[ -d "$REALPATH" ]]; then
+        err "makes no sense when called on a directory"
+        return 2
+    else
+        local DIR="$(dirname "$REALPATH")"
+        cd "$DIR"
+    fi
+
+    set +x
 }
 
 #### Homebrew settings
@@ -1200,11 +1213,15 @@ for MODEL_DIR in "$HOME/ai/models"/*; do
             }
 
             function $LLAMAFILE_FUNCNAME {
-                llamafile \"\$@\"
+                llamafile -m \"$HOME/ai/models/${MODEL_NAME}/${MODEL_NAME}.gguf\" \"\$@\"
             }
         "
     fi
 done
+
+function ai {
+    tmux attach-session -t ai
+}
 
 function mistral {
     Mistral-7B-Instruct-v0.3.Q4_0-ollama "$@"
@@ -3610,7 +3627,7 @@ function ta {
         local SESSION_NAME="$1"
 
         if ! tmux has-session -t "$SESSION_NAME" 2> /dev/null; then
-	    tn "$SESSION_NAME"
+	        tn "$SESSION_NAME"
         else
             tmux attach-session -t "$SESSION_NAME"
         fi
