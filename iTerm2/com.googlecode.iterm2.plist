@@ -5724,7 +5724,7 @@
 			<key>Mouse Reporting</key>
 			<true/>
 			<key>Movement Keys Scroll Outside Interactive Apps</key>
-			<true/>
+			<false/>
 			<key>Name</key>
 			<string>tritium</string>
 			<key>Non Ascii Font</key>
@@ -5821,6 +5821,8 @@
 			<integer>3</integer>
 			<key>Transparency</key>
 			<real>0.0</real>
+			<key>Treat Option as Alt</key>
+			<false/>
 			<key>Underline Color</key>
 			<dict>
 				<key>Alpha Component</key>
@@ -7104,6 +7106,8 @@
 	<false/>
 	<key>RemapModifiersWithoutEventTap</key>
 	<false/>
+	<key>RightControl</key>
+	<integer>12</integer>
 	<key>ShowFullScreenTabBar</key>
 	<false/>
 	<key>ShowNewOutputIndicator</key>
