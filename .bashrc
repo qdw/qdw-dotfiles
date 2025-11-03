@@ -377,6 +377,18 @@ function my-source {
     fi
 }
 
+#### Utilty functions/settings
+
+function foreach-line-in {
+    check-args 2 varargs 'FILE "COMMAND WITH {} PLACEHOLDER FOR LINE"' "$@" \
+        || return 1
+
+    local FILE="$1"
+    local COMMAND="$2"
+
+    parallel "$COMMAND" < "$FILE"
+}
+
 function xkcd-automate-p {
     local XKCD_CHART="$HOME/doc/is_it_worth_the_time_2x.png"
     if [[ -f "$XKCD_CHART" ]]; then
@@ -421,6 +433,12 @@ if on-macos; then
         }
     fi
     
+    function darken {
+        check-args 1 1 'true|false' "$@" || return 1
+        local BOOL="$1"
+        osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
+    }
+
     function dark {
         darken "true"
     }
@@ -435,12 +453,6 @@ if on-macos; then
 
     function right {
         dock "right"
-    }
-
-    function darken {
-        check-args 1 1 'true|false' "$@" || return 1
-        local BOOL="$1"
-        osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
     }
     
     function dock {
@@ -475,17 +487,6 @@ if on-macos; then
         fi
     }
     
-    function which {
-        check-args 1 1 'COMMAND' "$@" || return 1
-
-        local PROGRAM_NAME="$1"
-        if [[ "$PROGRAM_NAME" =~ [.]app$ ]]; then
-            macwhich "$PROGRAM_NAME"
-        else
-            type -P "$PROGRAM_NAME"
-        fi
-    }
-    
     function macwhich {
         local -a DIRS_TO_SEARCH=("$HOME/Applications" "/Applications")
         
@@ -509,6 +510,18 @@ Maybe you meant 'which \"$APP_NAME\"?'"
             return 2
         fi
     }
+    
+    function which {
+        check-args 1 1 'COMMAND' "$@" || return 1
+
+        local PROGRAM_NAME="$1"
+        if [[ "$PROGRAM_NAME" =~ [.]app$ ]]; then
+            macwhich "$PROGRAM_NAME"
+        else
+            type -P "$PROGRAM_NAME"
+        fi
+    }
+    
     
     # Given an app name, find the path to its executable
     function mac-app-binpath {
@@ -545,6 +558,55 @@ Try checking manually"
             return $MACWHICH_EXIT_STATUS
         else
             open "$APP_DIR"
+        fi
+    }
+    
+    function print-macos-version-codename {
+        check-args 0 0 "" "$@" || return 1
+        local DARWIN_VERSION="$(uname -r)"
+        print-macos-version-codename-for-darwin-version "$DARWIN_VERSION"
+    }
+    
+    function print-macos-version-codename-for-darwin-version {
+        check-args 1 1 'DARWIN_VERSION_NUMBER # example: 24.6.5' "$@" \
+            || return 1
+
+        local DARWIN_VERSION="$1"
+        local MAJOR_VERSION=${DARWIN_VERSION%%.*}
+
+        case $MAJOR_VERSION in
+            5)  echo "Cheetah (Mac OS X 10.0)"; return ;;
+            6)  echo "Puma (Mac OS X 10.1)"; return ;;
+            7)  echo "Jaguar (Mac OS X 10.2)"; return ;;
+            8)  echo "Panther (Mac OS X 10.3)"; return ;;
+            9)  echo "Tiger (Mac OS X 10.4)"; return ;;
+            10) echo "Leopard (Mac OS X 10.5)"; return ;;
+            11) echo "Snow Leopard (Mac OS X 10.6)"; return ;;
+            12) echo "Lion (Mac OS X 10.7)"; return ;;
+            13) echo "Mountain Lion (Mac OS X 10.8)"; return ;;
+            14) echo "Mavericks (Mac OS X 10.9)"; return ;;
+            15) echo "Yosemite (Mac OS X 10.10)"; return ;;
+            16) echo "El Capitan (Mac OS X 10.11)"; return ;;
+            17) echo "Sierra (macOS 10.12)"; return ;;
+            18) echo "High Sierra (macOS 10.13)"; return ;;
+            19) echo "Mojave (macOS 10.14)"; return ;;
+            20) echo "Catalina (macOS 10.15)"; return ;;
+            21) echo "Big Sur (macOS 11)"; return ;;
+            22) echo "Monterey (macOS 12)"; return ;;
+            23) echo "Ventura (macOS 13)"; return ;;
+            24) echo "Sonoma (macOS 14)"; return ;;
+            25) echo "Sequoia (macOS 15)"; return ;;
+            26) echo "Tahoe (macOS 16)"; return ;;
+             *) echo "I dunno the codename for macOS ${MAJOR_VERSION}.*.*";
+                return 2;;
+        esac
+    }
+    
+    function uname {
+        if [[ $# -eq 1 ]] && [[ "$1" = "-x" ]]; then
+            print-macos-version-codename
+        else
+            command uname "$@"
         fi
     }
 
@@ -4192,6 +4254,42 @@ function jql {
 # }
 
 #### Music-related settings
+
+function guit { # download guitar tabs from ultimate-guitar.com
+    check-args 1 1 'SOME_URL.ultimate-guitar.com' "$@" ||return 1
+    local URL="$1"
+
+    # 1. Fetch the page (curl).
+    # 
+    # 2. Extract the tablature payload from the JS-encoded HTML (perl).
+    #
+    # 3. Convert each DOS CRLF newline, represented in the JS-encoded payload
+    #    as the literal four-char string "\r\n", to an actual newline (sed 1).
+    # 
+    # 4. Remove Ultimate Guitar's idiosyncratic [tab] and [/tab]
+    #    HTML-like tags (sed 2).
+    #
+    # 5. Ditto for the [ch] and [/ch] pseudo-tags (sed 3).
+    #
+    # 6. Convert the HTML entity reference for an apostrophe
+    #     - which is  &#039; - to a literal Unicode ' (sed 4).
+    # 
+    # Later we will probably need to replace many more HTML entity references,
+    # and probably more [/pseudo-tags]. I will address them as I notice
+    # them in tablature that I actually read.
+    
+    set -o pipefail
+    curl -s "$URL" \
+        | perl -0777 -ne 'print "$1" if $_ =~ m|{&quot;wiki_tab&quot;:{&quot;content&quot;:&quot;(.*?)(?=&quot;,&quot;revision_id)|smx;' \
+        | sed -e "s|\\\r\\\n|\n|g" \
+        | sed -e 's|\[tab\]||g' -e 's|\[/tab\]||g' \
+        | sed -e 's|\[ch\]||g'  -e 's|\[/ch\]||g' \
+        | sed -e "s|&#039;|'|g"
+    local EXIT_STATUS=$?
+    set +o pipefail
+    echo
+    return $EXIT_STATUS
+}
 
 function music {
     am "$@"
