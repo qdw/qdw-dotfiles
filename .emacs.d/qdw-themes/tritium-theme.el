@@ -390,9 +390,10 @@ extended-bright-white "#a6acb9"))
    `(eshell-ls-special
      ((t (:foreground ,bright-magenta))))
      
-   ;;;; shell-mode
+   ;;;; sh-mode
    
-   
+   `(sh-heredoc
+     ((t (:foreground ,green :bold nil))))
 
    ;;;; calendar
 
