@@ -221,8 +221,12 @@ fi
 ## Hackish runtime argument checking
 
 function check-args {
+    # echo "In check-args, MANNAME='$MANNAME'"
+
     local FUNCTION="${FUNCNAME[1]}"
     
+    # First check number of args passed to check-args itself!
+
     if [[ $# -lt 3 ]]; then
         # Wrong number of args to check-args itself.
         # Print an error and return.
@@ -237,31 +241,61 @@ function check-args {
                  "($FUNCTION called check-args with $# $ARGUMENTS_INFLECTED, but it requires" \
                  "at least 3.)" \
                  "" \
-                 "Usage: checks_args MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
+                 "Usage: checks_args  MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
         return 250
     else
         # The caller passed the correct number of args to check-args itself.
-        # Now check whether the caller's caller called the caller properly.
-        
+        # Now check whether the user passed the right number of arguments
+        # to the function that called check-args.
+
         local MIN_ARGS="$1"; shift
         local MAX_ARGS="$1"; shift
-        local USAGE="$1"; shift        
+        local USAGE="$1"; shift
+        
+        local SYNOPSIS="$FUNCNAME $USAGE"
+        
+        # Optionally, the caller may set the magic variable MANNAME.
+        # This should be a one-line string describing the command,
+        # in the same format as the NAME section of a Unix man page.
+        # If MANNAME is set, then we print the whole usage message
+        # in a verbose, man-page-like, multiline format. Otherwise
+        # we print a one-liner.
+
+        if [[ "$MANNAME" ]]; then
+            USAGE="Usage:
+
+NAME
+     $FUNCNAME - $MANNAME
+     
+SYNOPSIS
+     $SYNOPSIS
+"
+        else
+            USAGE="Usage: $SYNOPSIS"
+        fi
+        
+        # Having formatted the usage string, figure out, er, whether we
+        # actually need to print it, that is, whether the user passed
+        # the right number of arguments or not.
+
         local ARGC=$#
         if [[ $ARGC -lt $MIN_ARGS ]]; then
-            local VARAGS_CLAUSE
+            local VARARGS_CLAUSE
             if [[ "$MAX_ARGS" = "varargs" ]]; then
-                VARAGS_CLAUSE=" or more"
+                VARARGS_CLAUSE=" or more"
             else
-                VARAGS_CLAUSE=""
+                VARARGS_CLAUSE=""
             fi
-            complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARAGS_CLAUSE} required)." \
-                     "" \
-                     "Usage: $FUNCTION $USAGE"
+
+            complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)."  \
+                     "" \           
+                     "$USAGE"
+            
             return 1
         elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
             complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
                      "" \
-                     "Usage: $FUNCTION $USAGE"
+                     "$USAGE"
             return 2
         else
             return 0
@@ -646,18 +680,17 @@ function cdq { cd ~/src/1/qdw-dotfiles ;}
 function cd3 { cd ~/src-3 ;}
 function cd1 { cd ~/src/1 ;}
 
-# cdd - cd to the enclosing dir of a file.
 #
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
 #
 # If the user passes no arguments, then do that to the directory portion
 # of the previous argument passed ($_).
-function cdd {
-    setx
+function cdl {
+    local MANNAME='cd to the enclosing dir of a file (or of $_ if none passed)'
     local ARG  REALPATH
-        
-    check-args 0 1 'cdd TARGET_FILE' "$@" || return 1
+    
+    check-args 0 1 '[TARGET_FILE] # default: $_' "$@" || return 1
     if [[ $# -eq 0 ]]; then
         ARG="$_"
     else
@@ -3193,21 +3226,15 @@ function buy {
     fi
 }
 
-function yak {
-    echo '* YAK_SHAVING' "$@" >> ~/.site.bash.d/gtd/gtd.org
-}
+function todo {
+    check-args 1 varargs 'todo MY TODO TEXT [...]' "$@" || return 1
 
-function rtfm {
-    check-args 0 1 'rtfm [TOPIC' "$@" || return 1
-    if [[ $# -eq 0 ]]; then
-        command ls --color=never "$HOME/.site.bash.d/rtfm"
-    elif [[ $# -eq 1 ]]; then
-        cat "$HOME/.site.bash.d/rtfm/$1"
+    if [[ "$GTD_INBOX_PATH" ]]; then
+        echo "* INBOX" "$@" >> "$GTD_INBOX_PATH"
+    else
+        err "Env var GTD_INBOX_PATH is not defined"
+        return 2
     fi
-}
-
-function wish () { 
-    echo '* TODO' "$@" >> ~/.site.bash.d/wishlist/wishlist.org
 }
 
 #### Python settings
@@ -3716,7 +3743,7 @@ function tl {
 # Timestamp with time zone, no special chars, OK to interpolate into filenames
 function ts {
     check-args 0 0 '[no-arguments]' "$@" || return 1
-    date +%Y%m%dT%H%M%S%z "$@"
+    date '+%Y-%m-dT%H%M%S%z' "$@"
 }
 
 # Timestamp in the format used by YAML
