@@ -240,8 +240,7 @@ function check-args {
         complain "check-args: error: $FUNCTION passed the wrong number of arguments to check-args itself" \
                  "($FUNCTION called check-args with $# $ARGUMENTS_INFLECTED, but it requires" \
                  "at least 3.)" \
-                 "" \
-                 "Usage: checks_args  MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
+                 "Usage: check-args  MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
         return 250
     else
         # The caller passed the correct number of args to check-args itself.
@@ -252,7 +251,7 @@ function check-args {
         local MAX_ARGS="$1"; shift
         local USAGE="$1"; shift
         
-        local SYNOPSIS="$FUNCNAME $USAGE"
+        local SYNOPSIS="$FUNCTION $USAGE"
         
         # Optionally, the caller may set the magic variable MANNAME.
         # This should be a one-line string describing the command,
@@ -265,7 +264,7 @@ function check-args {
             USAGE="Usage:
 
 NAME
-     $FUNCNAME - $MANNAME
+     $FUNCTION - $MANNAME
      
 SYNOPSIS
      $SYNOPSIS
@@ -288,13 +287,11 @@ SYNOPSIS
             fi
 
             complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)."  \
-                     "" \           
                      "$USAGE"
             
             return 1
         elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
             complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
-                     "" \
                      "$USAGE"
             return 2
         else
