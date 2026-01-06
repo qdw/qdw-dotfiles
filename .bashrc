@@ -3870,7 +3870,7 @@ function wayback {
 }
 
 function ddg {
-    check-args 1 1 'QUERY_STRING # no need to URL-encode'
+    check-args 1 1 'QUERY_STRING # no need to URL-encode' "$@" || return 1
     local QUERY="$1"
 
     local BASE_URL="https://duckduckgo.com/?t=h_&q="
