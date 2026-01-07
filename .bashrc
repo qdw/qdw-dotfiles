@@ -1984,7 +1984,8 @@ function bat-head {
     bat --line-range ":${NUMBER}" "$FILENAME"
 }
 
-# bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub)
+# bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub).
+
 function bbat {
     local TMPFILE
     
@@ -1993,34 +1994,24 @@ function bbat {
         && elinks "$TMPFILE"
 }
 
-# cdr ("CD Realname") - cd to the directory that a symlink points to
+# cdr ("CD Realpath") - cd to the enclosing directory that a symlink points to
+
 function cdr {
-    # check-args 1 1
-    local TARGET="$1"
-    local DEPTH=0
-    local MAX_DEPTH=9
-    while true; do
-        if [[ $DEPTH -ge $((MAX_DEPTH - 1)) ]]; then
-            complain "Giving up after following $MAX_DEPTH levels of symlinks"
-            complain "(do you have a circular reference?)"
-            return 1
-        elif [[ -L "$TARGET" ]]; then
-            TARGET="$(realpath "$TARGET")"
-            REALPATH_EXIT_STATUS=$?
-            if [[ $REALPATH_EXIT_STATUS -ne 0 ]]; then
-                return $REALPATH_EXIT_STATUS
-            else
-                DEPTH=$((DEPTH + 1))
-                continue
-            fi
-        else
-            cd "$TARGET"
-            return
-        fi
-    done
+    check-args 1 1 'FILE_OR_DIRECTORY' "$@" || return 1
+    REALPATH="$(realpath "$1")"
+
+    local DIR
+    if [[ -d "$REALPATH" ]]; then
+        DIR="$1"
+    else
+        DIR="$(dirname "$REALPATH")"
+    fi
+    
+    cd "$REALDIR"
 }
 
-# Report symlinks as symlinks
+# Tell file(1) to report symlinks as symlinks.
+
 function file { command file --no-dereference "$@" ;}
 
 # path - given a relative path, print its relative path. Does not dereference symlinks. Does not work on absolute paths; hence does not work for tilde expansion.
