@@ -1279,7 +1279,13 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(tritium))
  '(package-selected-packages
-   '(imenu-list blacken llm nushell-mode copilot ellama csv-mode yaml-tomato yaml-pro wgrep vimrc-mode terraform-mode slime-repl-ansi-color slime osx-plist json-mode jenkinsfile-mode go-mode fish-mode elpher elisp-slime-nav elfeed dumb-jump applescript-mode yaml-mode typescript-mode tide paredit osx-trash markdown-mode magit fd-dired exec-path-from-shell evil)))
+   '(applescript-mode blacken copilot csv-mode dumb-jump elfeed
+     elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
+     fish-mode fretboard go-mode imenu-list jenkinsfile-mode json-mode
+     julia-mode llm magit markdown-mode nushell-mode org-alert
+     org-caldav org-super-agenda osx-trash paredit pcre2el slime
+     slime-repl-ansi-color terraform-mode tide typescript-mode
+     vimrc-mode wgrep yaml-mode yaml-pro yaml-tomato)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
