@@ -675,6 +675,7 @@ function dashify-path {
     echo "$DASHIFIED"
 }
 
+function cdd { cd ~/Desktop ;}
 function cds { cd ~/src ;}
 function cdq { cd ~/src/1/qdw-dotfiles ;}
 function cd3 { cd ~/src-3 ;}
