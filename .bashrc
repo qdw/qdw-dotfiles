@@ -595,13 +595,13 @@ Try checking manually"
         fi
     }
     
-    function print-macos-version-codename {
+    function macos-codename {
         check-args 0 0 "" "$@" || return 1
         local DARWIN_VERSION="$(uname -r)"
-        print-macos-version-codename-for-darwin-version "$DARWIN_VERSION"
+        macos-codename-for-darwin-version "$DARWIN_VERSION"
     }
     
-    function print-macos-version-codename-for-darwin-version {
+    function macos-codename-for-darwin-version {
         check-args 1 1 'DARWIN_VERSION_NUMBER # example: 24.6.5' "$@" \
             || return 1
 
