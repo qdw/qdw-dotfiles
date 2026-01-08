@@ -1,168 +1,30 @@
 umask 0022
 set -o pipefail
 
+#### 0. Numbered sections like this one must appear in order.
+
 #### Bash debugging settings
 
 # Uncomment this to enable various hackish debugging statements in this file.
 # export MY_DEBUG=true
-
 # Run this function interactively to enable tracing *without*
 # the many prompt-related commands that automatically run every time I enter a
 # command. This makes the trace much more uncluttered and readable.
+
 function setx {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
     export PS4='${BASH_SOURCE}:${LINENO} '
     set -x
 }
-
 if [[ "$MY_DEBUG" ]]; then
     setx
 fi
-
 function sb {
     source "$HOME/.bashrc"
 }
 
-#### Color settings
-
-export COLORTERM="truecolor"
-export CLICOLOR=1
-
-## ANSI SGR 4-bit color codes
-
-set -a
-QANSI='\033['
-QRESET='\033[0m'
-
-set +a
-
-function color-printf {
-    local HELP="COLOR_NAME [STRING ...]
-
-For example, color-printf bright-cyan 'Color text' 'and more color text\n'.
-"
-
-    check-args 2 varargs "$HELP" "$@" || return 1
-    local COLOR_NAME="$1"
-    shift
-
-    local COLORCODE BRIGHTNESS
-    case "$COLOR_NAME" in
-        black)    COLORCODE=30; BRIGHTNESS=0;;
-        red)      COLORCODE=31; BRIGHTNESS=0;;
-        green)    COLORCODE=32; BRIGHTNESS=0;;
-        yellow)   COLORCODE=33; BRIGHTNESS=0;;
-        blue)     COLORCODE=34; BRIGHTNESS=0;;
-        magenta)  COLORCODE=35; BRIGHTNESS=0;;
-        cyan)     COLORCODE=36; BRIGHTNESS=0;;
-        white)    COLORCODE=37; BRIGHTNESS=0;;
-  
-        bright-black)    COLORCODE=90; BRIGHTNESS=1;;
-        bright-red)      COLORCODE=91; BRIGHTNESS=1;;
-        bright-green)    COLORCODE=92; BRIGHTNESS=1;;
-        bright-yellow)   COLORCODE=93; BRIGHTNESS=1;;
-        bright-blue)     COLORCODE=94; BRIGHTNESS=1;;
-        bright-magenta)  COLORCODE=95; BRIGHTNESS=1;;
-        bright-cyan)     COLORCODE=96; BRIGHTNESS=1;;
-        bright-white)    COLORCODE=96; BRIGHTNESS=1;;
-  
-        *) echo "Unsupported color '$COLOR_NAME'" >&2; return 2;;
-    esac
-
-    printf '\e[%d;%dm' "$BRIGHTNESS" "$COLORCODE"
-    echo -n "$@"
-    printf '\033[0m'
-}
-
-function bash-color-test-pattern {
-    for COLORNAME in black red green yellow blue magenta cyan white; do
-        for PREFIX in "" "bright-"; do
-            FULLCOLORNAME="${PREFIX}${COLORNAME}"
-            color-printf "$FULLCOLORNAME" "$FULLCOLORNAME"
-            echo
-        done
-    done
-}
-
-# bnw (Black 'n' White): remove non-printable chars,
-# such as ANSI color codes
-
-function bnw {
-    while IFS="" read -r LINE; do
-
-        # Strip ANSI color codes
-        CLEAN_LINE="$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')"
-
-        # Strip control characters
-        CLEAN_LINE="$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')"
-        
-        echo "$CLEAN_LINE"
-    done
-}
-
-# Take a hex triplet, and print it in the indicated color.
-# Requires a terminal that supports (ANSI SGR) 24-bit color,
-# a.k.a. true color
-function hex {
-    if [[ $# -ne 1 ]]; then
-        complain "Wrong number of arguments. Usage: hex RRGGBB"
-        return 1
-    else
-        # Extract the RGB values from the hex color code
-        local hex=${1#"#"}
-        local r=$(printf '0x%0.2s' "$hex")
-        local g=$(printf '0x%0.2s' "${hex#??}")
-        local b=$(printf '0x%0.2s' "${hex#????}")
-        
-        # Convert the hex values to decimal
-        local R=$(printf '%d' "$r")
-        local G=$(printf '%d' "$g")
-        local B=$(printf '%d' "$b")
-    
-        # Print the string in the specified color
-        printf "\e[38;2;%d;%d;%dm%s\e[0m\n" "$R" "$G" "$B" "$hex"
-    fi
-}
-
-#### Bash prompt settings
-
-unset PROMPT_COMMAND
-PS1_LOGO=""
-
-# # Use Unicode emoji as visual cues for different hosts/apps
-# if [[ "$INSIDE_EMACS" ]]; then
-#     PS1_LOGO=$'\u2130' # Cursive uppercase E
-# elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
-#     PS1_LOGO=$'\uF8FF' # Apple logo
-# fi
-# export PS1="\\[\\e[33m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
-
-export PS1="\\[\\e[33m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
-export DEFAULT_PS1="$PS1"
-
-# macOS: suppress nag message about Bash being deprecated in favor of zsh
-export BASH_SILENCE_DEPRECATION_WARNING=1
-
-#### Bash debugging settings
-
-function enva {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    env | ggrep --color=always -P '^AWS_[^=]*' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
-}
-
-function envp {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    env | ggrep --color=always -P '^PG_[^=]*' | sort
-}
-
-function envap {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    enva
-    envp
-}
-
-#### Bash metaprogramming library settings
+#### 1. Settings for my Bash metaprogramming library
 
 function stderr {
     echo "$@" >&2
@@ -172,8 +34,7 @@ function stderr {
 function command-exists {
     check-args 1 1 'COMMAND_NAME' "$@" || return 1
     local COMMAND="$1"
-    command -v "$COMMAND" >/dev/null 2>&1
-    return $?
+    command -V "$COMMAND" >/dev/null 2>&1
 }
 
 # Check for executables only.
@@ -217,6 +78,18 @@ else
         : # no-op
     }
 fi
+
+## Utilty functions/settings
+
+function foreach-line-in {
+    check-args 2 varargs 'FILE "COMMAND WITH {} PLACEHOLDER FOR LINE"' "$@" \
+        || return 1
+
+    local FILE="$1"
+    local COMMAND="$2"
+
+    parallel "$COMMAND" < "$FILE"
+}
 
 ## Hackish runtime argument checking
 
@@ -408,49 +281,65 @@ function my-source {
     fi
 }
 
-#### Utilty functions/settings
-
-function foreach-line-in {
-    check-args 2 varargs 'FILE "COMMAND WITH {} PLACEHOLDER FOR LINE"' "$@" \
-        || return 1
-
-    local FILE="$1"
-    local COMMAND="$2"
-
-    parallel "$COMMAND" < "$FILE"
-}
-
-function xkcd-automate-p {
-    local XKCD_CHART="$HOME/doc/is_it_worth_the_time_2x.png"
-    if [[ -f "$XKCD_CHART" ]]; then
-        open "$XKCD_CHART"
-    else
-        echo "Missing file '$XKCD_CHART'. Go grab it from https://xkcd.com/1205/"
-    fi
-}
-
-function xkcd {
-    check-args 1 1 'COMIC_NUMBER' "$@" || return 1
-    local COMIC_NUMBER="$1"
-    open "https://xkcd.com/$COMIC_NUMBER"
-}
-
-#### OS-specific settings
+#### 2. OS-specific settings, including Homebrew settings
 
 MY_OS="$(uname -s)"
-
-function on-linux {
-    local LINUX_REGEX="Linux"
-    [[ "$MY_OS" =~ $LINUX_REGEX ]]
-}
 
 function on-macos {
     [[ "$MY_OS" = "Darwin" ]]
 }
 
-if on-macos; then
+function on-linux {
+    [[ "$MY_OS" =~ Linux ]]
+}
 
-    # (on other Unix OS's these are set automatically)
+## OS-specific linker settings
+
+function ldd {
+    if on-macos; then
+        otool -L "$@" | $PAGER
+    else
+        command ldd "$@" | $PAGER
+    fi
+}
+
+# If some of the variables that I interpolated in my PATH are undefined,
+# then I will wind up with '::' in my PATH. That's equivalent to having
+# '.' (the current working directory) in one's path, which is a security
+# risk, because there's a silly trick that hackers can use where they
+# put a malicious binary named ls or grep or something inside a directory
+# and a privileged user cd's there and accidentally runs it.
+# Plus it looks bad. So remove any instances of two (or more)
+# consecutive colons. Same goes for a single leading or trailing colon.
+
+function decolonize {
+    check-args 1 1 'STRING # like PATH or MANPATH' "$@" || return 1
+    STRING="$1"
+    echo $STRING | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
+}
+
+## Homebrew settings
+
+for HDIR in "/opt/homebrew" "/usr/local"; do
+    if [[ -x "$HDIR/bin/brew" ]]; then
+        set -a
+        HOMEBREW_MANPATH="$HDIR/manpages:$HDIR/share/man"
+        HOMEBREW_INFOPATH="$HDIR/share/info"
+        HOMEBREW_ROOT="$HDIR"
+        HOMEBREW_OPT="$HDIR/opt"
+        HOMEBREW_BIN="$HDIR/bin"
+        MY_HOMEBREW_PATH="$HOMEBREW_OPT:$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin"
+        PATH="$(decolonize "$MY_HOMEBREW_PATH:$PATH")"
+        set +a
+        break
+    fi
+done
+
+### OS-specific convenience functions
+
+if on-macos; then
+    ## OS-specific settings for macOS
+
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
     XDG_CACHE_HOME="$HOME/.cache"
@@ -508,10 +397,6 @@ if on-macos; then
         "$HOME/bin/macos-set-wallpaper.scpt" "$@"
     }
     
-    # function day {
-    #     # set wallpaper
-    # }
-
     function pbc {
         local FILENAME="$1"
         if [[ "$FILENAME" ]]; then
@@ -520,6 +405,26 @@ if on-macos; then
             echo "pbc: error: missing argument. Usage: pbc FILENAME"
         fi
     }
+    
+    ## Safe-ish deletion settings for macOS
+    
+    if [[ -f "$HOMEBREW_BIN/trash" ]]; then
+        function trash {
+            "$HOMEBREW_BIN/trash" -F "$@"
+        }
+    elif [[ -x "/usr/bin/trash" ]]; then
+        function trash {
+            /usr/bin/trash "$@"
+        }
+    fi
+    
+    if command-exists trash; then
+        function rm {
+            trash "$@"
+        }
+    fi
+
+    ## which(1) settings: extend it to make it work for macOS .app bundles
     
     function macwhich {
         local -a DIRS_TO_SEARCH=("$HOME/Applications" "/Applications")
@@ -558,6 +463,7 @@ Maybe you meant 'which \"$APP_NAME\"?'"
     
     
     # Given an app name, find the path to its executable
+    
     function mac-app-binpath {
         check-args 1 1 'APP' "$@" || return 1
 
@@ -581,6 +487,7 @@ Try checking manually"
     }
     
     # Open a Mac app by name, e.g. 'opa Steam.app'
+
     function opa {
         local APP_NAME  APP_DIR  MACWHICH_EXIT_STATUS
         check-args 1 1 'FOO.app' "$@" || return 1
@@ -643,15 +550,12 @@ Try checking manually"
             command uname "$@"
         fi
     }
-
-
-else # for non-macOS Unixes:
-
+else
+    ## OS-specific settings for Linux and other non-macOS Unices
 
     function which {
         type -P "$@"
     }
-
     if command-exists xdg-open; then
         function open {
             xdg-open "$@"
@@ -659,79 +563,7 @@ else # for non-macOS Unixes:
     fi
 fi
 
-#### Filename/path/dir/cd-related functions
-
-function dashify-path {
-    if ! check-args 0 1 '[PATH] # defaults to current working directory]' "$@"
-    then
-        return 1
-    elif [[ $# -eq 0 ]]; then
-        local ABSOLUTE="$(realpath)"
-    elif [[ $# -eq 1 ]]; then
-        local ABSOLUTE="$(realpath "$1")"
-    fi
-    
-    local DASHIFIED="$(echo "$ABSOLUTE" | sed 's|^/|| ; s|[/]|---|g')"
-    echo "$DASHIFIED"
-}
-
-function cdd { cd ~/Desktop ;}
-function cds { cd ~/src ;}
-function cdq { cd ~/src/1/qdw-dotfiles ;}
-function cd3 { cd ~/src-3 ;}
-function cd1 { cd ~/src/1 ;}
-
-#
-# If the argument is a symlink, resolve it and then cd to the enclosing dir
-# of the file that it point to.
-#
-# If the user passes no arguments, then do that to the directory portion
-# of the previous argument passed ($_).
-function cdl {
-    local MANNAME='cd to the enclosing dir of a file (or of $_ if none passed)'
-    local ARG  REALPATH
-    
-    check-args 0 1 '[TARGET_FILE] # default: $_' "$@" || return 1
-    if [[ $# -eq 0 ]]; then
-        ARG="$_"
-    else
-        ARG="$1"
-    fi
-    
-    REALPATH="$(realpath "$ARG")"
-    if [[ -d "$REALPATH" ]]; then
-        err "makes no sense when called on a directory"
-        return 2
-    else
-        local DIR="$(dirname "$REALPATH")"
-        cd "$DIR"
-    fi
-
-    set +x
-}
-
-#### Homebrew settings
-
-for HDIR in "/opt/homebrew" "/usr/local"; do
-    if [[ -x "$HDIR/bin/brew" ]]; then
-        set -a    
-        HOMEBREW_ROOT="$HDIR"
-        HOMEBREW_BIN="$HDIR/bin"
-        
-        PATH="$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$PATH"
-        
-        HOMEBREW_MANPATH="$HDIR/manpages:$HDIR/share/man"
-        HOMEBREW_INFOPATH="$HDIR/share/info"
-
-        PATH=$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')
-        set +a
-        break
-    fi
-done
-
-## If on macOS, use the Homebrew versions of common command-line utilities
-## instead of the bundled macOS versions, as the Homebrewed versions
-## are more frequently updated.
+## OS-specific settings: when on macOS, use Homebrewed GNU tools if available
 
 if on-macos; then
     for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail
@@ -742,108 +574,6 @@ if on-macos; then
         fi
     done
 fi
-
-## Show all ignore patterns in effect for the cwd
-
-function ignorefiles-helper {
-    # Run command on any ignorefiles in our home dir
-
-    check-args 1 varargs 'ignorefiles-helper "COMMAND TO RUN ON EACH IGNOREFILE"' "$@"
-    for FILE in "$HOME/.gitignore" "$HOME/.ignore"; do
-        if [[ -f "$FILE" ]]; then
-            eval "$@" "$FILE"
-        fi
-    done
-    
-    # Walk up the pwd running the command on any ignorefiles
-    # in any enclosing dirs (except our home dir, which we already did)
-    
-    local DIR="."
-    while [[ "$(realpath "$DIR")" != "/" ]]; do
-        for FILE in "$DIR/.gitignore" "$DIR/.ignore"; do
-            if [[ -f "$FILE" ]]; then
-                if [[ "$(realpath "$FILE")" != "$HOME/$FILE" ]]; then
-                    eval "$@" "$FILE"
-                fi
-            fi
-        done
-        
-        DIR="$DIR/.."
-    done
-}
-
-function ignorefiles-show-all-patterns {
-    check-args 0 0 'ignore-patterns-show-all' "$@"
-    ignorefiles-helper "cat" \
-        | command grep -vE '^[ ]*[#]' \
-        | command grep -vE '^[ ]*$' \
-        | sort -u \
-        | $PAGER
-}
-
-function ignorefiles-list {
-    check-args 0 0 'ignorefiles' "$@"
-    ignorefiles-helper "echo" | sort | $PAGER
-}
-
-function ignorefiles-which-files-contain-pattern {
-    check-args 1 varargs 'ignorefiles-which-files-contain-pattern GREP_ARGUMENTS' "$@"
-    local REGEX="$1"
-    ignorefiles-helper command grep --color=auto -H -E "$@"
-}
-
-function ignorefiles-show-all-patterns-by-file {
-    check-args 0 0 'ignorefiles-show-patterns-by-file' "$@"
-    ignorefiles-which-files-contain-pattern "."
-}
-
-function fdd {
-    command fd \
-        --follow \
-        --full-path \
-        --hidden \
-        "$@"
-}
-
-function fd {
-    fdd --color=always "$@" | $PAGER
-}
-
-function gfd {
-    check-args 1 1 'gfd REGEX' "$@" || return 1
-	local GFD_REGEX="$1"
-	(fd -i "$GFD_REGEX"; g -i "$GFD_REGEX") | $PAGER
-}
-
-function fdgrep {
-    # check-args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"; shift    
-    (fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@" \;)
-}
-
-# Recursively search the current working directory for files that don't
-# end in a single newline, and print their names
-function newlineless {
-    fd -t f -x bash -c 'tail -c 1 "$1" | command grep -qvE "^$" && echo "$1"' _ {} \;
-}
-
-function fdoccur {
-    # check-args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"; shift
-    fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
-}
-
-function _file-types {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq \
-        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
-}
-
-function file-type-counts {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq -c \
-        | sort --reverse --general-numeric-sort | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
-}
 
 #### grep settings
 
@@ -1071,6 +801,312 @@ function dirs-matching {
     done
 }
 
+## Show all ignore patterns in effect for the cwd
+
+function ignorefiles-helper {
+    # Run command on any ignorefiles in our home dir
+
+    check-args 1 varargs 'ignorefiles-helper "COMMAND TO RUN ON EACH IGNOREFILE"' "$@"
+    for FILE in "$HOME/.gitignore" "$HOME/.ignore"; do
+        if [[ -f "$FILE" ]]; then
+            eval "$@" "$FILE"
+        fi
+    done
+    
+    # Walk up the pwd running the command on any ignorefiles
+    # in any enclosing dirs (except our home dir, which we already did)
+    
+    local DIR="."
+    while [[ "$(realpath "$DIR")" != "/" ]]; do
+        for FILE in "$DIR/.gitignore" "$DIR/.ignore"; do
+            if [[ -f "$FILE" ]]; then
+                if [[ "$(realpath "$FILE")" != "$HOME/$FILE" ]]; then
+                    eval "$@" "$FILE"
+                fi
+            fi
+        done
+        
+        DIR="$DIR/.."
+    done
+}
+
+function ignorefiles-show-all-patterns {
+    check-args 0 0 'ignore-patterns-show-all' "$@"
+    ignorefiles-helper "cat" \
+        | command grep -vE '^[ ]*[#]' \
+        | command grep -vE '^[ ]*$' \
+        | sort -u \
+        | $PAGER
+}
+
+function ignorefiles-list {
+    check-args 0 0 'ignorefiles' "$@"
+    ignorefiles-helper "echo" | sort | $PAGER
+}
+
+function ignorefiles-which-files-contain-pattern {
+    check-args 1 varargs 'ignorefiles-which-files-contain-pattern GREP_ARGUMENTS' "$@"
+    local REGEX="$1"
+    ignorefiles-helper command grep --color=auto -H -E "$@"
+}
+
+function ignorefiles-show-all-patterns-by-file {
+    check-args 0 0 'ignorefiles-show-patterns-by-file' "$@"
+    ignorefiles-which-files-contain-pattern "."
+}
+
+function fdd {
+    command fd \
+        --follow \
+        --full-path \
+        --hidden \
+        "$@"
+}
+
+function fd {
+    fdd --color=always "$@" | $PAGER
+}
+
+function gfd {
+    check-args 1 1 'gfd REGEX' "$@" || return 1
+	local GFD_REGEX="$1"
+	(fd -i "$GFD_REGEX"; g -i "$GFD_REGEX") | $PAGER
+}
+
+function fdgrep {
+    # check-args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    local FILENAME_REGEX="$1"; shift    
+    (fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@" \;)
+}
+
+# Recursively search the current working directory for files that don't
+# end in a single newline, and print their names
+function newlineless {
+    fd -t f -x bash -c 'tail -c 1 "$1" | command grep -qvE "^$" && echo "$1"' _ {} \;
+}
+
+function fdoccur {
+    # check-args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    local FILENAME_REGEX="$1"; shift
+    fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
+}
+
+function _file-types {
+    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
+        | uniq \
+        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+}
+
+function file-type-counts {
+    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
+        | uniq -c \
+        | sort --reverse --general-numeric-sort | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+}
+
+#### Color settings
+
+export COLORTERM="truecolor"
+export CLICOLOR=1
+
+## ANSI SGR 4-bit color codes
+
+set -a
+QANSI='\033['
+QRESET='\033[0m'
+
+set +a
+
+function color-printf {
+    local HELP="COLOR_NAME [STRING ...]
+
+For example, color-printf bright-cyan 'Color text' 'and more color text\n'.
+"
+
+    check-args 2 varargs "$HELP" "$@" || return 1
+    local COLOR_NAME="$1"
+    shift
+
+    local COLORCODE BRIGHTNESS
+    case "$COLOR_NAME" in
+        black)    COLORCODE=30; BRIGHTNESS=0;;
+        red)      COLORCODE=31; BRIGHTNESS=0;;
+        green)    COLORCODE=32; BRIGHTNESS=0;;
+        yellow)   COLORCODE=33; BRIGHTNESS=0;;
+        blue)     COLORCODE=34; BRIGHTNESS=0;;
+        magenta)  COLORCODE=35; BRIGHTNESS=0;;
+        cyan)     COLORCODE=36; BRIGHTNESS=0;;
+        white)    COLORCODE=37; BRIGHTNESS=0;;
+  
+        bright-black)    COLORCODE=90; BRIGHTNESS=1;;
+        bright-red)      COLORCODE=91; BRIGHTNESS=1;;
+        bright-green)    COLORCODE=92; BRIGHTNESS=1;;
+        bright-yellow)   COLORCODE=93; BRIGHTNESS=1;;
+        bright-blue)     COLORCODE=94; BRIGHTNESS=1;;
+        bright-magenta)  COLORCODE=95; BRIGHTNESS=1;;
+        bright-cyan)     COLORCODE=96; BRIGHTNESS=1;;
+        bright-white)    COLORCODE=96; BRIGHTNESS=1;;
+  
+        *) echo "Unsupported color '$COLOR_NAME'" >&2; return 2;;
+    esac
+
+    printf '\e[%d;%dm' "$BRIGHTNESS" "$COLORCODE"
+    echo -n "$@"
+    printf '\033[0m'
+}
+
+function bash-color-test-pattern {
+    for COLORNAME in black red green yellow blue magenta cyan white; do
+        for PREFIX in "" "bright-"; do
+            FULLCOLORNAME="${PREFIX}${COLORNAME}"
+            color-printf "$FULLCOLORNAME" "$FULLCOLORNAME"
+            echo
+        done
+    done
+}
+
+# bnw (Black 'n' White): remove non-printable chars,
+# such as ANSI color codes
+
+function bnw {
+    while IFS="" read -r LINE; do
+
+        # Strip ANSI color codes
+        CLEAN_LINE="$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')"
+
+        # Strip control characters
+        CLEAN_LINE="$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')"
+        
+        echo "$CLEAN_LINE"
+    done
+}
+
+# Take a hex triplet, and print it in the indicated color.
+# Requires a terminal that supports (ANSI SGR) 24-bit color,
+# a.k.a. true color
+function hex {
+    if [[ $# -ne 1 ]]; then
+        complain "Wrong number of arguments. Usage: hex RRGGBB"
+        return 1
+    else
+        # Extract the RGB values from the hex color code
+        local hex=${1#"#"}
+        local r=$(printf '0x%0.2s' "$hex")
+        local g=$(printf '0x%0.2s' "${hex#??}")
+        local b=$(printf '0x%0.2s' "${hex#????}")
+        
+        # Convert the hex values to decimal
+        local R=$(printf '%d' "$r")
+        local G=$(printf '%d' "$g")
+        local B=$(printf '%d' "$b")
+    
+        # Print the string in the specified color
+        printf "\e[38;2;%d;%d;%dm%s\e[0m\n" "$R" "$G" "$B" "$hex"
+    fi
+}
+
+#### Bash prompt settings
+
+unset PROMPT_COMMAND
+PS1_LOGO=""
+
+# # Use Unicode emoji as visual cues for different hosts/apps
+# if [[ "$INSIDE_EMACS" ]]; then
+#     PS1_LOGO=$'\u2130' # Cursive uppercase E
+# elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
+#     PS1_LOGO=$'\uF8FF' # Apple logo
+# fi
+# export PS1="\\[\\e[33m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
+
+export PS1="\\[\\e[33m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
+export DEFAULT_PS1="$PS1"
+
+# macOS: suppress nag message about Bash being deprecated in favor of zsh
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
+#### Environment-variable-checking shortcuts
+
+function enva {
+    check-args 0 0 "[no arguments]" "$@" || return 1
+    env | ggrep --color=always -P '^AWS_[^=]*' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
+}
+
+function envp {
+    check-args 0 0 "[no arguments]" "$@" || return 1
+    env | ggrep --color=always -P '^PG_[^=]*' | sort
+}
+
+function envap {
+    check-args 0 0 "[no arguments]" "$@" || return 1
+    enva
+    envp
+}
+
+function xkcd-automate-p {
+    local XKCD_CHART="$HOME/doc/is_it_worth_the_time_2x.png"
+    if [[ -f "$XKCD_CHART" ]]; then
+        open "$XKCD_CHART"
+    else
+        echo "Missing file '$XKCD_CHART'. Go grab it from https://xkcd.com/1205/"
+    fi
+}
+
+function xkcd {
+    check-args 1 1 'COMIC_NUMBER' "$@" || return 1
+    local COMIC_NUMBER="$1"
+    open "https://xkcd.com/$COMIC_NUMBER"
+}
+
+#### Filename/path/dir/cd-related functions
+
+function dashify-path {
+    if ! check-args 0 1 '[PATH] # defaults to current working directory]' "$@"
+    then
+        return 1
+    elif [[ $# -eq 0 ]]; then
+        local ABSOLUTE="$(realpath)"
+    elif [[ $# -eq 1 ]]; then
+        local ABSOLUTE="$(realpath "$1")"
+    fi
+    
+    local DASHIFIED="$(echo "$ABSOLUTE" | sed 's|^/|| ; s|[/]|---|g')"
+    echo "$DASHIFIED"
+}
+
+function cdd { cd ~/Desktop ;}
+function cds { cd ~/src ;}
+function cdq { cd ~/src/1/qdw-dotfiles ;}
+function cd3 { cd ~/src-3 ;}
+function cd1 { cd ~/src/1 ;}
+
+#
+# If the argument is a symlink, resolve it and then cd to the enclosing dir
+# of the file that it point to.
+#
+# If the user passes no arguments, then do that to the directory portion
+# of the previous argument passed ($_).
+function cdl {
+    local MANNAME='cd to the enclosing dir of a file (or of $_ if none passed)'
+    local ARG  REALPATH
+    
+    check-args 0 1 '[TARGET_FILE] # default: $_' "$@" || return 1
+    if [[ $# -eq 0 ]]; then
+        ARG="$_"
+    else
+        ARG="$1"
+    fi
+    
+    REALPATH="$(realpath "$ARG")"
+    if [[ -d "$REALPATH" ]]; then
+        err "makes no sense when called on a directory"
+        return 2
+    else
+        local DIR="$(dirname "$REALPATH")"
+        cd "$DIR"
+    fi
+
+    set +x
+}
+
 #### Bash history settings
 
 set -a
@@ -1276,6 +1312,10 @@ MANPAGER="$PAGER"
 
 set +a
 
+#### Pager settings: experimental
+
+export PPA='fmt -s -uw "$COLUMNS" | less'
+
 #### Makefile settings
 
 function make-targets {
@@ -1321,16 +1361,6 @@ function ai {
 
 function mistral {
     Mistral-7B-Instruct-v0.3.Q4_0-ollama "$@"
-}
-
-#### Linker settings
-
-function ldd {
-    if on-macos; then
-        otool -L "$@" | $PAGER
-    else
-        command ldd "$@" | $PAGER
-    fi
 }
 
 # # Tell man to display pages in color (it uses the deprecated Termcap system)
@@ -1580,7 +1610,6 @@ function install-emacs-plus {
     set -euo pipefail
     brew install --formula --build-from-source "emacs-plus@${VERSION_NUMBER}" \
                                                    --with-mailutils \
-                                                   --with-modern-doom3-icon \
                                                    --without-cocoa
 }
 
@@ -1814,7 +1843,7 @@ function brew-next-leaf {
 function bnl()  { brew-next-leaf "$@" ;}
 function leaf { brew-next-leaf "$@" ;}
 
-function be { EDITOR=vim brew edit "$@" ;}
+function be { brew edit "$@" ;}
 function bh { brew home "$@" ;}
 function bi { brew install "$@" ;}
 function bl { brew ls "$@" ;}
@@ -1933,10 +1962,9 @@ function mac-enable-cmd-ctrl-click-to-drag-windows {
 export BAT_THEME="base16"
 function bat {
     command bat \
-        --color always \
-        --decorations='auto' \
-        --style=rule,snip \
-        --wrap=auto \
+        --color "always" \
+        --decorations "auto" \
+        --style "rule,snip" \
         "$@" \
       | $PAGER
 }
@@ -1962,6 +1990,7 @@ function save-function {
     local FUNCTION_NAME="$1"
     local DEST_FILE="${2:-$HOME/.bashrc}"
     
+    echo >> "$DEST_FILE"
     func "$FUNCTION_NAME" | bnw >> "$DEST_FILE"
 }
 
@@ -3231,13 +3260,17 @@ function todo {
 
 #### Python settings
 
+export PYTHON_PIPX_PATH=~/.local/bin
+
 MY_VIRTUALENV_DIR=~/.virtualenvs--python3
 
-# Homebrew stable Python version
+for PREFERRED in "$HOMEBREW_BIN/python3" "/usr/bin/python3"; do
+    if [[ -f "$PREFERRED" ]]; then
+        PYTHON_INTERPRETER_PATH="$PREFERRED"
+        break
+    fi
+done
 
-set -a
-PYTHON_PIPX_PATH=~/.local/bin
-set +a
 
 function va {
     local VENV_NAME
@@ -3302,11 +3335,62 @@ function dc { deno eval --check "$@" ;}
 # dcr - run Deno, but first do type-checking (no longer the default as of Deno v1.23)
 function dcr { deno run --check "$@" ;}
 
+#### Ring tone settings
+
+# Download the audio from a YouTube video and convert it to an m4r.
+
+function yt {
+    check-args 2 2 'URL OUTPUT_FILENAME_WITHOUT_EXTENSION' "$@" || return 1
+    local URL="$1"
+    local OUTPUT_BASENAME="$2"
+    local OUTPUT_FILENAME="${OUTPUT_BASENAME}.m4a"
+
+    yt-dlp \
+        --cookies "$HOME/.yt-dlp-cookies" \
+        --format "bestaudio[ext=m4a]" \
+        --extract-audio --audio-format "m4a" --audio-quality "0" \
+        -o "$OUTPUT_FILENAME" \
+        "$URL" \
+      && mv "$OUTPUT_FILENAME" \
+            "$OUTPUT_BASENAME.m4r"
+}
+
+# Download an MP3 from zophar.net (video game sounds) and convert it to an m4r.
+
+function zo {
+    check-args 2 2 'URL OUTPUT_FILENAME' "$@" || return 1
+    local URL="$1"
+    local OUTPUT_FILENAME="$2"
+    if [[ ! $OUTPUT_FILENAME =~ .mp3$ ]]; then
+        OUTPUT_FILENAME="${OUTPUT_FILENAME}.mp3"
+    fi
+
+    curl -L "$URL" -o "$OUTPUT_FILENAME" \
+        && mp3-to-m4r "$OUTPUT_FILENAME" \
+        && command trash -F "$OUTPUT_FILENAME" # the mp3
+}
+
+# Conver an MP3 to an m4r (iPhone ring tone file).
+
+function mp3-to-m4r {
+    check-args 1 1 'FILENAME' "$@" || return 1
+    local FILENAME="$1"
+    local BASE="$(basename -s .mp3 "$FILENAME")"
+    
+    ffmpeg -i "$FILENAME" \
+           -c:a aac \
+           -b:a 256k \
+           "$BASE.m4a" \
+        && mv "$BASE.m4a" "$BASE.m4r"
+}
+
 #### Rust settings
 
 export RUST_PATH=~/.cargo/bin
 
 #### Ruby settings
+
+# CPPFLAGS="$RUBY_CPPFLAGS"
 
 # Use homebrewed Ruby if installed
 if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
@@ -3329,6 +3413,10 @@ function gemi {
                      --ri \
                      "$@"
 }
+
+#### golang settings
+
+export GOPATH="$HOME/go"
 
 #### Network-related settings
 
@@ -3423,33 +3511,13 @@ function pu { p "$USER" ;}
 
 #### vim settings
 
+if on-macos && command -v mvim >/dev/null 2>&1; then
+    function vim { mvim "$@" ;}
+    function gvim { mvim "$@" ;}
+fi
+ 
 # vl ("Vim Less") - use vim as a colorizing pager
 function vl { "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@" ;}
-
-function _mvim_helper {
-    local ERROR_MESSAGE="$1"; shift
-    
-    THE_MVIM_IN_PATH="$(type -P mvim)"
-    if [[ "$THE_MVIM_IN_PATH" ]]; then
-        "$THE_MVIM_IN_PATH" "$@"
-    elif [[ -f "$HOMEBREW_ROOT/opt/macvim/bin/mvim" ]]; then
-        "$HOMEBREW_ROOT/opt/macvim/bin/mvim" "$@"
-    else
-        complain "$ERROR_MESSAGE"
-    fi
-}
-
-function gvim {
-    if which gvim >/dev/null; then
-        command gvim "$@"
-    else
-        _mvim_helper "Looks like neither gvim nor mvim (MacVim) is installed" "$@"
-    fi
-}
-
-function mvim {
-    _mvim_helper "Looks like mvim (MacVim) isn't installed" "$@"
-}
 
 #### Set operations
 
@@ -3606,15 +3674,44 @@ function dos2unix { perl -pe 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 # dream - run the Electric Sheep fractal generation daemon
 function dream { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
 
+function this-is-a-mac-gui-session {
+    on-macos && test -t 1 && pgrep -xq WindowServer
+}
+
+function this-is-not-a-mac-gui-session {
+    ! this-is-a-mac-gui-session
+}
+
 # dfr ("df real") - show all mounted devices that are actually disks (see also mr).
 function dfr {
-    df -h | head -1
-
-    if [[ "$MY_OS" = "Darwin" ]]; then
-        df -h | command grep -E '/System/Volumes/Data$'
-    else
+    if ! on-macos; then
+        check-args 0 1 '' "$@" || return 1
+        df -h | head -1
         df -h | command grep ^/
+        return
+    else
+        check-args 0 1 '[--no-gui]' "$@" || return 1
+        err "df is broken on MacOS, because it doesn't understand APFS's pooling."
+        if this-is-not-a-mac-gui-session || [[ "$1" = "--no-gui" ]]; then
+            return 2
+            
+
+        else
+            local USER_REPLY
+            read \
+                -r \
+                -p "$(echo -n "Do you want to see the macOS GUI view of your storage? [y/N] " >&2)" \
+                USER_REPLY        
+            case "$USER_REPLY" in
+                [yY]*) open "x-apple.systempreferences:com.apple.settings.Storage";;
+            esac
+            return 3
+        fi
     fi
+}
+
+function mac-free-space {
+    open "x-apple.systempreferences:com.apple.settings.Storage"
 }
 
 # ff [PROFILE_NAME] - run Firefox with a profile. No args? Open the dialog box to list/create profiles.
@@ -4422,42 +4519,33 @@ function e-paper {
     open -u "https://www.waveshare.com/catalogsearch/result/?q=e-paper"
 }
 
-#### #### path settings
-set -a
+#### Qt settings (cross-platform GUI dev)
 
-## executable PATH
+QT_PATH="/opt/homebrew/opt/qt/bin"
 
-PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin:$HOMEBREW_ROOT/sbin:$HOMEBREW_ROOT/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$HOME/projects/log_duration/bin"
+function qtmake {
+    cmake -DCMAKE_PREFIX_PATH=$(brew --prefix qt)
+}
 
-# If some of those variables that I interpolated in my PATH are undefined,
-# then I will wind up with '::' in my PATH. That's equivalent to having
-# '.' (the current working directory) in one's path, which is a security
-# risk, because there's a silly trick that hackers can use where they
-# put a malicious binary named ls or grep or something inside a directory
-# and a privileged user cd's there and accidentally runs it.
-# So remove any instances of two (or more) consecutive colons.
-# Same goes for a single trailing colon.
+#### path settings
 
-PATH="$(echo $PATH | sed -e 's/[:]\{2,\}/:/g' -e 's/[:]$//')"
+## Executable PATH settings
 
-#### C and C++ library settings
+export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$QT_PATH"
 
-LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS"
-PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}"
+## C and C++ library settings
+
+export LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS"
+export PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}"
 
 if on-macos; then
     export SDKROOT="$(xcrun --show-sdk-path)"
 fi
 
-#### man settings: where to search for man pages
+## man settings
 
-MANPATH="$HOME/share/man:$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/man:/usr/share/openssl/man:/usr/local/share/man:/usr/local/man"
-
-## Dynamic library path settings
-
-CPPFLAGS="$RUBY_CPPFLAGS"
-
-set +a
+export MANPATH=":$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man:$HOME/share/man:/usr/share/man:/usr/local/share/man:/usr/local/man"
 
 source-if-exists ~/.site.bash.d/postamble.bash
+
 set +o pipefail
