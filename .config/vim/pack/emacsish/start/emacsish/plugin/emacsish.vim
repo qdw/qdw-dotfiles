@@ -32,12 +32,13 @@ let g:loaded_emacsish = 1
 """" Tab key: indent the line we're on, regardless of the column we're on.
 
 set expandtab
-set shiftwidth=4
-set softtabstop=4
-set tabstop=4
-
 nnoremap <Tab> ==
 inoremap <Tab> <Esc>==i
+
+augroup EmacsishTabs
+  autocmd!
+  autocmd BufWinEnter,InsertLeave * match ExtraTab /\t/
+augroup END
 
 """" Emacs keybindings for moving the cursor
 

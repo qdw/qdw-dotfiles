@@ -1,25 +1,53 @@
+"""" Appearance
+    
 " colorscheme dim
+set termguicolors
+set guifont=Menlo:h16
+
+" Use four spaces for indentation, not a tab character.
+
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+set expandtab
+
+" Highlight errant tab characters so I can hunt them down.
+
+highlight ExtraTab guibg=Red guifg=White
+
+"""" Indentation
+
+" Broken: automatically indent when I hit Enter
+" 
+" set autoindent
+" set filetype plugin indent on
+" set smartindent
+
+"""" other stuff (reorganize later)
+
+" Open filename at point (same keybindings I use in Emacs)
+
+nnoremap <C-.> gf
+inoremap <C-.> <Esc>gfi
+vnoremap <C-.> gf
+
 set runtimepath+=~/.vimruntime
-set guifont=Menlo:h17
         
 " Remap ';' to ':', so I don't have to hold down the shift key.
+
 map ; :
 
 " Append to end of file, in one keystroke.
+
 :nmap ^G Go
 
 " Insert a single character.
+
 :nnoremap s :exec "normal i".nr2char(getchar())."\e"<CR>
 
 " BROKEN: Append a single character.
 " :nnoremap S :exec "normal a".nr2char(getchar())."\e"<CR>
 
-" set autoindent
-" set filetype plugin indent on
-" set smartindent
-" set tabstop=4
-" set shiftwidth=4
-" set expandtab
 if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
    set fileencodings=ucs-bom,utf-8,latin1
 endif
@@ -85,3 +113,9 @@ endif
 " http://www.linuxpowertop.org/known.php
 let &guicursor = &guicursor . ",a:blinkon0"
 set rtp+=/opt/homebrew/opt/fzf
+
+" Add some Emacs-like keybindings and behaviors (GUI mode only for now)
+
+if has("gui_running")
+  packadd emacsish
+  endif
