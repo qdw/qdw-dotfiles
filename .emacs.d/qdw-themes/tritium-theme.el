@@ -142,19 +142,23 @@ extended-bright-white "#a6acb9"))
 (setopt ansi-color-bold-is-bright 't)
 
 (dolist (prefix '("" "bright-"))
-  (dolist (color-name '("black"
-                        "red"
-                        "green"
-                        "yellow"
-                        "blue"
-                        "magenta"
-                        "cyan"
-                        "white"))
-    (let* ((ansi-color-name (concat "ansi-color-" prefix color-name))
-           (ansi-color-symbol (intern ansi-color-name))
-           (desired-hex-value (symbol-value (intern color-name))))
+  (dolist (c '("black"
+               "red"
+               "green"
+               "yellow"
+               "blue"
+               "magenta"
+               "cyan"
+               "white"))
+    (let* ((color-name (concat prefix c))
+           (desired-hex-value (symbol-value (intern color-name)))
+
+           (ansi-color-name (concat "ansi-color-" color-name))
+           (ansi-color-symbol (intern ansi-color-name)))
+      
       (set ansi-color-symbol desired-hex-value)
       (face-spec-set ansi-color-symbol `((t (:foreground ,desired-hex-value)))))))
+
 
 ;; Then modify ANSI black so that it's visible against a true black
 ;; background (#000000). This doesn't change the global `black` var,
@@ -169,12 +173,28 @@ extended-bright-white "#a6acb9"))
 (deftheme tritium
   "tritium emacs theme")
 
-(custom-theme-set-faces
-   'tritium
+;; sh-script-mode clobbers our faces whenever we open a *sh file,
+;; so add a hook that restores them.
+  
+(defun tritium-apply-sh-script-mode-faces ()
+  (interactive)
+  (font-lock-mode -1)
+  
+  (custom-set-faces
+   `(sh-quoted-exec
+     ((t (:foreground ,bright-magenta))))
    
-   `(ansi-color-yellow
-     ((t (:foreground ,ansi-color-yellow) t))))
-      
+   `(sh-font-lock-quoted-subshell
+     ((t (:foreground ,bright-magenta))))
+   
+   `(sh-heredoc
+     ((t (:foreground ,green :bold nil)))))
+  
+  (font-lock-mode +1))
+
+(with-eval-after-load 'sh-script
+  (tritium-apply-sh-script-mode-faces))
+
 (custom-theme-set-faces
    'tritium
    
@@ -305,7 +325,7 @@ extended-bright-white "#a6acb9"))
      ((t (:foreground ,yellow))))
 
    `(font-lock-preprocessor-face
-     ((t (:foreground ,bright-green))))
+     ((t (:foreground ,green))))
      
    `(font-lock-property-face
      ((t (:foreground ,bright-cyan))))     
@@ -330,13 +350,14 @@ extended-bright-white "#a6acb9"))
      ((t (:inherit font-lock-variable-name-face))))
 
    `(font-lock-warning-face
-     ((t ((:foreground ,bright-magenta :underline (:style wave :color bright-red))))))
+     ((t ((:foreground ,bright-magenta
+                       :underline (:style wave :color bright-red))))))
      
    `(sh-quoted-exec-face
-     ((t ((:foreground ,bright-magenta)))))
+     ((t ((:foreground ,bright-black)))))
      
    `(sh-font-lock-quoted-subshell-face
-     ((t (:inherit sh-quoted-exec-face))))
+     ((t ((:foreground ,bright-black)))))
      
    ;;;; flycheck/flymake
    
