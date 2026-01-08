@@ -1,14 +1,16 @@
-;;;; Basic UI settings
-  ;; (placed early in the file in order to banish unwanted chrome
-  ;; before we can see it).
+;;;; UI settings: remove noise.
 
 (setopt inhibit-startup-screen 't)
-(require 'tool-bar)
-(if (boundp 'menu-bar-mode) (menu-bar-mode -1))
-(if (boundp 'tool-bar-mode) (tool-bar-mode -1))
-(if (boundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
-;;;; Don't beep; flash the screen (visual bell) instead
+(require 'tool-bar)
+(if (boundp 'menu-bar-mode)
+    (menu-bar-mode -1))
+(if (boundp 'tool-bar-mode)
+    (tool-bar-mode -1))
+(if (boundp 'scroll-bar-mode)
+    (scroll-bar-mode -1))
+
+;;;; UI settings: Don't beep; flash the screen (visual bell) instead.
 
 (setq ring-bell-function
       (lambda ()
@@ -19,7 +21,7 @@
                                  (set-face-foreground 'mode-line fg))
                                orig-fg))))
 
-;;;; Settings for GUI Emacs versus terminal Emacs
+;;;; UI settings: GUI Emacs versus terminal Emacs
 
 (defun initialize-ui ()
   (interactive)
@@ -37,19 +39,42 @@
       (defun track-mouse (e))
       (setopt mouse-sel-mode 't))))
 
-;; Apply the settings to the currently visible window.
+;; Apply those UI settings to the currently visible window.
 
 (initialize-ui)
+
+;;;; Typesetting settings: disable bold type passim.
+
+(mapc
+ (lambda (face)
+   (set-face-attribute face nil :weight 'normal))
+ (face-list))
       
-;; (For GUI Emacs): apply the above settings to *every* new window,
+;; (For GUI Emacs): apply those UI settings to *every* new window,
 ;; not just the initial window.
+
 (add-hook 'after-make-frame-functions
           (lambda (frame)
             (initialize-ui)))
-            
-;;;; Settings for managing viewports (a.k.a. windows)
-  ;; These apply to TUI mode as well as GUI mode.
-  
+
+;;;; Color theme settings
+
+(defvar qdw-themes '("amber" "amber-without-bold" "mariana" "tritium"))
+
+(mapc
+ (lambda (file-name)
+         (add-to-list 'custom-theme-load-path (expand-file-name file-name)))
+ '("~/.emacs.d/qdw-themes"
+   "~/src/forks/mariana-theme"))
+
+(setopt custom-enabled-themes '())
+(defvar my-chosen-theme "tritium")
+
+;; Load my current favorite theme. But keep the cursor orange for visibility.
+
+(load-theme (intern my-chosen-theme) 't)
+(set-cursor-color "DarkOrange1")
+
 (defun split-window-into-thirds ()
   "Split the current frame into three equal-width vertical windows."
   (interactive)
@@ -64,8 +89,6 @@
 (defun other-window-reverse ()
   (interactive)
   (other-window -1))
-
-;; Cycle through viewports.
 
 (defun rotate-windows () ;; from whattheemacsd.com
   "Rotate your windows"
@@ -93,16 +116,9 @@
              (setq i (1+ i))))))
              
   (other-window -1))
-
-;;;; Typesetting settings: disable bold type
-
-(mapc
- (lambda (face)
-   (set-face-attribute face nil :weight 'normal))
- (face-list))
  
-;;;; Text-entry settings: overwrite the region (selection) when I type.
-  ;; This is how modern GUIs work.
+;;;; Text-entry settings: overwrite the region (selection) when I type,
+;;;; in keeping with modern UI conventions.
 
 (delete-selection-mode 1)
 
@@ -110,10 +126,10 @@
 
 ;; Settings for the Emacs package system
 
-(setq package-archives
-      '(("gnu"    . "https://elpa.gnu.org/packages/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-        ("melpa"  . "https://melpa.org/packages/")))
+(setopt package-archives
+        '(("gnu"    . "https://elpa.gnu.org/packages/")
+          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+          ("melpa"  . "https://melpa.org/packages/")))
 
 ;; I'm running emacs as a daemon,
 ;; so just require all these modules at once;
@@ -125,28 +141,34 @@
 (require 'comint)
 (require 'compile)
 (require 'dirtrack)
+(require 'ellama)
 (require 'imenu)
 (require 'json)
 (require 'markdown-mode)
 (require 'menu-bar)
 (require 'mouse)
 (require 'org)
-(require 'recentf)
+;; (require 'org-superagenda)
+;; (require 'recentf)
 (require 'ruby-mode)
 (require 'scroll-bar)
 (require 'sh-script)
+
 (require 'tool-bar)
 (require 'whitespace)
-    
+
 (setopt vc-follow-symlinks 't)
 (setopt load-prefer-newer 't)
 
+;;;; Global upgrades/superpowers
+
+(pcre-mode +1)
+
 ;;;; Basic comfort
 
-(put 'upcase-region 'disabled nil)
-(put 'downcase-region 'disabled nil)
-
-(put 'narrow-to-region 'disabled nil)
+(put 'upcase-region     'disabled nil)
+(put 'downcase-region   'disabled nil)
+(put 'narrow-to-region  'disabled nil)
 
 (setopt word-wrap nil)
 
@@ -335,7 +357,7 @@ but it calls defvar under the hood."
 	  (lambda ()
 	    (insert "(")))
   
-;;;; Settings (?) for Emacs Lisp I wrote
+;;;; Settings for Emacs Lisp I wrote
 
 (add-to-list 'load-path
              (expand-file-name "qdw-themes" user-emacs-directory))
@@ -443,7 +465,7 @@ but it calls defvar under the hood."
   (interactive)
   (find-file (expand-file-name "~/.bashrc")))
 
-;;;; Theme settings
+;;;; Further theme settings
 
 (defun if-file-is-theme-reload-theme ()
   (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
@@ -456,53 +478,32 @@ but it calls defvar under the hood."
 
 (add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
 
-;; Always use the same cursor color, no matter what theme I use.
+(setq org-todo-keywords '("DEFER(e)"
+                          "TODO(t)"
+                          "NEXT_ACTION(n)"
+                          "IN_PROGRESS(i)"
+                          "GET_HELP(h)"
+                          "AWAITING_RESPONSE(a)"          
+                          "QUESTION(q)"
+                          "YAK_SHAVING(y)"
+                          "INFO(f)"
+                          "PROJECT(r)"
+                          "SUBPROJECT(s)"
+                          "POSTPONED(p)"
+                          
+                          "|"
 
-(set-cursor-color "DarkOrange1")
-
-;;; Themes that I created or forked
-
-(defvar qdw-themes '("amber" "amber-without-bold" "mariana" "tritium"))
-
-(mapc
- (lambda (file-name)
-         (add-to-list 'custom-theme-load-path (expand-file-name file-name)))
- '("~/.emacs.d/qdw-themes"
-   "~/src/forks/mariana-theme"))
-
-;;; Load my current favorite theme
-
-(setopt custom-enabled-themes '())
-(defvar my-chosen-theme "tritium")
-(load-theme (intern my-chosen-theme) 't)
+                          "DONE(d)"
+                          "WONTFIX(w)"
+                          ))
 
 (defun overlay-org-colors-qdw () 
   (interactive)
-  
-  (setopt org-catch-invisible-edits "show"
-          org-todo-keywords '((sequence
-                               "TODO(t)"
-                               "NEXT_ACTION(n)"
-                               "IN_PROGRESS(i)"
-                               "GET_HELP(h)"
-                               "AWAITING_RESPONSE(a)"          
-                               "QUESTION(q)"
-                               "YAK_SHAVING(y)"
-                               "INFO(f)"
-                               "PROJECT(r)"
-                               "SUBPROJECT(s)"
-                               "POSTPONED(p)"
-                       
-                               "|"
-
-                               "DONE(d)"
-                               "WONTFIX(w)"
-                               )))
-
   (when (or (member 'tritium custom-enabled-themes)
             (member 'mariana custom-enabled-themes))
     (let ((org-keyword-to-color-qdw
-          `(("TODO" . ,bright-magenta)
+          `(("DEFER" . ,bright-cyan)
+            ("TODO" . ,bright-magenta)
             ("NEXT_ACTION" . ,bright-red)
             ("IN_PROGRESS" . ,bright-yellow)
             ("GET_HELP" . ,bright-red)
@@ -544,40 +545,7 @@ but it calls defvar under the hood."
                               'face `(:foreground ,hex-string)))
           (insert (concat "  " color-name "\n")))))
 
-(defun test-pattern-qdw (&rest additional-colors)
-  (interactive)
-  (let*
-      ((buffer
-        (get-buffer-create "*theme colors*"))
-
-       (basic-colors '("black"
-                       "red"
-                       "green"
-                       "yellow"
-                       "blue"
-                       "magenta"
-                       "cyan"
-                       "white"))
-                     
-       (bright-colors
-        (mapcar (lambda (c) (concat "bright-" c)) basic-colors))
-      
-       (all-colors
-        (append basic-colors bright-colors additional-colors)))
-                       
-    (with-current-buffer buffer
-      (erase-buffer)
-      (dolist (co all-colors) (theme-insert-color co))
-      (display-buffer buffer))))
-      
-(defun idiosyncratic-test-pattern-qdw ()
-  (interactive)
-  (theme-test-pattern "extended-bright-white"
-                        "extended-bright-black"
-                        "extended-black"
-                        "extended-bright-red"))
-
-(defun test-pattern-brights-interleaved-qdw ()
+(defun test-pattern ()
   (interactive)
   (let* 
       ((buffer (get-buffer-create "*theme colors*"))
@@ -589,8 +557,10 @@ but it calls defvar under the hood."
                        "magenta"
                        "cyan"
                        "white"))
-       (variants '("extended"
+       (variants '("ansi-color"
                    "bright"
+                   "ansi-color-bright"
+                   "extended"
                    "extended-bright")))
     
     (with-current-buffer buffer
@@ -900,13 +870,6 @@ This command does the reverse of `fill-region'."
  neo-theme 'classic
  ns-alternate-modifier 'none
  ns-right-alternate-modifier 'meta
- org-agenda-files '("/Users/quinn.weaver/main.org")
- org-emphasis-alist '(("*" bold)
-                      ("/" italic)
-                      ("_" underline)
-                      ("=" org-verbatim verbatim)
-                      ("`" org-code verbatim)
-                      ("~" (:strike-through t)))
  recenter-positions '(top middle bottom))
 
 ;;;; eBook/e-reader settings
@@ -1051,14 +1014,28 @@ This command does the reverse of `fill-region'."
 
 ;;;; org-mode settings
 
+;; Open ASCII guitar tabs in a (fundamental-mode) buffer;
+;; don't use macOS open(1) on them.
+
+(add-to-list 'org-file-apps '("\\.crd\\'" . emacs))
+
 (setopt
   org-agenda-restore-windows-after-quit 't
   org-agenda-files (list (expand-file-name "~/main.org")
                          (expand-file-name "~/personal.org"))
+  org-archive "::"
+  org-catch-invisible-edits "show"
   org-cycle-separator-lines 1
+  org-emphasis-alist '(("*" bold)
+                       ("/" italic)
+                       ("_" underline)
+                       ("=" org-verbatim verbatim)
+                       ("`" org-code verbatim)
+                       ("~" (:strike-through t)))
+  ;; org-insert-heading '((heading . auto) (plain-list-item . auto))
   org-return-follows-link 't 
-  org-startup-folded 't)
-  ;; org-insert-heading '((heading . auto) (plain-list-item . auto)))
+  org-startup-folded 't
+  )
 
 (defun org-linkify-buffer-qdw ()
   "Make each line in the buffer into an org-mode style link
@@ -1309,4 +1286,7 @@ which is its intended use."
  '(ansi-color-red ((t (:foreground "red") t)))
  '(ansi-color-white ((t (:foreground "white") t)))
  '(ansi-color-yellow ((t (:foreground "yellow") t)))
- '(italic ((t (:underline t :slant normal :weight normal)))))
+ '(italic ((t (:underline t :slant normal :weight normal))))
+ '(sh-font-lock-quoted-subshell ((t (:foreground "#d8a0d0"))))
+ '(sh-heredoc ((t (:foreground "#3b8560" :bold nil))))
+ '(sh-quoted-exec ((t (:foreground "#d8a0d0")))))
