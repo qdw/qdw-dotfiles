@@ -24,6 +24,7 @@ function sb {
     source "$HOME/.bashrc"
 }
 
+#### Numbered sections must appear in order.
 #### 1. Settings for my Bash metaprogramming library
 
 function stderr {
@@ -94,8 +95,6 @@ function foreach-line-in {
 ## Hackish runtime argument checking
 
 function check-args {
-    # echo "In check-args, MANNAME='$MANNAME'"
-
     local FUNCTION="${FUNCNAME[1]}"
     
     # First check number of args passed to check-args itself!
@@ -115,26 +114,27 @@ function check-args {
                  "at least 3.)" \
                  "Usage: check-args  MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
         return 250
-    else
-        # The caller passed the correct number of args to check-args itself.
-        # Now check whether the user passed the right number of arguments
-        # to the function that called check-args.
+    fi
 
-        local MIN_ARGS="$1"; shift
-        local MAX_ARGS="$1"; shift
-        local USAGE="$1"; shift
-        
-        local SYNOPSIS="$FUNCTION $USAGE"
-        
-        # Optionally, the caller may set the magic variable MANNAME.
-        # This should be a one-line string describing the command,
-        # in the same format as the NAME section of a Unix man page.
-        # If MANNAME is set, then we print the whole usage message
-        # in a verbose, man-page-like, multiline format. Otherwise
-        # we print a one-liner.
+    # Okay, the caller passed the correct number of args to check-args itself.
+    # Now check whether the user passed the right number of arguments
+    # to the function that called check-args.
 
-        if [[ "$MANNAME" ]]; then
-            USAGE="Usage:
+    local MIN_ARGS="$1"; shift
+    local MAX_ARGS="$1"; shift
+    local USAGE="$1"; shift
+    
+    local SYNOPSIS="$FUNCTION $USAGE"
+    
+    # Optionally, the caller may set the magic local variable MANNAME.
+    # This should be a one-line string describing the command,
+    # in the same format as the NAME section of a Unix man page.
+    # If MANNAME is set, then we print the whole usage message
+    # in a verbose, man-page-like, multiline format. Otherwise
+    # we print a one-liner.
+
+    if [[ "$MANNAME" ]]; then
+        USAGE="Usage:
 
 NAME
      $FUNCTION - $MANNAME
@@ -142,38 +142,263 @@ NAME
 SYNOPSIS
      $SYNOPSIS
 "
+    else
+        USAGE="Usage: $SYNOPSIS"
+    fi
+    
+    # Having formatted the usage string, figure out, er, whether we
+    # actually need to print it, that is, whether the user passed
+    # the right number of arguments or not.
+
+    local ARGC=$#
+    if [[ $ARGC -lt $MIN_ARGS ]]; then
+        local VARARGS_CLAUSE
+        if [[ "$MAX_ARGS" = "varargs" ]]; then
+            VARARGS_CLAUSE=" or more"
         else
-            USAGE="Usage: $SYNOPSIS"
+            VARARGS_CLAUSE=""
         fi
+
+        complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)." "" \
+                 "$USAGE"
         
-        # Having formatted the usage string, figure out, er, whether we
-        # actually need to print it, that is, whether the user passed
-        # the right number of arguments or not.
-
-        local ARGC=$#
-        if [[ $ARGC -lt $MIN_ARGS ]]; then
-            local VARARGS_CLAUSE
-            if [[ "$MAX_ARGS" = "varargs" ]]; then
-                VARARGS_CLAUSE=" or more"
-            else
-                VARARGS_CLAUSE=""
-            fi
-
-            complain "$FUNCTION: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)."  \
-                     "$USAGE"
-            
-            return 1
-        elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
-            complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." \
-                     "$USAGE"
-            return 2
-        else
-            return 0
-        fi
+        return 1
+    elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
+        complain "$FUNCTION: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." "" \
+                 "$USAGE"
+        return 2
+    else
+        return 0
     fi
 }
 
-## Implementations of simple Unix commands in bash, to save fork(1) overhead
+function help_flag_in {
+    if [[ $# -ne 1 ]]; then
+        return 1
+    else
+        case "$1" in
+            -h|--help) return 0;;
+            *) return 1;;
+        esac
+    fi
+}
+
+function print-help {
+    # This is a helper function for check-args. It is not meant to be
+    # called by other code. check-args calls it after ensuring that
+    # check-args itself was invoked with the correct arguments,
+    # then extracting the information relevant to this function.
+
+    local FN="$1"
+    local USAGE="$2"
+    local OPTIONAL_MANNAME="$3"
+    
+    # Arguments explained:
+    # 
+    # - $FN is the name of the end-user function that callled check-args.
+    # 
+    # - $USAGE is the minimal usage string that the minimal user function
+    #   passed to check-args.
+    # 
+    # - $MANNAME is an optional description of what the end-user function
+    #   actually does.
+    
+    case "$#" in
+        2)
+            stderr "$FUNCTION USAGE"
+            return 1 ;;
+
+        
+        3)
+            stderr "
+NAME
+    $FN - $OPTIONAL_MANNAME
+    
+SYNOPSIS
+    $FN $USAGE"
+           return 2 ;;
+           
+        
+        *) stderr "print-help: error: wrong number of args (wanted 2 or 3)"
+           return 3 ;;
+    esac
+}
+
+function check-args-ng {
+
+    # check-args
+    # ==========
+    # 
+    # This function implements ad hoc, runtime argument-checking.
+    # It is meant to be called by end-user functions, not by users directly.
+    # 
+    # It checks whether the end-user function passed the right number of
+    # arguments. If not, it prints (to standard error) an informative
+    # error message, plus a usage string.
+    # 
+    # Exception: if the end user passed -h or --help, then check-args prints
+    # the usage string without the error message.
+    # 
+    # check-args returns 0 if the user passed the right number of arguments
+    # and 1 if the user passed the wrong number of arguments or passed -h
+    # or --help. Note that this differs from the behavior of most Unix
+    # utilities, where invoking with --help returns 0.
+    #
+    # DETAILS
+    # =======
+    # 
+    # check-args checks the *number* of arguments that the user passed;
+    # checking their *contents* is left to the caller. The end-user function
+    # must call check-args with 3 arguments:
+    # 
+    # check-args $MIN $MAX "$USAGE" "$@" || return $NONZERO
+    # 
+    # - $MIN is the minimum number of arguments required (which can be 0).
+    # 
+    # - $MAX is the maximum number of argumwnts allowed (can be "varargs").
+    # 
+    # - $USAGE is a brief human-readable explanation provided by the
+    #   end-user function. For details, see section RECOMMENDED FORMATTING.
+    # 
+    # Now if the end-user passes the wrong number of arguments,
+    # or if they pass -h or --help, check-args prints a line
+    # that shows the correct usage and tells the user whether they
+    # passed too many argument or not enough.
+    # 
+    # EXTENDED FORMAT: MANNAME
+    # ========================
+    # 
+    # Optionally, the end-user function may set the magic local variable
+    # MANNAME, a one-line string describing what the end-user command
+    # actually does. Passing MANNAME causes check-args to print
+    # usage info in a verbose, multi-line format reminiscent of
+    # a Unix man page. For details, see section RECOMMENDED_FORMATTING.
+    # 
+    # RECOMMENDED FORMATTING
+    # ======================
+    #
+    # You can use whatever strings you like for USAGE amd MANNAME,
+    # but the intended format is as follows.
+    # 
+    # Formatting if MANNAME is not set
+    # --------------------------------
+    # 
+    # If the end-user function does not set MANNAME, then check-args
+    # prints a compact message that lists the expected arguments
+    # but doesn't say what the end-user function actually does.
+    # For example:
+    # 
+    # function my_ln_terse {
+    #     check-args 1 2 "SOURCE_FILE [TARGET_FILE]" "$@" || return 1
+    #     
+    #     # ...
+    # }
+    # 
+    # Now if the end user passes no arguments, they will see the following:
+    # 
+    # my_ln_terse: error: too few arguments (0 given, 1 required).
+    # Usage: my_ln_terse SOURCE_FILE [TARGET_FILE]
+    # 
+    # If the user passes -h or --help, they will see the same usage message,
+    # but without the error line:
+    # 
+    # Usage: my_ln_terse SOURCE_FILE [TARGET_FILE]
+    # 
+    # Formatting if MANNAME is set
+    # ----------------------------
+    # 
+    # If the end-user function sets the magic local variable MANNAME,
+    # then check-args prints usage info in a verbose, multi-line format
+    # that mimics a Unix man page. For example:
+    # 
+    # function my_ln_verbose {
+    #     local MANNAME="create symbolic link to a file"
+    #     check-args 1 2 "SOURCE_FILE [TARGET_FILE]" "$@" || return 1
+    #     # ...
+    # }
+    # 
+    # Now if the end user passes no arguments, they will see the following:
+    # 
+    # my_ln_verbose: error: too few arguments (0 given, 1 required).
+    # 
+    # Usage:
+    # 
+    # NAME
+    #     my_ln - link files
+    #      
+    # SYNOPSIS
+    #     my_ln SOURCE_FILE [TARGET_FILE]
+    # 
+    # 
+    # If the user passes -h or --help, they will see the same output,
+    # but without this line:
+    # my_ln_verbose: error: too few arguments (0 given, 1 required).
+
+    local FNC="${FUNCNAME[1]}"
+    
+    # First check number of args passed to check-args itself!
+
+    if [[ $# -lt 3 ]]; then
+        # Wrong number of args to check-args itself.
+        # Print an error and return.
+
+        local ARGUMENTS_INFLECTED
+        if [[ $# -eq 1 ]]; then
+            ARGUMENTS_INFLECTED="argument"
+        else
+            ARGUMENTS_INFLECTED="arguments"
+        fi
+
+        stderr "check-args: error: $FNC passed the wrong number of arguments
+to check-args itself ($FNC called check-args with $# $ARGUMENTS_INFLECTED,
+but it requires at least 3.)"
+        stderr 'Usage: check-args MIN_NUM_ARGS MAX_NUM_ARGS USAGE_STRING "$@"'
+        return 250
+    fi
+
+    # Okay, the caller passed the correct number of args to check-args itself.
+    # Unpack them. Once we'e unpacked, $@ will contain only the args to the
+    # end-user program itself.
+
+    local MIN_ARGS="$1"
+    local MAX_ARGS="$2"
+    local USAGE="$3"
+    shift 3
+    
+    # Did the user pass the special -h/--help flag? If so, print the help
+    # message and exit.
+    
+    if help_flag_in "$@"; then
+        print-help "$FNC" "$USAGE" "$MANNAME"
+        return 1
+    fi
+    
+    # The user didn't pass the help flag, so check whether they passed
+    # the right number of arguments to the actual end-user function.
+
+    local ARGC=$#
+
+    # Too few args?
+    if [[ $ARGC -lt $MIN_ARGS ]]; then
+        local VARARGS_CLAUSE
+        if [[ "$MAX_ARGS" = "varargs" ]]; then VARARGS_CLAUSE=" or more"; fi
+        stderr "$FNC: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)."
+        print-help "$FNC" "$USAGE" "$MANNAME"
+        return 1
+    
+    # Too many args?
+    elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
+        complain "$FNC: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." "" \
+                 "$USAGE"
+        return 2
+
+    # Correct number of args!
+    else
+        return 0
+    fi
+}
+
+## Implementations of simple Unix commands in bash, to save fork overhead
 
 function basenam {
     # Remove trailing slashes
@@ -189,7 +414,7 @@ function dirnam {
     echo "${path%/*}"
 }
 
-## Array helper functions
+## Helper functions for working with Bash arrays
 
 function member {
     check-args 2 varargs "member ELEM ARG1 [ARG2 ...]" "$@"
