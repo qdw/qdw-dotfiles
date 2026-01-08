@@ -4531,7 +4531,7 @@ function qtmake {
 
 ## Executable PATH settings
 
-export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$QT_PATH"
+export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$QT_PATH"
 
 ## C and C++ library settings
 
