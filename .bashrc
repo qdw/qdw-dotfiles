@@ -460,10 +460,10 @@ if on-macos; then
 
     if [[ -f "$HOMEBREW_BIN/trash" ]]; then
         function rm {
-            "$HOMEBREW_BIN/trash -F" "$@"
+            "$HOMEBREW_BIN/trash" -F "$@"
         }
         function trash {
-            "$HOMEBREW_BIN/trash -F" "$@"
+            "$HOMEBREW_BIN/trash" -F "$@"
         }
     fi
     
