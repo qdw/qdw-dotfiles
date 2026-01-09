@@ -2886,9 +2886,37 @@ function lst {
     fi
 }
 
-# gcl (Git CLone) - quickly clone a repo belonging to my organization
-function gcl {
-    check-args 1 2 'REPO_NAME [SRC_DIR] # defaults to ~/src' "$@" || return 1
+function gclp {
+    local MANNAME="gclp (Git CLone Public) - quickly clone a GitHub repo"
+    check-args 1 varargs '${USER}/${REPO} [ENCLOSING_DIR] [GITARGS...]' "$@" \
+        || return 1
+    
+    local USER_SLASH_REPO="$1"
+    shift
+
+    local ENCLOSING_DIR
+    if [[ "$1" ]]; then
+        ENCLOSING_DIR="$1"
+        shift
+    else
+        ENCLOSING_DIR="$HOME/src-3"
+    fi
+    
+    echo "cd $ENCLOSING_DIR"
+    cd "$ENCLOSING_DIR" \
+        && git clone "git@github.com:$USER_SLASH_REPO" "$@"
+    EC=$?
+    
+    echo "cd -"
+    cd - >/dev/null
+
+    return $EC
+}
+
+# gclo (Git CLone Organization) - quickly clone a repo in a GitHub organization
+
+function gclo {
+    check-args 1 varargs 'REPO_NAME [SRC_DIR] # defaults to ~/src' "$@" || return 1
 
     local REPO="$1"
     shift
