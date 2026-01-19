@@ -135,6 +135,9 @@
 ;; so just require all these modules at once;
 ;; don't get clever with lazy-loading.
 
+(add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
+
+
 (require 'ansi-color)
 (require 'cc-mode)
 ;; (require 'copilot)
@@ -142,6 +145,7 @@
 (require 'compile)
 (require 'dirtrack)
 (require 'ellama)
+
 (require 'imenu)
 (require 'json)
 (require 'markdown-mode)
@@ -384,10 +388,14 @@ but it calls defvar under the hood."
                               (file-truename buffer-file-name))
                 (blacken-mode +1)
                 (blacken-mode -1))))
+                
+;;;; Settings for composing music in Python
+
+(
 
 ;;;; Javascript settings, TypeScript settings, JSON settings
 
-(let ((desired-indent-level 2))
+(let ((desired-indent-level 4))
   (setopt
         typescript-indent-level desired-indent-level)
   (setq js-indent-level desired-indent-level
@@ -1256,7 +1264,7 @@ which is its intended use."
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(tritium))
  '(package-selected-packages
-   '(applescript-mode blacken copilot csv-mode dumb-jump elfeed
+   '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed
      elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
      fish-mode fretboard go-mode imenu-list jenkinsfile-mode json-mode
      julia-mode llm magit markdown-mode nushell-mode org-alert
