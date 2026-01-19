@@ -3551,11 +3551,14 @@ function mkvirtualenv {
     fi
 }
 
-function ve { mkvirtualenv "$@" ;}
-
-function venvs {
-    ls "$MY_VIRTUALENV_DIR/"
+function ve {
+    if [[ $# -eq 0 ]]; then
+        ls "$MY_VIRTUALENV_DIR/"
+    else
+        mkvirtualenv "$@"
+    fi
 }
+
 
 #### Aranet4 air quality monitoring settings
 
