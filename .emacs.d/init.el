@@ -53,9 +53,8 @@
 ;; (For GUI Emacs): apply those UI settings to *every* new window,
 ;; not just the initial window.
 
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (initialize-ui)))
+(add-hook 'after-make-frame-functions (lambda (frame)
+                                        (initialize-ui)))
 
 ;;;; Color theme settings
 
@@ -388,10 +387,6 @@ but it calls defvar under the hood."
                               (file-truename buffer-file-name))
                 (blacken-mode +1)
                 (blacken-mode -1))))
-                
-;;;; Settings for composing music in Python
-
-(
 
 ;;;; Javascript settings, TypeScript settings, JSON settings
 
@@ -600,7 +595,7 @@ but it calls defvar under the hood."
                                         ("base0C" . "bright-blue")
                                         ("base0D" . "bright-magenta")
                                         ("base0E" . "bright-cyan")
-                                        ("base0F" . "bright-white")))                             
+                                        ("base0F" . "bright-white")))
         
         (let* ((tinted-name (car base16name-themename))
                  (theme-name (cdr base16name-themename))
@@ -1266,11 +1261,12 @@ which is its intended use."
  '(package-selected-packages
    '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed
      elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
-     fish-mode fretboard go-mode imenu-list jenkinsfile-mode json-mode
-     julia-mode llm magit markdown-mode nushell-mode org-alert
-     org-caldav org-super-agenda osx-trash paredit pcre2el slime
-     slime-repl-ansi-color terraform-mode tide typescript-mode
-     vimrc-mode wgrep yaml-mode yaml-pro yaml-tomato)))
+     fish-mode flymake flymake-hlint fretboard go-mode haskell-mode
+     imenu-list jenkinsfile-mode json-mode julia-mode llm magit
+     markdown-mode nushell-mode org-alert org-caldav org-super-agenda
+     osx-trash paredit pcre2el slime slime-repl-ansi-color
+     terraform-mode tidal tide typescript-mode vimrc-mode wgrep
+     yaml-mode yaml-pro yaml-tomato)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
