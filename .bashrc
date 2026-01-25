@@ -573,9 +573,9 @@ if on-macos; then
     set +a
 
     if [[ -f "$HOMEBREW_BIN/trash" ]]; then
-        function rm {
-            "$HOMEBREW_BIN/trash" -F "$@"
-        }
+        # function rm {
+        #     "$HOMEBREW_BIN/trash" -F "$@"
+        # }
         function trash {
             "$HOMEBREW_BIN/trash" -F "$@"
         }
@@ -643,11 +643,11 @@ if on-macos; then
         }
     fi
     
-    if command-exists trash; then
-        function rm {
-            trash "$@"
-        }
-    fi
+    # if command-exists trash; then
+        # function rm {
+        #     trash "$@"
+        # }
+    # fi
 
     ## which(1) settings: extend it to make it work for macOS .app bundles
     
@@ -1932,7 +1932,7 @@ GIT_EDITOR="$MY_EDITOR"
 EDITOR="$MY_EDITOR"
 VISUAL="$MY_EDITOR"
 
-if [[ -x "$SUBL_PATH" ]]; then 
+if command-exists "subl"; then 
     PSQL_EDITOR="subl -w"
     HOMEBREW_EDITOR="subl -w"
 else
@@ -4802,6 +4802,6 @@ fi
 
 export MANPATH=":$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man:$HOME/share/man:/usr/share/man:/usr/local/share/man:/usr/local/man"
 
-source-if-exists ~/.site.bash.d/postamble.bash
+source-if-exists "$HOME/.site.bash.d/postamble.bash"
 
 set +o pipefail
