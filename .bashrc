@@ -65,6 +65,20 @@ function complain { # for multiline msgs (pass each line as a separate arg)
     done
 }
 
+function _stderr {
+    echo "$@" >&2
+}
+
+function carp {
+    local CALLER="${FUNCNAME[1]}"
+    _stderr "$CALLER: warning:" "$@"
+}
+
+function rem {
+    local CALLER="${FUNCNAME[1]}"
+    complain "$CALLER: info:" "$@"
+}
+
 function err {
     local CALLER="${FUNCNAME[1]}"
     echo "$CALLER: error:" "$@" >&2
@@ -1776,12 +1790,12 @@ function rds-ls-log-groups {
 function in-dev {
     # (AWS_DEV_ACCOUNT_NUMBER must be defined in preamble.bash)
     if ! [[ "$AWS_ACCESS_KEY_ID" && "$AWS_SECRET_ACCESS_KEY" && "$AWS_SESSION_TOKEN" ]]; then
-        carp "AWS_ACCOUNT is defined, but not the auth-related AWS_* env vars"
+        complain "AWS_ACCOUNT is defined, but not the auth-related AWS_* env vars"
         return 1
     else
         local ACCOUNT_NUMBER="$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
         if [[ "$ACCOUNT_NUMBER" != "$AWS_DEV_ACCOUNT_NUMBER" ]]; then
-            carp "You're logged into '$ACCOUNT_NUMBER', but the dev account is '$AWS_DEV_ACCOUNT_NUMBER'"
+            complain "You're logged into '$ACCOUNT_NUMBER', but the dev account is '$AWS_DEV_ACCOUNT_NUMBER'"
             return 1
         else
             return 0
@@ -1832,10 +1846,62 @@ function install-emacs-plus {
     check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 29' "$@" || return 1
     local VERSION_NUMBER="$1"
     
-    set -euo pipefail
-    brew install --formula --build-from-source "emacs-plus@${VERSION_NUMBER}" \
-                                                   --with-mailutils \
-                                                   --without-cocoa
+    (
+        set -euo pipefail
+        brew install --formula \
+                     --build-from-source \
+                     "emacs-plus@${VERSION_NUMBER}" \
+                     --with-mailutils \
+                     --without-cocoa
+    )
+}
+
+# Alas, emacs-plus's compile options are no longer adequate to my needs.
+# Build Emacs from the original source, but apply emacs-plus's favored
+# patches first.
+
+function install-emacs {
+    check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 30' "$@" || return 1
+    local VERSION_NUMBER="$1"
+    
+    local INSTALL_DIR="/opt/emacs/$VERSION_NUMBER"
+    local SOURCE_DIR="$HOME/src-3/emacs"
+    local PATCH_DIR="$HOMEBREW_ROOT/Library/Taps/d12frosted/homebrew-emacs-plus/patches/emacs-$VERSION"
+    
+    local DESIRED_PATCHES=""
+    
+    function dir-is-okay {
+        if [[ -d "$DIR" ]] && \
+           [[ -r "$DIR" ]] && \
+           [[ -w "$DIR" ]] && \
+           [[ -x "$DIR" ]] && \
+           [[ -z "$(command ls -A "$DIR")" ]]
+        then
+            return 0
+        else
+            err "cannot access directory '$DIR'"
+            return 2
+        fi
+    }
+    
+    brew install $(brew deps "emacs-plus@${VERSION_NUMBER}") || return    
+    
+    for DIRECTORY in "$INSTALL_DIR" "$SOURCE_DIR" "$PATCH_DIR"; do
+        dir-is-okay "$DIRECTORY" || return
+    done
+        
+    cd "$SOURCE_DIR" || return
+    command git checkout "emacs-${VERSION_NUMBER}" || return
+    
+    ./autogen.sh || return
+    ./configure \
+        --prefix "$INSTALL_DIR" \
+        ...
+        
+    for PATCH in $DESIRED_PATCHES; do
+        apply_patch "$PATCH" || return
+    done
+    
 }
 
 function emacs-package-clean {
@@ -1934,7 +2000,7 @@ VISUAL="$MY_EDITOR"
 
 if command-exists "subl"; then 
     PSQL_EDITOR="subl -w"
-    HOMEBREW_EDITOR="subl -w"
+    HOMEBREW_EDITOR="subl"
 else
     PSQL_EDITOR="$MY_EDITOR"
 fi
@@ -2585,7 +2651,7 @@ function git-backup {
             local REPO="${GIT_URL##*/}"
             git-backup-helper "$REPO"
         else
-            carp "couldn't determine which repo to operate on"
+            complain "couldn't determine which repo to operate on"
             return 2
         fi
     fi
@@ -2689,7 +2755,7 @@ function gb-jira {
     check-args 1 1 'TINY_SUMMARY' "$@" || return 1
     local SUMMARY="$1";
     if [[ -z "$GITHUB_USERNAME" ]]; then
-        carp "You must set the GITHUB_USERNAME env var" >&2
+        complain "You must set the GITHUB_USERNAME env var" >&2
         return 2
     fi
 
@@ -2723,7 +2789,7 @@ function gclone {
         [[ "$SSH_URL" ]] || return 2
         git clone "$URL"
     else
-        carp "Unrecognized URL format in '$URL'"
+        complain "Unrecognized URL format in '$URL'"
         return 3
     fi
 }
@@ -3061,7 +3127,7 @@ function action {
     if [[ "$LATEST_ACTION_ID" ]]; then
         gh run view --web "$LATEST_ACTION_ID" >/dev/null
     else
-        carp "no GitHub actions found (at least for this branch)"
+        complain "no GitHub actions found (at least for this branch)"
         return 2
     fi
 }
@@ -3405,7 +3471,7 @@ function snip {
     local SNIPPET_DIR="$HOME/sql-snippets"
 
     if [[ ! -d "$SNIPPET_DIR" ]]; then
-        carp "No such directory '$SNIPPET_DIR'"
+        complain "No such directory '$SNIPPET_DIR'"
         return 2
     elif [[ $# -eq 0 ]]; then
         echo "Available snippets:"
@@ -3415,7 +3481,7 @@ function snip {
         if [[ "$PGSERVICE" ]]; then
             qql "$SNIPPET_DIR"
         else
-            carp "You must set the PGSERVICE env var, so qql knows to run the snippet"
+            complain "You must set the PGSERVICE env var, so qql knows to run the snippet"
             return 3
         fi
     fi
