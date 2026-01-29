@@ -1,16 +1,16 @@
-;;;; UI settings: remove noise.
+;;;; Appearance
 
-(setopt inhibit-startup-screen 't)
+;; Remove chrome (menu bar/too lbar/scroll bar).
+;; Behold the inconsistency of Emacs conventions!
 
-(require 'tool-bar)
-(if (boundp 'menu-bar-mode)
-    (menu-bar-mode -1))
-(if (boundp 'tool-bar-mode)
-    (tool-bar-mode -1))
-(if (boundp 'scroll-bar-mode)
-    (scroll-bar-mode -1))
+(setopt inhibit-startup-screen t)
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(use-package scroll-bar
+             :ensure nil
+             :config (scroll-bar-mode -1))
 
-;;;; UI settings: Don't beep; flash the screen (visual bell) instead.
+;; Don't beep; flash the screen (visual bell) instead.
 
 (setq ring-bell-function
       (lambda ()
@@ -20,42 +20,37 @@
                                (lambda (fg)
                                  (set-face-foreground 'mode-line fg))
                                orig-fg))))
-
-;;;; UI settings: GUI Emacs versus terminal Emacs
-
-(defun initialize-ui ()
-  (interactive)
-  (cond
-    ((display-graphic-p)
-     (set-face-font 'default "Menlo-17")
-     (blink-cursor-mode -1))
-
-     ('t
-      (xterm-mouse-mode 1)
-      (global-set-key [mouse-4]
-                      (lambda () (interactive) (scroll-down 1)))
-      (global-set-key [mouse-5]
-                      (lambda () (interactive) (scroll-up 1)))
-      (defun track-mouse (e))
-      (setopt mouse-sel-mode 't))))
-
-;; Apply those UI settings to the currently visible window.
-
-(initialize-ui)
-
-;;;; Typesetting settings: disable bold type passim.
+                               
+;; Disable bold text (just use regular weight). This applies in both
+;; GUI Emacs and TTY Emacs.
 
 (mapc
  (lambda (face)
    (set-face-attribute face nil :weight 'normal))
  (face-list))
+
+;;;; GUI settings. If you're running in a terminal emulator, these are no-ops.
+
+(set-face-font 'default "Menlo-17")
+(blink-cursor-mode -1)
+
+;;;; TTY settings. If you're running GUI Emacs, these are no-ops.
+
+;; Enable special mouse buttons if your terminal emulator supports them.
+;; These apply to TTY Emacs, and cause Emacs to interpret certain magic
+;; escape sequences if your terminal emulator sends them. This doesn't
+;; apply to GUI Emacs, which has its own builtin mouse-handling.
+
+(xterm-mouse-mode +1)
+(global-set-key [mouse-4]
+                (lambda () (interactive) (scroll-down 1)))
+(global-set-key [mouse-5]
+                (lambda () (interactive) (scroll-up 1)))
+
+;; Maybe junk DNA that modern Emacs ignores?
+(defun track-mouse (e))
+(setopt mouse-sel-mode 't)
       
-;; (For GUI Emacs): apply those UI settings to *every* new window,
-;; not just the initial window.
-
-(add-hook 'after-make-frame-functions (lambda (frame)
-                                        (initialize-ui)))
-
 ;;;; Color theme settings
 
 (defvar qdw-themes '("amber" "amber-without-bold" "mariana" "tritium"))
@@ -73,6 +68,11 @@
 
 (load-theme (intern my-chosen-theme) 't)
 (set-cursor-color "DarkOrange1")
+
+;;;; Window manipulation settings.
+  ;; Note that, in Emacs, the term "window" means what is called in modern
+  ;; parlance a pane or viewport. This is because Emacs was written before
+  ;; GUIs existed.
 
 (defun split-window-into-thirds ()
   "Split the current frame into three equal-width vertical windows."
@@ -115,11 +115,13 @@
              (setq i (1+ i))))))
              
   (other-window -1))
+  
+;;;;;;;; Behavior
  
-;;;; Text-entry settings: overwrite the region (selection) when I type,
-;;;; in keeping with modern UI conventions.
+;;;; Text-entry settings: overwrite or delete the "region" (selected text)
+;;;; when I type, in keeping with modern UI conventions.
 
-(delete-selection-mode 1)
+(delete-selection-mode +1)
 
 ;;;; Dependency settings
 
@@ -130,12 +132,7 @@
           ("nongnu" . "https://elpa.nongnu.org/nongnu/")
           ("melpa"  . "https://melpa.org/packages/")))
 
-;; I'm running emacs as a daemon,
-;; so just require all these modules at once;
-;; don't get clever with lazy-loading.
-
 (add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
-
 
 (require 'ansi-color)
 (require 'cc-mode)
@@ -144,20 +141,32 @@
 (require 'compile)
 (require 'dirtrack)
 (require 'ellama)
-
 (require 'imenu)
+
+(use-package cperl-mode
+  :mode ("\\.pl\\'" . cperl-mode)
+  :interpreter ("perl" . cperl-mode)
+  :custom (cperl-indent-level 4))
+
 (require 'json)
 (require 'markdown-mode)
 (require 'menu-bar)
 (require 'mouse)
 (require 'org)
+
+;; (use-package paredit
+;;   :hook ((lisp-mode . paredit-mode)
+;;          (emacs-lisp-mode . paredit-mode)))
+
+
+
 ;; (require 'org-superagenda)
 ;; (require 'recentf)
 (require 'ruby-mode)
-(require 'scroll-bar)
 (require 'sh-script)
 
-(require 'tool-bar)
+(use-package tree-sitter-langs)
+
 (require 'whitespace)
 
 (setopt vc-follow-symlinks 't)
@@ -186,7 +195,7 @@
  elisp-indent-level 2
  json-encoding-default-indentation "  "
  org-indent-indentation-per-level 4)
- 
+
 (setopt
  ;; Consider filenames case-sensitive (needed on macOS)
  read-file-name-completion-ignore-case nil 
@@ -206,7 +215,7 @@
 
  ;; Indentation: use spaces, not tabs.
  indent-tabs-mode nil
- 
+
  ;; The first day of the week is Monday.
  calendar-week-start-day 1
  
@@ -298,12 +307,54 @@
 ;;   (magit-commit)
 ;;   (magit-push))
 
-;;;; General coding settings
+;;;; General hacking settings
 
 (electric-indent-mode +1)
-(setopt imenu-list-auto-resize 't)
+(use-package treesit-auto
+  :ensure t
+  :config
+  (treesit-auto-add-to-auto-mode-alist)
+    (global-treesit-auto-mode))
 
-;;;; Emacs Lisp settings
+;;;; C hacking settings
+
+(c-add-style
+ "qdw"
+ '("stroustrup"
+   (c-offsets-alist
+    ;; Indent case statements 1 level beyond the enclosing 'switch() {' line
+    (case-label . +)
+    (statement-case-intro . +)
+    (statement-case-open . 0)
+
+    ;; When breaking stuff onto multiple lines, always indent 1 level
+    (arglist-cont . +)
+    (arglist-cont-nonempty . +)
+    (arglist-intro . +)
+    
+    (statement-cont . +)
+    (topmost-intro-cont . +)
+    (arglist-cont . +)
+    (arglist-cont-nonempty . +)
+    (statement-cont . +)
+    (topmost-intro-cont . +)
+    (brace-list-entry . +)
+    (brace-list-intro . +)
+    (brace-entry-open . +))
+
+    ;; Keep the opening brace of a function body
+    ;; on the same line as the function signature:
+    ;; 
+    ;; int foo(int arg1) {
+    (c-hanging-braces-alist
+     (defun-open . (nil . t)))))   ;; no newline before {, newline after
+
+(setopt c-default-style "qdw")
+
+;;;; Emacs Lisp hacking settings
+
+(setq major-mode-remap-alist '((elisp-mode . elisp-ts-mode)
+                               (lisp-data-mode . lisp-data-ts-mode)))
 
 (defun lfi ()
   (interactive)
@@ -1023,22 +1074,19 @@ This command does the reverse of `fill-region'."
 (add-to-list 'org-file-apps '("\\.crd\\'" . emacs))
 
 (setopt
-  org-agenda-restore-windows-after-quit 't
-  org-agenda-files (list (expand-file-name "~/main.org")
-                         (expand-file-name "~/personal.org"))
   org-archive "::"
   org-catch-invisible-edits "show"
   org-cycle-separator-lines 1
-  org-emphasis-alist '(("*" bold)
-                       ("/" italic)
-                       ("_" underline)
-                       ("=" org-verbatim verbatim)
-                       ("`" org-code verbatim)
-                       ("~" (:strike-through t)))
-  ;; org-insert-heading '((heading . auto) (plain-list-item . auto))
-  org-return-follows-link 't 
-  org-startup-folded 't
+  org-return-follows-link 't
   )
+  
+;; (setopt org-emphasis-alist
+;;         '(("*" bold)
+;;           ("/" italic)
+;;           ("_" underline)
+;;           ("=" org-verbatim verbatim)
+;;           ("`" org-code verbatim)
+;;           ("~" (:strike-through t)))
 
 (defun org-linkify-buffer-qdw ()
   "Make each line in the buffer into an org-mode style link
@@ -1264,9 +1312,11 @@ which is its intended use."
      fish-mode flymake flymake-hlint fretboard go-mode haskell-mode
      imenu-list jenkinsfile-mode json-mode julia-mode llm magit
      markdown-mode nushell-mode org-alert org-caldav org-super-agenda
-     osx-trash paredit pcre2el slime slime-repl-ansi-color
-     terraform-mode tidal tide typescript-mode vimrc-mode wgrep
-     yaml-mode yaml-pro yaml-tomato)))
+     osx-trash paredit pcre2el slime slime-repl-ansi-color smartparens
+     terraform-mode tidal tide tree-sitter-langs treesit-auto
+     typescript-mode vimrc-mode wgrep yaml-mode yaml-pro yaml-tomato))
+ '(safe-local-variable-values
+   '((eval c-toggle-auto-newline 1) (hide-semicolons-mode-qdw . t))))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
