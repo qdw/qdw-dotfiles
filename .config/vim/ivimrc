@@ -1,0 +1,56 @@
+source ~/ivim/common.vim
+
+"""" Settings to adapt to the iPhone's tiny screen
+
+set background=dark
+set cmdwinheight=3
+set guifont=Menlo:h17
+set linebreak
+"" ?? set list listchars=tab:\ \ ,trail:·
+
+" , break at these characters. This only affects the way
+" the file is displayed, not its contents. `^I` is a tab character.
+set breakat=\ ^I!@*_-+;:,./?
+
+" Disallow external commands, since they won't work on iPhone.
+set secure
+
+"""" Keybindings
+
+" Bump font size up or down
+
+nnoremap <leader>. :ifont -<cr>
+nnoremap <leader>; :ifont +<cr>
+
+" Shortcuts for pasting from the iOS clipboard
+
+nnoremap <leader>p "*p
+nnoremap <leader>P "*P
+
+" More shortcuts
+
+nnoremap <leader>f <C-f>
+nnoremap <leader>b <C-b>
+nnoremap <leader>sv :source ~/.vimrc
+
+"""" Third-party plugins
+
+source ~/ivim/pathogen/autoload/pathogen.vim
+execute pathogen#infect('~/ivim/{}')
+
+" Plugin 'vim-stay': keep open files, cursor positions across vim sessions
+set sessionoptions-=cursor,folds,slash,unix
+
+" Plugin 'CtrlP': search in buffers
+let g:ctrlp_working_path_mode = 'ra'
+map <leader>f :CtrlP<cr>
+map <leader>F :CtrlPCurFile<cr>
+map <leader>b :CtrlPBuffer<cr>
+map <leader>m :CtrlPBookmark<cr>
+
+"""" Third-party colorschemes
+
+set background=dark
+colorscheme scheakur
+
+" vim: fdm=marker

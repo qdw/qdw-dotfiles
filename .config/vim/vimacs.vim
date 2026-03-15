@@ -1,4 +1,4 @@
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " emacsish vim plugin: bring core Emacs keybindings to vim, 
 " and make (most of) them work regardless of mode.
 "
@@ -19,8 +19,10 @@
 "   the emacs definition of a word.
 "
 " - FIXME: this is tested in gvim only (specifically, in Macvim).
-"   It may not handle terminal escapes properly.
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+"   It has not been tested in terminal vim, and it may not handle
+"   terminal escapes properly.
+" 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""":
 
 """" Avoid double‑loading this plugin.
 
@@ -28,6 +30,14 @@ if exists("g:loaded_emacsish")
   finish
 endif
 let g:loaded_emacsish = 1
+
+"""" Backspace
+
+" - Use a single backspace keypress to delete one level of indentation.
+" - Allow backspacing all the way up into the preceding line.
+" - Don't stop backspacing at to the char where you entered insert mode.
+
+set backspace=indent,eol,nostop
 
 """" Tab key: indent the line we're on, regardless of the column we're on.
 
@@ -40,10 +50,98 @@ augroup EmacsishTabs
   autocmd BufWinEnter,InsertLeave * match ExtraTab /\t/
 augroup END
 
-"""" Emacs keybindings for moving the cursor
+"""" Appearance: cursor
 
+" Non-blinking block cursor in all modes. Don't auto-hide.
+" Each buffer has its own, independent cursor movement.
+
+set guicursor=a:block-blinkon0
+set concealcursor= conceallevel=0
+set nocursorbind
+
+
+"""" Appearance: window and minibuffer
+
+" Don't fill my screen with tildes after EOF. Use spaces instead.
+
+set fillchars+=eob:\
+
+" Don't hide the ends of lines that are longer than the window is wide.
+" Show a backslash at the window edge, followed by the rest of the line.
+" Same thing in the minibuffer.
+
+set wrap nobreakindent showbreak=\
+set fillchars+=trunc:\\
+
+" If you're typing a long command, you can open a separate window
+" for it. The cedit keybinding triggers this action.
+
+set cedit=<M-e>
+
+" Fix a quirk where Neovim doesn't size the minibuffer properly.
+
+set cmdheight=1
+
+"""" Parentheses
+
+" When I type bracket-type chars (for instance, ')'), highlight the
+" opening/closing char that matches. But unhighlight it when I type
+" the next char.
+
+set showmatch
+call s:SetCpoptionsFlag('m', v:false)
+
+"""" Current working directory
+
+" Don't auto-change the cwd depending on the file I'm editing.
+
+set noautochdir
+if exists('+autoshelldir')
+	set noautoshelldir
+endif
+
+" But make explicit :cd behave like shell cd.
+
+set cdhome
+set cdpath=,,
+
+"""" Completion: off by default
+
+set nocomplete
+
+"""" Encoding
+
+" Assume (and write) UTF-8 everywhere. Display glyphs with a width of one
+" character wherever allowed. Don't write a Windows-style BOM.
+
+set encoding=utf-8
+set fileencoding=utf-8
+set ambiwidth=single
+set nobomb
+
+" In UTF-8 files, use vim's own idea of uppercase/lowercase,
+" not the system locale's idea. Also, don't special-case Turkish ASCII.
+
+set casemap=internal,keepascii
+
+"""" Killing and yanking: system clipboard
+
+" By default, copy/paste to/from the system clipboard.
+" You can override this by specifying a different vim "register" to use.
+
+set clipboard=unnamed
+
+"""" Cursor: Emacs-esque keybindings for moving the cursor.
+"""" NB: these use vim behavior regarding the nuances of whitespace-
+"""" handling and word boundaries.
+
+" Use shift + arrows chords (not C-n and C-p) to move
+" among quickfix suggestions.
+nnoremap <S-Left> :cprev<CR>
+nnoremap <S-Right> :cnext<CR>
 nnoremap <C-n> j
 nnoremap <C-p> k
+
 nnoremap <C-f> l
 nnoremap <C-b> h
 nnoremap <C-a> ^
@@ -107,12 +205,13 @@ vnoremap <C-@> <Esc>
 
 "" isearch-esque behavior
 
-set incsearch
+set incsearch ignorecase smartcase
 set hlsearch
 set wrapscan
 set shortmess-=s
+set cpoption-=o
 
-"" isearch keybidings
+"" isearch keybindings
 
 nnoremap <C-s> /
 nnoremap <C-r> ?
@@ -127,14 +226,26 @@ cnoremap <C-w> <C-r><C-w>
 "" Reproduce something akin to Emacs query-replace
 
 " query-replace behavior
+
 nnoremap <M-%> :%s///gc<Left><Left><Left>
 vnoremap <M-%> :s///gc<Left><Left><Left>
 
 " query-replace-regexp
+
 nnoremap <C-M-%> :%s///gc<Left><Left><Left>
 vnoremap <C-M-%> :s///gc<Left><Left><Left>
 
-"""" Emacs keybindings for manipulating split windows
+"""" Buffers and windows
+
+set hidden
+
+" Make vertical splits go to the right of the current window.
+
+set splitright
+
+" Make horizontal splits go below the current window.
+
+set splitbelow
 
 nnoremap <C-x>0 :close<CR>
 nnoremap <C-x>1 :only<CR>
@@ -283,3 +394,7 @@ vnoremap <C-x>rc :call EmacsishClearRectangle()<CR>
 function! EmacsishClearRectangle()
   execute "'<,'>normal! r "
 endfunction
+
+" Miscellaneous behavior
+
+set cpoptions=aAbBcCdDeEfFiIolmnPqstuWXyZ*

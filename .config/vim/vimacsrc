@@ -1,0 +1,2 @@
+source ~/.config/vim/common.vim
+source ~/.config/vim/vimacs.vim
