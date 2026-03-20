@@ -1,3 +1,5 @@
+;;; -*- lexical-binding: t -*-
+
 (setq
  qdw-black  "#141414"  ;;      Grey15
  ;; black  "#000000"
@@ -38,10 +40,4 @@
   (message "qdw-bright-cyan: \"%s\"" qdw-bright-cyan)
   (message "qdw-bright-magenta: \"%s\"" magenta)
   (message "qdw-bright-white: \"%s\"" qdw-bright-white)
-  (message "qdw-ansi-bright-red: \"%s\"" qdw-ansi-bright-red))
-
-
- (defun 0x (color-name)
-   (letrec ((rgb (color-name-to-rgb color-name))
-            (hex (color-rgb-to-hex rgb)))
-     (message "equivalent exchange: \"%s\"" color-name)))
+  (message "extended-bright-red: \"%s\"" extended-bright-red))

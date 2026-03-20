@@ -370,6 +370,17 @@ extended-bright-white "#a6acb9"))
    `(flymake-warnline
      ((t (:underline ,bright-magenta))))
 
+   ;;;; imenu
+
+   `(imenu-list-entry-face-0
+     ((t (:inherit font-lock-variable-name-face))))
+
+   `(imenu-list-entry-subalist-face-0
+     ((t (:inherit font-lock-keyword-face))))
+
+   `(imenu-list-entry-face-1
+     ((t (:inherit font-lock-function-name-face))))
+
    ;;;; eshell
 
    `(eshell-ls-clutter
@@ -833,6 +844,10 @@ extended-bright-white "#a6acb9"))
       ((t :inherit font-lock-comment-delimiter-face)))
 
     ;;;; whitespace
+
+    `(makefile-space
+      ((t (:background ,extended-bright-red :foreground ,black))))
+    
     `(whitespace-big-indent
       ((t (:background ,bright-green :foreground ,black))))
       ;; ((t (:inherit forbidden-whitespace))))
