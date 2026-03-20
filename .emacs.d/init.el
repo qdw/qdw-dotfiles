@@ -1,3 +1,24 @@
+;;;; Inhibit superfluous messsages.
+
+(setq inhibit-startup-echo-area-message "quinn")
+(setq ad-redefinition-action 'accept)
+(setq use-package-always-demand 't)
+
+(remove-hook 'find-file-hook 'vc-refresh-state) ;; we'll use Magit instead.
+(remove-hook 'find-file-hook 'epa-file-find-file-hook)
+(remove-hook 'find-file-hook 'url-handlers-set-buffer-mode)
+
+(let ((inhibit-messsage t))
+
+;; (use-package sh-script
+;; :config
+(require 'sh-script)  
+(advice-add 'sh-set-shell
+            :around
+            (lambda (orig &rest args)
+              (let ((inhibit-message 't))
+                (apply orig args))))
+
 ;;;; Appearance
 
 ;; Remove chrome (menu bar/too lbar/scroll bar).
@@ -163,18 +184,14 @@
 ;; (require 'org-superagenda)
 ;; (require 'recentf)
 (require 'ruby-mode)
-(require 'sh-script)
-
-(use-package tree-sitter-langs)
-
 (require 'whitespace)
 
-(setopt vc-follow-symlinks 't)
 (setopt load-prefer-newer 't)
 
 ;;;; Global upgrades/superpowers
 
-(pcre-mode +1)
+(let ((ad-redefinition-action 'accept))
+  (pcre-mode +1))
 
 ;;;; Basic comfort
 
@@ -253,12 +270,12 @@
 
 ;;;; Settings for viewing binary files
 
-(defun use-hexl-mode-if-binary ()
-  "If the current buffer is a binary file, switch to `hexl-mode'."
-    (when (string-match-p "\0" (buffer-string))
-        (hexl-mode)))
-       
-(add-hook 'find-file-hook #'use-hexl-mode-if-binary)
+;; (defun use-hexl-mode-if-binary ()
+;;   "If the current buffer is a binary file, switch to `hexl-mode'."
+;;     (when (string-match-p "\0" (buffer-string))
+;;         (hexl-mode)))
+;;        
+;; (add-hook 'find-file-hook #'use-hexl-mode-if-binary)
 
 ;;;; Git/Magit settings. Re-enable now that that bug is fixed!
 
@@ -310,11 +327,10 @@
 ;;;; General hacking settings
 
 (electric-indent-mode +1)
-(use-package treesit-auto
-  :ensure t
-  :config
-  (treesit-auto-add-to-auto-mode-alist)
-    (global-treesit-auto-mode))
+
+;;;; Hack: tree-sitter
+
+
 
 ;;;; C hacking settings
 
@@ -362,9 +378,10 @@
 
 (defun load-file-if-exists-qdw (file-name)
   "Load FILE-NAME if it exists, and do nothing otherwise."
-  (condition-case
-      nil (load-file (expand-file-name file-name user-emacs-directory))
-      (error nil)))
+  (let ((inhibit-message t))
+    (condition-case nil
+        (load (expand-file-name file-name user-emacs-directory) 't 't)
+      (error nil))))
       
 (defmacro setqu (&rest args)
   "Set multiple variables globally, overriding them if they are
@@ -668,7 +685,7 @@ but it calls defvar under the hood."
   "Load a file that defines the 16 4-bit ANSI colors;
   then load tritium, my custom 16-color theme"
   (interactive)
-  (load-file
+  (load
    (read-file-name "Color definition file: "
                    (expand-file-name "~/.emacs.d/qdw-themes/")))
   (tritium-reload))
@@ -711,19 +728,6 @@ but it calls defvar under the hood."
     (when other-theme
       (setopt custom-enabled-themes (list other-theme)))))
 
-(defun load-theme-wrapper-qdw (orig-fun theme &optional no-confirm no-enable)
-  ;; Disable all currently enabled themes
-  (mapc 'disable-theme custom-enabled-themes)
-  
-  (prog1
-    ;; Call the original load-theme
-    (funcall orig-fun theme no-confirm no-enable)
-    
-    ;; Always use my custom org colors, regardless of theme
-    (overlay-org-colors-qdw)))
-
-(advice-add 'load-theme :around 'load-theme-wrapper-qdw)
-
 ;;;; Other themes that I like okay:
 
 ;;; Light mode:
@@ -734,20 +738,20 @@ but it calls defvar under the hood."
 
 ;; (load-theme 'modus-vivendi)  ;; max-contrast dark theme
 
-;;;; dired settings
+;;;; dired
 
-(defun dired-find-file-qdw ()
-  "In Dired, visit the file or directory on the cursor.
-If the file is a directory, use `dired-find-alternate-file'
-to avoid creating many buffers. If the file is a regular file,
-use `dired-find-file' to open it in a new buffer."
-  (interactive)
-  (let ((is-dir (file-directory-p (dired-get-file-for-visit))))
-    (if is-dir
-      (dired-find-alternate-file)
-      (dired-find-file))))
+;; (defun dired-find-file-qdw ()
+;;   "In Dired, visit the file or directory on the cursor.
+;; If the file is a directory, use `dired-find-alternate-file'
+;; to avoid creating many buffers. If the file is a regular file,
+;; use `dired-find-file' to open it in a new buffer."
+;;   (interactive)
+;;   (let ((is-dir (file-directory-p (dired-get-file-for-visit))))
+;;     (if is-dir
+;;       (dired-find-alternate-file)
+;;       (dired-find-file))))
 
-;;;; Buffer list settings
+;;;; Buffer list
 
 (setopt ibuffer-formats
         '((mark modified read-only " "
@@ -759,21 +763,21 @@ use `dired-find-file' to open it in a new buffer."
                 " "
                 filename-and-process)))
 
-;;;; Alternative-editor settings
+;;;; Alternative editors
 
-;; If a file is open in Emacs and another editor saves the file,
-;; update the one in Emacs. Also do this for dired.
+;; ;; If a file is open in Emacs and another editor saves the file,
+;; ;; update the one in Emacs. Also do this for dired.
 
-(setopt auto-revert-verbose nil)
-(when (not global-auto-revert-mode)
-      (global-auto-revert-mode 't))
+;; (setopt auto-revert-verbose nil)
+;; (when (not global-auto-revert-mode)
+;;       (global-auto-revert-mode 't))
 
-(defun alt-editor (program &rest program-args)
-  (interactive)
-  (letrec ((progname (file-name-nondirectory program))
-           (procname (concat "emacs-" progname)))
-    ;; (message (mapconcat 'identity
-    (apply 'start-process procname nil program program-args)))
+;; (defun alt-editor (program &rest program-args)
+;;   (interactive)
+;;   (letrec ((progname (file-name-nondirectory program))
+;;            (procname (concat "emacs-" progname)))
+;;     ;; (message (mapconcat 'identity
+;;     (apply 'start-process procname nil program program-args)))
 
 (defun gvim ()
   (interactive)
@@ -785,7 +789,7 @@ use `dired-find-file' to open it in a new buffer."
     (buffer-file-name)))
     
 (defalias 'mvim 'gvim)
-        
+
 (defun file-line-column-colon-separated ()
   (interactive)
   (format "%s:%d:%d"
@@ -819,7 +823,7 @@ use `dired-find-file' to open it in a new buffer."
 ;;       (alt-editor command
 ;;        editor-file-name ))))
 
-;;;; Quality-of-life settings
+;;;; Quality-of-life
 
 (defun goto-column (num)
   "Move to column N (1-based) of the current line"
@@ -830,39 +834,32 @@ use `dired-find-file' to open it in a new buffer."
                ('t          (1- num)))))
     (move-to-column one-based-column-number)))
 
-
-(defun find-file-at-point-with-line-and-column-if-present ()
-  "Open the file at point and navigate to the specified line and column, if provided."
+(defun open-thing-at-point ()
+  "Open the file or URL at point, with line and column if applicable."
   (interactive)
-  (letrec ((thing (string-trim (thing-at-point 'line 't)))
-           (parts (split-string thing ":"))
-           (file-name (or (nth 0 parts)
-                          parts))                          
-           (lin (if (and (nth 1 parts)
-                         (string-match-p "^[0-9]+$" (nth 1 parts)))
-                    (string-to-number (nth 1 parts))
-                  1))
-           (col (if (and (nth 2 parts)
-                         (string-match-p "^[0-9]+$" (nth 2 parts)))
-                    (string-to-number (nth 2 parts))
-                  1)))
-    (find-file file-name)
-    (message (format "goto line %s" lin))
-    (goto-line lin)
-    (message (format "goto column %s" col))
-    (goto-column col)))
+  (cond
+    ((thing-at-point 'url)
+     (call-process "/usr/bin/open" nil 0 nil (thing-at-point 'url 't)))
 
-(defalias 'dwim 'find-file-at-point-with-line-and-column-if-present)
+    ((thing-at-point 'filename)
+     (let* ((parts (split-string (thing-at-point 'filename 't) ":"))
+            (file-name (or (nth 0 parts) parts))
+            (lineno (if (and (nth 1 parts) (string-match-p "^[0-9]+$" (nth 1 parts)))
+                        (string-to-number (nth 1 parts))
+                        1))
+            (col (if (and (nth 2 parts) (string-match-p "^[0-9]+$" (nth 2 parts)))
+                     (string-to-number (nth 2 parts))
+                     1)))
+       (find-file file-name)
+       (goto-line lineno)
+       (goto-column col)))
+
+    ('t
+     (message "Don't know how to handle thing at point"))))
+
+(defalias #'dwim #'open-thing-at-point)
 
 ;;;; Settings specific to GUI Emacs
-
-;; Open PNGs in the Preview app, not in Emacs
-
-(when (string= system-type "darwin")
-  ;; Open PNGs with the system PNG viewer, not in Emacs
-  ;; (org-mode only).
-  (add-to-list 'org-file-apps
-               (cons "png" "open %s"))
 
   ;; When I delete files in dired, send them to the macOS Trash
 
@@ -880,18 +877,20 @@ use `dired-find-file' to open it in a new buffer."
   ;;                  "*Trash Error Buffer*"))
 
   ;; macOS's bundled BSD ls doesn't play well with Emacs,
-  ;; so use Homebrewed GNU ls instead
+;; so use Homebrewed GNU ls instead
+
+;;;; dired
   
-  (dolist (gnu-ls '("/opt/homebrew/bin/gls" "/usr/local/bin/gls"))
-    (when (file-exists-p gnu-ls)
-      (setopt insert-directory-program
-              gnu-ls
+;; (dolist (gnu-ls '("/opt/homebrew/bin/gls" "/usr/local/bin/gls"))
+;;   (when (file-exists-p gnu-ls)
+;;     (setopt insert-directory-program
+;;             gnu-ls
             
-              dired-use-ls-dired
-              t
+;;             dired-use-ls-dired
+;;             t
             
-              dired-listing-switches
-              "-aBhl --group-directories-first"))))
+;;             dired-listing-switches
+;;             "-aBhl --group-directories-first")))
 
 ;;;; Human-language settings (including English)
 
@@ -926,23 +925,35 @@ This command does the reverse of `fill-region'."
  ns-right-alternate-modifier 'meta
  recenter-positions '(top middle bottom))
 
-;;;; eBook/e-reader settings
+;;;; Reading ePub ebooks
 
-(add-to-list
- 'auto-mode-alist
- '("\\.epub\\'" .
-   (lambda ()
-     (add-to-list 'load-path (expand-file-name "~/src-3/nov.el") nil)
-     (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
-     (nov-mode))))
-     
+;; (add-to-list
+;;  'auto-mode-alist
+;;  '("\\.epub\\'" .
+;;    (lambda ()
+;;      (add-to-list 'load-path (expand-file-name "~/src-3/nov.el") nil)
+;;      (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
+;;      (nov-mode))))
 
-;;;; Settings for writing shell scripts
+;;;; Reading RSS and Atom feeds
+
+;; (use-package elfeed
+;;   :)
+
+;;;; Hack Bash/Bourne shell
 
 ;; Automatically make files executable if they start with a shebang
 
 (add-hook 'after-save-hook
           'executable-make-buffer-file-executable-if-script-p)
+
+;; (use-package sh-script
+;;   :config
+;;   (advice-add 'sh-set-shell
+;;               :around
+;;               (lambda (orig &rest args)
+;;                 (let ((inhibit-message 't))
+;;                   (apply orig args)))))
 
 ;; Don't auto-insert '<< EOF'-style heredocs when I type '<<',
 ;; since I have my own preferred way of writing heredocs.
@@ -974,7 +985,21 @@ This command does the reverse of `fill-region'."
      
      (shell-command
       (concat "source ~/.bashrc && INSIDE_EMACS=1 " command-string))))
-      
+
+(defun shell-command-to-string-qdw (command)
+  (interactive "M")
+  (string-trim-right
+    (shell-command-to-string (concat "source ~/.bashrc && INSIDE_EMACS=1 "
+                                     command)
+                             "*qdw-stdout*"
+                             "*qdw-stderr")))
+
+(defun noninteractive-shell-command-qdw (command)
+  (shell-command
+    (concat "source ~/.bashrc && INSIDE_EMACS=1 " command)
+    "*qdw-stdout*"
+    "*qdw-stderr*"))
+
 ;;;; Settings for running interactive shells inside Emacs (via `M-x shell`)
 
 (setq-default shell-prompt-regexp "[~][/].*[$][ ]")
@@ -1014,14 +1039,14 @@ This command does the reverse of `fill-region'."
     (apply 'start-process
            procname nil "/usr/bin/osascript" "-e" applescript-args)))
 
-;;;; Time-related settings
+;;;; Time and date
 
 (defun ts()
   "Insert today's date in YYYY-MM-DD format."
   (interactive)
   (insert (shell-command-to-string "date +%Y-%m-%d")))
 
-;;;; Search settings
+;;;; Search
 
 (defun prefix (string)
   (interactive "MPrefix: ")
@@ -1029,13 +1054,13 @@ This command does the reverse of `fill-region'."
 
 (defalias 'pos 'goto-char)
 
-(defun rg-in-current-directory-qdw (regexp)
-  (interactive "srg ")
-  (let ((current-dir (if (derived-mode-p 'dired-mode)
-                         dired-directory
-                         (file-name-directory (buffer-file-name)))))
-    (message regexp)
-    (fd-grep-dired current-dir regexp)))
+;; (defun rg-in-current-directory-qdw (regexp)
+;;   (interactive "srg ")
+;;   (let ((current-dir (if (derived-mode-p 'dired-mode)
+;;                          dired-directory
+;;                          (file-name-directory (buffer-file-name)))))
+;;     (message regexp)
+;;     (fd-grep-dired current-dir regexp)))
 
 (defun grep-buffer-qdw (regexp)
   (interactive "sSearch this buffer for regexp: ")
@@ -1060,34 +1085,32 @@ This command does the reverse of `fill-region'."
                  't)))
     (set-face-attribute 'underline nil :underline original-underline-face)))
     
-;;;; Makefile settings
+;;;; Hack Makefiles
 
 (add-hook 'makefile-mode-hook
           (lambda ()
             (setq indent-tabs-mode 't)))
 
-;;;; org-mode settings
+;;;; Hack org-mode documents
 
-;; Open ASCII guitar tabs in a (fundamental-mode) buffer;
-;; don't use macOS open(1) on them.
-
-(add-to-list 'org-file-apps '("\\.crd\\'" . emacs))
-
-(setopt
-  org-archive "::"
-  org-catch-invisible-edits "show"
-  org-cycle-separator-lines 1
-  org-return-follows-link 't
-  )
-  
-;; (setopt org-emphasis-alist
-;;         '(("*" bold)
-;;           ("/" italic)
-;;           ("_" underline)
-;;           ("=" org-verbatim verbatim)
-;;           ("`" org-code verbatim)
-;;           ("~" (:strike-through t)))
-
+(use-package org
+    :config
+    (when (string= system-type "darwin")
+      (add-to-list 'org-file-apps
+		   (cons "png" "/usr/bin/open %s")))
+    (add-to-list 'org-file-apps '("\\.crd\\'" . emacs)) ;; guitar tabs
+    (setopt
+     org-archive "::"
+     org-catch-invisible-edits "show"
+     org-cycle-separator-lines 1
+     org-return-follows-link 't))
+  ;; (setopt org-emphasis-alist
+  ;;         '(("*" bold)
+  ;;           ("/" italic)
+  ;;           ("_" underline)
+  ;;           ("=" org-verbatim verbatim)
+  ;;           ("`" org-code verbatim)
+  ;;           ("~" (:strike-through t)))
 (defun org-linkify-buffer-qdw ()
   "Make each line in the buffer into an org-mode style link
 by enclosing it in [[double square brackets]]. This works
@@ -1098,38 +1121,49 @@ which is its intended use."
   (replace-regexp "^" "[[")
   (goto-char (point-min))
   (replace-regexp "$" "]]"))
-  
-;; Settings for org-babel
-;; (org's system for displaying code/command results inline)
-
 (setopt org-confirm-babel-evaluate nil
         org-babel-load-languages
         '((emacs-lisp . t)
           (python . t)
           (shell . t)))
-
-;; org-mode: Jira-related settings
-
 (defun org-insert-jira-link-qdw ()
   (interactive)
-  (letrec (
-           (pre-filled-text (if (boundp 'jira-default-project-qdw)
+  (letrec ((pre-filled-text (if (boundp 'jira-default-project-qdw)
                                 (concat jira-default-project-qdw "-")
-                                ""))
-           (pre-filled-text "")                                
+                              ""))
            (issue-name (read-string
-                         "Issue name (e.g. MYPROJ-0000): "
-                         pre-filled-text
-                         nil
-                         nil
-                         nil)))
+                        "Issue name (e.g. MYPROJ-0000): "
+                        pre-filled-text
+                        nil
+                        nil
+                        nil)))
     (message (format "jira-default-project-qdw: %s\npre-filled-text: %s"
-                     jira-default-project-qdw
-                     pre-filled-text))
+		     jira-default-project-qdw
+		     pre-filled-text))
 
     (org-insert-link nil
-                     (concat jira-base-url "/browse/" issue-name)
-                     issue-name)))
+		     (concat jira-base-url "/browse/" issue-name)
+		     issue-name)))
+
+(defun org-link-word-at-point-qdw ()
+  "Wrap word at point in an org link, prompting for URL with org completion."
+  (interactive)
+  (let* ((bounds (bounds-of-thing-at-point 'word))
+         (word (buffer-substring-no-properties (car bounds) (cdr bounds)))
+         (start (copy-marker (car bounds)))
+         (end (copy-marker (cdr bounds)))
+         (offset (- (point) (car bounds))))
+    (goto-char end)
+    (condition-case nil
+        (progn
+          (org-insert-link nil nil word)
+          (delete-region start end)
+          ;; Link is now at start: [[url][word]]
+          ;; Jump to description part and apply original offset
+          (goto-char start)
+          (when (looking-at "\\[\\[[^]]*\\]\\[")
+            (goto-char (+ (match-end 0) offset))))
+      (quit (goto-char (+ (marker-position start) offset))))))
 
 (defun org-fold-qdw ()
   "In org-mode, set the VISIBILITY property of the element at point
@@ -1173,22 +1207,83 @@ which is its intended use."
       ((org-at-heading-p) (org-do-demote))
       ((org-at-item-p) (org-indent-item))))
 
+;;;; Music playlists in org-mode
 
-;;;; tail settings
+(use-package url-util
+    :commands (canonical-path-qdw insert-vgm-qdw))
+
+;;; Apple Music
+
+(org-link-set-parameters
+  "play"
+  :follow (lambda (song-id _)
+            (noninteractive-shell-command-qdw
+              (concat "play " (shell-quote-argument song-id)))))
+            ;; ^ My 'play' shell function is defined in my ~/.bashrc.
+
+(org-link-set-parameters
+  "play-album"
+  :follow (lambda (album-id _)
+            (noninteractive-shell-command-qdw
+              (concat "play-album " (shell-quote-argument album-id)))))
+            ;; ^ My 'play-album' shell function is defined in my ~/.bashrc.
+
+(defun insert-current-song-qdw ()
+  "Insert an org-mode link to the currently playing song.
+On click or RET, the link will replay the song.
+Depends on my Bash function `play', defined in ~/.bashrc."
+  (interactive)
+  (let* ((song-id (shell-command-to-string-qdw "song-id"))
+         (song-name (shell-command-to-string-qdw "song-name"))
+         (org-code (format "[[play:%s][%s]]" song-id song-name)))
+    (insert org-code)))
+
+;; (defun insert-current-album-qdw ()
+;;   (interactive)
+;;   (let*
+
+(defun insert-vgm-qdw (path)
+  "Insert an org-mode link to a local file containing video game music.
+On click or RET, the link will automatically play in a (hard-coded)
+player that I have chosen for its filetype. Currently supported
+filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
+  (interactive (list (read-file-name "File: ")))
+  (let* ((track-name (file-name-base path))
+         (link-type (upcase (file-name-extension path)))
+         (urlencoded-path (url-hexify-string path))
+         (org-code (format "[[%s:%s][%s]]"
+                           link-type
+                           urlencoded-path
+                           track-name)))
+  (insert org-code)))
+
+;; C64
+
+(org-link-set-parameters
+ "SID"
+ :follow (lambda (path _no-prefix-arg)
+           (shell-command-to-string-qdw ;; string  retval is ignored
+            (concat
+              "open -a Cog.app "
+              (canonical-path-qdw path)))))
+
+;; NES
+
+(org-link-set-parameters
+ "NSF"
+ :follow (lambda (path _no-prefix-arg)
+           (shell-command-to-string-qdw ;; string  retval is ignored
+            (concat
+               "open -a 'Audio Overload.app' "
+               (canonical-path-qdw path)))))
+
+;;;; tail -f settings
 
 (defun tail ()
   (interactive)
   (auto-revert-tail-mode))
   
 (add-hook 'xref-backend-functions 'dumb-jump-xref-activate)
-
-(defun my-enter ()
-  "Inserts a newline character then indents the new line just
-   like the previous line"
-  (interactive)
-  (newline)
-  (unless (derived-mode-p 'mhtml-mode)
-          (indent-relative-maybe)))
 
 (defun kebab-to-camel-case ()
   "Convert the kebab-case word at point to CamelCase."
@@ -1205,13 +1300,20 @@ which is its intended use."
           (while (re-search-forward "-" end t)
             (replace-match "" t t)))))))
 
-;;;; Editor MACroS settings
+;;;; Misc. utility functions
 
-;;;; Global keybindings, overridable by major and minor modes
+(defun convert-to-lisp-case-qdw (str)
+    (downcase (replace-regexp-in-string "[[:blank:][:punct:]]+" "-" str)))
 
-(global-set-key (kbd "RET") 'my-enter)
+(defun canonical-path-qdw (pth)
+  (shell-quote-argument
+    (expand-file-name
+      (url-unhex-string
+        pth))))
 
-;;;; Global keybindings, but make them override major and minor modes' bindings
+;;;; Editor MACroS
+
+;;; Global keybindings. Make them override major and minor modes' bindings.
 
 (defvar qdw-override-mode-map (make-sparse-keymap)
   "Keymap for `qdw-override-mode', used to override other modes' keymaps.")
@@ -1225,9 +1327,9 @@ which is its intended use."
    ("M-!"         shell-command-qdw)
    ("M-`"         unfill-paragraph-xah)
    ("C-c u"       uncomment-region)
-   ("C-c ."       find-file-at-point-with-line-and-column-if-present)
+   ("C-c ."       open-thing-at-point)
    ("C-c /"       grep-buffer-qdw)
-   ("C-c C-c /"   grep-all-buffers-qdw)
+   ("C-c C-c ."   grep-all-buffers-qdw)
    ("C-c g"       search-in-buffers)
    ("C-c 1"       async-shell-command)
    ("C-c :"       eval-expression)
@@ -1235,15 +1337,15 @@ which is its intended use."
    ("C-c C-f"     multi-occur-in-matching-buffers)
    ("C-c C-b"     ibuffer)
    ("C-c c"       comment-region)
-   ("C-c C-c g"   rg-in-current-directory-qdw)
+   ("C-c C-c C-g" rg-in-current-directory-qdw)
    ("C-c i"       indent-region)
    ("C-c C-c b"   edit-bashrc)
-   ("C-c C-c i"   ini)
+   ("C-c C-c TAB" ini)
    ("C-c SPC"     iterm2-here)
-   ("C-c m"       imenu-list-smart-toggle)
    ("C-c l"       shell)
    ("C-c n"       display-line-numbers-mode)
    ("C-c o"       rotate-windows)
+   ("C-c C-q"     run-qdw-func)
    ("C-c s"       isearch-forward-regexp)
    ("C-c r"       isearch-backward-regexp)
    ("C-c C-c C-t" switch-theme)
@@ -1262,26 +1364,29 @@ which is its intended use."
 
 (qdw-keymap-override-mode +1) ; enable the override mode
 
-;;;; C keybdindings
+;;; C keybindings
 
 (keymap-set c-mode-map "RET" 'electric-newline-and-maybe-indent)
 (keymap-set c-mode-map "C-c {" 'beginning-of-defun)
 (keymap-set c-mode-map "C-c }" 'end-of-defun)
 
 
-;;;; dired-mode keybindings
+;;; dired-mode keybindings
 
-(keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
+;; (keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
+;; (keymap-unset dired-mode-map "RET")
 
-;;;; help-command keybindings
+;;; help-command keybindings
 
 (define-key 'help-command (kbd "C-f") 'find-function)
 (define-key 'help-command (kbd "C-k") 'find-function-on-key)
 (define-key 'help-command (kbd "C-l") 'find-library)
 (define-key 'help-command (kbd "C-v") 'find-variable)
 
-;;;; org-mode keybindings
+;;; org-mode keybindings
 
+(keymap-set org-mode-map "C-c L" 'org-link-word-at-point-qdw)
+(keymap-set org-mode-map "C-c ;"   'insert-current-song-qdw)
 (keymap-set org-mode-map "C-c RET" 'org-open-at-point)
 (keymap-set org-mode-map "C-c >"   'org-insert-subheading-respect-content-qdw)
 (keymap-set org-mode-map "C-c ["   'org-table-move-column-left)
@@ -1294,11 +1399,13 @@ which is its intended use."
 (keymap-set org-mode-map "C-c ]"   'org-table-move-column-right)
 (keymap-set org-mode-map "C-c s"   'org-insert-slack-link)
 
-;;;; shell-script-editing-mode keybindings
+;;; shell-script-editing-mode keybindings
 
 ;; (define-prefix-command 'sh-mode-prefix-map)
 ;; (define-key sh-mode-map (kbd "C-c C-c") 'sh-mode-prefix-map)
 ;; (keymap-unset sh-mode-map "C-c C-c i")
+
+;;;; --------------------------------------------------------------------------
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1310,11 +1417,12 @@ which is its intended use."
    '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed
      elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
      fish-mode flymake flymake-hlint fretboard go-mode haskell-mode
-     imenu-list jenkinsfile-mode json-mode julia-mode llm magit
-     markdown-mode nushell-mode org-alert org-caldav org-super-agenda
-     osx-trash paredit pcre2el slime slime-repl-ansi-color smartparens
-     terraform-mode tidal tide tree-sitter-langs treesit-auto
-     typescript-mode vimrc-mode wgrep yaml-mode yaml-pro yaml-tomato))
+     imenu-list jenkinsfile-mode json-mode julia-mode llm lua-mode
+     magit markdown-mode moonscript nnreddit nushell-mode org-alert
+     org-caldav org-super-agenda osx-trash paredit pcre2el plz plz-see
+     slime slime-repl-ansi-color smartparens terraform-mode tidal tide
+     tree-sitter-langs typescript-mode vimrc-mode wgrep
+     yaml-mode yaml-pro yaml-tomato))
  '(safe-local-variable-values
    '((eval c-toggle-auto-newline 1) (hide-semicolons-mode-qdw . t))))
 
@@ -1344,3 +1452,4 @@ which is its intended use."
  '(sh-font-lock-quoted-subshell ((t (:foreground "#d8a0d0"))))
  '(sh-heredoc ((t (:foreground "#3b8560" :bold nil))))
  '(sh-quoted-exec ((t (:foreground "#d8a0d0")))))
+)
