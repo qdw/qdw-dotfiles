@@ -1,35 +1,44 @@
 umask 0022
 set -o pipefail
 
-#### 0. Numbered sections like this one must appear in order.
+#### Numbered sections like this one must appear in order. #sec 0#
 
-#### Bash debugging settings
+#### Bash metaprogramming library #sec 1#
 
-# Uncomment this to enable various hackish debugging statements in this file.
-# export MY_DEBUG=true
-# Run this function interactively to enable tracing *without*
-# the many prompt-related commands that automatically run every time I enter a
-# command. This makes the trace much more uncluttered and readable.
+### Diagnostics
 
-function setx {
-    unset PROMPT_COMMAND
-    export PS1="\u@\h:\w\\$ "
-    export PS4='${BASH_SOURCE}:${LINENO} '
-    set -x
-}
-if [[ "$MY_DEBUG" ]]; then
-    setx
-fi
-function sb {
-    source "$HOME/.bashrc"
-}
-
-#### Numbered sections must appear in order.
-#### 1. Settings for my Bash metaprogramming library
-
-function stderr {
+function _stderr {
     echo "$@" >&2
 }
+
+function err {
+    local CALLER="${FUNCNAME[1]}"
+    _stderr "$CALLER: error:" "$@"
+}
+
+function carp {
+    local CALLER="${FUNCNAME[1]}"
+    _stderr "$CALLER:" "$@"
+}
+
+function _debug {
+    if [[ "$MY_DEBUG_BASH" ]]; then
+        local CALLER="${FUNCNAME[1]}"
+        if [[ "$CALLER" ]]; then
+            _stderr "$CALLER: debug:" "$@"
+        else
+            _stderr "debug:" "$@"
+        fi
+    fi
+}
+
+function complain { # for multiline msgs (pass each line as a separate arg)
+    for STRING in "$@"; do
+        _stderr "$STRING" >&2
+    done
+}
+
+### Utilty functions
 
 # Check for functions, aliases, and executables.
 function command-exists {
@@ -44,57 +53,6 @@ function installed {
     local COMMAND="$1"
     type -P "$COMMAND" >/dev/null 2>&1
 }
-
-# Run a command, but ignore its STDOUT.
-function sil {
-    "$@" >/dev/null
-}
-
-function _diag_msg_helper {
-    local CALLER="${FUNCNAME[2]}"
-    if [[ -z "$CALLER" ]]; then
-        CALLER="bash"
-    fi
-    
-    echo "$CALLER:" "$@" >&2
-}
-
-function complain { # for multiline msgs (pass each line as a separate arg)
-    for STRING in "$@"; do
-        echo "$STRING" >&2
-    done
-}
-
-function _stderr {
-    echo "$@" >&2
-}
-
-function carp {
-    local CALLER="${FUNCNAME[1]}"
-    _stderr "$CALLER: warning:" "$@"
-}
-
-function rem {
-    local CALLER="${FUNCNAME[1]}"
-    complain "$CALLER: info:" "$@"
-}
-
-function err {
-    local CALLER="${FUNCNAME[1]}"
-    echo "$CALLER: error:" "$@" >&2
-}
-
-if [[ "$MY_DEBUG" ]]; then
-    function debug {
-        echo "Debug: $@" >&2
-    }
-else
-    function debug {
-        : # no-op
-    }
-fi
-
-## Utilty functions/settings
 
 function foreach-line-in {
     check-args 2 varargs 'FILE "COMMAND WITH {} PLACEHOLDER FOR LINE"' "$@" \
@@ -219,12 +177,12 @@ function print-help {
     
     case "$#" in
         2)
-            stderr "$FUNCTION USAGE"
+            _stderr "$FUNCTION USAGE"
             return 1 ;;
 
         
         3)
-            stderr "
+            _stderr "
 NAME
     $FN - $OPTIONAL_MANNAME
     
@@ -233,7 +191,7 @@ SYNOPSIS
            return 2 ;;
            
         
-        *) stderr "print-help: error: wrong number of args (wanted 2 or 3)"
+        *) _stderr "print-help: error: wrong number of args (wanted 2 or 3)"
            return 3 ;;
     esac
 }
@@ -363,10 +321,10 @@ function check-args-ng {
             ARGUMENTS_INFLECTED="arguments"
         fi
 
-        stderr "check-args: error: $FNC passed the wrong number of arguments
+        _stderr "check-args: error: $FNC passed the wrong number of arguments
 to check-args itself ($FNC called check-args with $# $ARGUMENTS_INFLECTED,
 but it requires at least 3.)"
-        stderr 'Usage: check-args MIN_NUM_ARGS MAX_NUM_ARGS USAGE_STRING "$@"'
+        _stderr 'Usage: check-args MIN_NUM_ARGS MAX_NUM_ARGS USAGE_STRING "$@"'
         return 250
     fi
 
@@ -396,7 +354,7 @@ but it requires at least 3.)"
     if [[ $ARGC -lt $MIN_ARGS ]]; then
         local VARARGS_CLAUSE
         if [[ "$MAX_ARGS" = "varargs" ]]; then VARARGS_CLAUSE=" or more"; fi
-        stderr "$FNC: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)."
+        _stderr "$FNC: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)."
         print-help "$FNC" "$USAGE" "$MANNAME"
         return 1
     
@@ -495,6 +453,9 @@ function funcalias {
     fi
 }
 
+#### Bash settings that shouldn't be checked into git #sec 2#
+  ## (either because they contain secrets, or because of license issues)
+
 function source-if-exists {
     check-args 1 1 'FILE' "$@"
     local FILE="$1"
@@ -509,18 +470,86 @@ function my-source {
     check-args 1 1 "my-source FILE" "$@"
     local FILE="$1"
 
-    if [[ $MY_DEBUG ]]; then
+    if [[ "$MY_DEBUG_BASH" ]]; then
         SECONDS=0
     fi
 
-    source "$FILE"
+    source "$FILE" || return 1
 
-    if [[ $MY_DEBUG ]]; then
+    if [[ "$MY_DEBUG_BASH" ]]; then
         echo "sourced '$FILE' in $SECONDS seconds"
     fi
 }
 
-#### 2. OS-specific settings, including Homebrew settings
+source-if-exists ~/.bashrc.d/daemons.bash
+source-if-exists ~/.site.bash.d/preamble.bash
+source-if-exists ~/.secrets.bash
+
+#### Bash debugging settings #sec 3#
+
+# Uncomment this to enable various hackish debugging statements in this file.
+# export MY_DEBUG_BASH="1"
+# Run this function interactively to enable tracing *without*
+# the many prompt-related commands that automatically run every time I enter a
+# command. This makes the trace much more uncluttered and readable.
+
+function setx {
+    unset PROMPT_COMMAND
+    export PS1="\u@\h:\w\\$ "
+    export PS4='${BASH_SOURCE}:${LINENO} '
+    set -x
+}
+if [[ "$MY_VERBOSE_DEBUG_BASH" ]]; then
+    setx
+fi
+function sb {
+    source "$HOME/.bashrc"
+}
+
+#### Time and date #sec4#
+
+function gnu-mtime-seconds {
+    check-args 1 1 'FILENAME' "$@" || return 1
+    local FILENAME="$1"
+    stat -c %Y "$FILENAME"
+}
+
+function bsd-mtime-seconds {
+    check-args 1 1 'FILENAME' "$@" || return 1
+    local FILENAME="$1"
+    stat -f %m "$FILENAME"
+}
+
+function mtime-in-epoch-seconds {
+    check-args 1 1 'FILENAME' "$@" || return 1
+    local FILENAME="$1"
+
+    if on-linux || [[ "$(command -V stat | head -1)" = "stat is a function" ]]; then
+        gnu-mtime-seconds "$FILENAME"
+    elif on-macos; then
+        bsd-mtime-seconds "$FILENAME"
+    else
+        carp "warning: unrecognized platform; guessing that stat(1) is GNU stat"
+        gnu-mtime-seconds "$FILENAME"
+    fi
+}
+
+# Timestamp with time zone, no special chars, OK to interpolate into filenames
+function ts {
+    check-args 0 0 '[no-arguments]' "$@" || return 1
+    date '+%Y-%m-dT%H%M%S%z' "$@"
+}
+
+# Timestamp in the format used by YAML
+function ts-yaml {
+    local TIMEZONE_SHORTCODE="$(date +%Z "$@")"
+    local TS_WITH_NANOSECONDS="$(date +%Y-%m-%dT%H:%M:%S.%N "$@")"
+    local TS_WITH_DECISECONDS=${TS_WITH_NANOSECONDS:0:21}
+    local RETVAL="${TS_WITH_DECISECONDS}${TIMEZONE_SHORTCODE}"
+    echo "$RETVAL"
+}
+
+#### OS-specific settings #sec 5#
 
 MY_OS="$(uname -s)"
 
@@ -535,10 +564,32 @@ function on-linux {
 ## OS-specific linker settings
 
 function ldd {
+    check-args 1 1 'EXECUTABLE | Some.app' "$@" || return 1
+    local PROG="$1"
+    
     if on-macos; then
-        otool -L "$@" | $PAGER
+        local APP_PREDICATE_REGEX=".+[.]app"
+        local PATH_PARSING_REGEX="(.*[/](.*)[.]app$)"
+        if [[ "$PROG" =~ $APP_PREDICATE_REGEX ]]; then
+            local APP_FULL_PATH
+            APP_FULL_PATH="$(which "$PROG")"
+            local WHICH_EXIT_STATUS=$?
+            if [[ $WHICH_EXIT_STATUS -ne 0 ]]; then
+                return $WHICH_EXIT_STATUS
+            elif [[ "$APP_FULL_PATH" =~ $PATH_PARSING_REGEX ]]; then
+                local APP_PATH="${BASH_REMATCH[1]}"
+                local APP_NAME="${BASH_REMATCH[2]}"
+                local EXE_PATH="$APP_PATH/Contents/MacOS/$APP_NAME"
+                otool -L "$EXE_PATH" | $PAGER
+            else
+                err "$PROG didn't match the path-parsing regex"
+                return 3
+            fi
+        else
+            otool -L "$PROG" | $PAGER
+        fi
     else
-        command ldd "$@" | $PAGER
+        command ldd "$PROG" | $PAGER
     fi
 }
 
@@ -557,7 +608,192 @@ function decolonize {
     echo $STRING | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
 }
 
-## Homebrew settings
+#### Text editor #sec 6#
+
+function install-emacs-plus {
+    check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 29' "$@" || return 1
+    local VERSION_NUMBER="$1"
+    
+    (
+        set -euo pipefail
+        brew install --formula \
+                     --build-from-source \
+                     "emacs-plus@${VERSION_NUMBER}" \
+                     --with-mailutils \
+                     --without-cocoa
+    )
+}
+
+# Alas, emacs-plus's compile options are no longer adequate to my needs.
+# Build Emacs from the original source, but apply emacs-plus's favored
+# patches first.
+
+function install-emacs {
+    check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 30' "$@" || return 1
+    local VERSION_NUMBER="$1"
+    
+    local INSTALL_DIR="/opt/emacs/$VERSION_NUMBER"
+    local SOURCE_DIR="$HOME/src-3/emacs"
+    local PATCH_DIR="$HOMEBREW_ROOT/Library/Taps/d12frosted/homebrew-emacs-plus/patches/emacs-$VERSION"
+    
+    local DESIRED_PATCHES=""
+    
+    function dir-is-okay {
+        if [[ -d "$DIR" ]] && \
+           [[ -r "$DIR" ]] && \
+           [[ -w "$DIR" ]] && \
+           [[ -x "$DIR" ]] && \
+           [[ -z "$(command ls -A "$DIR")" ]]
+        then
+            return 0
+        else
+            err "cannot access directory '$DIR'"
+            return 2
+        fi
+    }
+    
+    brew install $(brew deps "emacs-plus@${VERSION_NUMBER}") || return    
+    
+    for DIRECTORY in "$INSTALL_DIR" "$SOURCE_DIR" "$PATCH_DIR"; do
+        dir-is-okay "$DIRECTORY" || return
+    done
+        
+    cd "$SOURCE_DIR" || return
+    command git checkout "emacs-${VERSION_NUMBER}" || return
+    
+    ./autogen.sh || return
+    ./configure \
+        --prefix "$INSTALL_DIR" \
+        ...
+        
+    for PATCH in $DESIRED_PATCHES; do
+        apply_patch "$PATCH" || return
+    done
+    
+}
+
+function emacs-package-clean {
+    cd ~/.emacs.d \
+        && fd --no-ignore '.el[cn]$' -x rm
+}
+
+### Emacs daemon settings
+
+function emacs-daemon-pid {
+    pgrep -U "$USER" -fi "$@" "Emacs --bg-daemon"
+}
+
+function pe {
+    emacs-daemon-pid -l
+}
+
+function the-emacs-daemon-is-running {
+    emacs-daemon-pid > /dev/null
+    return $?
+}
+
+# ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
+function ke {
+    check-args 0 1 '[SIGNAL]' "$@" || return 1
+    local ARG=""
+
+    if [[ $# -eq 1 ]]; then
+        case "$1" in
+            "-9" | "-KILL") :;;
+            *) err "Invalid signal '$1'"; return 1;;
+        esac
+    fi
+
+    local PID="$(emacs-daemon-pid)"
+    if [[ -n "$PID" ]]; then
+        kill $ARG "$PID"
+    else
+        err "It doesn't look like the emacs daemon is running"
+        return 2
+    fi
+}
+
+# If we're in a terminal session, start an emacsclient session inside that terminal
+# (first starting the Emacs server, if it's not already running).
+#
+# This looks just like a normal terminal emacs session, but starts faster
+# (and can see buffers from other emacsclient sessions, but whatever).
+function emacs {
+    # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
+    # I directly type "emacs my-file", then...
+    if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
+        # If I'm inside an Emacs interactive-shell-mode buffer,
+        # then edit my-file in the same same Emacs window.
+        if [[ $# -gt 0 ]]; then
+            command emacsclient --no-wait "$@"
+        else
+            echo "You're already in emacs, genius" >&2
+        fi
+    else
+        if the-emacs-daemon-is-running; then
+            command emacsclient --tty "$@"
+        else
+            se "$@"
+        fi
+    fi
+}
+
+# se (Start Emacs-daemon): start the Emacs daemon.
+function se {
+    if the-emacs-daemon-is-running; then
+        err "Looks like the emacs daemon is already running"
+        return 1
+    else
+        echo "Starting the Emacs daemon..."
+        command emacs --bg-daemon >/dev/null 2>&1
+        
+	# Give it time to start up and load my ~/.emacs.d/init.el
+        sleep 4
+        emacs "$@"
+    fi
+}
+
+# re (Restart Emacs-daemon): stop it, then start it.
+function re {
+    ke
+    se
+}
+
+MY_EDITOR="$HOME/bin/emacs-wrapper"
+
+set -a
+# GIT_EDITOR="$MY_EDITOR"
+GIT_EDITOR="subl"
+EDITOR="$MY_EDITOR"
+VISUAL="$MY_EDITOR"
+
+if command-exists "subl"; then 
+    PSQL_EDITOR="subl -w"
+    HOMEBREW_EDITOR="subl"
+else
+    PSQL_EDITOR="$MY_EDITOR"
+fi
+set +a
+
+#### Homebrew #sec 7#
+
+set -a
+HOMEBREW_BAT=1
+HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
+HOMEBREW_NO_ANALYTICS=1
+HOMEBREW_NO_ENV_HINTS=1
+set +a
+
+## Homebrewed alternatives to bundled system utilities
+
+MY_LS_BASE_OPTIONS="--color=always -1F"
+if test -e "$HOMEBREW_BIN/gls"; then
+    export MY_LS=gls
+    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS --group-directories-first"
+else
+    export MY_LS=ls
+    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
+fi
 
 for HDIR in "/opt/homebrew" "/usr/local"; do
     if [[ -x "$HDIR/bin/brew" ]]; then
@@ -574,7 +810,237 @@ for HDIR in "/opt/homebrew" "/usr/local"; do
     fi
 done
 
-### OS-specific convenience functions
+## Basic brew shortcuts and wrappers
+
+function brew {
+    MANNAME="run Homebrew commands, paginating docs if any"
+    if [[ "$1" = 'help' ]] || [[ ${!#} = '--help' ]]; then
+        command brew "$@" | $PAGER
+    else
+        command brew "$@"
+    fi
+}
+
+function be { brew edit "$@" ;}
+function bh { brew home "$@" ;}
+function bi { brew install "$@" ;}
+function bl { brew ls "$@" ;}
+function bs { brew search "$@" ;}
+function bser { brew services "$@" ;}
+
+function brew-service-names {
+    local MANNAME="list Homebrew services (names only)"
+    brew services list --json | jq -r '.[].name'
+}
+
+function bls {
+    MANNAME="search for package (first installed packages, then uninstalled)"
+    check-args 1 1 'REGEX' "$@" || return 1
+    local REGEX="$1"
+
+    brew ls | grep "$REGEX"
+    if [[ $? -ne 0 ]]; then
+        brew search "/$REGEX/"
+    fi
+}
+
+## Functions for inspecting Homebrew dependencies
+
+function brew-deps-all {
+    brew deps --tree --install | $PAGER
+}
+
+function brew-leaves {
+    brew-deps-all | command grep -E '^[[:alpha:]]' | sort | uniq | $PAGER
+}
+
+function brew-leaf {
+    local LEAF_NUMBER
+    if [[ $# -eq 0 ]]; then
+        LEAF_NUMBER=1
+    elif [[ $# -eq 1 ]]; then
+        LEAF_NUMBER="$1";
+    else
+        echo "brew-leaf: error: wrong number of arguments."
+        echo "Usage: brew-leaf [NUMBER] # 1-based"
+        return
+    fi
+
+    brew-leaves | head "-${LEAF_NUMBER}" | tail -1
+}
+
+function brew-next-leaf {
+    local LEAF_FILE=~/.brew-next-leaf
+    
+    local LEAF_NUM
+    if [[ -f "$LEAF_FILE" ]]; then
+        LEAF_NUM=$(cat "$LEAF_FILE")
+    else
+        LEAF_NUM=1
+    fi
+
+        
+    if brew-leaf "$LEAF_NUM"; then
+        (( LEAF_NUM++ ))
+        echo "$LEAF_NUM" > "$LEAF_FILE"
+    fi
+}
+
+function  bnl { brew-next-leaf "$@" ;}
+function leaf { brew-next-leaf "$@" ;}
+
+# brew-n-deps PACKAGE_NAME - print the number of packages
+# that depend on PACKAGE_NAME
+function _brew-n-deps {
+    PACKAGE_NAME="$1"
+    if ! brew ls --formula "$PACKAGE_NAME" >/dev/null 2>&1; then
+        echo -1
+    else
+        RAW_COUNT=$(brew deps --tree --installed | command grep -c "$PACKAGE_NAME")
+        N_DEPENDERS=$(( RAW_COUNT - 1 ))
+        echo $N_DEPENDERS
+    fi
+}
+
+# Just a verbose wrapper to _brew-n-deps, which see
+function brew-n-deps {
+    PACKAGE_NAME="$1"
+    N_DEPENDERS=$(_brew-n-deps "$PACKAGE_NAME")
+    if [[ "$N_DEPENDERS" = -1 ]]; then
+        echo "Package '$PACKAGE_NAME' is installed"
+    elif [[ "$N_DEPENDERS" = 0 ]]; then
+        echo "Package '$PACKAGE_NAME' has no dependencies"
+    elif [[ "$N_DEPENDERS" = 1 ]]; then
+        echo "Package '$PACKAGE_NAME' has $N_DEPENDERS dependency"
+    else
+        echo "Package '$PACKAGE_NAME' has $N_DEPENDERS dependencies"
+    fi
+}
+
+## Functions for running Homebrew upgrades
+
+BREW_UPDATE_TIMESTAMP_FILE="$HOME/tmp/brew_updated_at"
+BREW_UPDATE_STALENESS_THRESHOLD="600" # = 10 min. in seconds
+
+function brew-update-timestamp {
+    check-args 0 0 '' "$@" || return 1
+    touch "$BREW_UPDATE_TIMESTAMP_FILE"
+}
+
+function brew-is-stale {
+    check-args 0 0 '' "$@" || return 1
+
+    if [[ ! -f "$BREW_UPDATE_TIMESTAMP_FILE" ]]; then
+        _debug "file '$BREW_UPDATE_TIMESTAMP_FILE' missing, so brew is stale"
+        return 0
+    else
+        local NOW="$(date +%s)"
+        _debug "$NOW since the Epoch"
+        local LAST_BREW_UPDATE="$(mtime-in-epoch-seconds "$BREW_UPDATE_TIMESTAMP_FILE")"
+        _debug "$LAST_BREW_UPDATE seconds since brew"
+        local SECONDS_OLD=$(( NOW - LAST_BREW_UPDATE ))
+        _debug "elapsed seconds: $SECONDS_OLD"
+        if [[ $SECONDS_OLD -gt $BREW_UPDATE_STALENESS_THRESHOLD ]]; then
+            _debug "$SECONDS_OLD > $BREW_UPDATE_STALENESS_THRESHOLD, so the brew is stale"
+            return 0
+        else
+            _debug "$SECONDS_OLD is less than $BREW_UPDATE_STALENESS_THRESHOLD, so the brew is still fresh"
+            return 1
+        fi
+    fi
+}
+
+function brew-force-update {
+    check-args 0 0 '' "$@" || return 1
+    brew update --quiet && brew-update-timestamp
+}
+
+function brew-update-if-stale {
+    check-args 0 0 '' "$@" || return 1
+    if brew-is-stale; then
+        brew-force-update
+    fi
+}
+
+function bo {
+    check-args 0 0 '' "$@" || return 1
+    brew-update-if-stale
+    brew outdated
+}
+
+function boser {
+    local MANNAME="show outdated Homebrew services"
+    brew-update-if-stale
+    
+
+    local -a OUTDATED_FORMULAE
+    mapfile -t OUTDATED_FORMULAE < <(bo)
+    if [[ 0 -eq ${#OUTDATED_FORMULAE[@]} ]]; then
+        carp "there are no services in need of upgrade."
+        return
+    fi
+
+
+    local -A BREW_SERVICE_NAMES
+    while IFS="" read -r NAME; do
+        BREW_SERVICE_NAMES["$NAME"]=1
+    done < <(brew-service-names)
+
+
+    for FORMULA_NAME in ${OUTDATED_FORMULAE[@]}; do
+        if [[ -v BREW_SERVICE_NAMES[$FORMULA_NAME] ]]; then
+            echo "$FORMULA_NAME"
+        fi
+    done
+}
+
+function bu {
+    local MANNAME="upgrade Homebrew packages, and restart services if needed"
+    check-args 0 0 '' "$@" || return 1
+
+    local -a OUTDATED_SERVICES
+    mapfile -t OUTDATED_SERVICES < <(boser)
+    echo; color-printf "blue" "==> "; color-printf "Outdated services:\n"
+
+    brew upgrade || return
+
+    for SVC in ${OUTDATED_SERVICES[@]}; do
+        brew services restart "$SVC"
+    done
+}
+
+function boi {
+    local MANNAME="show outdated Homebrew packages, and prompt to upgrade them"
+    brew-update-if-stale
+
+    local -a OUTDATED_FORMULAE OUTDATED_CASKS
+    mapfile -t OUTDATED_FORMULAE < <(brew outdated --formula)
+    local N_FORM=${#OUTDATED_FORMULAE[@]}
+    if [[ $N_FORM -gt 0 ]]; then
+        color-printf "red" "==> "; color-printf "red" "Outdated formulae:\n"
+        echo ${OUTDATED_FORMULAE[@]}
+    fi
+
+
+    mapfile -t OUTDATED_CASKS < <(brew outdated --cask | tee /dev/tty)
+    local N_CASK=${#OUTDATED_CASKS[@]}
+    if [[ $N_CASK -gt 0 ]]; then
+        color-printf "red" "==> "; color-printf "red" "Outdated casks:\n"
+        echo ${OUTDATED_CASKS[@]}
+    fi
+
+
+    if [[ $N_FORM -gt 0 ]] || [[ $N_CASK -gt 0 ]]; then
+        color-printf "bright-red" "==> Upgrade? [y/N]> "
+        local USER_REPLY
+        read USER_REPLY
+        if [[ "${USER_REPLY,,}" =~ y ]]; then # downcase, then match
+            bu
+        fi
+    fi
+}
+
+#### OS-specific convenience functions #sec 8#
 
 if on-macos; then
     ## OS-specific settings for macOS
@@ -598,7 +1064,7 @@ if on-macos; then
     function darken {
         check-args 1 1 'true|false' "$@" || return 1
         local BOOL="$1"
-        osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
+        /usr/bin/osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
     }
 
     function dark {
@@ -666,7 +1132,7 @@ if on-macos; then
     ## which(1) settings: extend it to make it work for macOS .app bundles
     
     function macwhich {
-        local -a DIRS_TO_SEARCH=("$HOME/Applications" "/Applications")
+        local -a DIRS_TO_SEARCH=("$HOME/Applications" "/Applications" "/Applications/Utilities")
         
         check-args 1 1 'FOO.app' "$@" || return 1
         local APP_NAME="$1"
@@ -683,8 +1149,9 @@ Maybe you meant 'which \"$APP_NAME\"?'"
                 fi
             done
             
-            complain "macwhich: error: couldn't find '$APP_NAME'. Search path:"
-            printf "%s\n" "${DIRS_TO_SEARCH[@]}" >&2
+            err "couldn't find app '$APP_NAME'. Search path:"
+            printf "    %s\n" "${DIRS_TO_SEARCH[@]}" >&2
+            echo >&2
             return 2
         fi
     }
@@ -695,50 +1162,24 @@ Maybe you meant 'which \"$APP_NAME\"?'"
         local PROGRAM_NAME="$1"
         if [[ "$PROGRAM_NAME" =~ [.]app$ ]]; then
             macwhich "$PROGRAM_NAME"
+            MACWHICH_EXIT_STATUS=$?
+            if [[ $MACWHICH_EXIT_STATUS -ne 0 ]]; then
+                return $MACWHICH_EXIT_STATUS
+            fi
         else
             type -P "$PROGRAM_NAME"
-        fi
-    }
-    
-    
-    # Given an app name, find the path to its executable
-    
-    function mac-app-binpath {
-        check-args 1 1 'APP' "$@" || return 1
-
-        local APP_NAME="$1"
-        
-        local APP_DIR="$(macwhich "$APP_NAME")"
-        local MACWHICH_EXIT_STATUS=$?
-        if [[ $MACWHICH_EXIT_STATUS -ne 0 ]]; then
-            return $MACWHICH_EXIT_STATUS
-        else
-            local EXPECTED_EXECUTABLE="$APP_BASE_DIR/Contents/MacOS/$APP"
-            if [[ ! -f "$EXPECTED_EXECUTABLE" ]]; then
-                err "'$APP' exists,
-but '$EXPECTED_EXECUTABLE' does not exist.
-Try checking manually"
-                return 3
-            else
-                echo "$EXPECTED_EXECUTABLE"
-            fi
         fi
     }
     
     # Open a Mac app by name, e.g. 'opa Steam.app'
 
     function opa {
-        local APP_NAME  APP_DIR  MACWHICH_EXIT_STATUS
         check-args 1 1 'FOO.app' "$@" || return 1
-        APP_NAME="$1"
+        local APP_NAME="$1"
         
-        APP_DIR="$(macwhich "$APP_NAME")"
-        MACWHICH_EXIT_STATUS=$?
-        if [[ $MACWHICH_EXIT_STATUS -ne 0 ]]; then
-            return $MACWHICH_EXIT_STATUS
-        else
-            open "$APP_DIR"
-        fi
+        local FULL_PATH="$(which "$APP_NAME")"
+        if [[ $? -eq 0 ]]; then return; fi
+        open "$APP_DIR"
     }
     
     function macos-codename {
@@ -800,11 +1241,10 @@ else
             xdg-open "$@"
         }
     fi
-fi
 
-## OS-specific settings: when on macOS, use Homebrewed GNU tools if available
+    ## When on macOS, prefer Homebrewed GNU tools to their built-in
+    ## equivalents, iff they're available
 
-if on-macos; then
     for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail
     do
         BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
@@ -814,7 +1254,7 @@ if on-macos; then
     done
 fi
 
-#### grep settings
+#### grep settings #sec 9#
 
 ## Lowest common denominator between GNU/Linux and macOS:
 ## old versions of GNU grep
@@ -1189,7 +1629,7 @@ For example, color-printf bright-cyan 'Color text' 'and more color text\n'.
     esac
 
     printf '\e[%d;%dm' "$BRIGHTNESS" "$COLORCODE"
-    echo -n "$@"
+    printf "$@"
     printf '\033[0m'
 }
 
@@ -1224,7 +1664,7 @@ function bnw {
 # a.k.a. true color
 function hex {
     if [[ $# -ne 1 ]]; then
-        complain "Wrong number of arguments. Usage: hex RRGGBB"
+        err "Wrong number of arguments. Usage: hex RRGGBB"
         return 1
     else
         # Extract the RGB values from the hex color code
@@ -1262,7 +1702,7 @@ export DEFAULT_PS1="$PS1"
 # macOS: suppress nag message about Bash being deprecated in favor of zsh
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
-#### Environment-variable-checking shortcuts
+#### Environment variable functions
 
 function enva {
     check-args 0 0 "[no arguments]" "$@" || return 1
@@ -1359,13 +1799,6 @@ HISTSIZE=-1
 
 set +a
 
-#### Bash settings that shouldn't be checked into git
-#### (either because they contain secrets, or because of license issues)
-
-source-if-exists ~/.bashrc.d/daemons.bash
-source-if-exists ~/.site.bash.d/preamble.bash
-source-if-exists ~/.secrets.bash
-
 ## Bash completion and prompt settings
 ## Dependencies:
 ##     - Homebrew itself
@@ -1414,7 +1847,7 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     function comp {
         function sc {
             for FILENAME in "$@"; do
-                my-source "$BASH_COMPLETION_DIR/$FILENAME"
+                source "$BASH_COMPLETION_DIR/$FILENAME"
             done
         }
 
@@ -1493,9 +1926,10 @@ fi
 #### Scheme Shell settings
 
 if [[ -d "/opt/scsh" ]]; then
-    SCSH_PATH="/opt/scsh/bin"
-    LATEST_SCSH_VERSION="$(ls /opt/scsh/lib | sort --general-numeric-sort | tail -1)"
-    SCSH_LDFLAGS="-L/opt/scsh/lib/${LATEST_SCSH_VERSION}"
+    SCSH_BASE="/opt/scsh"
+    SCSH_PATH="${SCSH_BASE}/bin"
+    LATEST_SCSH_VERSION="$(ls "${SCSH_BASE}/lib" | sort --general-numeric-sort | tail -1)"
+    SCSH_LDFLAGS="-L${SCSH_BASE}/lib/${LATEST_SCSH_VERSION}"
 fi
 
 #### Unicode-related settings
@@ -1565,13 +1999,13 @@ function make-rules {
     command grep -E --color=never '[[:alpha:]]+:' Makefile
 }
 
-#### Markdown settings
+#### Markdown
 
 function markdown2html {
     pandoc "$1" -t html
 }
 
-#### AI settings
+#### AI
 
 for MODEL_DIR in "$HOME/ai/models"/*; do
     MODEL_NAME="$(basename "$MODEL_DIR")"
@@ -1601,6 +2035,16 @@ function ai {
 function mistral {
     Mistral-7B-Instruct-v0.3.Q4_0-ollama "$@"
 }
+
+if on-macos; then
+    function clod {
+        /Applications/Firefox.app/Contents/MacOS/firefox \
+            --no-remote \
+            -P "Claude" \
+            --new-window "claude.ai/chat" \
+            &
+    }
+fi
 
 # # Tell man to display pages in color (it uses the deprecated Termcap system)
 # set -a
@@ -1790,12 +2234,12 @@ function rds-ls-log-groups {
 function in-dev {
     # (AWS_DEV_ACCOUNT_NUMBER must be defined in preamble.bash)
     if ! [[ "$AWS_ACCESS_KEY_ID" && "$AWS_SECRET_ACCESS_KEY" && "$AWS_SESSION_TOKEN" ]]; then
-        complain "AWS_ACCOUNT is defined, but not the auth-related AWS_* env vars"
+        err "AWS_ACCOUNT is defined, but not the auth-related AWS_* env vars"
         return 1
     else
         local ACCOUNT_NUMBER="$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
         if [[ "$ACCOUNT_NUMBER" != "$AWS_DEV_ACCOUNT_NUMBER" ]]; then
-            complain "You're logged into '$ACCOUNT_NUMBER', but the dev account is '$AWS_DEV_ACCOUNT_NUMBER'"
+            err "You're logged into '$ACCOUNT_NUMBER', but the dev account is '$AWS_DEV_ACCOUNT_NUMBER'"
             return 1
         else
             return 0
@@ -1815,7 +2259,7 @@ function ls-buckets {
 function rm-bucket {
     check-args 1 1 'rm-bucket BUCKET_NAME' "$@" || return
     if ! in-dev 2>/dev/null; then
-        complain "Not in dev; refusing to delete data!"
+        err "not in dev; refusing to delete data!"
         return 1
     else
         local BUCKET_NAME="$1"
@@ -1840,171 +2284,6 @@ function rm-bucket {
     fi
 }
 
-#### Editor settings/Emacs settings
-
-function install-emacs-plus {
-    check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 29' "$@" || return 1
-    local VERSION_NUMBER="$1"
-    
-    (
-        set -euo pipefail
-        brew install --formula \
-                     --build-from-source \
-                     "emacs-plus@${VERSION_NUMBER}" \
-                     --with-mailutils \
-                     --without-cocoa
-    )
-}
-
-# Alas, emacs-plus's compile options are no longer adequate to my needs.
-# Build Emacs from the original source, but apply emacs-plus's favored
-# patches first.
-
-function install-emacs {
-    check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 30' "$@" || return 1
-    local VERSION_NUMBER="$1"
-    
-    local INSTALL_DIR="/opt/emacs/$VERSION_NUMBER"
-    local SOURCE_DIR="$HOME/src-3/emacs"
-    local PATCH_DIR="$HOMEBREW_ROOT/Library/Taps/d12frosted/homebrew-emacs-plus/patches/emacs-$VERSION"
-    
-    local DESIRED_PATCHES=""
-    
-    function dir-is-okay {
-        if [[ -d "$DIR" ]] && \
-           [[ -r "$DIR" ]] && \
-           [[ -w "$DIR" ]] && \
-           [[ -x "$DIR" ]] && \
-           [[ -z "$(command ls -A "$DIR")" ]]
-        then
-            return 0
-        else
-            err "cannot access directory '$DIR'"
-            return 2
-        fi
-    }
-    
-    brew install $(brew deps "emacs-plus@${VERSION_NUMBER}") || return    
-    
-    for DIRECTORY in "$INSTALL_DIR" "$SOURCE_DIR" "$PATCH_DIR"; do
-        dir-is-okay "$DIRECTORY" || return
-    done
-        
-    cd "$SOURCE_DIR" || return
-    command git checkout "emacs-${VERSION_NUMBER}" || return
-    
-    ./autogen.sh || return
-    ./configure \
-        --prefix "$INSTALL_DIR" \
-        ...
-        
-    for PATCH in $DESIRED_PATCHES; do
-        apply_patch "$PATCH" || return
-    done
-    
-}
-
-function emacs-package-clean {
-    cd ~/.emacs.d \
-        && fd --no-ignore '.el[cn]$' -x rm
-}
-
-### Emacs daemon settings
-
-function emacs-daemon-pid {
-    pgrep -U "$USER" -fi "$@" "Emacs --bg-daemon"
-}
-
-function pe {
-    emacs-daemon-pid -l
-}
-
-function the-emacs-daemon-is-running {
-    emacs-daemon-pid > /dev/null
-    return $?
-}
-
-# ke (Kill Emacs-daemon): kill the Emacs daemon, if running.
-function ke {
-    check-args 0 1 '[SIGNAL]' "$@" || return 1
-    local ARG=""
-
-    if [[ $# -eq 1 ]]; then
-        case "$1" in
-            "-9" | "-KILL") :;;
-            *) err "Invalid signal '$1'"; return 1;;
-        esac
-    fi
-
-    local PID="$(emacs-daemon-pid)"
-    if [[ -n "$PID" ]]; then
-        kill $ARG "$PID"
-    else
-        complain "It doesn't look like the emacs daemon is running"
-        return 2
-    fi
-}
-
-# If we're in a terminal session, start an emacsclient session inside that terminal
-# (first starting the Emacs server, if it's not already running).
-#
-# This looks just like a normal terminal emacs session, but starts faster
-# (and can see buffers from other emacsclient sessions, but whatever).
-function emacs {
-    # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
-    # I directly type "emacs my-file", then...
-    if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
-        # If I'm inside an Emacs interactive-shell-mode buffer,
-        # then edit my-file in the same same Emacs window.
-        if [[ $# -gt 0 ]]; then
-            command emacsclient --no-wait "$@"
-        else
-            echo "You're already in emacs, genius" >&2
-        fi
-    else
-        if the-emacs-daemon-is-running; then
-            command emacsclient --tty "$@"
-        else
-            se "$@"
-        fi
-    fi
-}
-
-# se (Start Emacs-daemon): start the Emacs daemon.
-function se {
-    if the-emacs-daemon-is-running; then
-        complain "Looks like the emacs daemon is already running"
-        return 1
-    else
-        echo "Starting the Emacs daemon..."
-        command emacs --bg-daemon >/dev/null 2>&1
-        
-	# Give it time to start up and load my ~/.emacs.d/init.el
-        sleep 4
-        emacs "$@"
-    fi
-}
-
-# re (Restart Emacs-daemon): stop it, then start it.
-function re {
-    ke
-    se
-}
-
-MY_EDITOR="$HOME/bin/emacs-wrapper"
-
-set -a
-GIT_EDITOR="$MY_EDITOR"
-EDITOR="$MY_EDITOR"
-VISUAL="$MY_EDITOR"
-
-if command-exists "subl"; then 
-    PSQL_EDITOR="subl -w"
-    HOMEBREW_EDITOR="subl"
-else
-    PSQL_EDITOR="$MY_EDITOR"
-fi
-set +a
 
 ## FIXME: find a more elegant way
 # (This function depends on the third-party newtab() function;
@@ -2071,152 +2350,6 @@ function activate-iTerm2-integration {
     my-source ~/.iterm2_shell_integration.bash
 }
 
-#### Homebrew settings
-
-set -a
-HOMEBREW_BAT=1
-HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
-
-HOMEBREW_NO_ANALYTICS=1
-HOMEBREW_NO_ENV_HINTS=1
-set +a
-
-function brew {
-    if [[ "$1" = 'help' ]] || [[ ${!#} = '--help' ]]; then
-        command brew "$@" | $PAGER
-    else
-        command brew "$@"
-    fi
-}
-
-function brew-deps-all {
-    brew deps --tree --install | $PAGER
-}
-
-function brew-all-deps { brew-deps-all "$@" ;}
-
-function brew-leaves {
-    brew-deps-all | command grep -E '^[[:alpha:]]' | sort | uniq | $PAGER
-}
-
-function brew-leaf {
-    local LEAF_NUMBER
-    if [[ $# -eq 0 ]]; then
-        LEAF_NUMBER=1
-    elif [[ $# -eq 1 ]]; then
-        LEAF_NUMBER="$1";
-    else
-        echo "brew-leaf: error: wrong number of arguments."
-        echo "Usage: brew-leaf [NUMBER] # 1-based"
-        return
-    fi
-
-    brew-leaves | head "-${LEAF_NUMBER}" | tail -1
-}
-
-function brew-next-leaf {
-    local LEAF_FILE=~/.brew-next-leaf
-    
-    local LEAF_NUM
-    if [[ -f "$LEAF_FILE" ]]; then
-        LEAF_NUM=$(cat "$LEAF_FILE")
-    else
-        LEAF_NUM=1
-    fi
-
-        
-    if brew-leaf "$LEAF_NUM"; then
-        (( LEAF_NUM++ ))
-        echo "$LEAF_NUM" > "$LEAF_FILE"
-    fi
-}
-
-function bnl()  { brew-next-leaf "$@" ;}
-function leaf { brew-next-leaf "$@" ;}
-
-function be { brew edit "$@" ;}
-function bh { brew home "$@" ;}
-function bi { brew install "$@" ;}
-function bl { brew ls "$@" ;}
-function bo { brew update; brew outdated "$@" ;}
-# function bo { brew doctor; brew update && brew outdated ;}
-function bs { brew search "$@" ;}
-function bser { brew services "$@" ;}
-function bu { brew update && brew upgrade ;}
-    
-
-function buc {
-    (brew update && brew upgrade --formula) \
-        && (brew cleanup; brew doctor)
-}
-
-function brew-lock {
-    local HOMEBREW_LOCK_DIR USAGE
-    HOMEBREW_LOCK_DIR="$HOMEBREW_ROOT/var/homebrew/locks"
-    USAGE="Usage: brew-lock [--remove-all]"
-
-    if [[ $# -eq 0 ]]; then
-        ls "$HOMEBREW_LOCK_DIR"
-    elif [[ $# -eq 1 ]]; then
-        if [[ $1 = "--remove-all" ]]; then
-            brew cleanup
-        else
-            echo "brew-lock: error: unrecognized argument '$1'. $USAGE"
-        fi
-    else
-        echo "brew-lock: error: too many arguments. $USAGE"        
-    fi
-}
-
-# brew-n-deps PACKAGE_NAME - print the number of packages
-# that depend on PACKAGE_NAME
-function _brew-n-deps {
-    PACKAGE_NAME="$1"
-    if ! brew ls --formula "$PACKAGE_NAME" >/dev/null 2>&1; then
-        echo -1
-    else
-        RAW_COUNT=$(brew deps --tree --installed | command grep -c "$PACKAGE_NAME")
-        N_DEPENDERS=$(( RAW_COUNT - 1 ))
-        echo $N_DEPENDERS
-    fi
-}
-
-# bls (Brew List/Search): search for package in installed packages (brew ls);
-# if there are no results there, search uninstalled packages (brew search).
-function bls {
-    check-args 1 1 'REGEX' "$@" || return 1
-    local REGEX="$1"
-
-    brew ls | grep "$REGEX"
-    if [[ $? -ne 0 ]]; then
-        brew search "/$REGEX/"
-    fi
-}
-
-# Just a verbose wrapper to _brew-n-deps, which see
-function brew-n-deps {
-    PACKAGE_NAME="$1"
-    N_DEPENDERS=$(_brew-n-deps "$PACKAGE_NAME")
-    if [[ "$N_DEPENDERS" = -1 ]]; then
-        echo "Package '$PACKAGE_NAME' is installed"
-    elif [[ "$N_DEPENDERS" = 0 ]]; then
-        echo "Package '$PACKAGE_NAME' has no dependencies"
-    elif [[ "$N_DEPENDERS" = 1 ]]; then
-        echo "Package '$PACKAGE_NAME' has $N_DEPENDERS dependency"
-    else
-        echo "Package '$PACKAGE_NAME' has $N_DEPENDERS dependencies"
-    fi
-}
-
-## Homebrewed alternatives to bundled system utilities
-MY_LS_BASE_OPTIONS="--color=always -1F"
-if test -e "$HOMEBREW_BIN/gls"; then
-    export MY_LS=gls
-    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS --group-directories-first"
-else
-    export MY_LS=ls
-    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
-fi
 
 #### Other macOS-specific settings
 
@@ -2343,6 +2476,9 @@ function path {
     if [[ ! -e "$ABS_PATH" ]]; then
         echo "Error: file '$ABS_PATH' does not exist"
     else
+        # If path starts with home dir, convert to tilde notation.
+        ABS_PATH="$(echo "$ABS_PATH" | sed -e "s|^${HOME}/|~/|")"
+
         echo "$ABS_PATH" | tee >(pbcopy)
     fi
 }
@@ -2482,15 +2618,15 @@ function diff {
     git diff --no-index "$@"
 }
 
-#### FTP settings
+#### FTP
 
 set -a
-FTP_LOGIN=ftp
+FTP_LOGIN=anonymous
 FTP_PASSIVE_MODE=yes
 FTP_PASSWORD=""
 set +a
 
-#### Git setttings
+#### Git
 
 function git-hist-grep {
     check-args 2 2 'REGEX FILENAME' "$@" || return 1
@@ -2551,13 +2687,9 @@ export GIT_SHELL_PATH="$(which bash)"
 function gs { git status "$@" ;}
 
 function branch-name {
-    local PHRASE_STRING
-    if [[ $# -eq 1 ]]; then
-        PHRASE="$1"
-        kebab-case "$(strip-punctuation "$PHRASE")"
-    else
-        complain "branch-name: error: wrong number of arguments. Usage: branch-name 'Some (explanatory) phase'"
-    fi
+    check-args 1 1 '"QUOTED_PHRASE"' "$@" || return 1
+    local PHRASE="$1"
+    kebab-case "$(strip-punctuation "$PHRASE")"
 }
 
 function main {
@@ -2583,7 +2715,7 @@ function strip-punctuation {
         INPUT_STRING="$1"
         echo "$INPUT_STRING" | tr -d '[:punct:]'
     else
-        complain "strip-punctuation: error: wrong number of arguments. Usage: strip-punctuation 'my string'"
+        err "wrong number of arguments. Usage: strip-punctuation 'my string'"
     fi
 }
 
@@ -2596,7 +2728,7 @@ function kebab-case {
         INPUT_STRING="$1"
         echo "$INPUT_STRING" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'
     else
-        complain "kebab-case: error: wrong number of arguments. Usage: kebab-case 'My input String'"
+        err "wrong number of arguments. Usage: kebab-case 'My input String'"
     fi   
 }
 
@@ -2651,7 +2783,7 @@ function git-backup {
             local REPO="${GIT_URL##*/}"
             git-backup-helper "$REPO"
         else
-            complain "couldn't determine which repo to operate on"
+            err "couldn't determine which repo to operate on"
             return 2
         fi
     fi
@@ -2755,7 +2887,7 @@ function gb-jira {
     check-args 1 1 'TINY_SUMMARY' "$@" || return 1
     local SUMMARY="$1";
     if [[ -z "$GITHUB_USERNAME" ]]; then
-        complain "You must set the GITHUB_USERNAME env var" >&2
+        err "You must set the GITHUB_USERNAME env var" >&2
         return 2
     fi
 
@@ -2789,7 +2921,7 @@ function gclone {
         [[ "$SSH_URL" ]] || return 2
         git clone "$URL"
     else
-        complain "Unrecognized URL format in '$URL'"
+        err "enrecognized URL format in '$URL'"
         return 3
     fi
 }
@@ -2864,16 +2996,15 @@ function gb {
 
 # gist - view gists or create a gist
 function gist {
+    check-args 0 2 \
+               '[no args] | DESCRIPTION [FILENAME] # if you pass no FILENAME, it will read from standard input' \
+               "$@" \
+        || return 1
+    
     local DESCRIPTION
-    local FILENAME="$(mktemp "$HOME/tmp")"
+    local FILENAME="$(command mktemp -p "$HOME/tmp/")"
 
-    if [[ $# -gt 2 ]]; then
-        complain "gist: error: wrong number of arguments."
-        complain "Usage:
-                     gist DESCRIPTION # invokes GIT_EDITOR
-                     gist ???"
-        return
-    elif [[ $# -eq 0 ]]; then
+    if [[ $# -eq 0 ]]; then
         local GIST_EDITOR
         for EDITOR_VAR in GIT_EDITOR VISUAL EDITOR; do
             if [[ -n "$EDITOR_VAR" ]]; then
@@ -2882,28 +3013,29 @@ function gist {
             fi
         done
         if [[ -z "$EDITOR_VAR" ]]; then
-            GIST_EDITOR=vi
+            GIST_EDITOR="vi"
         fi
-        "$GIST_EDITOR" "$FILENAME"        
+
+        "$GIST_EDITOR" "$FILENAME"
+
     elif [[ $# -eq 1 ]]; then
-        # Assume we were invoked like this:
-        #     some_command | gist DESCRIPTION
+        # Assume we were invoked as some_command | gist "some description"
         DESCRIPTION="$1"
         local PIPED_INPUT="$(cat)"
         echo "$PIPED_INPUT" > "$FILENAME"
+
     elif [[ $# -eq 2 ]]; then
         DESCRIPTION="$1"
         FILENAME="$2"
     fi
     
     local DESCRIPTION_CLAUSE
-    if [[ -n "$DESCRIPTION" ]]; then
+    if [[ "$DESCRIPTION" ]]; then
         DESCRIPTION_CLAUSE="--desc '$DESCRIPTION'"
     fi
     
-    gh gist create --web --filename "$FILENAME" "$DESCRIPTION_CLAUSE"
+    gh gist create --web --filename "$FILENAME" $DESCRIPTION_CLAUSE
 }
-
 
 # gtr (Git Team and Repo) - run this in any dir inside a working copy of a GitHub repo to show the team name plus repo name in GitHub notation, e.g., myorg/myrepo
 function gtr {
@@ -3035,7 +3167,7 @@ function repos {
     local PATTERN VERBOSE
 
     if [[ ! "$GITHUB_ORG" ]]; then
-        complain "repos: error: env var GITHUB_ORG is not set. Set it to your team name"
+        err "env var GITHUB_ORG is not set. Set it to your team name"
         return 1
     fi
         
@@ -3127,7 +3259,7 @@ function action {
     if [[ "$LATEST_ACTION_ID" ]]; then
         gh run view --web "$LATEST_ACTION_ID" >/dev/null
     else
-        complain "no GitHub actions found (at least for this branch)"
+        err "no GitHub actions found (at least, not for this branch)"
         return 2
     fi
 }
@@ -3154,7 +3286,7 @@ function action {
 function prl {    
     local URL="$(gh pr list --author "$GITHUB_USERNAME" --json url --jq '.[0].url')"
     if [[ -z "$URL" ]]; then
-        complain "Looks like you don't have any PRs open in this repo"
+        err "you don't have any PRs open in this repo"
     else
         echo "$URL"
         open "$URL"
@@ -3266,11 +3398,6 @@ function git-infra-dirs {
     done
 }
 
-function t {
-    git-e "cass-api" \
-          "infra"
-}
-
 #### Kubernetes (and OpenShift) settings
 
 function oc {
@@ -3326,17 +3453,12 @@ function pd_encode {
     fi
 }
 
-#### Data risotto spatulae
-function csview { command csview "$@" | $PAGER ;}
-
 #### PostgreSQL settings
-####
-#### (for additional PostgreSQL settings, see the following files):
-####     ~/.psqlrc*
-####     ~/.pg_service
-####     ~/.pgpass
-
-
+##
+##   For additional PostgreSQL-realted settings, see the following files:
+##     ~/.psqlrc*
+##     ~/.pg_service
+##     ~/.pgpass
 
 function pg {
     local  VERSION  PROGRAM_NAME  BINARY_PATH  COMMAND
@@ -3376,9 +3498,11 @@ function pg_dump_globals_rds {
 declare -Ax pgpasses
 
 function pql {
+    check-args 1 1 '"stanza name from pg_service.conf"' "$@" || return 1
+    
     local SERVICE  PASSWORD
     if [[ $# -ne 1 ]]; then
-        complain "pql: error: missing argument. Usage: pql pg_service.conf-stanza-name | psql --clear-cache"
+        err "missing argument. Usage: pql pg_service.conf-stanza-name | psql --clear-cache"
         return 1
     else
         if [[ "$1" = "--clear-cache" ]]; then
@@ -3391,7 +3515,7 @@ function pql {
             else
                 PASSWORD="$("$MY_VIRTUALENV_DIR/qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")";
                 if [[ $? -ne 0 ]]; then
-                    complain "pql couldn't retrieve the AWS secret for $SERVICE" 1>&2;
+                    err "couldn't retrieve the AWS secret for $SERVICE" 1>&2;
                     return 2
                 fi
             fi
@@ -3403,29 +3527,29 @@ function pql {
 }
 
 function qql {
-    local SERVICE PASSWORD
-    
-    if [[ $# -eq 0 ]]; then
-        echo "qql: error: missing argument. Usage: qql pg_service.conf-stanza-name [PSQL_OPTION ...]" \
-             >&2
-    else
-        SERVICE="$1"; shift
-        
-        # Disable cacheing logic; it's confusing when the password in the hash is wrong
-        # 
-        # if [[ -n ${pgpasses["$SERVICE"]} ]]; then
-        #     PASSWORD=${pgpasses["$SERVICE"]}
-        # else
-            PASSWORD="$("$MY_VIRTUALENV_DIR//qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")"
-            if [[ $? -ne 0 ]]; then
-                echo "pql couldn't retrieve the AWS secret for $SERVICE" >&2
-                return 2
-        #     else
-        #         pgpasses["$SERVICE"]="$PASSWORD"
-            fi
-        # fi
+    check-args \
+        1 \
+        varargs \
+        '"stanza name from pg_service.conf"' [ARGUMENT_TO_PSQL ...] "$@" \
+      || return 1
 
-        PGSERVICE="$SERVICE" PGPASSWORD="$PASSWORD" psql "$@"
+    local SERVICE="$1"; shift
+
+
+    local PASSWORD
+    #cache# Disable cacheing logic; it's confusing when the password in the hash is wrong
+    #cache# 
+    #cache# if [[ -n ${pgpasses["$SERVICE"]} ]]; then
+    #cache#     PASSWORD=${pgpasses["$SERVICE"]}
+    #cache# else
+    PASSWORD="$("$MY_VIRTUALENV_DIR/qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")"
+
+    if [[ $? -ne 0 ]]; then
+        echo "pql couldn't retrieve the AWS secret for $SERVICE" >&2
+        return 2
+    else
+        PGSERVICE="$SERVICE" PGPASSWORD="$PASSWORD" psql "$@" \
+            && : #cache# pgpasses["$SERVICE"]="$PASSWORD"
     fi
 }
 
@@ -3471,7 +3595,7 @@ function snip {
     local SNIPPET_DIR="$HOME/sql-snippets"
 
     if [[ ! -d "$SNIPPET_DIR" ]]; then
-        complain "No such directory '$SNIPPET_DIR'"
+        err "no such directory '$SNIPPET_DIR'"
         return 2
     elif [[ $# -eq 0 ]]; then
         echo "Available snippets:"
@@ -3481,7 +3605,7 @@ function snip {
         if [[ "$PGSERVICE" ]]; then
             qql "$SNIPPET_DIR"
         else
-            complain "You must set the PGSERVICE env var, so qql knows to run the snippet"
+            err "you must set the PGSERVICE env var"
             return 3
         fi
     fi
@@ -3526,7 +3650,7 @@ function air {
 
 function buy {
     if ! on-macos; then
-        complain "buy is implemented for macOS only, for now. Sorry!"
+        err "buy is implemented for macOS only, for now. Sorry!"
         return 2
     fi
 
@@ -3547,8 +3671,7 @@ function buy {
         local PRODUCT_NAME="$1"
         local URL_FILE="$HOME/.site.bash.d/buy/$PRODUCT_NAME"
         if [[ ! -e "$URL_FILE" ]]; then
-            complain "Don't know how to buy '$PRODUCT_NAME'"
-            complain "(no such file '$URL_FILE')"
+            err "don't know how to buy '$PRODUCT_NAME'"
             list-things-you-can-buy /dev/stderr
             return 3
         else
@@ -3557,7 +3680,7 @@ function buy {
             if [[ $CAT_EXIT_STATUS -ne 0 ]]; then
                 return $CAT_EXIT_STATUS
             elif [[ -z "$URL" ]]; then
-                complain "'$URL_FILE' is empty"
+                err "URL file '$URL_FILE' is empty"
                 return 4
             else
                 open -a Firefox "$URL"
@@ -3577,11 +3700,7 @@ function todo {
     fi
 }
 
-#### Python settings
-
-export PYTHON_PIPX_PATH=~/.local/bin
-
-MY_VIRTUALENV_DIR=~/.virtualenvs--python3
+#### Python
 
 for PREFERRED in "$HOMEBREW_BIN/python3" "/usr/bin/python3"; do
     if [[ -f "$PREFERRED" ]]; then
@@ -3590,41 +3709,9 @@ for PREFERRED in "$HOMEBREW_BIN/python3" "/usr/bin/python3"; do
     fi
 done
 
-
-function va {
-    local VENV_NAME
-    if [[ $# -ne 1 ]]; then
-        echo "va: error: wrong number of arguments. Usage: va VIRTUALENV_TO_ACTIVATE"
-    else
-        VENV_NAME="$1"
-        my-source "$MY_VIRTUALENV_DIR/$VENV_NAME/bin/activate"
-        pip install --upgrade pip
-    fi
+function python {
+    python3 "$@"
 }
-
-function mkvirtualenv {
-    mkdir -p "$MY_VIRTUALENV_DIR"
-    
-    NEW_VIRTUALENV_NAME="$1"
-    shift
-    if [[ ! $NEW_VIRTUALENV_NAME ]]; then
-        echo "Missing argument. Usage: mkvirtualenv [OPTIONS] NEW_VIRTUALENV_NAME"
-    else
-        NEW_VIRTUALENV_PATH="$MY_VIRTUALENV_DIR/$NEW_VIRTUALENV_NAME"
-        python3 -m venv "$NEW_VIRTUALENV_PATH" \
-            && va "$NEW_VIRTUALENV_NAME" \
-            && pip install --upgrade pip
-    fi
-}
-
-function ve {
-    if [[ $# -eq 0 ]]; then
-        ls "$MY_VIRTUALENV_DIR/"
-    else
-        mkvirtualenv "$@"
-    fi
-}
-
 
 #### Aranet4 air quality monitoring settings
 
@@ -3636,12 +3723,12 @@ function co2-verbose {
     echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
 }
 
-#### Tor settings
+#### Tor
 
 function tor-curl { curl --socks4a 127.0.0.1:9050 "$@" ;}
 function torcurl { tor-curl "$@" ;}
 
-#### TypeScript settings/Deno settings
+#### TypeScript/Deno
 
 export CDK_DISABLE_CLI_TELEMETRY=true
 
@@ -3657,24 +3744,33 @@ function dc { deno eval --check "$@" ;}
 # dcr - run Deno, but first do type-checking (no longer the default as of Deno v1.23)
 function dcr { deno run --check "$@" ;}
 
-#### Ring tone settings
+#### Ring tones
 
 # Download the audio from a YouTube video and convert it to an m4r.
 
 function yt {
-    check-args 2 2 'URL OUTPUT_FILENAME_WITHOUT_EXTENSION' "$@" || return 1
+    check-args 2 3 'URL OUTPUT_FILENAME_WITHOUT_EXTENSION [OUTPUT_FORMAT]' "$@" || return 1
     local URL="$1"
     local OUTPUT_BASENAME="$2"
-    local OUTPUT_FILENAME="${OUTPUT_BASENAME}.m4a"
+    local OUTPUT_FORMAT="${3:-m4a}"
+    local OUTPUT_FILENAME="${OUTPUT_BASENAME}.${OUTPUT_FORMAT}"
 
     yt-dlp \
         --cookies "$HOME/.yt-dlp-cookies" \
         --format "bestaudio[ext=m4a]" \
-        --extract-audio --audio-format "m4a" --audio-quality "0" \
+        --extract-audio --audio-format "$OUTPUT_FORMAT" --audio-quality "0" \
         -o "$OUTPUT_FILENAME" \
         "$URL" \
-      && mv "$OUTPUT_FILENAME" \
-            "$OUTPUT_BASENAME.m4r"
+        || return
+
+    if [[ "$OUTPUT_FORMAT" = "m4a" ]]; then
+        mv "$OUTPUT_FILENAME" "$OUTPUT_BASENAME.m4r"
+    fi
+}
+
+function mp3 {
+    check-args 2 2 'URL OUTPUT_FILENAME_WITHOUT_EXTENSION' "$@" || return 1
+    yt "$@" "mp3"
 }
 
 # Download an MP3 from zophar.net (video game sounds) and convert it to an m4r.
@@ -3706,15 +3802,22 @@ function mp3-to-m4r {
         && mv "$BASE.m4a" "$BASE.m4r"
 }
 
-#### Rust settings
+#### golang
 
-export RUST_PATH=~/.cargo/bin
+export GOPATH="$HOME/go"
 
-#### Ruby settings
+#### Lua
 
-# CPPFLAGS="$RUBY_CPPFLAGS"
+LUAROCKS_PATH=~/.luarocks/bin
 
-# Use homebrewed Ruby if installed
+# We need this old version in order to compile Moonscript itself
+LUA51_BASE="/opt/lua-5.1.5"
+LUA51_PATH="${LUA51_BASE}/bin"
+LUA51_LDFLAGS="-L${LUA51_BASE}/lib"
+LUA51_CPPFLAGS="-I${LUA51_BASE}/include"
+
+#### Ruby
+
 if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
     set -a
     RUBYOPT=rubygems
@@ -3724,10 +3827,6 @@ if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
     set +a
 fi
 
-#### golang settings
-
-export GOPATH="$HOME/go"
-
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
 function gemi {
     sudo gem install --remote \
@@ -3736,11 +3835,11 @@ function gemi {
                      "$@"
 }
 
-#### golang settings
+#### Rust
 
-export GOPATH="$HOME/go"
+export RUST_PATH=~/.cargo/bin
 
-#### Network-related settings
+#### Network
 
 function ips {
     /sbin/ifconfig -a \
@@ -3755,13 +3854,11 @@ function ipv6 {
 }
 
 function whois {
-    complain "whois is deprecated; using rdap instead"
-    complain "(if you really need to use whois, do 'command whois ...')."
-    complain
+    carp "warning: whois is deprecated; using rdap instead"
     rdap "$@"
 }
 
-#### Miscellaneous shell functions
+#### Miscellaneous
 
 # Change this terminal's background to the hex triplet passed in.
 function bghex {
@@ -3813,7 +3910,7 @@ function mshost {
     mhost "$COMMAND" "$@"
 }
 
-#### Process-related settings
+#### Processes
 
 function pstree {
     command pstree -g 3 -u $USER "$@" | $PAGER
@@ -3831,15 +3928,62 @@ function p {
 # Display only processes that belong to me.
 function pu { p "$USER" ;}
 
-#### vim settings
+#### vim
 
-if on-macos && command -v mvim >/dev/null 2>&1; then
-    function vim { mvim "$@" ;}
-    function gvim { mvim "$@" ;}
-fi
- 
+function vimacs {
+    # Run vim with settings that make its behavior and keybindings
+    # resemble those of Emacs:
+    command vim -u "$XDG_CONFIG_HOME/vim/vimacsrc" "$@"
+}
+
 # vl ("Vim Less") - use vim as a colorizing pager
-function vl { "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@" ;}
+function vl {
+    "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@"
+}
+
+#### VMs
+
+if on-macos && installed "qemu-system-arch64" >/dev/null 2>&1; then
+    function vm {
+        local INSTALLATION_ISO="/Users/quinn.weaver/vm/iso/debian-13.2.0-arm64-netinst.iso"
+
+        qemu-system-aarch64 \
+            -M virt,accel=hvf \
+            -cpu host \
+            -drive if=pflash,format=raw,file=/opt/homebrew/share/qemu/edk2-aarch64-code.fd,readonly=on \
+            -drive if=pflash,format=raw,file=efivars.fd \
+            -drive file=disk.img,format=qcow2,if=virtio,cache=writeback \
+            -smp 2 \
+            -m 2G \
+            `# initial installation only: CD-ROM/ISO for installation; omit after initial install` \
+            -drive "file=${INSTALLATION_ISO},media=cdrom,if=virtio,readonly=on" \
+            `# initial installation only: boot order (d=cdrom, c=disk, n=network; c is the default)` \
+            -boot order=dc,menu=on \
+            `# user-mode networking with SSH port forwarding; no root needed; default has no port forwarding so you can't SSH in` \
+            -netdev user,id=net0,hostfwd=tcp::2244-:22 \
+            `# companion to -netdev: attaches virtio NIC to the network backend defined above; without a -device the -netdev does nothing` \
+            -device virtio-net-pci,netdev=net0 \
+            `# make the virtio RNG feed the guest entropy pool. Without this, /dev/random in the guest can starve during boot` \
+            -device virtio-rng-pci \
+            `# Recommended: exposes a host directory to the guest via 9p; mount in guest with: mount -t 9p -o trans=virtio hostshare /mnt; omit if you don't need host<->guest file sharing` \
+            `## -virtfs local,path=/path/to/shared,mount_tag=hostshare,security_model=mapped-xattr,id=fs0` \
+            `# Recommended for headless VMs: disables graphical window and multiplexes serial+monitor onto stdio; default opens a graphical window (useless for a server VM)` \
+            -nographic \
+            `# Optional: redirects serial console to stdio (use with -nographic); 'mon:stdio' also gives you the QEMU monitor via Ctrl-A C` \
+            -serial mon:stdio \
+            `# Optional: exposes QEMU monitor on a Unix socket so you can manage the VM programmatically; without this you only get monitor access via the serial mux above` \
+            -monitor unix:qemu-monitor.sock,server,nowait \
+            `# Optional: writes the QEMU process PID to a file; useful for scripted stop/start; no PID file written by default` \
+            -pidfile qemu.pid \
+            `# Optional: sets the VM name shown in process list and window title; defaults to the qemu binary name` \
+            -name my-vm \
+            `# Optional: sets guest RTC to UTC; default is also utc but some guides use localtime, which causes clock drift issues on Linux guests` \
+            -rtc base=utc \
+            `# Optional: on guest-initiated reboot, exit QEMU instead of rebooting; useful in provisioning scripts where you want to detect reboot as a completion signal` \
+            -no-reboot \
+            `# Optional: forks QEMU to background after startup; default runs in foreground`
+    }
+fi
 
 #### Set operations
 
@@ -3867,39 +4011,32 @@ function vl { "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@" ;}
 #             membership | in | E)
 #                 grep -Fxq "$1" "$2" ;;
 #             *)
-#                 complain "unsupported set operation '$OP'"
+#                 err "unsupported set operation '$OP'"
 #                 return 255 ;;
 #         esac
 #     fi
 # }            
 
 # function set-intersection {
-#     if [[ $# -eq 2 ]]; then
-#         comm -12 "$1" "$2"
-#     else
-#         complain "set-intersection: error: wrong number of arguments (got $#, expected 2)"
-#     fi
+#     check-args 2 2 'SET_1_FILE SET_2_FILE' "$@" || return 1
+#     comm -12 "$1" "$2"
 # }
 
 function set-difference {
-    check-args 2 2 'FILE_1 FILE_2' "$@" || return 1
-
+    check-args 2 2 'SET_1_FILE SET_2_FILE' "$@" || return 1
     comm -23 <(sort -u "$1") <(sort -u "$2")
 }
 
-# function set-disjunctive-union { set-difference "$@" ;}
-
-# function set-union {
-#     if [[ $# -eq 2 ]]; then
-#         cat "$1" "$2" | sort | uniq
-#     else
-#         complain "set-union: error: wrong number of arguments (got $#, expected 2)"
-#     fi
+# function set-disjunctive-union {
+#     set-difference "$@"
 # }
 
-# function set-equals {
+# function set-union {
+#     check-args 2 2 'SET_1_FILE SET_2_FILE' "$@" || return 1
+#     cat "$1" "$2" | sort | uniq
+# }
 
-#### Slack settings
+#### Slack
 
 function slack-channel {
     check-args \
@@ -3970,14 +4107,32 @@ function my_ssh {
     ssh "$NODE"
 }
 
-# aa graceful|start|... -  because typing 'sudo apache2ctl' is too much work.
-function aa { sudo apache2ctl "$@" ;}
+#### News of various sorts
 
-function atom { newsboat "$@" ;}
-function news { cast-text "$@" ;}
+function newsboat {
+    command newsboat \
+        --refresh-on-start \
+        --efwklwkml \    
+        "$@"
+}
+
+# function rss { newsboat --refresh-on-start "$@" ;}
+function usenet { tin "$@" ;}
+function newspapers { cast-text "$@" ;}
+
+function news {
+    err "ambiguous command. Please run one of the following instead:
+
+    - usenet
+    - newspapers"
+}
+
+#### Emacs-merge
 
 # cel FILE.el ("compile LISP") - byte-compile an emacs LISP file.
 function cel { command emacs -nw -q -batch -f batch-byte-compile "$@" ;}
+
+#### Miscellaneous-merge
 
 # d ("date") - give today's date in YYYY-MM-DD format.
 function d {
@@ -3993,41 +4148,52 @@ function epoch2human {
 
 function dos2unix { perl -pe 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
 
-# dream - run the Electric Sheep fractal generation daemon
-function dream { /System/Library/Frameworks/ScreenSaver.framework/Resources/ScreenSaverEngine.app/Contents/MacOS/ScreenSaverEngine -background ;}
+#### Mac-specific settings-merge
 
-function this-is-a-mac-gui-session {
+function macos-gui {
     on-macos && test -t 1 && pgrep -xq WindowServer
 }
 
-function this-is-not-a-mac-gui-session {
-    ! this-is-a-mac-gui-session
+function df {
+    if on-macos; then
+        dfr "$@"
+    else
+        df "$@"
+    fi
 }
 
-# dfr ("df real") - show all mounted devices that are actually disks (see also mr).
 function dfr {
+    local MANNAME="show mounted disks only, not other devices"
+    check-args 0 1 '--no-gui' "$@" || return 1
+    local NO_GUI="$1"
+
     if ! on-macos; then
-        check-args 0 1 '' "$@" || return 1
         df -h | head -1
         df -h | command grep ^/
         return
     else
-        check-args 0 1 '[--no-gui]' "$@" || return 1
-        err "df is broken on MacOS, because it doesn't understand APFS's pooling."
-        if this-is-not-a-mac-gui-session || [[ "$1" = "--no-gui" ]]; then
+        err "df is broken on MacOS, as it doesn't understand APFS pooling"
+        if this-is-not-a-mac-gui-session || [[ "$NO_GUI" ]]; then
             return 2
-            
-
         else
-            local USER_REPLY
-            read \
-                -r \
-                -p "$(echo -n "Do you want to see the macOS GUI view of your storage? [y/N] " >&2)" \
-                USER_REPLY        
-            case "$USER_REPLY" in
-                [yY]*) open "x-apple.systempreferences:com.apple.settings.Storage";;
-            esac
-            return 3
+            function open_settings_storage {
+                carp "opening Settings > Storage"
+                open "x-apple.systempreferences:com.apple.settings.Storage"
+            }
+
+            if [[ "$DF_USE_MACOS_GUI" ]]; then
+                open_settings_storage
+                return 3
+            else
+                local USER_REPLY
+                read -rp \
+                     "Open the Settings > Storage GUI? [y/N] " \
+                     USER_REPLY
+                case "$USER_REPLY" in
+                    [yY]) open_settings_storage; return 4;;
+                       *) return 5;;
+                esac
+            fi
         fi
     fi
 }
@@ -4127,21 +4293,10 @@ function ta {
         local SESSION_NAME="$1"
 
         if ! tmux has-session -t "$SESSION_NAME" 2> /dev/null; then
-	        tn "$SESSION_NAME"
+	        tmux new-session -s "$SESSION_NAME"
         else
             tmux attach-session -t "$SESSION_NAME"
         fi
-    fi
-}
-
-# tn ("Tmux New") - create a new tmux session
-function tn {
-    if [[ $# -ne 1 ]]; then
-        echo "tn: error: wrong number of arguments. Usage: tn SESSION_NAME"
-    else
-        local SESSION_NAME="$1"
-
-        tmux new-session -s "$SESSION_NAME"
     fi
 }
 
@@ -4149,21 +4304,6 @@ function tn {
 function tl {
     check-args 0 0 '[no arguments]' "$@" || return 1
     tmux list-sessions 2>/dev/null
-}
-
-# Timestamp with time zone, no special chars, OK to interpolate into filenames
-function ts {
-    check-args 0 0 '[no-arguments]' "$@" || return 1
-    date '+%Y-%m-dT%H%M%S%z' "$@"
-}
-
-# Timestamp in the format used by YAML
-function ts-yaml {
-    local TIMEZONE_SHORTCODE="$(date +%Z "$@")"
-    local TS_WITH_NANOSECONDS="$(date +%Y-%m-%dT%H:%M:%S.%N "$@")"
-    local TS_WITH_DECISECONDS=${TS_WITH_NANOSECONDS:0:21}
-    local RETVAL="${TS_WITH_DECISECONDS}${TIMEZONE_SHORTCODE}"
-    echo "$RETVAL"
 }
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
@@ -4195,7 +4335,7 @@ if (shopt -q login_shell   &&  tty > /dev/null 2>&1); then
     stty -ixon -ixoff > /dev/null 2>&1
 fi
 
-#### Perlbrew settings (this must come after the part in this file where PATH is set):
+#### Perl-merge: Perlbrew settings (this must come after the part in this file where PATH is set):
 
 function activate-perlbrew { my-source ~/perl5/perlbrew/etc/bashrc ;}
 function perlbrew-activate { activate-perlbrew ;}
@@ -4204,7 +4344,7 @@ function psql-tips { links ~/src/psql-tips/html/psql_tips_all.html ;}
 function tips { psql-tips "$@" ;}
 function mutt { neomutt "$@" ;}
 
-#### Game development settings
+#### Games
 
 function sd2lcompile {
     gcc -o "$@"  `sdl2-config --cflags --libs`
@@ -4212,7 +4352,7 @@ function sd2lcompile {
 
 function sdd { sdl2compile "$@" ;}
 
-#### Web settings
+#### Web
 
 function brow { defaultbrowser "$@" ;}
 function brc { brow "chrome" ;}
@@ -4300,7 +4440,7 @@ function sheet {
     sheets "$@"
 }
 
-#### Jenkins settings
+#### Jenkins
 
 # function jenkins {
 #     local  REPO  BRANCH  JENKINS_OUTPUT_FILENAME  JENKINS_OUTPUT_URL  DOCKER_IMAGE_URL  SHORT_MESSAGE  LOGFILE
@@ -4328,7 +4468,7 @@ function sheet {
 #         JENKINS_OUTPUT_URL="$JENKINS_BASE_URL/job/$REPO/job/$BRANCH/lastBuild/consoleText"
         
 #         JENKINS_OUTPUT_FILENAME="$(mktemp "$HOME/tmp/jenkins-log--$REPO--$BRANCH.XXXXXX")"
-#         osascript ~/bin/jenkins-fetch-console-output.osascript "$JENKINS_OUTPUT_URL" \
+#         /usr/bin/osascript ~/bin/jenkins-fetch-console-output.osascript "$JENKINS_OUTPUT_URL" \
 #             | tee "$JENKINS_OUTPUT_FILENAME" \
 #             | tee >(command grep -m 1 -o "docker://.*" | sed 's/docker:[/][/]//' | tee pbcopy) \
 #             2>&1
@@ -4401,7 +4541,7 @@ function sheet {
 #     fi
 # }
 
-#### JSON settings
+#### JSON
 
 function json-key { 
     check-args 1 varargs 'json-key KEY_NAME [FILE1 [FILE2...]]' "$@"
@@ -4414,13 +4554,13 @@ function json-key {
     fi
 }
 
-#### Confluence settings
+#### Confluence
 
 function confluence-docs-by-me {
     open "https://$JIRA_TEAM.atlassian.net/wiki/search?cql=creator%3DcurrentUser()"
 }
 
-#### Jira settings
+#### Jira
 
 function _j-check-env {
     local VALUE
@@ -4690,7 +4830,7 @@ function jql {
 #         && jira epic link --issue "$ISSUE_NAME" --epic "$EPIC_NAME"
 # }
 
-#### Music-related settings
+#### Music
 
 function guit { # download guitar tabs from ultimate-guitar.com
     check-args 1 1 'SOME_URL.ultimate-guitar.com' "$@" ||return 1
@@ -4728,15 +4868,81 @@ function guit { # download guitar tabs from ultimate-guitar.com
     return $EXIT_STATUS
 }
 
-function music {
-    am "$@"
-}
+if on-macos; then
+    AM="$HOME/src-3/apple-music-cli/bin/am-cli"
 
-function am {
-    ~/src-3/music-cli/src/am.sh
-}
+    function am {
+        "$AM" "$@"
+    }
 
-#### Video game settings
+    # What song am I listening to right now?
+    function song-id {
+        check-args 0 0 '' "$@" || return 1
+        /usr/bin/osascript -e \
+            'tell application "Music" to get persistent ID of current track'
+    }
+
+    function song-name {
+        check-args 0 0 '' "$@" || return 1
+        /usr/bin/osascript -e 'tell application "Music" to get name of current track'
+    }
+
+    function album-id {
+        check-args 0 0 '' "$@" || return 1
+        /usr/bin/osascript -e '
+tell application "Music"
+    set currentTrack to current track
+    set trackAlbum to album of currentTrack
+    set trackArtist to album artist of currentTrack
+    if trackArtist is "" then set trackArtist to artist of currentTrack
+    set theAlbum to first album of library playlist 1 whose name is trackAlbum and artist is trackArtist
+    get database ID of theAlbum
+end tell
+'
+    }
+
+    function play {
+        check-args 1 1 'APPLE_MUSIC_SONG_ID # looks like "C3D4E5F6A1B2C3D4"' \
+            "$@" || return 1
+
+        local SONG_ID="$1"
+        
+        local APPLESCRIPT="
+on playTrack(persistentIdString)
+   log \"persistentIdString is \" & persistentIdString
+    tell application \"Music\"
+        set results to (every track whose persistent ID is persistentIdString)
+        if results is {} then
+            log \"No such track '\" & persistentIdString & \"'\"
+        else if (count of results) > 1 then
+            log \"Multiple tracks match '\" & persistentIdString & \"'\"
+        else
+            play item 1 of results
+        end if
+    end tell
+end playTrack
+
+playTrack(\"$SONG_ID\")"
+
+        echo "$APPLESCRIPT" | tee >(/usr/bin/osascript)
+    }
+
+    function play-album {
+        check-args 1 1 'APPLE_MUSIC_ALBUM_ID' "$@" || return 1
+        local ALBUM_ID="$1"
+
+        local APPLESCRIPT="
+set albumID to $ALBUM_ID
+tell application \"Music\"
+    set theAlbum to first album whose database ID is albumID
+    play theAlbum
+end tell
+"
+        echo "$APPLESCRIPT" | /usr/bin/osascript
+    }
+fi # end macOS-specific functions
+    
+#### Games-merge
 
 ## Steam settings
 if on-macos; then
@@ -4753,10 +4959,10 @@ if on-macos; then
     }
 fi
 
-### BGM settings
+### Video game music
 
-# zophar - search for video game music (BGM)
 function zophar {
+    local MANNAME="search zophar.net for video game music"
     local URL
     local NES_URL="https://mail.zophar.net/music/nintendo-nes-nsf"
     
@@ -4775,14 +4981,15 @@ function zophar {
             PSP)
                 URL="https://www.zophar.net/music/playstation-portable-psp";;
             *)
-                complain "Console '$1' is unsupported"; return 1;;
+                err "console '$1' is unsupported"
+                return 1;;
         esac
         
         open "$URL"
     fi
 }
 
-#### YAML and JSON settings
+#### JSON and YAML
 
 function yv {
     if [[ $# -ne 1 ]]; then
@@ -4841,7 +5048,7 @@ function e-paper {
     open -u "https://www.waveshare.com/catalogsearch/result/?q=e-paper"
 }
 
-#### Qt settings (cross-platform GUI dev)
+#### GUI dev settings
 
 QT_PATH="/opt/homebrew/opt/qt/bin"
 
@@ -4849,15 +5056,17 @@ function qtmake {
     cmake -DCMAKE_PREFIX_PATH=$(brew --prefix qt)
 }
 
-#### path settings
+#### Path settings #sec yy#
 
-## Executable PATH settings
+## Executable PATH
 
-export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$JAVA_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/opt/tmux/bin:/usr/local/sbin:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$QT_PATH"
+export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$QT_PATH"
 
-## C and C++ library settings
+## C libraries
 
-export LDFLAGS="$RUBY_LDFLAGS $SCSH_LDFLAGS"
+# "CPP" in this case means "C preprocesor," not C++.
+export CPPFLAGS="$LUA51_CPPFLAGS $RUBY_CPPFLAGS"
+export LDFLAGS="$LUA51_LDFLAGS $SCSH_LDFLAGS $RUBY_LDFLAGS"
 export PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}"
 
 if on-macos; then
@@ -4868,6 +5077,9 @@ fi
 
 export MANPATH=":$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man:$HOME/share/man:/usr/share/man:/usr/local/share/man:/usr/local/man"
 
-source-if-exists "$HOME/.site.bash.d/postamble.bash"
-
 set +o pipefail
+
+#### site-specific stuff, not stored in git #sec zz#
+
+source-if-exists "$HOME/.bashrc.d/macos-apps.bash"
+source-if-exists "$HOME/.site.bash.d/postamble.bash"
