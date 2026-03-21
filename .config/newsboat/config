@@ -1,0 +1,10 @@
+browser "/opt/homebrew/bin/elinks"
+pager "less --RAW-CONTROL-CHARS --no-init --mouse"
+
+color listnormal        white black
+color listnormal_unread white black
+color listfocus         black red
+color listfocus_unread  black red bold
+color info              yellow black
+color background        black white
+color article           white black
