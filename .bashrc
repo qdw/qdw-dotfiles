@@ -4383,6 +4383,23 @@ function urlencode {
     fi
 }
 
+function url-file {
+    check-args 1 2 'URL [FILENAME]' "$@" || return 1
+    local URL="$1"
+
+    function write-that {
+        local THE_URL="$1"
+        printf "[InternetShortcut]\n%s\n" "$THE_URL"
+    }
+
+    if [[ "$2" ]]; then
+        local FILENAME="$2"
+        write-that "$URL" > "$FILENAME"
+    else
+        write-that "$URL"
+    fi
+}
+
 function gmail {
     check-args 0 1 '[SEARCH_TERMS_STRING]' "$@" || return 1
     
