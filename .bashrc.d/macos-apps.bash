@@ -19,7 +19,7 @@ function create-functions {
     done < "$APP_LIST_FILE"
 
     # Special case: some macOS builtin apps live in /System/Applications
-    for AP in "Photos"; do
+    for AP in "Photos" "Home"; do
         FK="$(function-name-for "$AP")"
         eval "function $FK { open '/System/Applications/$AP.app' ;}"
         eval "function $FK.app { open '/System/Applications/$AP.app' ;}"
