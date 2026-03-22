@@ -989,10 +989,8 @@ This command does the reverse of `fill-region'."
 (defun shell-command-to-string-qdw (command)
   (interactive "M")
   (string-trim-right
-    (shell-command-to-string (concat "source ~/.bashrc && INSIDE_EMACS=1 "
-                                     command)
-                             "*qdw-stdout*"
-                             "*qdw-stderr")))
+    (shell-command-to-string
+      (concat "source ~/.bashrc && INSIDE_EMACS=1 " command))))
 
 (defun noninteractive-shell-command-qdw (command)
   (shell-command
@@ -1084,7 +1082,12 @@ This command does the reverse of `fill-region'."
         (compile (concat command-string " " buffer-file-name)
                  't)))
     (set-face-attribute 'underline nil :underline original-underline-face)))
-    
+
+;;;; Hack macOS sandbox-exec files (which are written in a Lisp dialect)
+
+(use-package lisp-mode
+    :mode ("\\.sb\\'"))
+
 ;;;; Hack Makefiles
 
 (add-hook 'makefile-mode-hook
@@ -1216,16 +1219,16 @@ which is its intended use."
 
 (org-link-set-parameters
   "play"
-  :follow (lambda (song-id _)
+  :follow (lambda (song-name _)
             (noninteractive-shell-command-qdw
-              (concat "play " (shell-quote-argument song-id)))))
+              (concat "play " (shell-quote-argument song-name)))))
             ;; ^ My 'play' shell function is defined in my ~/.bashrc.
 
 (org-link-set-parameters
   "play-album"
   :follow (lambda (album-id _)
             (noninteractive-shell-command-qdw
-              (concat "play-album " (shell-quote-argument album-id)))))
+              (concat "play-album-untested " (shell-quote-argument album-id)))))
             ;; ^ My 'play-album' shell function is defined in my ~/.bashrc.
 
 (defun insert-current-song-qdw ()
@@ -1233,9 +1236,8 @@ which is its intended use."
 On click or RET, the link will replay the song.
 Depends on my Bash function `play', defined in ~/.bashrc."
   (interactive)
-  (let* ((song-id (shell-command-to-string-qdw "song-id"))
-         (song-name (shell-command-to-string-qdw "song-name"))
-         (org-code (format "[[play:%s][%s]]" song-id song-name)))
+  (let* ((song-name (shell-command-to-string-qdw "song-name"))
+         (org-code (format "[[play:%s][%s]]" song-name song-name)))
     (insert org-code)))
 
 ;; (defun insert-current-album-qdw ()
