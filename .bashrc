@@ -1043,7 +1043,6 @@ function boi {
 #### OS-specific convenience functions #sec 8#
 
 if on-macos; then
-    ## OS-specific settings for macOS
 
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
@@ -1098,10 +1097,6 @@ if on-macos; then
             && killall Dock
     }
     
-    function wallpaper {
-        "$HOME/bin/macos-set-wallpaper.scpt" "$@"
-    }
-    
     function pbc {
         local FILENAME="$1"
         if [[ "$FILENAME" ]]; then
@@ -1109,6 +1104,12 @@ if on-macos; then
         else
             echo "pbc: error: missing argument. Usage: pbc FILENAME"
         fi
+    }
+
+    function plist-bin-to-text {
+        check-args 1 1 'SOMEFILE.plist' "$@" || return 1
+        local FILE="$1"
+        plutil -convert xml1 -o - "$FILE"
     }
     
     ## Safe-ish deletion settings for macOS
@@ -1877,6 +1878,10 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
                 sc "gh" \
                    "git-completion.bash"
                 ;;
+
+            m|macos|macOS)
+                sc "m"
+                ;;
             
             openshift|oc|kubernetes|kube|k8s)
                 sc "oc" \
@@ -2005,7 +2010,7 @@ function markdown2html {
     pandoc "$1" -t html
 }
 
-#### AI
+#### AI/LLMs/ML
 
 for MODEL_DIR in "$HOME/ai/models"/*; do
     MODEL_NAME="$(basename "$MODEL_DIR")"
@@ -4886,20 +4891,16 @@ function guit { # download guitar tabs from ultimate-guitar.com
 }
 
 if on-macos; then
-    AM="$HOME/src-3/apple-music-cli/bin/am-cli"
 
-    function am {
-        "$AM" "$@"
-    }
-
-    # What song am I listening to right now?
     function song-id {
+        local MANNAME="get the ID of the Apple Music song currently playing"
         check-args 0 0 '' "$@" || return 1
         /usr/bin/osascript -e \
             'tell application "Music" to get persistent ID of current track'
     }
 
     function song-name {
+        local MANNAME="get the name of the Apple Music song currently playing"
         check-args 0 0 '' "$@" || return 1
         /usr/bin/osascript -e 'tell application "Music" to get name of current track'
     }
@@ -4919,32 +4920,17 @@ end tell
     }
 
     function play {
-        check-args 1 1 'APPLE_MUSIC_SONG_ID # looks like "C3D4E5F6A1B2C3D4"' \
-            "$@" || return 1
-
-        local SONG_ID="$1"
+        check-args 1 1 'BEGINNING_OF_SONG_NAME' "$@" || return 1
+        local PREF="$1"
         
-        local APPLESCRIPT="
-on playTrack(persistentIdString)
-   log \"persistentIdString is \" & persistentIdString
-    tell application \"Music\"
-        set results to (every track whose persistent ID is persistentIdString)
-        if results is {} then
-            log \"No such track '\" & persistentIdString & \"'\"
-        else if (count of results) > 1 then
-            log \"Multiple tracks match '\" & persistentIdString & \"'\"
-        else
-            play item 1 of results
-        end if
-    end tell
-end playTrack
-
-playTrack(\"$SONG_ID\")"
-
-        echo "$APPLESCRIPT" | tee >(/usr/bin/osascript)
+        /usr/bin/osascript -e "
+tell application \"Music\"
+    set t to first track of library playlist 1 whose name starts with \"$PREF\"
+    play t
+end tell"
     }
 
-    function play-album {
+    function play-album-untested {
         check-args 1 1 'APPLE_MUSIC_ALBUM_ID' "$@" || return 1
         local ALBUM_ID="$1"
 
