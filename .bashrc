@@ -975,10 +975,6 @@ function boser {
 
     local -a OUTDATED_FORMULAE
     mapfile -t OUTDATED_FORMULAE < <(bo)
-    if [[ 0 -eq ${#OUTDATED_FORMULAE[@]} ]]; then
-        carp "there are no services in need of upgrade."
-        return
-    fi
 
 
     local -A BREW_SERVICE_NAMES
@@ -998,15 +994,21 @@ function bu {
     local MANNAME="upgrade Homebrew packages, and restart services if needed"
     check-args 0 0 '' "$@" || return 1
 
-    local -a OUTDATED_SERVICES
-    mapfile -t OUTDATED_SERVICES < <(boser)
-    echo; color-printf "blue" "==> "; color-printf "Outdated services:\n"
+    if ! brew-is-stale; then
+        return
+    else
+        local -a OUTDATED_SERVICES
+        mapfile -t OUTDATED_SERVICES < <(boser)
+        if [[ ${#OUTDATED_SERVICES[@]} -gt 0 ]]; then
+            echo; color-printf "blue" "==> "; printf "Outdated services:\n"
+        fi
 
-    brew upgrade || return
+        brew upgrade
 
-    for SVC in ${OUTDATED_SERVICES[@]}; do
-        brew services restart "$SVC"
-    done
+        for SVC in ${OUTDATED_SERVICES[@]}; do
+            brew services restart "$SVC"
+        done
+    fi
 }
 
 function boi {
@@ -1059,20 +1061,6 @@ if on-macos; then
             "$HOMEBREW_BIN/trash" -F "$@"
         }
     fi
-    
-    function darken {
-        check-args 1 1 'true|false' "$@" || return 1
-        local BOOL="$1"
-        /usr/bin/osascript -e "tell app \"System Events\" to tell appearance preferences to set dark mode to $BOOL"
-    }
-
-    function dark {
-        darken "true"
-    }
-    
-    function light {
-        darken "false"
-    }
     
     function left {
         dock "left"
@@ -1752,13 +1740,11 @@ function dashify-path {
     echo "$DASHIFIED"
 }
 
-function cdd { cd ~/Desktop ;}
-function cds { cd ~/src ;}
-function cdq { cd ~/src/1/qdw-dotfiles ;}
-function cd3 { cd ~/src-3 ;}
-function cd1 { cd ~/src/1 ;}
+function cdd { cd ~/Desktop/$1 ;}
+function cdq { cd ~/src/1/qdw-dotfiles/$1 ;}
+function cd3 { cd ~/src-3/$1 ;}
+function cd1 { cd ~/src/1/$1 ;}
 
-#
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
 #
@@ -4114,6 +4100,10 @@ function my_ssh {
 
 #### News of various sorts
 
+function c-span {
+    open "https://www.c-span.org/congress/"
+}
+
 function newsboat {
     command newsboat \
         --refresh-on-start \
@@ -5086,3 +5076,8 @@ set +o pipefail
 
 source-if-exists "$HOME/.bashrc.d/macos-apps.bash"
 source-if-exists "$HOME/.site.bash.d/postamble.bash"
+
+function bug {
+    :
+}
+
