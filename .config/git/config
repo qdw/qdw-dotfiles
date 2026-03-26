@@ -5,11 +5,8 @@
 	user = qdw
 
 [user]
-	email = quinn.weaver@upstart.com
+	email = quinn.weaver@gmail.com
 	name = Quinn Weaver
-
-[includeIf "gitdir:~/upst"]
-	path = ~/.upstart-gitconfig
 
 [includeif "gitdir:blue-shaper"]
 	path = ~/.blue-shaper-gitconfig
