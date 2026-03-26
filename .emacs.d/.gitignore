@@ -1,3 +1,5 @@
+elisp/**
+elpa/**
 *.eln
 *.elc
 secrets.el
