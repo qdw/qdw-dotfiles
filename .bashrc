@@ -971,17 +971,14 @@ function bo {
 function boser {
     local MANNAME="show outdated Homebrew services"
     brew-update-if-stale
-    
 
     local -a OUTDATED_FORMULAE
     mapfile -t OUTDATED_FORMULAE < <(bo)
-
 
     local -A BREW_SERVICE_NAMES
     while IFS="" read -r NAME; do
         BREW_SERVICE_NAMES["$NAME"]=1
     done < <(brew-service-names)
-
 
     for FORMULA_NAME in ${OUTDATED_FORMULAE[@]}; do
         if [[ -v BREW_SERVICE_NAMES[$FORMULA_NAME] ]]; then
@@ -994,18 +991,16 @@ function bu {
     local MANNAME="upgrade Homebrew packages, and restart services if needed"
     check-args 0 0 '' "$@" || return 1
 
-    if ! brew-is-stale; then
-        return
-    else
-        local -a OUTDATED_SERVICES
-        mapfile -t OUTDATED_SERVICES < <(boser)
-        if [[ ${#OUTDATED_SERVICES[@]} -gt 0 ]]; then
-            echo; color-printf "blue" "==> "; printf "Outdated services:\n"
-        fi
+    brew-update-if-stale
+    local -a OUTDATED_SERVICES
+    mapfile -t OUTDATED_SERVICES < <(boser)
 
-        brew upgrade
+    brew upgrade
 
+    if [[ ${#OUTDATED_SERVICES[@]} -gt 0 ]]; then
+        color-printf "blue" "==> "; color-printf "red" "Restarting services:\n"
         for SVC in ${OUTDATED_SERVICES[@]}; do
+            color-printf "green" "==> "; color-printf "red" "Restarting "; color-printf "bright-green" "$SVC\n"
             brew services restart "$SVC"
         done
     fi
@@ -1045,6 +1040,7 @@ function boi {
 #### OS-specific convenience functions #sec 8#
 
 if on-macos; then
+    source-if-exists "$HOME/.bashrc.d/macos-light-and-dark.bash"
 
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
@@ -5076,8 +5072,3 @@ set +o pipefail
 
 source-if-exists "$HOME/.bashrc.d/macos-apps.bash"
 source-if-exists "$HOME/.site.bash.d/postamble.bash"
-
-function bug {
-    :
-}
-
