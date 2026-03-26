@@ -1,5 +1,5 @@
 ;;;; Inhibit superfluous messsages.
-
+1
 (setq inhibit-startup-echo-area-message "quinn")
 (setq ad-redefinition-action 'accept)
 (setq use-package-always-demand 't)
@@ -214,6 +214,10 @@
  org-indent-indentation-per-level 4)
 
 (setopt
+
+ ;; Open symlinks' targets, with the targets' parents directory as buffer cwd
+ find-file-visit-truename t
+ 
  ;; Consider filenames case-sensitive (needed on macOS)
  read-file-name-completion-ignore-case nil 
  
@@ -317,22 +321,19 @@
 ;;                 magit-insert-unpushed-to-upstream-or-recent
 ;;                 magit-insert-unpulled-from-pushremote
 ;;                 magit-insert-unpulled-from-upstream))
-
+;; 
 ;; (defun magit-try ()
 ;;   (interactive)
 ;;   (magit-stage-modified)
 ;;   (magit-commit)
 ;;   (magit-push))
 
-;;;; General hacking settings
+;;;; Hack automatic indentation
 
 (electric-indent-mode +1)
 
-;;;; Hack: tree-sitter
-
-
-
-;;;; C hacking settings
+;;;; Hack tree-sitter
+;;;; Hack C
 
 (c-add-style
  "qdw"
@@ -367,7 +368,7 @@
 
 (setopt c-default-style "qdw")
 
-;;;; Emacs Lisp hacking settings
+;;;; Hack Emacs Lisp
 
 (setq major-mode-remap-alist '((elisp-mode . elisp-ts-mode)
                                (lisp-data-mode . lisp-data-ts-mode)))
@@ -718,6 +719,14 @@ but it calls defvar under the hood."
   (interactive)
   (customize-variable 'custom-enabled-themes))
 
+(defun light ()
+  (interactive)
+  (setopt custom-enabled-themes (list 'mariana)))
+
+(defun dark ()
+  (interactive)
+  (setopt custom-enabled-themes (list 'tritium)))
+
 (defun toggle-theme-qdw ()
   "Toggle between my two favorite color themes, if applicable"
   (interactive)
@@ -772,12 +781,12 @@ but it calls defvar under the hood."
 ;; (when (not global-auto-revert-mode)
 ;;       (global-auto-revert-mode 't))
 
-;; (defun alt-editor (program &rest program-args)
-;;   (interactive)
-;;   (letrec ((progname (file-name-nondirectory program))
-;;            (procname (concat "emacs-" progname)))
-;;     ;; (message (mapconcat 'identity
-;;     (apply 'start-process procname nil program program-args)))
+(defun alt-editor (program &rest program-args)
+  (interactive)
+  (letrec ((progname (file-name-nondirectory program))
+           (procname (concat "emacs-" progname)))
+    ;; (message (mapconcat 'identity
+    (apply 'start-process procname nil program program-args)))
 
 (defun gvim ()
   (interactive)
