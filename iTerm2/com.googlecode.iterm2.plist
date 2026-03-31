@@ -30,6 +30,8 @@
 	<string>https://api.openai.com/v1/responses</string>
 	<key>AllowClipboardAccess</key>
 	<true/>
+	<key>CheckTestRelease</key>
+	<false/>
 	<key>CommandSelection</key>
 	<false/>
 	<key>Custom Color Presets</key>
@@ -1556,7 +1558,7 @@
 		</dict>
 	</dict>
 	<key>Default Bookmark Guid</key>
-	<string>311CD262-2473-49A1-9938-3EBA5D8C0538</string>
+	<string>1402BFFC-DB48-4908-9FB4-A764FD7BF6EA</string>
 	<key>DeleteProfile_SilenceUntil</key>
 	<real>771803704.51575303</real>
 	<key>DeleteProfile_selection</key>
@@ -7436,7 +7438,7 @@
 			<key>HotKey Modifier Activation</key>
 			<integer>0</integer>
 			<key>HotKey Modifier Flags</key>
-			<integer>1179648</integer>
+			<integer>1048576</integer>
 			<key>HotKey Window Animates</key>
 			<false/>
 			<key>HotKey Window AutoHides</key>
@@ -7563,7 +7565,7 @@
 			<key>Session Close Undo Timeout</key>
 			<integer>30</integer>
 			<key>Shortcut</key>
-			<string>L</string>
+			<string></string>
 			<key>Show Status Bar</key>
 			<false/>
 			<key>Show Timestamps</key>
@@ -8107,7 +8109,7 @@
 			<key>Non-ASCII Anti Aliased</key>
 			<true/>
 			<key>Normal Font</key>
-			<string>C64Pro 16</string>
+			<string>Commodore64 23</string>
 			<key>Open Password Manager Automatically</key>
 			<false/>
 			<key>Option Key Sends</key>
