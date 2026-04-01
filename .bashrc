@@ -517,6 +517,21 @@ function bu {
     fi
 }
 
+function shells {
+    MANNAME="list installed Unix shells"
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    (
+        basename "$(which scsh 2>/dev/null)"
+
+        ORIGINAL_DIR="$(pwd)" && cd /bin && printf "%s\n" *sh
+
+        brew ls \
+            | command grep -E --color=never 'sh$|nushell' \
+            | command grep -vE 'ssh|trash|hash|cash'
+    ) \
+    | sort
+}
+
 function boi {
     local MANNAME="show outdated Homebrew packages, and prompt to upgrade them"
     brew-update-if-stale
@@ -844,7 +859,7 @@ function gbr {
 }
 
 function ge {
-    g "$@" ~/.emacs.d
+    g "$@" ~/.emacs.d/init.el
 }
 
 function defs {
@@ -4622,3 +4637,4 @@ set +o pipefail
 
 source-if-exists "$HOME/.bashrc.d/macos-apps.bash"
 source-if-exists "$HOME/.site.bash.d/postamble.bash"
+. "$HOME/.cargo/env"
