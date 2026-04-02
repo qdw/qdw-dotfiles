@@ -765,231 +765,22 @@ else
     done
 fi
 
-#### grep settings #sec 9#
+#### grep (or rg, if installed) ## sec 9 ##
 
-## Lowest common denominator between GNU/Linux and macOS:
-## old versions of GNU grep
-
-set -a
-MY_GREP="command grep"
-MY_GREP_OPTIONS="-EIin --color=always"
-GREP_RECURSE="-R"
-GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
-GREEN="32"
-YELLOW="33"
-FILENAME_COLOR="fn=${GREEN}"
-LINE_NUMBER_COLOR="ln=${YELLOW}"
-GREP_COLOR_FLAGS=""
-GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
-set +a
-
-if command-exists rg || command-exists ggrep; then
-    source-if-exists ~/.bashrc.d/grep.bash
-fi
-
-function my-grep {
-    set -o pipefail
-    
-    # When using rg as my grep implementation, I often type -R out of habit,
-    # but rg has no -R flag (and it's recursive by default).
-    # So, if I try to pass that flag to rg, just remove it.
-    local ARGS=()
-    if [[ "$MY_GREP" = "rg" ]]; then
-        for ARG in "$@"; do
-            # FIXME: rewrite this properly, using Bash's builtin getopt
-            if [[ "$ARG" != "-R" ]]; then
-                ARGS+=("$ARG")
-            fi
-        done
-    else
-        ARGS=($@)
-    fi
-
-    $MY_GREP \
-        $MY_GREP_OPTIONS \
-        $GREP_COLOR_FLAGS \
-        $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
-        
-    set +o pipefail
-}
-
-function grep {
-    my-grep "$@"
-}
-
-function gi {
-    my-grep -i "$@"
-}
-
-function grep-terms {
-    check-args 2 varargs 'FILENAME PATTERN [PATTERN ...]' "$@" || return 1
-    local FILENAMES="$1"; shift
-    local REGEX=""
-
-    for TERM in "$@"; do
-        REGEX="${REGEX}(${TERM})|"
-    done
-    
-    # Remove trailing '|'
-    REGEX="${REGEX%|}"
-    
-    # echo "$REGEX" >&2 # for debugging
-    my-grep "$REGEX" $FILENAMES
-}
-
-function g {
-    check-args 1 varargs 'REGEX [PATH1 [PATH2 [...]]]' "$@" || return 1
- 
-    local REGEX="$1"
-    shift
-    if [[ $# -eq 0 ]]; then
-        my-grep -i $GREP_RECURSE "$REGEX" "."
-    else
-        my-grep -i $GREP_RECURSE "$REGEX" "$@"
-    fi
-}
-
-function gbr {
-    check-args 1 varargs 'gbr [ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
-    g \
-        "$@" \
-        ~/.bashr* \
-        ~/.*profile* \
-        ~/.site.bash*
-}
-
-function ge {
-    g "$@" ~/.emacs.d/init.el
-}
-
-function defs {
-    # Show Python function names
-    check-args 0 varargs \
-               '[GREP_ARG_1 [GREP-ARG_2 ...]] [DIRECTORY] # defaults to .' \
-               "$@" \
-        || return 1
-
-    # Get the last argument, and remove it from $@
-    local PTH
-    if [[ $# -ne 0 ]]; then
-        local PTH="${@[$# - 1]}"
-        unset ${@[$# - 1]}
-        echo "PTH: $PTH"
-        echo "remaining args: $@"
-    else
-         PTH="."
-    fi
-    
-    command fd -t f '.py$' \
-        -x command grep -RiE --color=always "$@"  "^[ ]*def[ ]"  "{}" \; \
-        "$PTH"
-}
+source "$QBASHD/grep.bash" && function grep { my-grep "$@" ;}
 
 # grep TypeScript files only
 function tsgrep {
     fdgrep "[.]ts$" "$@"
 }
 
-function grep-settings {
-    # check-args 2 varargs
-    local GREP_SETTINGS_REGEX="$1"
-    shift
-    
-    function file-ext-in {
-        local FILE
-        
-        for EXT in "$@"; do
-            if [[ "$FILE" =~ "[.]${EXT}$" ]]; then
-                return 0
-            fi
-        done
 
-        return 1
-    }
-    
-    local COMMENT_PREFIX
-    for FILE in "$@"; do
-        if file-ext-in 'el' 'l' 's'; then
-            COMMENT_PREFIX=';;;; '
-        elif file-ext-in 'ts' 'js' 'c' 'cpp' 'cxx' 'c++'; then
-            COMMENT_PREFIX='//// '
-        elif file-ext-in 'bash' 'py' 'sh' 'pl'; then
-            COMMENT_PREFIX="#### "
-        else
-            complain "Unrecognized file extension for file '$FILE'"
-            return
-        fi
-    done
+## sec 9 ##
 
-    grep -i \
-        "^${COMMENT_PREFIX}.*(${GREP_SETTINGS_REGEX}.*settings|settings.*${GREP_SETTINGS_REGEX})"
-}
+#### fd
 
-# fip (Filter In Place) - filter lines matching regex from a file,
-# modifying the file in-place to remove those lines. If you specify
-# multiple files, it does this to all of them.
-function fip {
-    # check-args 2 varargs
-    
-    local FIP_REGEX="$1"
-    shift
-    
-    # if [[ "$1" = "-"  ]]; then
-    #     local LINE
-    #     while true; do
-    #         LINE="$(read)"
-    #         if [[ "$LINE" = "" ]]; then
-    
-    for FILE in "$@"; do
-        command grep -vE "$FIP_REGEX" "$FILE" | sponge "$FILE"
-    done
-}
+source "$QBASHD/fd.bash"
 
-# count: recursively grep the specified dirs (or '.', if no dirs specified)
-# for a pattern, then print the number of times that pattern occurs
-# in each matching file. Don't show files with zero matches.
-function count { 
-    command grep -Rc $GREP_EXCLUDE_FLAGS "$@" \
-        | command grep -v ':0$' \
-        | sed -e 's/\(.*\):\(.*\)/\2 \1/' \
-        | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
-}
-
-function count_one_level {
-    local COUNT  PATTERN
-
-    PATTERN="$1"
-    shift
-
-    (for FILE in $@; do
-         COUNT=$(command grep -REio -E $GREP_EXCLUDE_FLAGS --exclude "cdk.out" --exclude "*.js" --exclude "*.json"  "$FILE" | wc -l)
-         echo "$COUNT $FILE"
-    done) \
-    | command grep -vE "^0 " \
-    | sort --reverse --general-numeric-sort
-}
-
-# occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
-function occur {
-    $MY_GREP $GREP_RECURSE --files-with-matches --max-count=1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
-}
-
-# dirs-matching REGEX [DIR ...]
-# Take a list of dirs,
-# and print those whose recursive contents
-# match REGEX (case-insensitive).
-function dirs-matching {
-    check-args 1 varargs 'dirs-matching REGEX [DIR ...]' "$@"
-
-    local REGEX="$1"
-    shift
-    
-    for DIR in "$@"; do
-        if rg -i "$REGEX" "$DIR" >/dev/null 2>&1; then
-            echo "$DIR"
-        fi
-    done
-}
 
 ## Show all ignore patterns in effect for the cwd
 
@@ -1043,54 +834,6 @@ function ignorefiles-which-files-contain-pattern {
 function ignorefiles-show-all-patterns-by-file {
     check-args 0 0 'ignorefiles-show-patterns-by-file' "$@"
     ignorefiles-which-files-contain-pattern "."
-}
-
-function fdd {
-    command fd \
-        --follow \
-        --full-path \
-        --hidden \
-        "$@"
-}
-
-function fd {
-    fdd --color=always "$@" | $PAGER
-}
-
-function gfd {
-    check-args 1 1 'gfd REGEX' "$@" || return 1
-	local GFD_REGEX="$1"
-	(fd -i "$GFD_REGEX"; g -i "$GFD_REGEX") | $PAGER
-}
-
-function fdgrep {
-    # check-args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"; shift    
-    (fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@" \;)
-}
-
-# Recursively search the current working directory for files that don't
-# end in a single newline, and print their names
-function newlineless {
-    fd -t f -x bash -c 'tail -c 1 "$1" | command grep -qvE "^$" && echo "$1"' _ {} \;
-}
-
-function fdoccur {
-    # check-args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"; shift
-    fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
-}
-
-function _file-types {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq \
-        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
-}
-
-function file-type-counts {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq -c \
-        | sort --reverse --general-numeric-sort | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
 }
 
 #### Color settings
@@ -1459,48 +1202,13 @@ function nbsp {
     zero-width-joiner "$@"
 }
 
-#### Pager settings
+#### Pager (less or whatever)
 
-set -a
+source "$QBASHD/pager.bash"
 
-LESS="--RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+#### String manipulation
 
-if [[ "$INSIDE_EMACS" ]]; then
-    # Emacs shell-mode is a dumb terminal, so use special pager settings there.
-    export PAGER="cat"
-    export AWS_PAGER="$PAGER"
-    export GIT_PAGER="$PAGER"
-    export PSQL_PAGER="$PAGER"
-    function fd {
-        fdd "$@"
-    }
-else
-    # If we're a non-dumb terminal, then page fancily,
-    # with the color and pagination options I like.
-    if command -v jless > /dev/null; then
-        # export AWS_PAGER="jless"
-        export AWS_PAGER="bat --language json --style=rule,snip"
-    else
-        export AWS_PAGER="$PAGER"
-    fi
-
-    export PAGER="less"
-    
-    # Show an extra line before each match - useful when running 'git diff'
-    export GIT_PAGER="$PAGER -j 2"
-    
-    export PSQL_PAGER="less --no-init --mouse"
-fi
-
-ACK_PAGER="$PAGER"
-BAT_PAGER="$PAGER"
-MANPAGER="$PAGER"
-
-set +a
-
-#### Pager settings: experimental
-
-export PPA='fmt -s -uw "$COLUMNS" | less'
+source "$QBASHD/string-manipulation.bash"
 
 #### Makefile settings
 
@@ -1800,7 +1508,7 @@ function rm-bucket {
 
 ## FIXME: find a more elegant way
 # (This function depends on the third-party newtab() function;
-# see ~/.bashrc.d/third-party.bash)
+# see $QBASHD/third-party.bash)
 # 
 # te ("TErminal window") - create a new Terminal.app window in the same directory I'm in when I run te.
 # function te {
@@ -2966,47 +2674,14 @@ function pd_encode {
     fi
 }
 
-#### PostgreSQL settings
-##
-##   For additional PostgreSQL-realted settings, see the following files:
-##     ~/.psqlrc*
-##     ~/.pg_service
-##     ~/.pgpass
+#### PostgreSQL
 
-function pg {
-    local  VERSION  PROGRAM_NAME  BINARY_PATH  COMMAND
-    
-    if [[ "$1" ]]; then
-        VERSION="$1"
-        shift
-    else
-        echo "pg: error: missing argument. Usage: pg VERSION [COMMAND] [ARG ...]" >&2
-        return
-    fi
+# For additional PostgreSQL-realted settings, see the following files:
+#    ~/.psqlrc*
+#    ~/.pg_service
+#    ~/.pgpass
 
-    if [[ "$1" ]]; then
-        PROGRAM_NAME="$1"
-        shift
-    else
-        PROGRAM_NAME="psql"
-    fi
-    
-    BINARY_PATH=$(echo $HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/$PROGRAM_NAME)
-    
-    
-    (
-        export PGSERVICE="pg${VERSION}"
-        "$BINARY_PATH" "$@"
-    )
-}
-
-function pg_dump_roles {
-    pg_dumpall --roles-only --no-role-passwords "$@"
-}
-
-function pg_dump_globals_rds {
-    pg_dumpall --globals-only --no-role-passwords "$@"
-}
+source "$HOME/.bashrc.d/postgresql.bash"
 
 declare -Ax pgpasses
 
@@ -3039,34 +2714,8 @@ function pql {
     fi
 }
 
-function qql {
-    check-args \
-        1 \
-        varargs \
-        '"stanza name from pg_service.conf"' [ARGUMENT_TO_PSQL ...] "$@" \
-      || return 1
-
-    local SERVICE="$1"; shift
-
-
-    local PASSWORD
-    #cache# Disable cacheing logic; it's confusing when the password in the hash is wrong
-    #cache# 
-    #cache# if [[ -n ${pgpasses["$SERVICE"]} ]]; then
-    #cache#     PASSWORD=${pgpasses["$SERVICE"]}
-    #cache# else
-    PASSWORD="$("$MY_VIRTUALENV_DIR/qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")"
-
-    if [[ $? -ne 0 ]]; then
-        echo "pql couldn't retrieve the AWS secret for $SERVICE" >&2
-        return 2
-    else
-        PGSERVICE="$SERVICE" PGPASSWORD="$PASSWORD" psql "$@" \
-            && : #cache# pgpasses["$SERVICE"]="$PASSWORD"
-    fi
-}
-
 # replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or psql prompt)
+
 function replication_role {
     if ! which psql; then
         echo ''
@@ -3093,6 +2742,7 @@ function replication_role {
 #     # ^ prints all sections with section headings matching '[.*monolith.*]'
 # 
 # ser - display sections of my ~/.pg_service.conf, or the whole thing
+
 function ser {
     local COLORIZE="bat --language ini"
 
@@ -3224,6 +2874,29 @@ done
 
 function python {
     python3 "$@"
+}
+
+function defs {
+    # Show Python function names
+    check-args 0 varargs \
+               '[GREP_ARG_1 [GREP-ARG_2 ...]] [DIRECTORY] # defaults to .' \
+               "$@" \
+        || return 1
+
+    # Get the last argument, and remove it from $@
+    local PTH
+    if [[ $# -ne 0 ]]; then
+        local PTH="${@[$# - 1]}"
+        unset ${@[$# - 1]}
+        echo "PTH: $PTH"
+        echo "remaining args: $@"
+    else
+         PTH="."
+    fi
+    
+    command fd -t f '.py$' \
+        -x command grep -RiE --color=always "$@"  "^[ ]*def[ ]"  "{}" \; \
+        "$PTH"
 }
 
 #### Aranet4 air quality monitoring settings
@@ -3788,35 +3461,14 @@ function lw { perldoc -l "$1" ;}
 
 # (See http://wiki.github.com/bard/mozrepl/)
 # mz: Use mozrepl to connect to Firefox for some interactive debugging.
+
 function mz { socat READLINE TCP4:localhost:4242 ;}
 
 # rmds: remove a directory, including .DS_Store droppings left by OS X Finder. Fails if the directory contains anything besides .DS_Store.
+
 function rmds {
     rm -fi "$1/.DS_Store"
     rmdir "$1"
-}
-
-function rot13 {
-    echo "$1" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
-}
-        
-
-# Invoke strings(1) safely, because http://www.jwz.org/blog/2014/10/we-live-in-a-magical-future-where-strings-is-exploitable/
-function strings { command strings -a "$@"  | $PAGER ;}
-
-# para: print any paragraph contaning the desired string. A paragraph is defined as a collection of lines followed by an all-blank line (i.e., a newline).
-function para {
-    STRING="$1"; shift
-    awk -v ORS="\n\n" -v RS='' "/$STRING/" "$@"
-}
-
-# Same thing, with line numbers, and a line with only whitespace also
-# marks a paragraph boundary
-function paraln {
-    # check args 1 varargs
-    local PARALN_REGEX="$1"; shift
-    # awk "/$PARALN_REGEX/ {print NR \": \" \$0; f=1} f && NF {print NR \": \" \$0} /^$/ {f=0}" \
-    awk "/$PARALN_REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$PARALN_REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
 }
 
 # FIXME: doesn't work
