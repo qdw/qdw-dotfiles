@@ -3333,7 +3333,7 @@ LUA51_CPPFLAGS="-I${LUA51_BASE}/include"
 
 if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
     set -a
-    RUBYOPT=rubygems
+    # RUBYOPT=rubygems
     RUBY_PATH=$HOMEBREW_ROOT/opt/ruby/bin
     RUBY_LDFLAGS='-L$HOMEBREW_ROOT/opt/ruby/lib'
     RUBY_CPPFLAGS='-I$HOMEBREW_ROOT/opt/ruby/include'
@@ -3351,6 +3351,7 @@ function gemi {
 #### Rust
 
 export RUST_PATH=~/.cargo/bin
+source "$HOME/.cargo/env"
 
 #### Network
 
@@ -4637,4 +4638,4 @@ set +o pipefail
 
 source-if-exists "$HOME/.bashrc.d/macos-apps.bash"
 source-if-exists "$HOME/.site.bash.d/postamble.bash"
-. "$HOME/.cargo/env"
+
