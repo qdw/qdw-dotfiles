@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 ;;; tritium-theme.el --- Fork of the original subatomic-theme
 ;;; for terminals that support only 256 colors
 ;;; (for example, macOS Terminal.app).
@@ -9,7 +11,7 @@
 ;; https://github.com/cryon/subatomic256
 ;; Version: 1.3
 
-;; Futher modified by Quinn Weaver &lt;quinn.weaver@gmail.com&gt;
+;; Heavily modified by Quinn Weaver &lt;quinn.weaver@gmail.com&gt;
 ;; https://github.com/qdw/tritium-theme
 
 ;; This file is free software: you can redistribute it and/or modify
@@ -25,28 +27,30 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this file.  If not, see http://www.gnu.org/licenses/
 
-;; (defvar black)
-;; (defvar bright-black)
-;; (defvar red)
-;; (defvar bright-red)
-;; (defvar green)
-;; (defvar bright-green)
-;; (defvar yellow)
-;; (defvar bright-yellow)
-;; (defvar blue)
-;; (defvar bright-blue)
-;; (defvar magenta)
-;; (defvar bright-magenta)
-;; (defvar cyan)
-;; (defvar bright-cyan)
-;; (defvar white)
-;; (defvar bright-white)
-
+;; (defvar            black)
+;; (defvar     bright-black)
+;; (defvar              red)
+;; (defvar       bright-red)
+;; (defvar            green)
+;; (defvar     bright-green)
+;; (defvar           yellow)
+;; (defvar    bright-yellow)
+;; (defvar             blue)
+;; (defvar      bright-blue)
+;; (defvar          magenta)
+;; (defvar   bright-magenta)
+;; (defvar             cyan)
+;; (defvar      bright-cyan)
+;; (defvar            white)
+;; (defvar     bright-white)
+;; (defvar extended-bright-black "#676767")
+;; (defvar extended-bright-red "#800000")
+;; (defvar extended-bright-white "#a6acb9"))
 
 (cond
 
   ((or (string= "truecolor" (getenv "COLORTERM"))
-      (string= "24bit" (getenv "COLORTERM")))
+       (string= "24bit" (getenv "COLORTERM")))
 
    (setq
            black  "#000000"  ;; in iTerm2, displayed as the terminal's bg color
@@ -69,30 +73,35 @@
    (setq
 extended-bright-black "#676767"
 extended-bright-red "#800000"
-extended-bright-white "#a6acb9"))
+extended-bright-white "#a6acb9")))
   
   ;;; For terminals that support only 256 colors
   ;;; (i.e., almost every other terminal in use today)
-   ('t 
-   (setqu
-             black  "#000000"  ;;  16  Terminal emulator's ANSI black
-             black  "color-16" ;;   0  Terminal emulator's background
-      bright-black  "#5f5f5f"  ;;  59  Grey37
-               red  "#af5f00"  ;; 130  DarkOrange3
-        bright-red  "#ff7f00"  ;;  xx  DarkOrange1  ;; no X11 name
-             green  "#008700"  ;;  28  Green4
-      bright-green  "#00ff00"  ;;  46  Green1
-            yellow  "#875fff"  ;;  99  SlateBlue1   ;; actually purple
-     bright-yellow  yellow     ;;  99  SlateBlue1   ;; actually purple
-              blue  "#00afff"  ;;  39  DeepSkyBlue1
-       bright-blue  blue       ;;  39  DeepSkyBlue1
-           magenta  "#af00af"  ;; 127  Magenta3
-    bright-magenta  "#ff87ff"  ;; 213  Orchid1
-              cyan  "#00af87"  ;;  36  DarkCyan
-       bright-cyan  cyan       ;;  36  DarkCyan
-             white  "#949494"  ;; 246  Grey58
-      bright-white  white      ;; 246  Grey58
-      ))
+;;    ('t 
+;;    (setq
+;;              black  "#000000"  ;;  16  Terminal emulator's ANSI black
+;;              black  "color-16" ;;   0  Terminal emulator's background
+;;       bright-black  "#5f5f5f"  ;;  59  Grey37
+;;                red  "#af5f00"  ;; 130  DarkOrange3
+;;         bright-red  "#ff7f00"  ;;  xx  DarkOrange1  ;; no X11 name
+;;              green  "#008700"  ;;  28  Green4
+;;       bright-green  "#00ff00"  ;;  46  Green1
+;;             yellow  "#875fff"  ;;  99  SlateBlue1   ;; actually purple
+;;      bright-yellow  yellow     ;;  99  SlateBlue1   ;; actually purple
+;;               blue  "#00afff"  ;;  39  DeepSkyBlue1
+;;        bright-blue  blue       ;;  39  DeepSkyBlue1
+;;            magenta  "#af00af"  ;; 127  Magenta3
+;;     bright-magenta  "#ff87ff"  ;; 213  Orchid1
+;;               cyan  "#00af87"  ;;  36  DarkCyan
+;;        bright-cyan  cyan       ;;  36  DarkCyan
+;;              white  "#949494"  ;; 246  Grey58
+;;       bright-white  white      ;; 246  Grey58
+;;       )
+
+;;    (setq 
+;; extended-bright-black bright-black
+;; extended-bright-red "#800000"
+;; extended-bright-white "#a6acb9"))
  
   ;;; Incomplete: for terminals that support only 16 colors
 ;; ((condition-1)
@@ -113,10 +122,15 @@ extended-bright-white "#a6acb9"))
 ;;     bright-cyan  bright-black    ?  ANSI bright-black
 ;;           white  ????       ;;   ?
 ;;    bright-white  white      ;;   ?
-;;  ))
+;;  )
+;; 
+;; (setq
+;; extended-bright-black bright-black
+;; extended-bright-red bright-red
+;; extended-bright-white bright-white))
 
-  ;;; Incomplete: for terminals that support only 8 colors
-;; ((condition-2)
+;;; Incomplete: for terminals that support only 8 colors
+;; (('t)
 ;; (setq
 ;;           black  "#000000"  ;;   0  ANSI black
 ;;     bright-black white
@@ -134,366 +148,25 @@ extended-bright-white "#a6acb9"))
 ;;     bright-cyan cyan
 ;;           white  ????       ;;   ?
 ;;    bright-white  white
-;;  ))
-) ;; cond
-
-;; Set ANSI colors (as shown in *shell* == shell-mode sessions)
+;;  )
+;;    (setq 
+;; extended-bright-black bright-black
+;; extended-bright-red bright-red
+;; extended-bright-white bright-white))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (setopt ansi-color-bold-is-bright 't)
 
-(dolist (prefix '("" "bright-"))
-  (dolist (c '("black"
-               "red"
-               "green"
-               "yellow"
-               "blue"
-               "magenta"
-               "cyan"
-               "white"))
-    (let* ((color-name (concat prefix c))
-           (desired-hex-value (symbol-value (intern color-name)))
-
-           (ansi-color-name (concat "ansi-color-" color-name))
-           (ansi-color-symbol (intern ansi-color-name)))
-      
-      (set ansi-color-symbol desired-hex-value)
-      (face-spec-set ansi-color-symbol `((t (:foreground ,desired-hex-value)))))))
-
-
-;; Then modify ANSI black so that it's visible against a true black
-;; background (#000000). This doesn't change the global `black` var,
-;; only `ansi-color-black`.
-
-(set 'ansi-color-bright-black "#0000dd")
-(set 'ansi-color-black "#333333") ;; dark grey
-
-(face-spec-set 'ansi-color-black `((t (:foreground ,ansi-color-black))))
-(face-spec-set 'ansi-color-bright-black `((t (:foreground ,ansi-color-bright-black))))
-
 (deftheme tritium
-  "tritium emacs theme")
-
-;; sh-script-mode clobbers our faces whenever we open a *sh file,
-;; so add a hook that restores them.
-  
-(defun tritium-apply-sh-script-mode-faces ()
-  (interactive)
-  (font-lock-mode -1)
-  
-  (custom-set-faces
-   `(sh-quoted-exec
-     ((t (:foreground ,bright-magenta))))
-   
-   `(sh-font-lock-quoted-subshell
-     ((t (:foreground ,bright-magenta))))
-   
-   `(sh-heredoc
-     ((t (:foreground ,green :bold nil)))))
-  
-  (font-lock-mode +1))
-
-(with-eval-after-load 'sh-script
-  (tritium-apply-sh-script-mode-faces))
+  "tritium, a neon theme that works with many color depths and temperatures")
 
 (custom-theme-set-faces
    'tritium
-   
-   ;;;; default stuff
-   
-   `(cursor
-      ((t (:background ,bright-red))))
-
-   `(default
-      ((t (:background ,black :foreground ,white))))
-
-   `(forbidden-whitespace
-      ((t (:background ,bright-green :foreground ,black))))
-
-   `(fringe
-     ((t (:background ,black))))
-
-   `(vertical-border
-     ((t (:background ,black))))
-
-   `(region
-     ((t (:background ,cyan :foreground ,black))))
-
-   `(show-paren-match-face
-     ((t (:background ,blue :foreground ,black :bold nil))))
-
-   `(show-paren-mismatch-face
-     ((t (:background magenta :foreground ,black :bold nil))))
-
-   `(isearch
-     ((t (:background ,bright-yellow :foreground ,black :bold nil))))
-
-   `(isearch-fail
-     ((t (:background ,magenta :foreground ,black :bold nil))))
-
-   `(lazy-highlight
-     ((t (:background ,cyan :foreground ,black :bold nil))))
-
-   `(query-replace
-     ((t (:inherit isearch))))
-
-   `(minibuffer-prompt
-     ;; ((t (:foreground ,bright-magenta))))
-     ((t (:foreground ,yellow))))
-
-   `(header-line
-     ((t (:background ,black :foreground ,white :foreground ,white))))
-
-   `(hl-line
-     ((t (:background ,black))))
-
-   `(highlight-current-line-face
-     ((t (:inherit hl-line))))
-
-   `(powerline-active1
-     ((t (:background ,bright-black))))
-
-   `(powerline-active2
-     ((t (:background ,bright-black :foreground ,white))))
-
-   `(powerline-inactive1
-     ((t (:background ,black :foreground ,white :foreground ,white))))
-
-   `(powerline-inactive2
-     ((t (:background ,black :foreground ,white))))
-
-   `(escape-glyph
-     ((t (:foreground ,bright-magenta))))
-
-   `(link
-     ((t (:foreground ,yellow :underline t))))     
-   
-   ;;;; customize
-
-   `(widget-field
-     ((t (:foreground ,black :background ,bright-red))))
-     
-   ;;;; window dressing (including the mode-line)
-   
-   ;; When you're in display-line-numbers-mode,
-   ;; this is the face in which line numbers
-   ;; are displayed to the left of your code
-   `(line-number
-     ((t (:foreground ,bright-black))))
-     
-   `(diredp-mode-line-marked
-      ((t (:foreground ,blue))))
-
-   `(diredp-mode-line-flagged
-     ((t (:foreground ,yellow))))
-     
-   `(mode-line
-     ((t (:foreground ,blue :background ,bright-black))))
-
-   `(mode-line-inactive
-     ((t (:foreground ,cyan :background ,bright-black))))
-     
-   ;;;; font lock
-
-   `(font-lock-builtin-face
-    ((t ((:foreground ,blue)))))
-   
-   `(font-lock-comment-delimiter-face
-     ((t (:foreground ,cyan))))
-     
-   `(font-lock-comment-face
-     ((t (:foreground ,red))))
-
-   `(font-lock-constant-face
-     ((t (:foreground ,bright-red))))
-
-   `(font-lock-delimiter-face
-     ((t (:foreground ,bright-cyan))))
-     
-   `(font-lock-doc-face
-     ((t (:foreground ,magenta))))
-
-   `(font-lock-doc-markup-face
-     ((t (:foreground ,bright-cyan))))
-     
-   `(font-lock-function-name-face
-     ((t (:foreground ,blue))))
-
-   `(font-lock-function-call-face
-     ((t (:foreground ,blue))))   
-     
-   `(font-lock-keyword-face
-     ((t (:foreground ,yellow))))
-
-   `(font-lock-preprocessor-face
-     ((t (:foreground ,green))))
-     
-   `(font-lock-property-face
-     ((t (:foreground ,bright-cyan))))     
-
-   `(font-lock-property-use-face
-     ((t (:foreground ,green))))
-
-   `(font-lock-punctuation-face
-     ((t (:foreground ,yellow))))
-     
-   `(font-lock-string-face
-     ((t (:foreground ,green))))
-
-   `(font-lock-type-face
-     ((t (:foreground ,magenta))))
-
-   `(font-lock-variable-name-face
-     ;; ((t (:foreground ,magenta))))
-     ((t (:inherit default-face))))
-
-   `(font-lock-variable-use-face
-     ((t (:inherit font-lock-variable-name-face))))
-
-   `(font-lock-warning-face
-     ((t ((:foreground ,bright-magenta
-                       :underline (:style wave :color bright-red))))))
-     
-   `(sh-quoted-exec-face
-     ((t ((:foreground ,bright-black)))))
-     
-   `(sh-font-lock-quoted-subshell-face
-     ((t ((:foreground ,bright-black)))))
-     
-   ;;;; flycheck/flymake
-   
-   `(flycheck-error
-     ((t (:underline ,red))))
-
-   `(flymake-errline
-     ((t (:underline ,red))))
-
-   `(flymake-warnline
-     ((t (:underline ,bright-magenta))))
-
-   ;;;; imenu
-
-   `(imenu-list-entry-face-0
-     ((t (:inherit font-lock-variable-name-face))))
-
-   `(imenu-list-entry-subalist-face-0
-     ((t (:inherit font-lock-keyword-face))))
-
-   `(imenu-list-entry-face-1
-     ((t (:inherit font-lock-function-name-face))))
-
-   ;;;; eshell
-
-   `(eshell-ls-clutter
-     ((t (:inherit font-lock-comment-face))))
-
-   `(eshell-ls-executable
-     ((t (:foreground ,bright-magenta))))
-
-   `(eshell-ls-directory
-     ((t (:foreground ,blue :bold nil))))
-
-   `(eshell-ls-archive
-     ((t (:foreground ,red))))
-
-   `(eshell-ls-backup
-     ((t (:inherit font-lock-comment-face))))
-
-   `(eshell-ls-missing
-     ((t (:inherit font-lock-warning-face))))
-
-   `(eshell-ls-unreadable
-     ((t (:inherit font-lock-warning-face))))
-
-   `(eshell-ls-symlink
-     ((t (:inherit font-lock-builtin-face))))
-
-   `(eshell-prompt
-     ((t (:inherit minibuffer-prompt))))
-
-   `(eshell-ls-backup
-     ((t (:foreground ,red))))
-
-   `(eshell-ls-product
-     ((t (:inherit default))))
-
-   `(eshell-ls-readonly
-     ((t (:inherit font-lock-comment))))
-
-   `(eshell-ls-special
-     ((t (:foreground ,bright-magenta))))
-     
-   ;;;; sh-mode
-   
-   `(sh-heredoc
-     ((t (:foreground ,green :bold nil))))
-
-   ;;;; calendar
-
-   `(calendar-today-face
-     ((t (:foreground ,bright-magenta :bold nil))))
-
-   `(holiday-face
-     ((t (:foreground ,bright-green))))
-
-   `(diary-face
-     ((t (:foreground ,red))))
-
-   ;;;; erc
-
-   `(erc-default-face
-     ((t (:inherit default))))
-
-   `(erc-current-nick-face
-     ((t (:inherit font-lock-keyword-face))))
-
-   `(erc-action-face
-     ((t (:foreground ,bright-magenta))))
-
-   `(erc-dangerous-host-face
-     ((t (:inherit font-lock-warning-face))))
-
-   `(erc-highlight-face
-     ((t (:weight normal))))
-
-   `(erc-direct-msg-face
-     ((t (:foreground ,bright-magenta))))
-
-   `(erc-nick-msg-face
-     ((t (:foreground ,blue))))
-
-   `(erc-fool-face
-     ((t (:inherit font-lock-comment-face))))
-
-   `(erc-input-face
-     ((t (:inherit default))))
-
-   `(erc-error-face
-     ((t (:inherit font-lock-warning-face))))
-
-   `(erc-keyword-face
-     ((t (:inherit font-lock-keyword-face))))
-
-   `(erc-nick-default-face
-     ((t (:inherit default))))
-
-   `(erc-prompt-face
-     ((t (:inherit eshell-prompt))))
-
-   `(erc-notice-face
-     ((t (:foreground ,bright-magenta))))
-
-   `(erc-timestamp-face
-     ((t (:inherit font-lock-comment-face))))
-
-   `(erc-pal-face
-     ((t (:foreground ,bright-magenta))))
-
-   ;;;; highlight-symbol
-
-   `(highlight-symbol-face
-     ((t (:background ,black))))
 
    ;;;; diff
+
+   ;; `(diff-file-header
+   ;;   ((t (:background ,bright-magenta :foreground ,black))))   
 
    `(diff-file-header
      ((t (:background ,bright-magenta :foreground ,black))))
@@ -502,19 +175,19 @@ extended-bright-white "#a6acb9"))
      ((t (:inherit default :foreground ,blue))))
 
    `(diff-indicator-changed
-     ((t (:foreground ,bright-magenta))))
+     ((t (:foreground ,yellow))))
 
    `(diff-changed
-     ((t (:foreground ,red))))
+     ((t (:foreground ,yellow))))
 
    `(diff-indicator-removed
-    ((t (:foreground ,red))))
+    ((t (:foreground ,extended-bright-red))))
 
    `(diff-removed
-     ((t (:foreground ,"DarkOrange1"))))
+     ((t (:foreground ,extended-bright-red))))
 
    `(diff-indicator-added
-     ((t (:foreground ,bright-magenta))))
+     ((t (:foreground ,bright-green))))
 
    `(diff-added
      ((t (:foreground ,green))))
@@ -523,13 +196,13 @@ extended-bright-white "#a6acb9"))
      ((t (:foreground ,white))))
 
    `(diff-refine-change
-     ((t (:background ,magenta))))
+     ((t (:background ,yellow))))
    
    `(diff-refine-removed
-     ((t (:background ,bright-red))))
+     ((t (:foreground ,extended-bright-red))))
 
    `(diff-refine-added
-     ((t (:background ,bright-green))))
+     ((t (:foregound ,bright-green))))
      
    ;;;; git
    
@@ -646,10 +319,10 @@ extended-bright-white "#a6acb9"))
       ((t (:foreground ,white))))
 
     `(outline-7
-      ((t (:foreground ,ansi-color-black))))
+      ((t (:foreground ,black) :background ,bright-black)))
 
     `(outline-8
-      ((t (:foreground ,ansi-color-bright-black))))
+      ((t (:foreground ,bright-black))))
 
     ;;;; org-mode
     
