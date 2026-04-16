@@ -2,8 +2,6 @@
 ####   ./bash-metaprogramming.bash
 ####   ./grep.bash
 
-#### Customizations for fd itself
-
 function fdd {
     command fd \
         --follow \
@@ -14,13 +12,6 @@ function fdd {
 
 function fd {
     fdd --color=always "$@" | $PAGER
-}
-
-#### fd-plus-grep combos
-
-# Same as fdgrep, but search TypeScript files only
-function tsgrep {
-    fdgrep "[.]ts$" "$@"
 }
 
 function gfd {
@@ -47,15 +38,14 @@ function fdoccur {
     fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
 }
 
-function _file-types { #FIXME: don't hard-code extensions
+function _file-types {
     fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
         | uniq \
         | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
 }
 
-function file-type-counts { #FIXME: don't hard-code extensions
+function file-type-counts {
     fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
         | uniq -c \
-        | sort --reverse --general-numeric-sort \
-        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+        | sort --reverse --general-numeric-sort | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
 }

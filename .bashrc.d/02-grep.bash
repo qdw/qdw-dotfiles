@@ -85,7 +85,7 @@ function grep-terms {
     REGEX="${REGEX%|}"
     
     # echo "$REGEX" >&2 # for debugging
-    grep "$REGEX" $FILENAMES
+    my-grep "$REGEX" $FILENAMES
 }
 
 function g {
@@ -94,9 +94,9 @@ function g {
     local REGEX="$1"
     shift
     if [[ $# -eq 0 ]]; then
-        grep -i $GREP_RECURSE "$REGEX" "."
+        my-grep -i $GREP_RECURSE "$REGEX" "."
     else
-        grep -i $GREP_RECURSE "$REGEX" "$@"
+        my-grep -i $GREP_RECURSE "$REGEX" "$@"
     fi
 }
 

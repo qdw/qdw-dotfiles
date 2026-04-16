@@ -875,11 +875,11 @@ else
 fi
 
 # source-section "02-grep.bash" #### grep (or rg, if installed). Lots of customizations.
-source-section "grep.bash"
+source-section "02-grep.bash"
 
 
 # source-section "03-fd.bash" #### fd, a fast, modern replacement for find(1)
-source-section "fd.bash"
+source-section "03-fd.bash"
 
 source-section "dot-ignore.bash" #### helper functions for the .ignore files honored by git, fd, and rg
 
