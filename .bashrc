@@ -1,10 +1,16 @@
 umask 0022
+
 set -o pipefail
 
-QBASHD="$HOME/.bashrc.d" # checked into git
 QSITED="$HOME/.site.bash.d" # not checked into git; specific to this machine
 
-source "$QBASHD/00-bash-metaprogramming.bash"
+QBASHD="$HOME/.bashrc.d" # checked into git
+function source-section {
+    source "$QBASHD/$1"
+}
+
+
+source-section "00-bash-metaprogramming.bash" #### Bash helper funcs, arg checking, functional programming"
 
 export MY_DEBUG=""
 export MY_VERBOSE_DEBUG_BASH=""
@@ -563,10 +569,11 @@ function boi {
     fi
 }
 
-#### OS-specific convenience functions #sec 8#
-
+#### OS-specific settings for macOS #sec 8#
 if on-macos; then
-    source-if-exists "$HOME/.bashrc.d/macos-light-and-dark.bash"
+    source-section "macos-apps.bash" #### Shortcuts for macOS apps, e.g. Mail, Mail.app, Finder, Finder.app
+
+    source-section "macos-light-and-dark.bash" #### Set light/dark mode in all apps, web pages, and other contexts
 
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
@@ -643,7 +650,12 @@ if on-macos; then
     ## which(1) settings: extend it to make it work for macOS .app bundles
     
     function macwhich {
-        local -a DIRS_TO_SEARCH=("$HOME/Applications" "/Applications" "/Applications/Utilities")
+        local -a DIRS_TO_SEARCH=(
+            "$HOME/Applications"
+            "/Applications"
+            "/Applications/Utilities"
+            "/System/Applications"
+        )
         
         check-args 1 1 'FOO.app' "$@" || return 1
         local APP_NAME="$1"
@@ -681,56 +693,151 @@ Maybe you meant 'which \"$APP_NAME\"?'"
             type -P "$PROGRAM_NAME"
         fi
     }
-    
-    # Open a Mac app by name, e.g. 'opa Steam.app'
 
-    function opa {
-        check-args 1 1 'FOO.app' "$@" || return 1
-        local APP_NAME="$1"
-        
-        local FULL_PATH="$(which "$APP_NAME")"
-        if [[ $? -eq 0 ]]; then return; fi
-        open "$APP_DIR"
+    function darwin-version {
+        uname -r
     }
-    
-    function macos-codename {
-        check-args 0 0 "" "$@" || return 1
-        local DARWIN_VERSION="$(uname -r)"
-        macos-codename-for-darwin-version "$DARWIN_VERSION"
+
+    function macos-version {
+        echo "$(sw_vers -productName) $(sw_vers -productVersion)"
     }
-    
-    function macos-codename-for-darwin-version {
-        check-args 1 1 'DARWIN_VERSION_NUMBER # example: 24.6.5' "$@" \
+
+    function macos-version-for-darwin-version {
+        check-args 0 2 '[--codename-only | --number-only] DARWIN_VERSION_NUMBER # example: 24.6.5' "$@" \
             || return 1
 
-        local DARWIN_VERSION="$1"
-        local MAJOR_VERSION=${DARWIN_VERSION%%.*}
+        local DARWIN_VERSION CODENAME MACOS MACOSVER
+        if [[ $# -eq 0 ]]; then
+            DARWIN_VERSION="$(darwin-version)" # the currently running version
+        else
+            DARWIN_VERSION="${@: -1}"
+        fi
+        
+        local DARWIN_MAJOR_VERSION="${DARWIN_VERSION%%.*}"
+        case "$DARWIN_MAJOR_VERSION" in
+            "1.3") CODENAME="Cheetah"
+                   MACOS="Mac OS X"
+                   MACOSVER="10.0"
+                   ;;
+            "1.4"|"1.5") CODENAME="Puma"
+                         MACOS="Mac OS X"
+                         MACOSVER="10.1"
+                         ;;
+            "6") CODENAME="Jaguar"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.2"
+                 ;;
+            "7") CODENAME="Panther"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.3"
+                 ;;
+            "8") CODENAME="Tiger"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.4"
+                 ;;
+            "9") CODENAME="Leopard"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.5"
+                 ;;
+           "10") CODENAME="Snow Leopard"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.6"
+                 ;;
+           "11") CODENAME="Lion"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.7"
+                 ;;
+           "12") CODENAME="Mountain Lion"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.8"
+                 ;;
+           "13") CODENAME="Mavericks"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.9"
+                 ;;
+           "14") CODENAME="Yosemite"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.10"
+                 ;;
+           "15") CODENAME="El Capitan"
+                 MACOS="Mac OS X"
+                 MACOSVER="10.11"
+                 ;;
+           "16") CODENAME="Sierra"
+                 MACOS="macOS"
+                 VERSION="10.12"
+                 ;;
+           "17") CODENAME="High Sierra"
+                 MACOS="macOS"
+                 VERSION="10.13"
+                 ;;
+           "18") CODENAME="Mojave"
+                 MACOS="macOS"
+                 VERSION="10.14"
+                 ;;
+           "19") CODENAME="Catalina"
+                 MACOS="macOS"
+                 VERSION="10.15"
+                 ;;
+           "20") CODENAME="Big Sur"
+                 MACOS="macOS"
+                 VERSION="11"
+                 ;;
+           "21") CODENAME="Monterey"
+                 MACOS="macOS"
+                 VERSION="12"
+                 ;;
+           "22") CODENAME="Ventura"
+                 MACOS="macOS"
+                 VERSION="13"
+                 ;;
+           "23") CODENAME="Sonoma"
+                 MACOS="macOS"
+                 VERSION="14"
+                 ;;
+           "24") CODENAME="Sequoia"
+                 MACOS="macOS"
+                 VERSION="15"
+                 ;;
+           "25") CODENAME="Tahoe"
+                 MACOS="macOS"
+                 VERSION="26"
+                 ;;
+              *) err "unrecognized Darwin version '${DARWIN_MAJOR_VERSION}'; update this bash function"
+                 return 2
+                 ;;
+        esac
 
-        case $MAJOR_VERSION in
-            5)  echo "Cheetah (Mac OS X 10.0)"; return ;;
-            6)  echo "Puma (Mac OS X 10.1)"; return ;;
-            7)  echo "Jaguar (Mac OS X 10.2)"; return ;;
-            8)  echo "Panther (Mac OS X 10.3)"; return ;;
-            9)  echo "Tiger (Mac OS X 10.4)"; return ;;
-            10) echo "Leopard (Mac OS X 10.5)"; return ;;
-            11) echo "Snow Leopard (Mac OS X 10.6)"; return ;;
-            12) echo "Lion (Mac OS X 10.7)"; return ;;
-            13) echo "Mountain Lion (Mac OS X 10.8)"; return ;;
-            14) echo "Mavericks (Mac OS X 10.9)"; return ;;
-            15) echo "Yosemite (Mac OS X 10.10)"; return ;;
-            16) echo "El Capitan (Mac OS X 10.11)"; return ;;
-            17) echo "Sierra (macOS 10.12)"; return ;;
-            18) echo "High Sierra (macOS 10.13)"; return ;;
-            19) echo "Mojave (macOS 10.14)"; return ;;
-            20) echo "Catalina (macOS 10.15)"; return ;;
-            21) echo "Big Sur (macOS 11)"; return ;;
-            22) echo "Monterey (macOS 12)"; return ;;
-            23) echo "Ventura (macOS 13)"; return ;;
-            24) echo "Sonoma (macOS 14)"; return ;;
-            25) echo "Sequoia (macOS 15)"; return ;;
-            26) echo "Tahoe (macOS 16)"; return ;;
-             *) echo "I dunno the codename for macOS ${MAJOR_VERSION}.*.*";
-                return 2;;
+        if [[ $# -eq 0 ]]; then
+            MACOS="$(sw_vers --productName)"
+            VERSION="$(sw_vers --productVersion)"
+        fi
+
+        _format-macos_version "$CODENAME" "$MACOS" "$MACOSVER"
+    }
+
+    function _format-macos-version {
+        check-args \
+            3 4 \
+            '[--codename-only | --macos-only] MACOS CODENAME VERSION' "$@" \
+          || return 1
+
+        local FLAG MACOS CODENAME VERSION
+
+        if [[ $# -eq 3 ]]; then
+            FLAG="$1"
+            shift
+        fi
+
+        MACOS="$1"
+        CODENAME="$1"
+        VERSION="$2"
+
+        case "$FLAG" in
+            "") echo "$CODENAME ($MACOS $VERSION)";;
+            "--codename-only") echo "$CODENAME";;
+            "--macos-only") echo "$MACOS $VERSION";;
+            *) err "invalid option '$FLAG'"; return 1;;
         esac
     }
     
@@ -741,9 +848,9 @@ Maybe you meant 'which \"$APP_NAME\"?'"
             command uname "$@"
         fi
     }
-else
-    ## OS-specific settings for Linux and other non-macOS Unices
 
+#### OS-specific settings for Linux and other non-macOS Unices
+else
     function which {
         type -P "$@"
     }
@@ -759,89 +866,66 @@ else
     for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail
     do
         BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
-        if [[ -f "$BREWED_GNU" ]]; then
-            exalias "$GNU_COMMAND" "$BREWED_GNU"
+        if [[ -e "$BREWED_GNU" ]]; then
+            # FIXME: this code is not being reached, somehow
+            eval "function $GNU_COMMAND { $BREWED_GNU \"$@\" ;}"
+            # exalias "$GNU_COMMAND" "$BREWED_GNU"
         fi
     done
 fi
 
-#### grep (or rg, if installed) ## sec 9 ##
+# source-section "02-grep.bash" #### grep (or rg, if installed). Lots of customizations.
+source-section "grep.bash"
 
-source "$QBASHD/grep.bash" && function grep { my-grep "$@" ;}
 
-# grep TypeScript files only
-function tsgrep {
-    fdgrep "[.]ts$" "$@"
+# source-section "03-fd.bash" #### fd, a fast, modern replacement for find(1)
+source-section "fd.bash"
+
+source-section "dot-ignore.bash" #### helper functions for the .ignore files honored by git, fd, and rg
+
+#### Terminal emulator settings
+
+function strip_control_characters_from {
+    local STRING
+    if [[ $# -eq 1 ]]; then
+        echo "$(tr -cd  "[:print:]"  "$STRING")"
+    else
+        echo "strip_control_characters_from: error: wrong number of arguments. Usage: strip_control_characters_from STRING" >&2
+    fi
 }
 
+# title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
+# This works by using a special ANSI-like escape code that not all terminal
+# emulators support.
 
-## sec 9 ##
-
-#### fd
-
-source "$QBASHD/fd.bash"
-
-
-## Show all ignore patterns in effect for the cwd
-
-function ignorefiles-helper {
-    # Run command on any ignorefiles in our home dir
-
-    check-args 1 varargs 'ignorefiles-helper "COMMAND TO RUN ON EACH IGNOREFILE"' "$@"
-    for FILE in "$HOME/.gitignore" "$HOME/.ignore"; do
-        if [[ -f "$FILE" ]]; then
-            eval "$@" "$FILE"
-        fi
-    done
-    
-    # Walk up the pwd running the command on any ignorefiles
-    # in any enclosing dirs (except our home dir, which we already did)
-    
-    local DIR="."
-    while [[ "$(realpath "$DIR")" != "/" ]]; do
-        for FILE in "$DIR/.gitignore" "$DIR/.ignore"; do
-            if [[ -f "$FILE" ]]; then
-                if [[ "$(realpath "$FILE")" != "$HOME/$FILE" ]]; then
-                    eval "$@" "$FILE"
-                fi
-            fi
-        done
-        
-        DIR="$DIR/.."
-    done
+function title {
+    echo -ne "\033]2;" "$1" "\007"
 }
 
-function ignorefiles-show-all-patterns {
-    check-args 0 0 'ignore-patterns-show-all' "$@"
-    ignorefiles-helper "cat" \
-        | command grep -vE '^[ ]*[#]' \
-        | command grep -vE '^[ ]*$' \
-        | sort -u \
-        | $PAGER
+#### iTerm2-specific terminal settings
+
+# See https://iterm2.com/documentation-captured-output.html
+function cl {
+    printf "\e]1337;ClearCapturedOutput\e\\"
 }
 
-function ignorefiles-list {
-    check-args 0 0 'ignorefiles' "$@"
-    ignorefiles-helper "echo" | sort | $PAGER
+function activate-iTerm2-integration {
+    # Enable "iTerm2 integration," that is, a bunch of fancy features
+    # specific to the iTerm2 terminal emulator (example: click-to-download
+    # over ssh plus lots more).
+    #
+    # It would slow down shell startup considerably if I automatically
+    # sourced this code, so I've separated it into a function that you
+    # can call explicitly when you want it.
+    my-source ~/.iterm2_shell_integration.bash
 }
 
-function ignorefiles-which-files-contain-pattern {
-    check-args 1 varargs 'ignorefiles-which-files-contain-pattern GREP_ARGUMENTS' "$@"
-    local REGEX="$1"
-    ignorefiles-helper command grep --color=auto -H -E "$@"
-}
-
-function ignorefiles-show-all-patterns-by-file {
-    check-args 0 0 'ignorefiles-show-patterns-by-file' "$@"
-    ignorefiles-which-files-contain-pattern "."
-}
-
-#### Color settings
+#### Terminal color settings
 
 export COLORTERM="truecolor"
 export CLICOLOR=1
 
-## ANSI SGR 4-bit color codes
+#### Convenience functions for printing ANSI SGR 4-bit color codes
 
 set -a
 QANSI='\033['
@@ -898,7 +982,7 @@ function bash-color-test-pattern {
 }
 
 # bnw (Black 'n' White): remove non-printable chars,
-# such as ANSI color codes
+# such as ANSI color codes. Works as a filter, e.g. 'git diff a b | bnw'
 
 function bnw {
     while IFS="" read -r LINE; do
@@ -916,6 +1000,7 @@ function bnw {
 # Take a hex triplet, and print it in the indicated color.
 # Requires a terminal that supports (ANSI SGR) 24-bit color,
 # a.k.a. true color
+
 function hex {
     if [[ $# -ne 1 ]]; then
         err "Wrong number of arguments. Usage: hex RRGGBB"
@@ -1257,16 +1342,6 @@ function mistral {
     Mistral-7B-Instruct-v0.3.Q4_0-ollama "$@"
 }
 
-if on-macos; then
-    function clod {
-        /Applications/Firefox.app/Contents/MacOS/firefox \
-            --no-remote \
-            -P "Claude" \
-            --new-window "claude.ai/chat" \
-            &
-    }
-fi
-
 # # Tell man to display pages in color (it uses the deprecated Termcap system)
 # set -a
 # # Section headings? (bold orange)
@@ -1539,39 +1614,6 @@ function update_terminal_cwd {
 #     printf '\e]7;%s\a' "$PWD_URL" > /dev/null
 # }
 
-#### Terminal emulator settings
-
-function strip_control_characters_from {
-    local STRING
-    if [[ $# -eq 1 ]]; then
-        echo "$(tr -cd  "[:print:]"  "$STRING")"
-    else
-        echo "strip_control_characters_from: error: wrong number of arguments. Usage: strip_control_characters_from STRING" >&2
-    fi
-}
-
-# title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
-# This works by using a special ANSI-like escape code that not all terminal
-# emulators support.
-function title { echo -ne "\033]2;" "$1" "\007" ;}
-
-## iTerm2 settings
-
-# See https://iterm2.com/documentation-captured-output.html
-function cl { printf "\e]1337;ClearCapturedOutput\e\\" ;}
-
-function activate-iTerm2-integration {
-    # Enable "iTerm2 integration," that is, a bunch of fancy features
-    # specific to the iTerm2 terminal emulator (example: click-to-download
-    # over ssh plus lots more).
-    #
-    # It would slow down shell startup considerably if I automatically
-    # sourced this code, so I've separated it into a function that you
-    # can call explicitly when you want it.
-    my-source ~/.iterm2_shell_integration.bash
-}
-
-
 #### Other macOS-specific settings
 
 function mac-globalize-fonts {
@@ -1721,11 +1763,13 @@ if command-exists rsync; then
     }
 fi
 
-### ls settings
+#### ls settings
 
-## LS_COLORS is specific to GNU ls (macOS's built-in BSD ls uses LSCOLORS instead).
+# Note: LS_COLORS is specific to GNU ls (macOS's built-in BSD ls uses
+# LSCOLORS instead). For the meanings of these two-letter codes, run
+# dircolors --print-database
 
-export LS_COLORS='rs=0:di=34:ln=32:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;91;01:mi=00:su=30;31:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90'
+export LS_COLORS='rs=0:di=34:ln=32:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=91:mi=35:su=30;31:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=93:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90'
 
 function ls {
     if [[ "$PWD" = "$HOME" ]] && [[ $# -eq 0 ]]; then
@@ -2168,12 +2212,27 @@ function gists {
 }
 
 function readme {
-    check-args 0 varargs "readme [options to pass to 'gh repo view'" "$@" || return 1
-    gh repo view "$@"
-}
+    check-args 0 1 '[FILE]' "$@" || return 1
+    local FILE="$1"
+    local REPO_URL
 
-function REAMDE {
-    readme "$@"
+    if [[ "$FILE" ]]; then
+        bat "$FILE"
+    elif [[ REPO_URL="$(gurl)" ]] && {
+             [[ "$REPO_URL" =~ git@github.com ]] || \
+             [[ "$REPO_URL" =~ https://github.com/ ]] }; then
+        gh repo view "$@"
+    elif [[ "$(echo README* | wc -w)" -gt 1 ]]; then
+        ERRMSG="$(printf "There are multiple README files. Pass the one you want as an arg\n%s" \
+                        "$(echo README*)")"
+        err "$ERRMSG"
+    elif [[ -f "README.md" ]]; then
+        bat README.md
+    elif [[ -f "README" ]]; then
+        bat README
+    else
+        err "No README.md/README. Re-run and pass the filename as an arg"
+    fi
 }
 
 function team {
@@ -2363,7 +2422,7 @@ function ginit {
     fi
 }
 
-function gl {
+function gll {
     local N_COMMITS
 
     if [[ $# -eq 0 ]]; then
@@ -2619,6 +2678,11 @@ function git-infra-dirs {
     done
 }
 
+#### gitlawb, a distributed take on Git. Alpha.
+
+GITLAWB_PATH="/opt/gitlawb"
+export GITLAWB_NODE="https://node.gitlawb.com"
+
 #### Kubernetes (and OpenShift) settings
 
 function oc {
@@ -2649,14 +2713,7 @@ function minilube { minikube "$@" ;}
 
 #### Perl settings
 
-# Make Module::Install auto-follow dependencies. cpanm sets this by default,
-# but sometimes you can't use cpanm (e.g., you're developing a Catalyst app,
-# which means using MakeMaker directly).
-export PERL_MM_USE_DEFAULT=1
-
-function pb {
-    ~/perl5/perlbrew/bin/perlbrew "$@"
-}
+# source "$QBASHD/perl.bash"
 
 #### Playdate (handheld indie console) game dev settings
 
@@ -2846,7 +2903,7 @@ function buy {
                 err "URL file '$URL_FILE' is empty"
                 return 4
             else
-                open -a Firefox "$URL"
+                open "$URL"
             fi
         fi
     fi
@@ -3458,11 +3515,6 @@ function lw { perldoc -l "$1" ;}
 
 # elw Perl::Module, elw Perl/Module.pm ("edit library which") - find a perl module in PER5LIB and open it in VISUAL. #FIXME: test behavior.
 # elw { $VISUAL $(lw "$@") ;}
-
-# (See http://wiki.github.com/bard/mozrepl/)
-# mz: Use mozrepl to connect to Firefox for some interactive debugging.
-
-function mz { socat READLINE TCP4:localhost:4242 ;}
 
 # rmds: remove a directory, including .DS_Store droppings left by OS X Finder. Fails if the directory contains anything besides .DS_Store.
 
@@ -4267,7 +4319,7 @@ function qtmake {
 
 ## PATH (to search for executables)
 
-export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$QT_PATH"
+export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$GITLAWB_PATH:$QT_PATH"
 
 ## C libraries
 
@@ -4288,6 +4340,5 @@ set +o pipefail
 
 #### site-specific stuff, not stored in git #sec zz#
 
-source-if-exists "$HOME/.bashrc.d/macos-apps.bash"
 source-if-exists "$HOME/.site.bash.d/postamble.bash"
 

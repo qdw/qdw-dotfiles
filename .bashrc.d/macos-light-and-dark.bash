@@ -61,7 +61,17 @@ function change-emacs-to {
     esac
 }
 
+function firefox-is-running {
+    ps -xwu "$USER" \
+        | command grep -v grep \
+        | command grep 'Firefox[.]app' > /dev/null
+}
+
 function toggle-dark-reader {
+    if ! firefox-is-running; then
+        return
+    fi
+    
     local OSA="/usr/bin/osascript"
     local ORIG_APP="$("$OSA" -e \
         'tell application "System Events" to get name of first process whose frontmost is true')"
