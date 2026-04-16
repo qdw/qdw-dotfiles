@@ -297,10 +297,11 @@ function gclone {
 #     fi
 # }
 
-function git-https-to-ssh {
+function github-https-to-ssh {
+    local MANNAME="convert a GitHub web URL to ssh format, which you can clone"
     check-args 1 1 'HTTPS_URL' "$@" || return 1
     local HTTPS_URL="$1"
-    echo "$HTTPS_URL" | sed -e s'|^https://|git@github.com:|'
+    echo "$HTTPS_URL" | sed -e s'|^https://github.com|git@github.com:|'
 }
 
 function gists {
