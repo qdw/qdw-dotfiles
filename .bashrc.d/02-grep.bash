@@ -1,7 +1,6 @@
-#### grep.bash
-#### Dependencies:
-#### ./metaprogramming.bash
-#### ./pager.bash
+########     dependencies:
+########        01-bash-debugging.bash
+########        ./pager.bash
 
 # Use the best available grep-like tool, and make them all behave the same.
 # 
@@ -113,9 +112,9 @@ function ge {
     g "$@" ~/.emacs.d/init.el
 }
 
-#### grep-settings: grep for section names,
-#### which I mark I use 4 leading comment chars, as in this line.
-#### Infer the comment char from the file extension.
+############ Search a file for section names,
+############ which I, by convention, mark using 4 leading comment chars.
+############ Infer the comment char from the file extension.
 
 function grep-settings {
     # check-args 2 varargs

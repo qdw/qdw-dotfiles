@@ -9,8 +9,9 @@ function source-section {
     source "$QBASHD/$1"
 }
 
+#### My Bash metaprogramming library
 
-source-section "00-bash-metaprogramming.bash" #### Bash helper funcs, arg checking, functional programming"
+source-section "00-bash-metaprogramming.bash" ### Bash helper funcs, arg checking, functional programming"
 
 export MY_DEBUG=""
 export MY_VERBOSE_DEBUG_BASH=""
@@ -570,10 +571,11 @@ function boi {
 }
 
 #### OS-specific settings for macOS #sec 8#
-if on-macos; then
-    source-section "macos-apps.bash" #### Shortcuts for macOS apps, e.g. Mail, Mail.app, Finder, Finder.app
 
-    source-section "macos-light-and-dark.bash" #### Set light/dark mode in all apps, web pages, and other contexts
+if on-macos; then
+    source-section "macos-apps.bash" ### Shortcuts for macOS apps, e.g. Mail, Mail.app, Finder, Finder.app
+
+    source-section "macos-light-and-dark.bash" ### Set light/dark mode in all apps, web pages, and other contexts
 
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
@@ -849,7 +851,8 @@ Maybe you meant 'which \"$APP_NAME\"?'"
         fi
     }
 
-#### OS-specific settings for Linux and other non-macOS Unices
+#### OS-specific settings for Linux and other non-macOS Unix variants
+
 else
     function which {
         type -P "$@"
@@ -874,16 +877,19 @@ else
     done
 fi
 
-# source-section "02-grep.bash" #### grep (or rg, if installed). Lots of customizations.
-source-section "02-grep.bash"
+#### grep
 
+source-section "02-grep.bash" ### grep (or rg, if installed). Lots of customizations.
 
-# source-section "03-fd.bash" #### fd, a fast, modern replacement for find(1)
-source-section "03-fd.bash"
+#### fd
 
-source-section "dot-ignore.bash" #### helper functions for the .ignore files honored by git, fd, and rg
+source-section "03-fd.bash" ### fd, a fast, modern replacement for find(1)
 
-#### Terminal emulator settings
+#### .ignore files
+
+source-section "dot-ignore.bash" ### helper functions for the .ignore files honored by git, fd, and rg
+
+#### Terminal emulators
 
 function strip_control_characters_from {
     local STRING

@@ -1,8 +1,8 @@
-#### Dependencies:
-####   ./bash-metaprogramming.bash
-####   ./grep.bash
+########     dependencies:
+########         00-bash-metaprogramming.bash
+########         pager.bash
 
-#### Customizations for fd itself
+############ Customizations for fd itself
 
 function fdd {
     command fd \
@@ -16,7 +16,7 @@ function fd {
     fdd --color=always "$@" | $PAGER
 }
 
-#### fd-plus-grep combos
+############ fd-plus-grep combos
 
 # Same as fdgrep, but search TypeScript files only
 function tsgrep {
