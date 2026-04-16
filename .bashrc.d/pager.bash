@@ -1,4 +1,8 @@
-#### Pager settings
+########     dependencies:
+########         none
+########     third-party dependencies
+########         GNU less
+
 
 set -a
 

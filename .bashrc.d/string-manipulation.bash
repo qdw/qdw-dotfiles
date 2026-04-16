@@ -1,14 +1,10 @@
-#### String manipulation
-#### Dependencies:
-#### ./metaprogramming.bash
-#### ./pager.bash
-#### ./grep.bash
-####
-#### Third-party:
-#### moreutils (for the sponge-command):
-####     brew install moreutils
-#### One True Awk (preferred; Probably works with your bundled awk too).
-####     brew install awk.
+########     dependencies:
+########         00-bash-metaprogramming.bash
+########         02-grep.bash
+########         pager.bash
+########     third-party dependencies:
+########         moreutils (for the sponge-command):
+########         One True Awk (preferred, but your OS's awk probably works).
 
 function rot13 {
     echo "$1" | tr 'A-Za-z' 'N-ZA-Mn-za-m'

@@ -1,4 +1,8 @@
-### Diagnostics
+########     dependencies:
+########         QBASHD env var setting in ~/.bashrc
+########         optional: USE_GREP_TO_PRINT_BASH_DEPS override in ~/.bashrc
+
+############ Diagnostics
 
 function _stderr {
     echo "$@" >&2
@@ -31,7 +35,7 @@ function complain { # for multiline msgs (pass each line as a separate arg)
     done
 }
 
-### Utilty functions
+############ Utilty functions
 
 # Check for functions, aliases, and executables.
 function command-exists {
@@ -413,4 +417,47 @@ function my-source {
     if [[ "$MY_DEBUG_BASH" ]]; then
         echo "sourced '$FILE' in $SECONDS seconds"
     fi
+}
+
+
+# USE_GREP_TO_PRINT_BASH_DEPS="yeah"
+function deps-bash {
+    local ORIG_DIR="$(pwd)"
+    cd "$QBASHD" || return 2
+
+    local -a FILES
+    if [[ $# -eq 0 ]]; then
+        FILES=(*)
+    else
+        FILES=("$@")
+    fi
+
+    function _deps_search_for_regex_in_file {
+        local FILENAME="$1"
+        if ! installed "rg" || [[ "$USE_GREP_TO_PRINT_BASH_DEPS"  ]]; then
+            echo "$FILE"
+
+            # FIXME: doesn't take effect, even with --color=always: GREP_COLORS="mt=black"
+            command grep \
+                --color=never \
+                '^######## ' \
+                "$FILE" \
+                && echo
+        else
+            rg \
+                --with-filename \
+                --no-line-number \
+                --colors path:fg:blue \
+                --colors match:fg:black \
+                '^######## ' \
+                "$FILE" \
+              && echo
+        fi
+    }
+
+    for FILE in "${FILES[@]}"; do
+        _deps_search_for_regex_in_file "$FILE"
+    done
+
+    cd "$ORIG_DIR"
 }

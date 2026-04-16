@@ -1,3 +1,6 @@
+########     dependencies:
+########         00-bash-metaprogramming.bash
+
 LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
 OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
 LIGHT_WALLPAPER="$HOME/wallpaper/light/favorites/castle.jpg"

@@ -1,3 +1,6 @@
+########     dependencies:
+########         00-bash-metaprogramming.bash
+
 # Show all ignore patterns in effect for the cwd.
 # Programs that respect ignorefiles include git, fd, and rg
 

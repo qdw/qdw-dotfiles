@@ -1,3 +1,6 @@
+########     dependencies
+########         none
+
 function _function-name-for {
     local APPNAME="$1"
 

@@ -1,18 +1,19 @@
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" emacsish vim plugin: bring core Emacs keybindings to vim, 
-" and make (most of) them work regardless of mode.
+" Bring core Emacs keybindings to vim, and make (most of) them work
+" regardless of mode.
 "
 " Motivation: sometimes I want vim's unmatched low display latency,
 " but I still want the Emacs commands that are burned into my muscle memory.
 "
 " Caveats:
 "
-" - This plugin clobbers some common vim keybindings like <C-f>.
+" - This config clobbers some common vim keybindings like <C-f>.
 "
-" - Our goal is to map Emacs keys to the *analogous* vim acions,
-"   *not to replicate* Emacs functionality exactly. For instance,
-"   if you press <C-f> at the end of a line, emacsish does not advance
-"   to the next line, while, in Emacs, it does advance.
+" - The goal is to map Emacs keys to the *analogous* vim acions,
+"   not to replicate Emacs functionality exactly. For instance,
+"   <C-f> moves the cursor forward one char (as in Emacs),
+"   but if you press <C-f> at the end of a line, the vim version
+"   does not advance to the next line (unlike in Emacs).
 "   
 "   Likewise, <M-f> moves forward according to vim's definition of a word,
 "   using vim's built-in <w> command - it does not move forward using
@@ -24,18 +25,11 @@
 " 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""":
 
-"""" Avoid double‑loading this plugin.
-
-if exists("g:loaded_emacsish")
-  finish
-endif
-let g:loaded_emacsish = 1
-
 """" Backspace
 
 " - Use a single backspace keypress to delete one level of indentation.
 " - Allow backspacing all the way up into the preceding line.
-" - Don't stop backspacing at to the char where you entered insert mode.
+" - Don't stop backspacing at the char where you entered insert mode.
 
 set backspace=indent,eol,nostop
 
@@ -62,9 +56,9 @@ set nocursorbind
 
 """" Appearance: window and minibuffer
 
-" Don't fill my screen with tildes after EOF. Use spaces instead.
+" Don't fill my screen with tildes after EOF.
 
-set fillchars+=eob:\
+set fillchars+=eob:\ 
 
 " Don't hide the ends of lines that are longer than the window is wide.
 " Show a backslash at the window edge, followed by the rest of the line.
@@ -76,7 +70,7 @@ set fillchars+=trunc:\\
 " If you're typing a long command, you can open a separate window
 " for it. The cedit keybinding triggers this action.
 
-set cedit=<M-e>
+set cedit=<Tab>
 
 " Fix a quirk where Neovim doesn't size the minibuffer properly.
 
@@ -85,11 +79,9 @@ set cmdheight=1
 """" Parentheses
 
 " When I type bracket-type chars (for instance, ')'), highlight the
-" opening/closing char that matches. But unhighlight it when I type
-" the next char.
+" opening/closing char that matches.
 
 set showmatch
-call s:SetCpoptionsFlag('m', v:false)
 
 """" Current working directory
 
@@ -104,10 +96,6 @@ endif
 
 set cdhome
 set cdpath=,,
-
-"""" Completion: off by default
-
-set nocomplete
 
 """" Encoding
 
@@ -209,7 +197,6 @@ set incsearch ignorecase smartcase
 set hlsearch
 set wrapscan
 set shortmess-=s
-set cpoption-=o
 
 "" isearch keybindings
 
@@ -395,6 +382,90 @@ function! EmacsishClearRectangle()
   execute "'<,'>normal! r "
 endfunction
 
+" FIXME: unmap all the vim keybindings that aren't used in Emacs?!
+" Here's the output of :map when running vim with this config file:
+
+" n  <Tab>       * ==
+" n  ,;          * :ifont +<CR>
+" n  ,.          * :ifont -<CR>
+"    ;             :
+" n  Q           * <nop> " starts ex mode, which I never want.
+" n  Y           * y$
+" n  ZZ          * <nop> " same as :q!
+" n  ZQ          * <nop> " same as :wq
+" x  gx            <Plug>(open-word-under-cursor)
+" n  gx            <Plug>(open-word-under-cursor)
+" x  <Plug>(open-word-under-cursor) * <ScriptCmd>vim9.Open(getregion(getpos('v'), getpos('.'), { type: mode() })->join())<CR>
+" n  <Plug>(open-word-under-cursor) * <ScriptCmd>vim9.Open(GetWordUnderCursor())<CR>
+" v  <C-X>rc     * :call EmacsishClearRectangle()<CR>
+" n  <C-X>rc     * :call EmacsishClearRectangle()<CR>
+" v  <C-X>ro     * :call EmacsishOpenRectangle()<CR>
+" n  <C-X>ro     * :call EmacsishOpenRectangle()<CR>
+" v  <C-X>rt     * :call EmacsishStringRectangle()<CR>
+" n  <C-X>rt     * :call EmacsishStringRectangle()<CR>
+" v  <C-X>ry     * :call EmacsishYankRectangle()<CR>
+" n  <C-X>ry     * :call EmacsishYankRectangle()<CR>
+" v  <C-X>rk     * :call EmacsishKillRectangle()<CR>
+" n  <C-X>rk     * :call EmacsishKillRectangle()<CR>
+" v  <C-_>       * <Esc>u
+" v  <C-/>       * <Esc>u
+" n  <C-_>       * u
+" n  <C-/>       * u
+" n  <M-;>       * :call EmacsishCommentRegion()<CR>
+" n  <C-X>b      * :buffer<Space>
+" n  <C-X><C-W>  * :write<Space>
+" n  <C-X>k      * :bdelete<CR>
+" n  <C-X><C-F>  * :edit<Space>
+" n  <C-X><C-S>  * :w<CR>
+" n  <C-X>o      * <C-W>w
+" n  <C-X>3      * :vsplit<CR>
+" n  <C-X>2      * :split<CR>
+" n  <C-X>1      * :only<CR>
+" n  <C-X>0      * :close<CR>
+" v  <M-C-%>     * :s///gc<Left><Left><Left>
+" n  <M-C-%>     * :%s///gc<Left><Left><Left>
+" v  <M-%>       * :s///gc<Left><Left><Left>
+" n  <M-%>       * :%s///gc<Left><Left><Left>
+" v  <C-R>       * <Esc>?
+" v  <C-S>       * <Esc>/
+" n  <C-R>       * ?
+" n  <C-S>       * /
+" v  <C-@>       * <Esc>
+" n  <C-@>       * v
+" v  <C-Y>       * p
+" n  <C-Y>       * p
+" v  <C-K>       * d$
+" n  <C-K>       * d$
+" n  <C-T>       * xp
+" v  <M-v>       * <PageUp>
+" v  <C-V>       * <PageDown>
+" v  <M-b>       * b
+" v  <M-f>       * w
+" v  <C-E>       * $
+" v  <C-A>       * ^
+" v  <C-B>       * h
+" v  <C-F>       * l
+" v  <C-P>       * k
+" v  <C-N>       * j
+" n  <C-Up>      * {
+" n  <C-Down>    * }
+" n  <M-v>       * <PageUp>
+" n  <C-V>       * <PageDown>
+" n  <M-b>       * b
+" n  <M-f>       * w
+" n  <C-E>       * $
+" n  <C-A>       * ^
+" n  <C-B>       * h
+" n  <C-F>       * l
+" n  <C-P>       * k
+" n  <C-N>       * j
+" v  <C-.>       * gf
+" n  <C-.>       * gf
+" n  <S-Right>   * :cnext<CR>
+" n  <S-Left>    * :cprev<CR>
+" n  <M-Tab>     * <C-N>
+
+
 " Miscellaneous behavior
 
-set cpoptions=aAbBcCdDeEfFiIolmnPqstuWXyZ*
+set cpoptions=aAbBcCdDeEfFiIlmnoPqstuWXyZ*

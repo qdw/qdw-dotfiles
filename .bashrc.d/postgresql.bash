@@ -1,3 +1,8 @@
+########     dependencies:
+########         00-bash-metaprogramming.bash
+########     third-party dependencies:
+########         PostgreSQL, of course
+
 function pg {
     MANNAME="manage multiple Homebrewed PostgreSQL versions
 CAVEATS

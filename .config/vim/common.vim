@@ -49,7 +49,7 @@ highlight ExtraTab guibg=Red guifg=White
 " When I activate "list mode", use special glyphs to show certain other undesired
 " whitespace et cetera. See `:help listchars` for details.
 
-set list
+" set list
 "" ?? set listchars=conceal:?,extends:\\,nbsp:~,tab:T,trail:~
 
 " - Use a single backspace keypress to delete one level of indentation.
