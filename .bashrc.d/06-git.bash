@@ -1,8 +1,8 @@
 ######## dependencies:
 ########     00-bash-metaprogramming.bash
-########     pager.bash
+########     04-string-manipulation.bash
+########     05-pager.bash
 ########     [editor/emacs code in ~/.bashrc]
-
 
 ######## Git: general settings (not specific to GitHub)
 

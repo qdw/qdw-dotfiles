@@ -1,8 +1,7 @@
 ########     dependencies:
 ########         none
-########     third-party dependencies
+########     third-party dependencies:
 ########         GNU less
-
 
 set -a
 
@@ -41,6 +40,6 @@ MANPAGER="$PAGER"
 
 set +a
 
-#### Pager settings: experimental
+######## Pager settings: experimental
 
 export PPA='fmt -s -uw "$COLUMNS" | less'

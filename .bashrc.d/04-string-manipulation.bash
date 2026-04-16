@@ -5,6 +5,9 @@
 ########     third-party dependencies:
 ########         moreutils (for the sponge-command):
 ########         One True Awk (preferred, but your OS's awk probably works).
+########     optional third-party dependencies:
+########         a terminal emulator that supports Unicode
+########         a terminal-emulator font that supports Unicode
 
 function lisp-case {
     local MANNAME='"A Phrase with mixed Case" -> "a-phrase-with-mixed-case"'

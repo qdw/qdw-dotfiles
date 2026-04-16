@@ -1,4 +1,4 @@
-########     dependencies
+########     dependencies:
 ########         none
 
 function _function-name-for {
