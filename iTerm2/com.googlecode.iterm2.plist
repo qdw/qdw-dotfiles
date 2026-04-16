@@ -1558,7 +1558,7 @@
 		</dict>
 	</dict>
 	<key>Default Bookmark Guid</key>
-	<string>1402BFFC-DB48-4908-9FB4-A764FD7BF6EA</string>
+	<string>311CD262-2473-49A1-9938-3EBA5D8C0538</string>
 	<key>DeleteProfile_SilenceUntil</key>
 	<real>771803704.51575303</real>
 	<key>DeleteProfile_selection</key>
@@ -1597,6 +1597,8 @@
 	<true/>
 	<key>HotkeyModifiers</key>
 	<integer>1048840</integer>
+	<key>IRMemory</key>
+	<integer>4</integer>
 	<key>InvalidateShadowTimesPerSecond</key>
 	<real>0.0</real>
 	<key>MaxVertically</key>
@@ -7438,7 +7440,7 @@
 			<key>HotKey Modifier Activation</key>
 			<integer>0</integer>
 			<key>HotKey Modifier Flags</key>
-			<integer>1048576</integer>
+			<integer>1179648</integer>
 			<key>HotKey Window Animates</key>
 			<false/>
 			<key>HotKey Window AutoHides</key>
@@ -10850,6 +10852,8 @@
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
 	<false/>
 	<key>kCPKUseSystemColorPicker</key>
+	<false/>
+	<key>metalMaximizeThroughput</key>
 	<false/>
 </dict>
 </plist>
