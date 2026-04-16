@@ -1,5 +1,5 @@
 ;;;; Inhibit superfluous messsages.
-1
+
 (setq inhibit-startup-echo-area-message "quinn")
 (setq ad-redefinition-action 'accept)
 (setq use-package-always-demand 't)
@@ -8,7 +8,7 @@
 (remove-hook 'find-file-hook 'epa-file-find-file-hook)
 (remove-hook 'find-file-hook 'url-handlers-set-buffer-mode)
 
-(let ((inhibit-messsage t))
+;;;;;; (let ((inhibit-messsage t))
 
 ;; (use-package sh-script
 ;; :config
@@ -60,18 +60,10 @@
 ;; Enable special mouse buttons if your terminal emulator supports them.
 ;; These apply to TTY Emacs, and cause Emacs to interpret certain magic
 ;; escape sequences if your terminal emulator sends them. This doesn't
-;; apply to GUI Emacs, which has its own builtin mouse-handling.
+;; apply to GUI Emacs, which has its built-in GUI mouse-handling.
 
 (xterm-mouse-mode +1)
-(global-set-key [mouse-4]
-                (lambda () (interactive) (scroll-down 1)))
-(global-set-key [mouse-5]
-                (lambda () (interactive) (scroll-up 1)))
 
-;; Maybe junk DNA that modern Emacs ignores?
-(defun track-mouse (e))
-(setopt mouse-sel-mode 't)
-      
 ;;;; Color theme settings
 
 (defvar qdw-themes '("amber" "amber-without-bold" "mariana" "tritium"))
@@ -91,9 +83,10 @@
 (set-cursor-color "DarkOrange1")
 
 ;;;; Window manipulation settings.
-  ;; Note that, in Emacs, the term "window" means what is called in modern
-  ;; parlance a pane or viewport. This is because Emacs was written before
-  ;; GUIs existed.
+
+;; Note that, in Emacs, the term "window" means what is called in modern
+;; parlance a pane or viewport. This is because Emacs was written before
+;; GUIs existed.
 
 (defun split-window-into-thirds ()
   "Split the current frame into three equal-width vertical windows."
@@ -155,9 +148,12 @@
 
 (add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
 
+;; Explicitly load everything at Emacs init time,
+;; since I'm running in --fg-daemon mode and I don't
+;; want delays later when things lazy-load.
+
 (require 'ansi-color)
 (require 'cc-mode)
-;; (require 'copilot)
 (require 'comint)
 (require 'compile)
 (require 'dirtrack)
@@ -171,8 +167,6 @@
 
 (require 'json)
 (require 'markdown-mode)
-(require 'menu-bar)
-(require 'mouse)
 (require 'org)
 
 ;; (use-package paredit
@@ -328,11 +322,15 @@
 ;;   (magit-commit)
 ;;   (magit-push))
 
-;;;; Hack automatic indentation
+;;;; AI stuff
+
+(load-file (expand-file-name "~/src-3/emacs-copilot/copilot.el"))
+
+;;;; Hack: general: automatic indentation
 
 (electric-indent-mode +1)
 
-;;;; Hack tree-sitter
+;;;; Hack: general: tree-sitter
 ;;;; Hack C
 
 (c-add-style
@@ -445,6 +443,9 @@ but it calls defvar under the hood."
 (defvar slack-team (getenv "SLACK_TEAM"))
 
 ;;;; Python settings
+
+;; Better Python REPL integration
+(load-file (expand-file-name "~/src-3/lobstermacs/lobstermacs-python.el"))
 
 (add-hook 'python-mode-hook
           (lambda ()
@@ -603,9 +604,7 @@ but it calls defvar under the hood."
   (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
     (when (string-match "\\(.*\\)-theme\\.el$" base-name)
       (let ((theme-name (match-string 1 base-name)))
-        (message "theme-name: %s; qdw-themes: %s" theme-name qdw-themes)
         (when (string-in theme-name qdw-themes)
-          (message "theme name is in qdw-themes")
           (load-theme (intern theme-name) 't 't))))))
 
 (add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
@@ -1334,8 +1333,7 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
                           (kbd (car ls))
                           (cadr ls)))
 
- '(("<backtab>"   rk/copilot-change-activation)
-   ("M-!"         shell-command-qdw)
+ '(("M-!"         shell-command-qdw)
    ("M-`"         unfill-paragraph-xah)
    ("C-c u"       uncomment-region)
    ("C-c ."       open-thing-at-point)
@@ -1416,51 +1414,37 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 ;; (define-key sh-mode-map (kbd "C-c C-c") 'sh-mode-prefix-map)
 ;; (keymap-unset sh-mode-map "C-c C-c i")
 
-;;;; --------------------------------------------------------------------------
+;;;;;;; ) ;; end of inhinbit-message lexical binding
+
+;;;; Customizations
+
+;; The remaining code in this file - various calls to (custom-set-*)
+;; - was added by the Emacs built-in Custom system.
+;; If you edit it by hand, you could mess it up, so be careful.
+;; Your init file should contain only one such instance;
+;; if there are more than one, they won't work right.
+
+;;;; ---------------------------------------------------------------
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(tritium))
+ '(custom-theme-directory "~/.emacs.d/qdw-themes")
  '(package-selected-packages
    '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed
      elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
-     fish-mode flymake flymake-hlint fretboard go-mode haskell-mode
-     imenu-list jenkinsfile-mode json-mode julia-mode llm lua-mode
-     magit markdown-mode moonscript nnreddit nushell-mode org-alert
-     org-caldav org-super-agenda osx-trash paredit pcre2el plz plz-see
-     slime slime-repl-ansi-color smartparens terraform-mode tidal tide
-     tree-sitter-langs typescript-mode vimrc-mode wgrep
-     yaml-mode yaml-pro yaml-tomato))
- '(safe-local-variable-values
-   '((eval c-toggle-auto-newline 1) (hide-semicolons-mode-qdw . t))))
-
+     fish-mode flymake flymake-hlint fretboard go-mode imenu-list
+     jenkinsfile-mode json-mode julia-mode lua-mode magit
+     markdown-mode moonscript nnreddit nushell-mode org-alert
+     org-caldav org-super-agenda osx-trash paredit pcre2el plz-see
+     slime-repl-ansi-color smartparens terraform-mode tidal tide
+     tree-sitter-langs typescript-mode vimrc-mode wgrep yaml-mode
+     yaml-pro yaml-tomato)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-black ((t (:foreground "black") t)))
- '(ansi-color-blue ((t (:foreground "blue") t)))
- '(ansi-color-bright-black ((t (:foreground "black") t)))
- '(ansi-color-bright-blue ((t (:foreground "blue") t)))
- '(ansi-color-bright-cyan ((t (:foreground "cyan") t)))
- '(ansi-color-bright-green ((t (:foreground "green") t)))
- '(ansi-color-bright-magenta ((t (:foreground "magenta") t)))
- '(ansi-color-bright-red ((t (:foreground "red") t)))
- '(ansi-color-bright-white ((t (:foreground "white") t)))
- '(ansi-color-bright-yellow ((t (:foreground "yellow") t)))
- '(ansi-color-cyan ((t (:foreground "cyan") t)))
- '(ansi-color-green ((t (:foreground "green") t)))
- '(ansi-color-magenta ((t (:foreground "magenta") t)))
- '(ansi-color-name (('t (:foreground ansi-color-symbol) 't)))
- '(ansi-color-red ((t (:foreground "red") t)))
- '(ansi-color-white ((t (:foreground "white") t)))
- '(ansi-color-yellow ((t (:foreground "yellow") t)))
- '(italic ((t (:underline t :slant normal :weight normal))))
- '(sh-font-lock-quoted-subshell ((t (:foreground "#d8a0d0"))))
- '(sh-heredoc ((t (:foreground "#3b8560" :bold nil))))
- '(sh-quoted-exec ((t (:foreground "#d8a0d0")))))
-)
+ )
