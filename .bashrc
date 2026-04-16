@@ -1279,13 +1279,13 @@ if [[ -d "/opt/scsh" ]]; then
     SCSH_LDFLAGS="-L${SCSH_BASE}/lib/${LATEST_SCSH_VERSION}"
 fi
 
-#### Pager (GNU less)
-
-source-section "pager.bash" ### Pager (GNU less)
-
 #### String manipulation
 
-source-section "string-manipulation.bash" ### String manipulation
+source-section "04-string-manipulation.bash" ### String manipulation
+
+#### Pager (GNU less)
+
+source-section "05-pager.bash" ### Pager (GNU less)
 
 #### Makefiles
 
@@ -1885,7 +1885,7 @@ set +a
 
 #### Git, GitHub, gitlawb
 
-source-section "git.bash" ### Git, GitHub, gitlawb
+source-section "06-git.bash" ### Git, GitHub, gitlawb
 
 #### Kubernetes (and OpenShift) settings
 
