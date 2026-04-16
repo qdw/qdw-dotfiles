@@ -6,6 +6,19 @@
 ########         moreutils (for the sponge-command):
 ########         One True Awk (preferred, but your OS's awk probably works).
 
+function lisp-case {
+    local MANNAME='"A Phrase with mixed Case" -> "a-phrase-with-mixed-case"'
+    check-args 1 1 'STRING' "$@" || return 1
+    local INPUT_STRING="$1"
+    echo "$INPUT_STRING" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'
+}
+
+function kebab-case {
+    local MANNAME="alias for lisp-case"
+    check-args 1 1 'STRING' "$@" || return 1
+    lisp-case "$@"
+}
+
 function rot13 {
     echo "$1" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
 }        
@@ -52,4 +65,18 @@ function fip {
     for FILE in "$@"; do
         command grep -vE "$FIP_REGEX" "$FILE" | sponge "$FILE"
     done
+}
+
+######## Unicode
+
+function zero-width-joiner {
+    echo -en '\u200D' | pbcopy
+}
+
+function zwj {
+    zero-width-joiner "$@"
+}
+
+function nbsp {
+    zero-width-joiner "$@"
 }
