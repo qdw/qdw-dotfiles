@@ -282,7 +282,7 @@ function gclone {
         [[ "$SSH_URL" ]] || return 2
         git clone "$URL"
     else
-        err "enrecognized URL format in '$URL'"
+        err "unrecognized URL format in '$URL'"
         return 3
     fi
 }
