@@ -2910,24 +2910,24 @@ function ddg {
     open "${BASE_URL}${URLENCODED_QUERY}"
 }
 
-function wi {
-    local MANNAME="search Wikipedia (via DuckDuckGo)"
-    check-args 1 1 'SEARCH_QUERY' "$@" || return 1
-    local SEARCH_QUERY="$1"
-    ddg "!w $SEARCH_QUERY"
-}
-
-function _bang {
+function bang {
     local MANNAME="use a DuckDuckGo bang"
     local USAGE="BANG_CODE_WITHOUT_EXCLAMATION_POINT QUERY
 EXAMPLE
-    _bang w 'Duck-Billed Platypus'"
+    ${FUNCNAME[0]} w 'Duck-Billed Platypus'"
 
     check-args 2 2 "$USAGE" "$@" || return 1
     local BANGCODE="$1"
     local QUERY="$2"
     
     ddg "!${BANGCODE} ${QUERY}"
+}
+
+function wi {
+    local MANNAME="search Wikipedia (via DuckDuckGo)"
+    check-args 1 1 'SEARCH_QUERY' "$@" || return 1
+    local SEARCH_QUERY="$1"
+    bang w "$SEARCH_QUERY"
 }
 
 function sheets {
