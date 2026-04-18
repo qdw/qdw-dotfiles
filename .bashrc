@@ -2073,11 +2073,7 @@ function air {
 #### Convenience functions for working with local files
 
 function buy {
-    if ! on-macos; then
-        err "buy is implemented for macOS only, for now. Sorry!"
-        return 2
-    fi
-
+    local MANNAME="list or navigate to sites for return purchases"
     check-args 0 1 '[PRODUCT_NAME]' "$@" || return 1
     
     local URL
@@ -2107,7 +2103,7 @@ function buy {
                 err "URL file '$URL_FILE' is empty"
                 return 4
             else
-                open "$URL"
+                firefox "$URL"
             fi
         fi
     fi
@@ -2912,6 +2908,26 @@ function ddg {
     local BASE_URL="https://duckduckgo.com/?t=h_&q="
     local URLENCODED_QUERY="$(urlencode "$QUERY")"
     open "${BASE_URL}${URLENCODED_QUERY}"
+}
+
+function wi {
+    local MANNAME="search Wikipedia (via DuckDuckGo)"
+    check-args 1 1 'SEARCH_QUERY' "$@" || return 1
+    local SEARCH_QUERY="$1"
+    ddg "!w $SEARCH_QUERY"
+}
+
+function _bang {
+    local MANNAME="use a DuckDuckGo bang"
+    local USAGE="BANG_CODE_WITHOUT_EXCLAMATION_POINT QUERY
+EXAMPLE
+    _bang w 'Duck-Billed Platypus'"
+
+    check-args 2 2 "$USAGE" "$@" || return 1
+    local BANGCODE="$1"
+    local QUERY="$2"
+    
+    ddg "!${BANGCODE} ${QUERY}"
 }
 
 function sheets {
