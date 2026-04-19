@@ -2861,6 +2861,21 @@ function url-file {
     fi
 }
 
+function http_status {
+    check-args 1 1 'URL' "$@" || return 1
+    local URL="$1"
+    local STATUS="$(curl --head \
+                         --silent --output /dev/null \
+                         --write-out '%{http_code}' \
+                         "$URL")"
+    echo "$STATUS"
+}
+
+function http_200 {
+    local STATUS="$(http_status "$@")"
+    [[ "$STATUS" = 200 ]]
+}
+
 function gmail {
     check-args 0 1 '[SEARCH_TERMS_STRING]' "$@" || return 1
     
