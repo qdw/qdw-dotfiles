@@ -2861,18 +2861,18 @@ function url-file {
     fi
 }
 
-function http_status {
+function http-status-follow-redirects {
     check-args 1 1 'URL' "$@" || return 1
     local URL="$1"
-    local STATUS="$(curl --head \
+    local STATUS="$(curl -L --head \
                          --silent --output /dev/null \
                          --write-out '%{http_code}' \
                          "$URL")"
     echo "$STATUS"
 }
 
-function http_200 {
-    local STATUS="$(http_status "$@")"
+function http-200 {
+    local STATUS="$(http-status-follow-redirects "$@")"
     [[ "$STATUS" = 200 ]]
 }
 
