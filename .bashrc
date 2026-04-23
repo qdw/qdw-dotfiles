@@ -2553,15 +2553,16 @@ function nanp {
 
     # Column names
     local HEADER
-    HEADER="$(head -2 "$CACHED_COPY" | tail -1)"
+    HEADER="$(head -2 "$CACHED_COPY" | tail -1 | grep ",")"
 
     local -a MATCHING_LINES
-    mapfile -t MATCHING_LINES < <(tail -n "+2" "$CACHED_COPY" | grep "^${AREA_CODE}")
+    mapfile -t MATCHING_LINES \
+            < <(tail -n "+2" "$CACHED_COPY" | grep "^${AREA_CODE}")
 
-    if [[ ${#MATCHING_LINES} -ne 0 ]]; then
+    if [[ ${#MATCHING_LINES} -gt 0 ]]; then
         echo "$HEADER"
         echo
-        echo "${MATCHING_LINES[@]}"
+        echo "${MATCHING_LINES[@]}" | grep "," # highlight field separators
         return 0
     else
         return 2
