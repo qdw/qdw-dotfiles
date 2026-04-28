@@ -2,10 +2,13 @@
 ########         00-bash-metaprogramming.bash
 
 LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
-OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
+# OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
+OBLIGATE_TOGGLE_FUNCTIONS=""
 LIGHT_WALLPAPER="$HOME/wallpaper/light/favorites/castle.jpg"
 DARK_WALLPAPER="$HOME/wallpaper/dark/favorites/anemone.jpg"
 MODE_SPEC="'dark' | 'light'"
+
+declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app")
 
 function validate-mode {
     check-args 1 1 "$MODE_SPEC # anything else returns false" "$@" \
@@ -64,27 +67,32 @@ function change-emacs-to {
     esac
 }
 
-function firefox-is-running {
-    ps -xwu "$USER" \
+function _i_am_running {
+    check args 1 1 'MyApp.app' "$@" || return 1
+    local APP="$1"
+    
+    ps -wux "$USER" \
         | command grep -v grep \
-        | command grep 'Firefox[.]app' > /dev/null
+        | command grep -F "$APP" > /dev/null
 }
 
 function toggle-dark-reader {
-    if ! firefox-is-running; then
-        return
-    fi
+    local MANNAME="use AppleScript to toggle the Dark Reader browser ext on/off
+
+    (obsolete for recent versions of Dark Reader, which include a feature
+    to auto-follow the system-wide setting)"
+
+    check-args 0 0 "$@" || return 1
     
-    local OSA="/usr/bin/osascript"
-    local ORIG_APP="$("$OSA" -e \
-        'tell application "System Events" to get name of first process whose frontmost is true')"
-
-    "$OSA" -e \
-        'tell application "Firefox" to activate' -e \
-        'tell application "System Events" to keystroke "x" using {option down, command down}'
-
-    "$OSA" -e \
-        "tell application \"$ORIG_APP\" to activate"
+    for BROWSER in @{BROWSERS_USING_DARK_READER[@]}; do
+        if _i_am_running "$BROWSER"; then
+            local OSA="/usr/bin/osascript"
+            local ORIG_APP="$("$OSA" -e 'tell application "System Events" to get name of first process whose frontmost is true')"
+            "$OSA" -e 'tell application "Waterfox" to activate' \
+                   -e 'tell application "System Events" to keystroke "x" using {option down, command down}'
+            "$OSA" -e "tell application \"$ORIG_APP\" to activate"
+        fi
+    done
 }
 
 function mode {
