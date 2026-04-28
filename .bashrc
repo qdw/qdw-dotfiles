@@ -305,11 +305,12 @@ set +a
 ## Homebrewed alternatives to bundled system utilities
 
 MY_LS_BASE_OPTIONS="--color=always -1F"
+MY_GNU_SPECIFIC_LS_OPTIONS="--group-directories-first"
 if test -e "$HOMEBREW_BIN/gls"; then
-    export MY_LS=gls
-    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS --group-directories-first"
+    export MY_LS="$HOMEBREW_BIN/gls"
+    export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS $MY_GNU_SPECIFIC_LS_OPTIONS"
 else
-    export MY_LS=ls
+    export MY_LS="$(which ls)"
     export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
 fi
 
@@ -1224,6 +1225,10 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
             m|macos|macOS)
                 sc "m"
                 ;;
+
+            ollama)
+                source-if-exists "$HOME/src-3/ollama-bash-completion-plugin/plugin.sh"
+                ;;
             
             openshift|oc|kubernetes|kube|k8s)
                 sc "oc" \
@@ -1348,6 +1353,8 @@ function mistral {
 
 ### Generic AWS settings
 
+MODEL_DIR="$HOME/ai/weights"
+
 function aws-account {
     echo "$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
 }
@@ -1363,6 +1370,52 @@ function clear-env {
           PGPORT \
           PGSERVICE \
           PGUSER
+}
+
+function gguf {
+    local MANNAME="show ollama GGUF files (weights) for all installed models"
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    
+    for MODEL_NAME in $(ollama ls | gtail -n +2 | awk '{print $1}'); do
+        local BLOB
+        BLOB="$(ollama show --modelfile "$MODEL_NAME" \
+                    | command grep '^FROM' \
+                    | sed 's/^FROM[ ]//')"
+        echo "$BLOB $MODEL_NAME"
+    done
+}
+
+function link-ggufs {
+    check-args 0 2 '[--verbose] [--force]' "$@" || return 1
+
+    local VERBOSE FORCE
+    while [[  $# -gt 0 ]]; do
+        case "$1" in
+            --verbose) VERBOSE="yes"; shift;;
+            --force) FORCE="yes"; shift;;
+            *) err "invalid option '$1'"; return 1;;
+        esac
+    done    
+
+    local ORIG_DIR
+    ORIG_DIR="$(pwd)" || return
+    cd "$MODEL_DIR" || return
+
+    while read -r BLOB MODEL_NAME; do
+        local MODEL_NAME="$(echo $MODEL_NAME | sed -e 's/:.*//')"
+        
+        if [[ "$VERBOSE" ]]; then
+            _stderr "$MODEL_NAME -> $BLOB"
+        fi
+
+        if [[ "$FORCE" ]]; then
+            ln -sf "$BLOB" "$MODEL_NAME"
+        else
+            ln -s "$BLOB" "$MODEL_NAME"
+        fi
+    done < <(gguf)
+
+    cd "$ORIG_DIR" >/dev/null
 }
 
 ### AWS IAM settings
@@ -2660,12 +2713,16 @@ function dfr {
         df -h | command grep ^/
         return
     else
-        err "df is broken on MacOS, as it doesn't understand APFS pooling"
-        if this-is-not-a-mac-gui-session || [[ "$NO_GUI" ]]; then
+        err "CLI df is broken on macOS; it doesn't grok APFS pooling"
+        if [[ "$NO_GUI" ]]; then
+            err "and you passed --no-gui, so I'm bailing out"
             return 2
+        elif ! macos-gui; then
+            err "can't find the GUI. Are you in single-user mode?"
+            return 3
         else
             function open_settings_storage {
-                carp "opening Settings > Storage"
+                _stderr "dfr: opening Settings.app > Storage"
                 open "x-apple.systempreferences:com.apple.settings.Storage"
             }
 
