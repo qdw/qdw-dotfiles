@@ -578,6 +578,8 @@ if on-macos; then
 
     source-section "macos-light-and-dark.bash" ### Set light/dark mode in all apps, web pages, and other contexts
 
+    source-section "macos-app-completion.bash" ### Make 'la SUBSTRING tab' complete on macOS app names
+
     set -a
     XDG_CONFIG_HOME="$HOME/.config"
     XDG_CACHE_HOME="$HOME/.cache"
@@ -2790,19 +2792,12 @@ function rmds {
 #         | command grep -e '^' -e "$PATTERN"
 # }
 
-# pi ("Perl @INC") - print @INC dirs, one per line, preceded by the path to Perl.
-function pi {
-    echo -n "perl = "; which perl
-    echo
-    perl -e 'print (join "\n", @INC); print "\n";'
-}
-
 # shn ("SSH hostname") - print the canonical hostname for a ~/.ssh/config alias.
 function shn {
     command grep -A 1 "$1" ~/.ssh/*config* | tail -1 | awk '{ print $3; }'
 }
 
-## tmux settings
+#### tmux
 
 # ta $SESSION_NAME ("Tmux Attach") - attach to named session, creating if needed
 function ta {
