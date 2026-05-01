@@ -12,3 +12,19 @@ export PERL_MM_USE_DEFAULT=1
 function pb {
     ~/perl5/perlbrew/bin/perlbrew "$@"
 }
+
+function inc {
+    echo -n "perl = "; which perl
+    echo
+    perl -e 'print (join "\n", @INC); print "\n";'
+}
+
+function lwhich {
+    for DIR in $(inc); do
+        if [[ -x "$DIR/$1" ]]; then
+            echo "$DIR/$1"
+            return 0
+        fi
+    done
+    return 2
+}
