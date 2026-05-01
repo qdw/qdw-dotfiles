@@ -43,8 +43,8 @@ function create-functions {
 
     # Irregular cases
 
-    function Settings { open "open /System/Applications/System Settings.app" ;}
-    function SystemSettings { Settings ;}
+    function Settings { open "/System/Applications/System Settings.app" ;}
+    function Settings.app { Settings "$@" ;}
 }
 
 create-functions
