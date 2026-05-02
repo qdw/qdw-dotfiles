@@ -699,6 +699,28 @@ Maybe you meant 'which \"$APP_NAME\"?'"
         fi
     }
 
+    function exe {
+        check-args 1 1 'My.app' "$@" || return 1
+        local APP_NAME_INCLUDING_EXT="$1"
+        local APP_DIR="$(which "$APP_NAME_INCLUDING_EXT")"
+        if [[ ! "$APP_DIR" ]]; then
+            err "couldn't find a macOS app named '$APP_NAME_INCLUDING_EXT'"
+        else
+            local EXE_DIR="$APP_DIR/Contents/MacOS"
+            shopt -s nullglob
+            local -a EXE_FILES=($EXE_DIR/*)
+            shopt -u nullglob
+            N_EXE=${#EXE_FILES[@]}
+            if [[ "$N_EXE" -eq 0 ]]; then
+                err "found no executables in '$EXE_DIR'"
+            elif [[ "$N_EXE" -gt 1 ]]; then
+                err "found multiple executables in '$EXE_DIR'"
+            else
+                echo ${EXE_FILES[0]}
+            fi
+        fi
+    }
+
     function darwin-version {
         uname -r
     }
@@ -1833,7 +1855,8 @@ function lsd {
 }
 
 function recent {
-    ls -t "$@" | head -5
+    check-args 0 0 '[no arguments]'
+    $MY_LS $MY_LS_BASE_OPTIONS -lt | head -5
 }
 
 #### diff settings
