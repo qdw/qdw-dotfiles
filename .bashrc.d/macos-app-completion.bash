@@ -45,4 +45,8 @@ function _complete_macos_apps {
     fi
 }
 
+function la {
+    open -a "$@"
+}
+
 complete -F _complete_macos_apps la
