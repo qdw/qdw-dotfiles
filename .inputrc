@@ -1,7 +1,71 @@
 # For documentation of this file's format, 'man inputrc' or see
 # https://www.gnu.org/software/bash/manual/html_node/Readline-Init-File.html
 
+#### Settings that I customized
+
 set bell-style visible
-set editing-mode emacs
-set enable-bracketed-paste on
-# set active-region-start-color [some_escape_sequence]
+set prefer-visible-bell on
+set blink-matching-paren on
+
+# Use LSCOLORS when displaying filename completions
+set colored-stats on
+
+# Completion: don't confirm by writing Display all n possibilities? (y or n)
+# Just show me all of them without prompting.
+set completion-query-items 0
+
+# Keep unlimited command history, overriding HISTSIZE
+set history-size -1
+
+set isearch-terminators '\C-[\C-j\C-g'
+
+# In completion, show a trailing / at the end of a symlink to a directory.
+set mark-symlinked-directories on
+
+# Don't keep mistaken edits I make while searching history!
+set revert-all-at-newline on
+
+set vi-cmd-mode-string ': '
+set vi-ins-mode-string '--INSERT--'
+
+# Like 'ls -F'
+set visible-stats on
+
+#### Settings that I left at their defaults
+
+# default: set active-region-start-color off
+# default (auto, via terminfo): set active-region-end-color off   ~~‘\e[0m’~~
+# default: set colored-completion-prefix off
+# default: set comment-begin '#'
+# default (show one completion per line) set completion-display-width -1
+# default (one per line!) set print-completions-horizontally off
+# default: set completion-ignore-case off
+# default: set completion-map-case off
+# set completion-prefix-display-length = ?????
+# default is enabled if the terminal supports it: set convert-meta on
+# default: set disable-completion off
+# default is to show them if your terminal can: set echo-control-characters on
+# default: set editing-mode emacs
+# default: set show-mode-in-prompt Doff
+# default (but I don't need bash to tell me the mode): set emacs-mode-string @
+# default: set enable-active-region on
+# default: set enable-bracketed-paste on
+# default (Just Works with my keyboards): set enable-keypad off
+# default: set enable-meta-key on
+# default: set expand-tilde off
+# default (don't force-convert M-? to Esc+?): set force-meta-prefix off
+# default: set history-preserve-point off
+# default (show on new line): set horizontal-scroll-mode=off
+# default: set input-meta off [but bash intelligently turns on for UTF-8)
+# default: set keymap emacs
+# default: set keyseq-timeout 500
+# default (show trailing '/'): set mark-directories on
+# default (don't flag history edits in isearch): set mark-modified-lines off
+# default: set match-hidden files on
+# default: set menu-complete-display-prefix off
+# default (off or determined by LC_TYPE): set output-meta off
+# default (yes, do use a pager): set page-completions on
+# default: set search-ignore-case off
+# default (try setting it on? in Emacs too??): set show-all-if-ambiguous off
+# default: set show-mode-in-prompt off
+# default: set skip-completed-text off
