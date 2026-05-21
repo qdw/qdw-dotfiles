@@ -475,7 +475,10 @@ function brew-is-stale {
 
 function brew-force-update {
     check-args 0 0 '' "$@" || return 1
-    brew update --quiet && brew-update-timestamp
+    brew update \
+         --quiet \
+         2> >(grep -v "No remote 'origin' in /opt/homebrew/Library/Taps/quinn/homebrew-old-nethack" >&2) \
+     && brew-update-timestamp
 }
 
 function brew-update-if-stale {
@@ -906,13 +909,17 @@ else
     done
 fi
 
-#### grep
+#### search: grep
 
 source-section "02-grep.bash" ### grep (or rg, if installed). Lots of customizations.
 
-#### fd
+#### search: fd
 
 source-section "03-fd.bash" ### fd, a fast, modern replacement for find(1)
+
+#### search: fzf
+
+# source-section "04-fzf.bash"
 
 #### .ignore files
 
