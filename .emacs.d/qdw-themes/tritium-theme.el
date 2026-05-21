@@ -343,7 +343,7 @@ extended-bright-white "#a6acb9")))
      ((t (:foreground ,yellow))))
 
    `(font-lock-preprocessor-face
-     ((t (:foreground ,green))))
+     ((t (:foreground ,blue))))
      
    `(font-lock-property-face
      ((t (:foreground ,bright-cyan))))     
