@@ -4,8 +4,8 @@
 LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
 # OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
 OBLIGATE_TOGGLE_FUNCTIONS=""
-LIGHT_WALLPAPER="$HOME/wallpaper/light/favorites/castle.jpg"
-DARK_WALLPAPER="$HOME/wallpaper/dark/favorites/anemone.jpg"
+LIGHT_WALLPAPER="$HOME/wallpaper/light/current-favorite"
+DARK_WALLPAPER="$HOME/wallpaper/dark/current-favorite"
 MODE_SPEC="'dark' | 'light'"
 
 declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app")
