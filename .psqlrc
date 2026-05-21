@@ -1,6 +1,6 @@
 -- -*- mode: sql -*-
 
--- Important semantics
+-- -- Important semantics
 
 \set ON_ERROR_ROLLBACK interactive
 \set HISTSIZE -1
@@ -8,9 +8,15 @@
 \set idle_session_timeout = '2 days';
 \set idle_in_transaction_session_timeout = '5 minutes';
 
--- Appearance
+-- -- Output formatting
 
 \x auto
-\pset null 🐙
-\set PROMPT1 '🐘 %n@%m:%/ 🌸 > '
+\pset null '        [NULL]'
+-- \pset null 🐙
 -- \set QUIET on
+
+-- -- Prompt
+
+SELECT CASE WHEN pg_is_in_recovery() THEN 'replica 💧' ELSE 'PRIMARY ⚠️' END
+       AS sigil \gset
+\set PROMPT1 '🐘 %n@%m:%/ %:sigil: %# '
