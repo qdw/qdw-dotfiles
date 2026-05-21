@@ -278,7 +278,7 @@ function gclone {
     if [[ "$URL" =~ $SSH_REGEX ]]; then
         git clone "$URL"
     elif [[ "$URL" =~ $HTTPS_REGEX ]]; then
-        local SSH_URL="$(git-https-to-ssh "$URL")"
+        local SSH_URL="$(github-https-to-ssh "$URL")"
         [[ "$SSH_URL" ]] || return 2
         git clone "$URL"
     else
