@@ -10013,13 +10013,13 @@
 				<key>Alpha Component</key>
 				<real>1</real>
 				<key>Blue Component</key>
-				<real>0.20000000000000001</real>
+				<real>0.49232903079710144</real>
 				<key>Color Space</key>
 				<string>P3</string>
 				<key>Green Component</key>
-				<real>0.20000000000000001</real>
+				<real>0.33160578826474835</real>
 				<key>Red Component</key>
-				<real>0.20000000000000001</real>
+				<real>0.3367166775078731</real>
 			</dict>
 			<key>Ansi 8 Color (Light)</key>
 			<dict>
@@ -10824,7 +10824,7 @@
 	<key>RightControl</key>
 	<integer>12</integer>
 	<key>ShowFullScreenTabBar</key>
-	<false/>
+	<true/>
 	<key>ShowNewOutputIndicator</key>
 	<true/>
 	<key>SoundForEsc</key>
