@@ -55,7 +55,11 @@ function mtime-in-epoch-seconds {
 # Timestamp with time zone, no special chars, OK to interpolate into filenames
 function ts {
     check-args 0 0 '[no-arguments]' "$@" || return 1
-    date '+%Y-%m-dT%H%M%S%z' "$@"
+    date '+%Y-%m-%dT%H%M%S%z' "$@"
+}
+
+function pg-ts {
+    psql --no-psqlrc -tc 'select now()' | sed -e 's/[ ]*//'
 }
 
 # Timestamp in the format used by YAML
