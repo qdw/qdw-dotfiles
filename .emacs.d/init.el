@@ -749,16 +749,16 @@ but it calls defvar under the hood."
 
 ;;;; dired
 
-;; (defun dired-find-file-qdw ()
-;;   "In Dired, visit the file or directory on the cursor.
-;; If the file is a directory, use `dired-find-alternate-file'
-;; to avoid creating many buffers. If the file is a regular file,
-;; use `dired-find-file' to open it in a new buffer."
-;;   (interactive)
-;;   (let ((is-dir (file-directory-p (dired-get-file-for-visit))))
-;;     (if is-dir
-;;       (dired-find-alternate-file)
-;;       (dired-find-file))))
+(defun dired-find-file-qdw ()
+  "In Dired, visit the file or directory on the cursor.
+If the file is a directory, use `dired-find-alternate-file'
+to avoid creating many buffers. If the file is a regular file,
+use `dired-find-file' to open it in a new buffer."
+  (interactive)
+  (let ((is-dir (file-directory-p (dired-get-file-for-visit))))
+    (if is-dir
+      (dired-find-alternate-file)
+      (dired-find-file))))
 
 ;;;; Buffer list
 
@@ -1383,8 +1383,7 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
 ;;; dired-mode keybindings
 
-;; (keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
-;; (keymap-unset dired-mode-map "RET")
+(keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
 
 ;;; help-command keybindings
 
