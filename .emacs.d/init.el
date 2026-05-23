@@ -1055,11 +1055,17 @@ This command does the reverse of `fill-region'."
 
 ;;;; Search
 
+(defalias 'pos 'goto-char)
+
 (defun prefix (string)
   (interactive "MPrefix: ")
   (query-replace-regexp "^" string))
 
-(defalias 'pos 'goto-char)
+;; Write (grep) results; Emacs auto-saves them to the right buffer.
+(use-package wgrep ;; built in
+    :init (setq-default wgrep-auto-save-buffer t)  
+    ;; :config (setq wgrep-auto-save-buffer t)
+    )
 
 ;; (defun rg-in-current-directory-qdw (regexp)
 ;;   (interactive "srg ")
