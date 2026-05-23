@@ -580,7 +580,7 @@ but it calls defvar under the hood."
             ("NEXT_ACTION" . ,bright-red)
             ("IN_PROGRESS" . ,bright-yellow)
             ("GET_HELP" . ,bright-red)
-            ("AWAITING_RESPONSE" . ,yellow)
+            ("AWAITING_RESPONSE" . ,bright-magenta)
             ("QUESTION" . ,bright-magenta)
             ("YAK_SHAVING" . ,yellow)
 
