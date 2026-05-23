@@ -1416,6 +1416,37 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
 ;;;;;;; ) ;; end of inhinbit-message lexical binding
 
+;;;; Experimental section
+
+(use-package popper
+  :ensure t ; or :straight t
+
+  :bind (("C-q"    . popper-toggle)
+         ("C-M-i" . popper-cycle)
+         ("C-b" . popper-toggle-type))
+
+  :init (setq popper-reference-buffers '("\\*Messages\\*"
+                                         "Output\\*$"
+                                         "\\*Async Shell Command\\*"
+                                         help-mode
+                                         compilation-mode))
+        (popper-mode +1)
+        (popper-echo-mode +1))
+
+;;; Toggle-able keybindings
+
+(defun unkill ()
+  (interactive)
+  (keymap-local-set "C-k" 'ignore)
+  (keymap-local-set "C-x C-c" 'ignore))
+
+;; (use-package ghosttext :ensure t)
+
+;; (use-package straight :ensure t)
+
+;;;; HTTP client
+;; (Use-package verb :ensure t)
+
 ;;;; Customizations
 
 ;; The remaining code in this file - various calls to (custom-set-*)
