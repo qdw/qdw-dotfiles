@@ -563,6 +563,7 @@ but it calls defvar under the hood."
                           "PROJECT(r)"
                           "SUBPROJECT(s)"
                           "POSTPONED(p)"
+                          "RECOMMENDATION(c)"
                           
                           "|"
 
