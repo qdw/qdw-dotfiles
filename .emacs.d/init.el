@@ -1330,7 +1330,13 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
 ;;;; Editor MACroS
 
-;;; Global keybindings. Make them override major and minor modes' bindings.
+;;; Global keybindings that get overridden by major and minor modes' bindings.
+(keymap-global-set "C-c C-p"
+                   (lambda ()
+                     (interactive)
+                     (find-file (expand-file-name "~/personal.org"))))
+
+;;; Global keybindings that override major and minor modes' bindings.
 
 (defvar qdw-override-mode-map (make-sparse-keymap)
   "Keymap for `qdw-override-mode', used to override other modes' keymaps.")
