@@ -1466,13 +1466,16 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
  '(package-selected-packages
    '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed
      elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
-     fish-mode flymake flymake-hlint fretboard go-mode imenu-list
-     jenkinsfile-mode json-mode julia-mode lua-mode magit
+     fish-mode flymake flymake-hlint fretboard go-mode helpful
+     imenu-list jenkinsfile-mode json-mode julia-mode lua-mode magit
      markdown-mode moonscript nnreddit nushell-mode org-alert
      org-caldav org-super-agenda osx-trash paredit pcre2el plz-see
-     slime-repl-ansi-color smartparens terraform-mode tidal tide
-     tree-sitter-langs typescript-mode vimrc-mode wgrep yaml-mode
-     yaml-pro yaml-tomato)))
+     popper slime-repl-ansi-color smartparens terraform-mode tidal
+     tide tree-sitter-langs typescript-mode vimrc-mode wgrep yaml-mode
+     yaml-pro yaml-tomato))
+ '(safe-local-variable-values
+   '((eval keymap-local-unset "C-x k")
+     )))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
