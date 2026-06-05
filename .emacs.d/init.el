@@ -1416,7 +1416,6 @@ This command does the reverse of `fill-region'."
 (keymap-set c-mode-map "C-c {" 'beginning-of-defun)
 (keymap-set c-mode-map "C-c }" 'end-of-defun)
 
-
 ;;; dired-mode keybindings
 
 (keymap-set dired-mode-map "RET" 'dired-find-file-qdw)
@@ -1454,6 +1453,79 @@ This command does the reverse of `fill-region'."
 
 ;;;; Experimental section
 
+;; Experimenting with paredit
+
+;; (use-package paredit
+;;   :hook ((lisp-mode . paredit-mode)
+;;          (emacs-lisp-mode . paredit-mode)))
+
+
+;; Experimenting with org-superagenda
+
+;; (use-package org-superagenda)
+
+;; Experimenting with the equovalent of modern UIs' "Open Recent"
+
+;; (use-package recentf)
+
+;;;; Experimenting with special settings for viewing binary files
+
+;; (defun use-hexl-mode-if-binary ()
+;;   "If the current buffer is a binary file, switch to `hexl-mode'."
+;;     (when (string-match-p "\0" (buffer-string))
+;;         (hexl-mode)))
+;;        
+;; (add-hook 'find-file-hook #'use-hexl-mode-if-binary)
+
+;;;; Experimenting with Git/Magit settings (note to self: re-enable now that that bug is fixed!)
+
+;; (defun gline-qdw ()
+;;   (interactive)
+;;   (let* ((dir (file-name-directory buffer-file-name))
+;;          (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
+;;     (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)
+;;     (if (not git-working-copy-root-dir)
+;;         (message (format "Not a Git working copy: %s"
+;;                          (file-name-directory buffer-file-name)))
+;;         (replace-regexp git-working-copy-root-dir "" dir)
+;;         (message (format "About to run gline in dir '%s':" git-working-copy-root-dir))
+;;         ;; (shell-command-qdw
+;;         (message
+;;          (format "gline %s %s" buffer-file-name (line-number-at-pos))))))
+
+;; In the default view, show stashes and local branches.
+;; Also, move the sections around a bit to suit my preferences.
+
+;; (setq-default magit-section-initial-visibility-alist
+;;               '((stashes . show)))
+              
+;; (setq-default magit-status-sections-hook
+;;               '(magit-insert-status-headers
+;;                 magit-insert-merge-log
+;;                 magit-insert-rebase-sequence
+;;                 magit-insert-am-sequence
+;;                 magit-insert-sequencer-sequence
+;;                 magit-insert-bisect-output
+;;                 magit-insert-bisect-rest
+;;                 magit-insert-bisect-log
+;;                 magit-insert-untracked-files
+;;                 magit-insert-stashes
+;;                 magit-insert-unstaged-changes
+;;                 magit-insert-staged-changes
+;;                 magit-insert-local-branches
+;;                 magit-insert-unpushed-to-pushremote
+;;                 magit-insert-unpushed-to-upstream-or-recent
+;;                 magit-insert-unpulled-from-pushremote
+;;                 magit-insert-unpulled-from-upstream))
+;; 
+;; (defun magit-try ()
+;;   (interactive)
+;;   (magit-stage-modified)
+;;   (magit-commit)
+;;   (magit-push))
+
+;; Experimenting with poppers
+
 (use-package popper
   :ensure t ; or :straight t
 
@@ -1476,20 +1548,24 @@ This command does the reverse of `fill-region'."
   (keymap-local-set "C-k" 'ignore)
   (keymap-local-set "C-x C-c" 'ignore))
 
+
+;; Experimenting with ghosttext (emacsclient as editor for web textareas)
+
 ;; (use-package ghosttext :ensure t)
+
+;; Experimenting with straight men (package management with version-pinning)
 
 ;; (use-package straight :ensure t)
 
 ;;;; HTTP client
 ;; (Use-package verb :ensure t)
 
+;;;; The end
+
 ;;;; Customizations
 
 ;; The remaining code in this file - various calls to (custom-set-*)
-;; - was added by the Emacs built-in Custom system.
-;; If you edit it by hand, you could mess it up, so be careful.
-;; Your init file should contain only one such instance;
-;; if there are more than one, they won't work right.
+;; - was added by the Emacs built-in Custom system. Don't mess with it.
 
 ;;;; ---------------------------------------------------------------
 
@@ -1503,18 +1579,18 @@ This command does the reverse of `fill-region'."
    '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed
      elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
      fish-mode flymake flymake-hlint fretboard go-mode helpful
-     imenu-list jenkinsfile-mode json-mode julia-mode lua-mode magit
-     markdown-mode moonscript nnreddit nushell-mode org-alert
-     org-caldav org-super-agenda osx-trash paredit pcre2el plz-see
-     popper slime-repl-ansi-color smartparens terraform-mode tidal
-     tide tree-sitter-langs typescript-mode vimrc-mode wgrep yaml-mode
-     yaml-pro yaml-tomato))
- '(safe-local-variable-values
-   '((eval keymap-local-unset "C-x k")
-     )))
+     hide-lines imenu-list jenkinsfile-mode json-mode julia-mode
+     lua-mode magit markdown-mode moonscript nnreddit nushell-mode
+     org-alert org-caldav org-super-agenda org-transclusion osx-trash
+     paredit plz-see popper popup slime-repl-ansi-color smartparens
+     terraform-mode tidal tide tree-sitter-langs typescript-mode
+     vimrc-mode wgrep yaml-mode yaml-pro yaml-tomato))
+ '(safe-local-variable-values '((eval keymap-local-unset "C-x k"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(sh-font-lock-quoted-subshell ((t (:foreground "#d8a0d0"))))
+ '(sh-heredoc ((t (:foreground "#3b8560" :bold nil))))
+ '(sh-quoted-exec ((t (:foreground "#d8a0d0")))))
