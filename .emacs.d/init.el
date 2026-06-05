@@ -87,7 +87,7 @@
 (setopt custom-enabled-themes '())
 (defvar my-chosen-theme "tritium")
 
-;; Load my current favorite theme. But keep the cursor orange for visibility.
+;; Load my current favorite theme. But keep the cursor bright orange for visibility.
 
 (load-theme (intern my-chosen-theme) 't)
 (set-cursor-color "DarkOrange1")
@@ -96,7 +96,7 @@
 
 ;; Note that, in Emacs, the term "window" means what is called in modern
 ;; parlance a pane or viewport. This is because Emacs was written before
-;; GUIs existed.
+;; your primitive human GUIs existed.
 
 (defun split-window-into-thirds ()
   "Split the current frame into three equal-width vertical windows."
@@ -113,8 +113,8 @@
   (interactive)
   (other-window -1))
 
-(defun rotate-windows () ;; from whattheemacsd.com
-  "Rotate your windows"
+(defun rotate-windows ()
+  "Rotate your windows (from whattheemacsd.com)"
   (interactive)
   (cond ((not (> (count-windows) 1))
          (message "You can't rotate a single window!"))
@@ -514,62 +514,6 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
 (global-whitespace-mode -1)
 
-;;;; Settings for viewing binary files
-
-;; (defun use-hexl-mode-if-binary ()
-;;   "If the current buffer is a binary file, switch to `hexl-mode'."
-;;     (when (string-match-p "\0" (buffer-string))
-;;         (hexl-mode)))
-;;        
-;; (add-hook 'find-file-hook #'use-hexl-mode-if-binary)
-
-;;;; Git/Magit settings. Re-enable now that that bug is fixed!
-
-;; (defun gline-qdw ()
-;;   (interactive)
-;;   (let* ((dir (file-name-directory buffer-file-name))
-;;          (git-working-copy-root-dir (shell-command "git rev-parse --show-toplevel")))
-;;     (message "dir: %s; gcd: %s" dir git-working-copy-root-dir)
-;;     (if (not git-working-copy-root-dir)
-;;         (message (format "Not a Git working copy: %s"
-;;                          (file-name-directory buffer-file-name)))
-;;         (replace-regexp git-working-copy-root-dir "" dir)
-;;         (message (format "About to run gline in dir '%s':" git-working-copy-root-dir))
-;;         ;; (shell-command-qdw
-;;         (message
-;;          (format "gline %s %s" buffer-file-name (line-number-at-pos))))))
-
-;; In the default view, show stashes and local branches.
-;; Also, move the sections around a bit to suit my preferences.
-
-;; (setq-default magit-section-initial-visibility-alist
-;;               '((stashes . show)))
-              
-;; (setq-default magit-status-sections-hook
-;;               '(magit-insert-status-headers
-;;                 magit-insert-merge-log
-;;                 magit-insert-rebase-sequence
-;;                 magit-insert-am-sequence
-;;                 magit-insert-sequencer-sequence
-;;                 magit-insert-bisect-output
-;;                 magit-insert-bisect-rest
-;;                 magit-insert-bisect-log
-;;                 magit-insert-untracked-files
-;;                 magit-insert-stashes
-;;                 magit-insert-unstaged-changes
-;;                 magit-insert-staged-changes
-;;                 magit-insert-local-branches
-;;                 magit-insert-unpushed-to-pushremote
-;;                 magit-insert-unpushed-to-upstream-or-recent
-;;                 magit-insert-unpulled-from-pushremote
-;;                 magit-insert-unpulled-from-upstream))
-;; 
-;; (defun magit-try ()
-;;   (interactive)
-;;   (magit-stage-modified)
-;;   (magit-commit)
-;;   (magit-push))
-
 ;;;; AI stuff
 
 (load-file (expand-file-name "~/src-3/emacs-copilot/copilot.el"))
@@ -690,22 +634,6 @@ but it calls defvar under the hood."
 (defvar jira-default-project-qdw (getenv "JIRA_DEFAULT_PROJECT"))
 (defvar slack-team (getenv "SLACK_TEAM"))
 
-;;;; Python settings
-
-;; Better Python REPL integration
-(load-file (expand-file-name "~/src-3/lobstermacs/lobstermacs-python.el"))
-
-(add-hook 'python-mode-hook
-          (lambda ()
-          
-            ;; Auto-indent my own code, but not third-party code!
-            ;; In this case, "my own code" means any file
-            ;; whose path starts with ~/src/1/
-            (if (string-match (concat "^" (file-truename (expand-file-name "~/src/1/"))) ;; regexp
-                              (file-truename buffer-file-name))
-                (blacken-mode +1)
-                (blacken-mode -1))))
-
 ;;;; Javascript settings, TypeScript settings, JSON settings
 
 (let ((desired-indent-level 4))
@@ -715,6 +643,7 @@ but it calls defvar under the hood."
         js-switch-indent-offset desired-indent-level))
 
 ;; eslint (JavaScript/TypeScript linter) settings
+
 (defun seteslintrc ()
   "Returns the location of nearest eslintrc"
   (interactive)
@@ -752,7 +681,7 @@ but it calls defvar under the hood."
 
 (add-to-list 'auto-mode-alist '("\\.markdown\\'" . gfm-mode))
 
-;;;; Buffer-management settings
+;;;; Buffers; files; saving; killing emacs
 
 (defun buffer-saver-killer-helper (prompt-bool)
   (save-some-buffers prompt-bool)
@@ -768,11 +697,15 @@ but it calls defvar under the hood."
   (interactive)
   (buffer-saver-killer-helper 't))
 
-(defun qdw-kill-emacs ()
+(defun kill-emacs-qdw ()
   "Save file buffers and kill emacs, all without prompting"
   (interactive)
   (buffer-saver-killer-helper 't)
-  (kill-emacs))  
+  (kill-emacs))
+
+(defun start-at-column-qdw (col-num-zero-based)
+  (interactive "n") ;; Number read using minibuffer.
+  (set-window-hscroll (selected-window) col-num-zero-based))
 
 ;;;; Edit this file
 
@@ -792,9 +725,7 @@ but it calls defvar under the hood."
   (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
     (when (string-match "\\(.*\\)-theme\\.el$" base-name)
       (let ((theme-name (match-string 1 base-name)))
-        ;; (message "theme-name: %s; qdw-themes: %s" theme-name qdw-themes)
         (when (string-in theme-name custom-enabled-themes)
-          ;; (message "theme name is in custom-enabled-themes")
           (load-theme (intern theme-name) 't 't))))))
 
 (add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
@@ -853,7 +784,7 @@ but it calls defvar under the hood."
   (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
     (when (string-match "\\(.*\\)-theme\\.el$" base-name)
       (let ((theme-name (match-string 1 base-name)))
-        (when (string-in theme-name qdw-themes)
+        (when (string-in theme-name themes-qdw)
           (load-theme (intern theme-name) 't 't))))))
 
 (add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
@@ -1340,16 +1271,41 @@ This command does the reverse of `fill-region'."
         (original-underline-face (face-attribute 'underline :underline)))
     (unwind-protect
       (progn
-        Momentarily disable underlining; it looks bad in compilation-mode
+        ;; Momentarily disable underlining; it looks bad in compilation-mode
         (set-face-attribute 'underline nil :underline t)
         (compile (concat command-string " " buffer-file-name)
                  't)))
     (set-face-attribute 'underline nil :underline original-underline-face)))
 
-;;;; Hack macOS sandbox-exec files (which are written in a Lisp dialect)
+;;;; Hack macOS sandbox-exec (.sb) files, which are written in a Lisp dialect
 
 (use-package lisp-mode
-    :mode ("\\.sb\\'"))
+  :mode ("\\.sb\\'"))
+
+;;;; Hack Emacs Lisp
+
+;; broken
+;; (use-package elisp-mode
+;;   :after custom font-lock-mode    
+;;   :config
+;;   (custom-set-faces `(font-lock-builtin-face
+;;                       ((t ((:foreground ,blue)))))))
+
+  
+;;;; Hack Python
+
+(use-package python
+  :config (setopt python-indent-offset 4)
+          (add-hook 'python-mode-hook
+                    (lambda ()
+                      ;; Auto-indent my own code, but not third-party code.
+                      ;; In this case, "my own code" means any file
+                      ;; whose path starts with ~/src/1/
+                      (if (string-match
+                           (concat "^" (file-truename (expand-file-name "~/src/1/")))
+                           (file-truename buffer-file-name))
+                          (blacken-mode +1)
+                        (blacken-mode -1)))))
 
 ;;;; Hack Makefiles
 
@@ -1357,198 +1313,13 @@ This command does the reverse of `fill-region'."
           (lambda ()
             (setq indent-tabs-mode 't)))
 
-;;;; Hack org-mode documents
-
-(use-package org
-    :config
-    (when (string= system-type "darwin")
-      (add-to-list 'org-file-apps
-		   (cons "png" "/usr/bin/open %s")))
-    (add-to-list 'org-file-apps '("\\.crd\\'" . emacs)) ;; guitar tabs
-    (setopt
-     org-archive "::"
-     org-catch-invisible-edits "show"
-     org-cycle-separator-lines 1
-     org-return-follows-link 't))
-  ;; (setopt org-emphasis-alist
-  ;;         '(("*" bold)
-  ;;           ("/" italic)
-  ;;           ("_" underline)
-  ;;           ("=" org-verbatim verbatim)
-  ;;           ("`" org-code verbatim)
-  ;;           ("~" (:strike-through t)))
-(defun org-linkify-buffer-qdw ()
-  "Make each line in the buffer into an org-mode style link
-by enclosing it in [[double square brackets]]. This works
-for files of local paths produced by running, e.g., fd,
-which is its intended use."
-  (interactive)
-  (goto-char (point-min))
-  (replace-regexp "^" "[[")
-  (goto-char (point-min))
-  (replace-regexp "$" "]]"))
-(setopt org-confirm-babel-evaluate nil
-        org-babel-load-languages
-        '((emacs-lisp . t)
-          (python . t)
-          (shell . t)))
-(defun org-insert-jira-link-qdw ()
-  (interactive)
-  (letrec ((pre-filled-text (if (boundp 'jira-default-project-qdw)
-                                (concat jira-default-project-qdw "-")
-                              ""))
-           (issue-name (read-string
-                        "Issue name (e.g. MYPROJ-0000): "
-                        pre-filled-text
-                        nil
-                        nil
-                        nil)))
-    (message (format "jira-default-project-qdw: %s\npre-filled-text: %s"
-		     jira-default-project-qdw
-		     pre-filled-text))
-
-    (org-insert-link nil
-		     (concat jira-base-url "/browse/" issue-name)
-		     issue-name)))
-
-(defun org-link-word-at-point-qdw ()
-  "Wrap word at point in an org link, prompting for URL with org completion."
-  (interactive)
-  (let* ((bounds (bounds-of-thing-at-point 'word))
-         (word (buffer-substring-no-properties (car bounds) (cdr bounds)))
-         (start (copy-marker (car bounds)))
-         (end (copy-marker (cdr bounds)))
-         (offset (- (point) (car bounds))))
-    (goto-char end)
-    (condition-case nil
-        (progn
-          (org-insert-link nil nil word)
-          (delete-region start end)
-          ;; Link is now at start: [[url][word]]
-          ;; Jump to description part and apply original offset
-          (goto-char start)
-          (when (looking-at "\\[\\[[^]]*\\]\\[")
-            (goto-char (+ (match-end 0) offset))))
-      (quit (goto-char (+ (marker-position start) offset))))))
-
-(defun org-fold-qdw ()
-  "In org-mode, set the VISIBILITY property of the element at point
-  to 'folded'."
-  (interactive)
-  (when (org-at-heading-p)
-    (org-set-property "VISIBILITY" "folded")))
-
-(defun org-insert-file-link-qdw ()
-  "Insert a link to a local file."
-  (interactive)
-  (let* ((filename
-          (read-file-name "Link to file: "))
-
-         (link-text
-          (read-string "Link text: " (file-name-nondirectory filename))))
-    (insert (format "[[file:%s][%s]]" filename link-text))))
-
-(defun org-insert-slack-link-qdw (channel-name)
-  (interactive "MSlack channel (without the '#'): ")
-  (org-insert-link
-    nil
-    (concat "https://" slack-team ".slack.com/channels/#" channel-name)
-    (concat "#" channel-name)))
-          
-(defun org-just-eval-blocks-qdw ()
-  "Automatically evaluate specific org-mode #+CALL: lines on buffer visit."
-  (interactive)
-  (when (derived-mode-p 'org-mode)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "^#\\+CALL:" nil t)
-        (org-babel-lob-execute-maybe)))))
-
-(add-hook 'org-mode-hook #'org-just-eval-blocks-qdw)
-
-(defun org-insert-subheading-respect-content-qdw (arg)
-  (interactive "P")
-  (org-insert-todo-subheading-respect-content arg)
-    (cond
-      ((org-at-heading-p) (org-do-demote))
-      ((org-at-item-p) (org-indent-item))))
-
-;;;; Music playlists in org-mode
-
-(use-package url-util
-    :commands (canonical-path-qdw insert-vgm-qdw))
-
-;;; Apple Music
-
-(org-link-set-parameters
-  "play"
-  :follow (lambda (song-name _)
-            (noninteractive-shell-command-qdw
-              (concat "play " (shell-quote-argument song-name)))))
-            ;; ^ My 'play' shell function is defined in my ~/.bashrc.
-
-(org-link-set-parameters
-  "play-album"
-  :follow (lambda (album-id _)
-            (noninteractive-shell-command-qdw
-              (concat "play-album-untested " (shell-quote-argument album-id)))))
-            ;; ^ My 'play-album' shell function is defined in my ~/.bashrc.
-
-(defun insert-current-song-qdw ()
-  "Insert an org-mode link to the currently playing song.
-On click or RET, the link will replay the song.
-Depends on my Bash function `play', defined in ~/.bashrc."
-  (interactive)
-  (let* ((song-name (shell-command-to-string-qdw "song-name"))
-         (org-code (format "[[play:%s][%s]]" song-name song-name)))
-    (insert org-code)))
-
-;; (defun insert-current-album-qdw ()
-;;   (interactive)
-;;   (let*
-
-(defun insert-vgm-qdw (path)
-  "Insert an org-mode link to a local file containing video game music.
-On click or RET, the link will automatically play in a (hard-coded)
-player that I have chosen for its filetype. Currently supported
-filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
-  (interactive (list (read-file-name "File: ")))
-  (let* ((track-name (file-name-base path))
-         (link-type (upcase (file-name-extension path)))
-         (urlencoded-path (url-hexify-string path))
-         (org-code (format "[[%s:%s][%s]]"
-                           link-type
-                           urlencoded-path
-                           track-name)))
-  (insert org-code)))
-
-;; C64
-
-(org-link-set-parameters
- "SID"
- :follow (lambda (path _no-prefix-arg)
-           (shell-command-to-string-qdw ;; string  retval is ignored
-            (concat
-              "open -a Cog.app "
-              (canonical-path-qdw path)))))
-
-;; NES
-
-(org-link-set-parameters
- "NSF"
- :follow (lambda (path _no-prefix-arg)
-           (shell-command-to-string-qdw ;; string  retval is ignored
-            (concat
-               "open -a 'Audio Overload.app' "
-               (canonical-path-qdw path)))))
-
 ;;;; tail -f settings
 
-(defun tail ()
-  (interactive)
-  (auto-revert-tail-mode))
+(defalias 'tail 'auto-revert-tail-mode)
   
 (add-hook 'xref-backend-functions 'dumb-jump-xref-activate)
+
+;;;; various_CaseConvention-settings
 
 (defun kebab-to-camel-case ()
   "Convert the kebab-case word at point to CamelCase."
@@ -1579,22 +1350,27 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 ;;;; Editor MACroS
 
 ;;; Global keybindings that get overridden by major and minor modes' bindings.
-(keymap-global-set "C-c C-p"
+
+(keymap-global-set "C-c C-c C-p"
                    (lambda ()
                      (interactive)
                      (find-file (expand-file-name "~/personal.org"))))
 
 ;;; Global keybindings that override major and minor modes' bindings.
 
-(defvar qdw-override-mode-map (make-sparse-keymap)
+
+
+(defvar override-mode-map-qdw (make-sparse-keymap)
   "Keymap for `qdw-override-mode', used to override other modes' keymaps.")
 
 (mapc
- (lambda (ls) (define-key qdw-override-mode-map
+ (lambda (ls) (define-key override-mode-map-qdw
                           (kbd (car ls))
                           (cadr ls)))
 
- '(("M-!"         shell-command-qdw)
+ '(("C-c <up>"     move-line-up-qdw)
+   ("C-c <down>" move-line-down-qdw)
+   ("M-!"         shell-command-qdw)
    ("M-`"         unfill-paragraph-xah)
    ("C-c u"       uncomment-region)
    ("C-c ."       open-thing-at-point)
@@ -1627,12 +1403,12 @@ filetypes: SID (Commodore 64), NSF (Nintendo Entertainment System)."
    ("M-5"         query-replace-regexp)
    ("M-o"         other-window-reverse)))
 
-(define-minor-mode qdw-keymap-override-mode
+(define-minor-mode keymap-override-mode-qdw
   "Minor mode to override major and minor mode keybindings."
   :global t
-  :keymap qdw-override-mode-map)
+  :keymap override-mode-map-qdw)
 
-(qdw-keymap-override-mode +1) ; enable the override mode
+(keymap-override-mode-qdw +1) ; enable the override mode
 
 ;;; C keybindings
 
