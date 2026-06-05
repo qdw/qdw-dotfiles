@@ -10,26 +10,19 @@
 
 ;;;;;; (let ((inhibit-messsage t))
 
-;; (use-package sh-script
-;; :config
-(require 'sh-script)  
-(advice-add 'sh-set-shell
-            :around
-            (lambda (orig &rest args)
-              (let ((inhibit-message 't))
-                (apply orig args))))
 
 ;;;; Appearance
 
 ;; Remove chrome (menu bar/too lbar/scroll bar).
+
 ;; Behold the inconsistency of Emacs conventions!
 
 (setopt inhibit-startup-screen t)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
-(use-package scroll-bar
-             :ensure nil
-             :config (scroll-bar-mode -1))
+(use-package scroll-bar :config (scroll-bar-mode -1)
+                        :demand t
+                        :ensure nil)
 
 ;; Don't beep; flash the screen (visual bell) instead.
 
@@ -55,18 +48,35 @@
 (set-face-font 'default "Menlo-17")
 (blink-cursor-mode -1)
 
+(use-package xterm
 ;;;; TTY settings. If you're running GUI Emacs, these are no-ops.
 
-;; Enable special mouse buttons if your terminal emulator supports them.
-;; These apply to TTY Emacs, and cause Emacs to interpret certain magic
-;; escape sequences if your terminal emulator sends them. This doesn't
-;; apply to GUI Emacs, which has its built-in GUI mouse-handling.
+  ;; They work by telling Emacs to interpret certain magic
+  ;; escape sequences iff your terminal emulator sends them.
+  ;; 
+  ;; The way I'm using `xterm', it's doing two things:
+  ;; 
+  ;; 1) Enable special mouse buttons if your terminal emulator supports them.
+  ;;
+  ;; 2) Automagically, transiently turn off electric-indent-mode and
+  ;;    enable bracketed paste whenever you paste from the OS
+  ;;    clipboard (e.g., when you do Cmd-V on a Mac).
+  ;;
+  ;;    This behavior is
+  ;;    the equivalent of vim's :set paste, except that you don't need
+  ;;    to turn it on and off manually.
+    
+  :init
+  (add-hook 'server-after-make-frame-hook
+            (lambda ()
+              (setenv "TERM" "xterm-256color"))) ; required for bracketed paste
 
-(xterm-mouse-mode +1)
+  :config
+  (xterm-mouse-mode +1))
 
-;;;; Color theme settings
+;;;; Color-theme settings
 
-(defvar qdw-themes '("amber" "amber-without-bold" "mariana" "tritium"))
+(defvar themes-qdw '("amber" "amber-without-bold" "mariana" "tritium"))
 
 (mapc
  (lambda (file-name)
@@ -130,12 +140,40 @@
              
   (other-window -1))
   
-;;;;;;;; Behavior
+;;;; Basic text-editing behavior
  
-;;;; Text-entry settings: overwrite or delete the "region" (selected text)
-;;;; when I type, in keeping with modern UI conventions.
+;; Text-entry settings: overwrite or delete the "region" (selected text)
+;; when I type, in keeping with modern UI conventions.
 
 (delete-selection-mode +1)
+
+;; Display long lines as ......$,
+;; rather than displaying the whole text-line on multiple terminal-lines
+;; using Emacs ......\ notation
+
+(defalias 'vim-newlines 'toggle-truncate-lines)
+
+(defun start-lines-at-col (one-based-column-number)
+  (interactive "n")
+  (toggle-truncate-lines +1)
+  (set-window-hscroll (selected-window) (- one-based-column-number 1))
+  (setq-local auto-hscroll-mode nil))
+
+(defun start-lines-at-1 ()
+  (interactive)
+  (set-window-hscroll (selected-window) 0)
+  (setq-local auto-hscroll-mode 't))
+
+(defun move-line-up-qdw ()
+  (interactive)
+  (transpose-lines 1)
+  (forward-line -2))
+
+(defun move-line-down-qdw ()
+  (interactive)
+  (forward-line 1)
+  (transpose-lines 1)
+  (forward-line -1))
 
 ;;;; Dependency settings
 
@@ -151,41 +189,251 @@
 ;; Explicitly load everything at Emacs init time,
 ;; since I'm running in --fg-daemon mode and I don't
 ;; want delays later when things lazy-load.
+;; 
+;; For documentation on use-package, see
+;;
+;; https://github.com/jwiegley/use-package-examples
 
-(require 'ansi-color)
-(require 'cc-mode)
-(require 'comint)
-(require 'compile)
-(require 'dirtrack)
-(require 'ellama)
-(require 'imenu)
+(setq use-package-always-demand t)  ;; load at Emacs init time
+;; use-package-always-ensure t) ;; auto-install from repo if not installed
 
+(use-package ansi-color)
+(use-package cc-mode)
+(use-package comint)
+(use-package compile)
 (use-package cperl-mode
   :mode ("\\.pl\\'" . cperl-mode)
   :interpreter ("perl" . cperl-mode)
   :custom (cperl-indent-level 4))
+(use-package dired)
+(use-package dirtrack)
+(use-package ellama)
+(use-package hide-lines
+  :config (defun org-skel-qdw ()
+            (interactive)
+            (hide-lines-not-matching "PROJECT\|SUBPROJECT\|NEXT_ACTION")))
 
-(require 'json)
-(require 'markdown-mode)
-(require 'org)
+(use-package imenu)
+(use-package sh-script
+    :init (advice-add 'sh-set-shell
+                      :around
+                      (lambda (orig &rest args)
+                        (let ((inhibit-message 't))
+                          (apply orig args)))))
+(use-package json)
+(use-package markdown-mode)
 
-;; (use-package paredit
-;;   :hook ((lisp-mode . paredit-mode)
-;;          (emacs-lisp-mode . paredit-mode)))
+(use-package url-util)
+
+;;;; Hack org-mode documents
+
+(use-package org :after url-util
+    
+  :config
+
+  ;; When visiting links to guitar tabs, open them in Emacs itself.
+  (add-to-list 'org-file-apps '("\\.crd\\'" . emacs))
+
+  ;; On macOS, open files of certain types with GUI apps (not Emacs).
+  (when (string= system-type "darwin")
+      (add-to-list 'org-file-apps
+		           (cons "png" "/usr/bin/open %s")
+                   (cons "pdf" "/usr/bin/open %s")))
+
+    (defun org-linkify-buffer-qdw ()
+    "Make each line in the buffer into an org-mode style link
+by enclosing it in [[double square brackets]]. This works
+for files of local paths produced by running, e.g., fd,
+which is its intended use."
+    (interactive)
+    (goto-char (point-min))
+    (replace-regexp "^" "[[")
+    (goto-char (point-min))
+    (replace-regexp "$" "]]"))
+
+  (defun org-insert-jira-link-qdw ()
+    (interactive)
+    (letrec ((pre-filled-text (if (boundp 'jira-default-project-qdw)
+                                  (concat jira-default-project-qdw "-")
+                                ""))
+             (issue-name (read-string
+                          "Issue name (e.g. MYPROJ-0000): "
+                          pre-filled-text
+                          nil
+                          nil
+                          nil)))
+      (message (format "jira-default-project-qdw: %s\npre-filled-text: %s"
+		               jira-default-project-qdw
+		               pre-filled-text))
+
+      (org-insert-link nil
+		               (concat jira-base-url "/browse/" issue-name)
+		               issue-name)))
+
+  (defun org-link-word-at-point-qdw ()
+    "Wrap word at point in an org link, prompting for URL with org completion."
+    (interactive)
+    (let* ((bounds (bounds-of-thing-at-point 'word))
+           (word (buffer-substring-no-properties (car bounds) (cdr bounds)))
+           (start (copy-marker (car bounds)))
+           (end (copy-marker (cdr bounds)))
+           (offset (- (point) (car bounds))))
+      (goto-char end)
+      (condition-case nil
+          (progn
+            (org-insert-link nil nil word)
+            (delete-region start end)
+            ;; Link is now at start: [[url][word]]
+            ;; Jump to description part and apply original offset
+            (goto-char start)
+            (when (looking-at "\\[\\[[^]]*\\]\\[")
+              (goto-char (+ (match-end 0) offset))))
+        (quit (goto-char (+ (marker-position start) offset))))))
+
+  (defun org-fold-qdw ()
+    "In org-mode, set the VISIBILITY property of the element at point
+  to 'folded'."
+    (interactive)
+    (when (org-at-heading-p)
+      (org-set-property "VISIBILITY" "folded")))
+
+  (defun org-insert-file-link-qdw ()
+    "Insert a link to a local file"
+    (interactive)
+    (let* ((filename
+            (read-file-name "Link to file: "))
+
+           (link-text
+            (read-string "Link text: " (file-name-nondirectory filename))))
+      (insert (format "[[file:%s][%s]]" filename link-text))))
+
+  (defun org-insert-slack-link-qdw (channel-name)
+    (interactive "MSlack channel (without the '#'): ")
+    (org-insert-link
+     nil
+     (concat "https://" slack-team ".slack.com/channels/#" channel-name)
+     (concat "#" channel-name)))
+          
+  (defun org-just-eval-blocks-qdw ()
+    "Automatically evaluate specific org-mode #+CALL: lines on buffer visit."
+    (interactive)
+    (when (derived-mode-p 'org-mode)
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward "^#\\+CALL:" nil t)
+          (org-babel-lob-execute-maybe)))))
+
+  (add-hook 'org-mode-hook #'org-just-eval-blocks-qdw)
+
+  (defun org-insert-subheading-respect-content-qdw (arg)
+    (interactive "P")
+    (org-insert-todo-subheading-respect-content arg)
+    (cond ((org-at-heading-p) (org-do-demote))
+          ((org-at-item-p) (org-indent-item))))
+
+  ;;; Music playlists in org-mode
+  ;;; (this code depends on Emacs's built-in url-util package
+  ;;; being loaded first, hence the :after url-util at the top of
+  ;;; my org-mode use-package expression).
+
+   ;; Apple Music
+
+  (org-link-set-parameters
+   "play"
+   :follow (lambda (song-name _)
+             (noninteractive-shell-command-qdw
+              (concat "play " (shell-quote-argument song-name)))))
+             ;; ^ The 'play' shell function is defined in my ~/.bashrc.
+
+  (org-link-set-parameters
+   "play-album"
+   :follow (lambda (album-id _)
+             (noninteractive-shell-command-qdw
+              (concat "play-album-untested "
+                      (shell-quote-argument album-id)))))
+             ;; ^ The 'play-album' shell function is defined in my ~/.bashrc.
+
+  (defun org-insert-current-song-qdw ()
+  "Insert an org-mode link to the currently playing song.
+On click or RET, the link will replay the song.
+Depends on my Bash function `play', defined in ~/.bashrc."
+    (interactive)
+    (let* ((song-name (shell-command-to-string-qdw "song-name"))
+           (org-code (format "[[play:%s][%s]]" song-name song-name)))
+      (insert org-code)))
+
+;; (defun insert-current-album-qdw ()
+;;   (interactive)
+;;   (let*
+
+  (defun insert-vgm-qdw (path)
+    "Insert an org-mode link to a local file containing video game music.
+On click or RET, the link will automatically play in a (hard-coded)
+player that I have chosen for its filetype. Currently supported
+file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
+    (interactive (list (read-file-name "File: ")))
+    (let* ((track-name (file-name-base path))
+           (link-type (upcase (file-name-extension path)))
+           (urlencoded-path (url-hexify-string path))
+           (org-code (format "[[%s:%s][%s]]"
+                             link-type
+                             urlencoded-path
+                             track-name)))
+      (insert org-code)))
+
+  ;; C64
+
+  (org-link-set-parameters
+   "SID"
+   :follow (lambda (path _no-prefix-arg)
+             (shell-command-to-string-qdw ;; string  retval is ignored
+              (concat
+               "open -a Cog.app "
+               (canonical-path-qdw path)))))
+
+  ;; NES
+
+  (org-link-set-parameters
+   "NSF"
+   :follow (lambda (path _no-prefix-arg)
+             (shell-command-to-string-qdw ;; string  retval is ignored
+              (concat
+               "open -a 'Audio Overload.app' "
+               (canonical-path-qdw path)))))
+
+  :custom
+
+  org-archive "::"
+  org-catch-invisible-edits "show"
+  org-cycle-separator-lines 1
+  org-return-follows-link 't
+
+  ;; default org formatting; consider changing
+  ;; org-emphasis-alist '(("*" bold)
+  ;;                      ("/" italic)
+  ;;                      ("_" underline)
+  ;;                      ("=" org-verbatim verbatim)
+  ;;                      ("`" org-code verbatim)
+  ;;                      ("~" (:strike-through t)))
+
+  org-emphasis-alist '(("*" underline)
+                       ("/" underline)
+                       ("_" underline)
+                       ("=" org-verbatim verbatim)
+                       ("`" org-code verbatim)
+                       ("~" (:strike-through t)))
+
+  
+  org-confirm-babel-evaluate nil
+  org-babel-load-languages '((emacs-lisp . t)
+                             (python . t)
+                             (shell . t)))
 
 
-
-;; (require 'org-superagenda)
-;; (require 'recentf)
-(require 'ruby-mode)
-(require 'whitespace)
+(use-package ruby-mode)
+(use-package whitespace)
 
 (setopt load-prefer-newer 't)
-
-;;;; Global upgrades/superpowers
-
-(let ((ad-redefinition-action 'accept))
-  (pcre-mode +1))
 
 ;;;; Basic comfort
 
