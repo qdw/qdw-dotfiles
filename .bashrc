@@ -3396,6 +3396,6 @@ export MANPATH=":$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man
 
 set +o pipefail
 
-#### #section-8# site-specific stuff, not stored in git
+#### #section-8#  Site-specific stuff, not stored in git
 
 source-if-exists "$HOME/.site.bash.d/postamble.bash"
