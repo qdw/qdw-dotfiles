@@ -1,12 +1,11 @@
 ########     dependencies:
 ########         00-bash-metaprogramming.bash
 
-LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
-# OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
-OBLIGATE_TOGGLE_FUNCTIONS=""
-LIGHT_WALLPAPER="$HOME/wallpaper/light/current-favorite"
 DARK_WALLPAPER="$HOME/wallpaper/dark/current-favorite"
+LIGHT_WALLPAPER="$HOME/wallpaper/light/current-favorite"
+LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
 MODE_SPEC="'dark' | 'light'"
+OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
 
 declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app")
 
@@ -40,7 +39,12 @@ function change-macos-to {
 }
 
 function _set_wallpaper {
+    check-args 1 1 "$@" \
+        'do not run directly; run change-wallpaper-to instead' || return 1
     local IMAGE_FILENAME="$1"
+    echo "Image filename is '$IMAGE_FILENAME'" >&2
+    echo "real path is" "$(realpath $IMAGE_FILENAME)" >&2
+    
 
     # FIXME: make this work for all desktops, somehow
     /opt/homebrew/bin/wallpaper set "$IMAGE_FILENAME"
@@ -50,6 +54,7 @@ function change-wallpaper-to {
     check-args 1 1 "$MODE_SPEC" "$@" || return 1
     local MODE="$1"
     validate-mode "$MODE" || return 1
+    echo "Change wallpaper to '$MODE'" >&2
     case "$MODE" in
         light) _set_wallpaper "$LIGHT_WALLPAPER";;
         dark) _set_wallpaper "$DARK_WALLPAPER";;
@@ -68,7 +73,7 @@ function change-emacs-to {
 }
 
 function _i_am_running {
-    check args 1 1 'MyApp.app' "$@" || return 1
+    check-args 1 1 'MyApp.app' "$@" || return 1
     local APP="$1"
     
     ps -wux "$USER" \
@@ -82,7 +87,8 @@ function toggle-dark-reader {
     (obsolete for recent versions of Dark Reader, which include a feature
     to auto-follow the system-wide setting)"
 
-    check-args 0 0 "$@" || return 1
+    check-args 0 0 'toggle the Dark Reader browser extension on/off' \
+        "$@" || return 1
     
     for BROWSER in @{BROWSERS_USING_DARK_READER[@]}; do
         if _i_am_running "$BROWSER"; then
@@ -121,7 +127,7 @@ function currently-light {
 
 function toggle-toggles {
     for FN in $OBLIGATE_TOGGLE_FUNCTIONS; do
-        $FN
+        "$FN"
     done
 }
 
@@ -138,6 +144,7 @@ function dark {
     if currently-light; then
         change-macos-to "dark"
         change-wallpaper-to "dark"
+        change-emacs-to "dark"
         toggle-toggles
         echo "dark" > "$LIGHT_OR_DARK_FILE"
     fi
