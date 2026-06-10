@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 umask 0022
 
 set -o pipefail
@@ -127,7 +129,7 @@ function ldd {
 function decolonize {
     check-args 1 1 'STRING # like PATH or MANPATH' "$@" || return 1
     STRING="$1"
-    echo $STRING | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
+    echo "$STRING" | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
 }
 
 #### Text editor #sec 6#
@@ -174,7 +176,7 @@ function install-emacs {
         fi
     }
     
-    brew install $(brew deps "emacs-plus@${VERSION_NUMBER}") || return    
+    brew install "$(brew deps "emacs-plus@${VERSION_NUMBER}")" || return    
     
     for DIRECTORY in "$INSTALL_DIR" "$SOURCE_DIR" "$PATCH_DIR"; do
         dir-is-okay "$DIRECTORY" || return
@@ -228,7 +230,7 @@ function ke {
 
     local PID="$(emacs-daemon-pid)"
     if [[ -n "$PID" ]]; then
-        kill $ARG "$PID"
+        kill "$ARG" "$PID"
     else
         err "It doesn't look like the emacs daemon is running"
         return 2
@@ -243,6 +245,7 @@ function ke {
 function emacs {
     # If, instead of running a command like crontab(1) that implicitly runs $VISUAL,
     # I directly type "emacs my-file", then...
+    # shellcheck disable=SC2078
     if [[ "$1" = "-c" && shift ]]   ||   [[ "$INSIDE_EMACS" ]]; then
         # If I'm inside an Emacs interactive-shell-mode buffer,
         # then edit my-file in the same same Emacs window.
@@ -267,7 +270,11 @@ function se {
         return 1
     else
         echo "Starting the Emacs daemon..."
+        local ORIG_DIR="$(pwd)"
+        cd
+        echo "TERM is $TERM"
         command emacs --bg-daemon >/dev/null 2>&1
+        cd "$ORIG_DIR" >/dev/null
         
 	# Give it time to start up and load my ~/.emacs.d/init.el
         sleep 4
@@ -277,34 +284,30 @@ function se {
 
 # re (Restart Emacs-daemon): stop it, then start it.
 function re {
-    ke
-    se
+    ke "$@"
+    se "$@"
 }
 
 MY_EDITOR="$HOME/bin/emacs-wrapper"
 
-set -a
-# GIT_EDITOR="$MY_EDITOR"
-GIT_EDITOR="subl"
-EDITOR="$MY_EDITOR"
-VISUAL="$MY_EDITOR"
+# export GIT_EDITOR="$MY_EDITOR"
+export GIT_EDITOR="subl"
+export EDITOR="$MY_EDITOR"
+export VISUAL="$MY_EDITOR"
 
 if command-exists "subl"; then 
-    PSQL_EDITOR="subl -w"
-    HOMEBREW_EDITOR="subl"
+    export PSQL_EDITOR="subl -w"
+    export HOMEBREW_EDITOR="subl"
 else
-    PSQL_EDITOR="$MY_EDITOR"
+    export PSQL_EDITOR="$MY_EDITOR"
 fi
-set +a
 
 #### Homebrew #sec 7#
 
-set -a
-HOMEBREW_BAT=1
-HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
-HOMEBREW_NO_ANALYTICS=1
-HOMEBREW_NO_ENV_HINTS=1
-set +a
+export HOMEBREW_BAT=1
+export HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
+export HOMEBREW_NO_ANALYTICS=1
+export HOMEBREW_NO_ENV_HINTS=1
 
 ## Homebrewed alternatives to bundled system utilities
 
@@ -320,15 +323,13 @@ fi
 
 for HDIR in "/opt/homebrew" "/usr/local"; do
     if [[ -x "$HDIR/bin/brew" ]]; then
-        set -a
-        HOMEBREW_MANPATH="$HDIR/manpages:$HDIR/share/man"
-        HOMEBREW_INFOPATH="$HDIR/share/info"
-        HOMEBREW_ROOT="$HDIR"
-        HOMEBREW_OPT="$HDIR/opt"
-        HOMEBREW_BIN="$HDIR/bin"
-        MY_HOMEBREW_PATH="$HOMEBREW_OPT:$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin"
-        PATH="$(decolonize "$MY_HOMEBREW_PATH:$PATH")"
-        set +a
+        export HOMEBREW_MANPATH="$HDIR/manpages:$HDIR/share/man"
+        export HOMEBREW_INFOPATH="$HDIR/share/info"
+        export HOMEBREW_ROOT="$HDIR"
+        export HOMEBREW_OPT="$HDIR/opt"
+        export HOMEBREW_BIN="$HDIR/bin"
+        export MY_HOMEBREW_PATH="$HOMEBREW_OPT:$HOMEBREW_BIN:$HDIR/sbin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin:$HOMEBREW_ROOT/bin/Contents/SharedSupport/bin"
+        export PATH="$(decolonize "$MY_HOMEBREW_PATH:$PATH")"
         break
     fi
 done
@@ -361,8 +362,7 @@ function bls {
     check-args 1 1 'REGEX' "$@" || return 1
     local REGEX="$1"
 
-    brew ls | grep "$REGEX"
-    if [[ $? -ne 0 ]]; then
+    if brew ls | grep "$REGEX"; then
         brew search "/$REGEX/"
     fi
 }
@@ -506,8 +506,9 @@ function boser {
         BREW_SERVICE_NAMES["$NAME"]=1
     done < <(brew-service-names)
 
+    # shellcheck disable=SC2068
     for FORMULA_NAME in ${OUTDATED_FORMULAE[@]}; do
-        if [[ -v BREW_SERVICE_NAMES[$FORMULA_NAME] ]]; then
+        if [[ -v ${BREW_SERVICE_NAMES[$FORMULA_NAME]} ]]; then
             echo "$FORMULA_NAME"
         fi
     done
@@ -525,26 +526,12 @@ function bu {
 
     if [[ ${#OUTDATED_SERVICES[@]} -gt 0 ]]; then
         color-printf "blue" "==> "; color-printf "red" "Restarting services:\n"
+        # shellcheck disable=SC2068
         for SVC in ${OUTDATED_SERVICES[@]}; do
             color-printf "green" "==> "; color-printf "red" "Restarting "; color-printf "bright-green" "$SVC\n"
             brew services restart "$SVC"
         done
     fi
-}
-
-function shells {
-    MANNAME="list installed Unix shells"
-    check-args 0 0 '[no arguments]' "$@" || return 1
-    (
-        basename "$(which scsh 2>/dev/null)"
-
-        ORIGINAL_DIR="$(pwd)" && cd /bin && printf "%s\n" *sh
-
-        brew ls \
-            | command grep -E --color=never 'sh$|nushell' \
-            | command grep -vE 'ssh|trash|hash|cash'
-    ) \
-    | sort
 }
 
 function boi {
@@ -556,7 +543,7 @@ function boi {
     local N_FORM=${#OUTDATED_FORMULAE[@]}
     if [[ $N_FORM -gt 0 ]]; then
         color-printf "red" "==> "; color-printf "red" "Outdated formulae:\n"
-        echo ${OUTDATED_FORMULAE[@]}
+        echo "${OUTDATED_FORMULAE[@]}"
     fi
 
 
@@ -564,14 +551,14 @@ function boi {
     local N_CASK=${#OUTDATED_CASKS[@]}
     if [[ $N_CASK -gt 0 ]]; then
         color-printf "red" "==> "; color-printf "red" "Outdated casks:\n"
-        echo ${OUTDATED_CASKS[@]}
+        echo "${OUTDATED_CASKS[@]}"
     fi
 
 
     if [[ $N_FORM -gt 0 ]] || [[ $N_CASK -gt 0 ]]; then
         color-printf "bright-red" "==> Upgrade? [y/N]> "
         local USER_REPLY
-        read USER_REPLY
+        read -r USER_REPLY
         if [[ "${USER_REPLY,,}" =~ y ]]; then # downcase, then match
             bu
         fi
@@ -587,12 +574,10 @@ if on-macos; then
 
     source-section "macos-app-completion.bash" ### Make 'la SUBSTRING tab' complete on macOS app names
 
-    set -a
-    XDG_CONFIG_HOME="$HOME/.config"
-    XDG_CACHE_HOME="$HOME/.cache"
-    XDG_DATA_HOME="$HOME/.local/share"
-    XDG_STATE_HOME="$HOME/.local/state"
-    set +a
+    export XDG_CONFIG_HOME="$HOME/.config"
+    export XDG_CACHE_HOME="$HOME/.cache"
+    export XDG_DATA_HOME="$HOME/.local/share"
+    export XDG_STATE_HOME="$HOME/.local/state"
 
     if [[ -f "$HOMEBREW_BIN/trash" ]]; then
         # function rm {
@@ -744,7 +729,7 @@ Maybe you meant 'which \"$APP_NAME\"?'"
         if [[ $# -eq 0 ]]; then
             DARWIN_VERSION="$(darwin-version)" # the currently running version
         else
-            DARWIN_VERSION="${@: -1}"
+            DARWIN_VERSION="${_[-1]}"
         fi
         
         local DARWIN_MAJOR_VERSION="${DARWIN_VERSION%%.*}"
@@ -903,6 +888,7 @@ else
         BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
         if [[ -e "$BREWED_GNU" ]]; then
             # FIXME: this code is not being reached, somehow
+            # shellcheck disable=SC2145,SC2294
             eval "function $GNU_COMMAND { $BREWED_GNU \"$@\" ;}"
             # exalias "$GNU_COMMAND" "$BREWED_GNU"
         fi
@@ -930,7 +916,7 @@ source-section "dot-ignore.bash" ### helper functions for the .ignore files hono
 function strip_control_characters_from {
     local STRING
     if [[ $# -eq 1 ]]; then
-        echo "$(tr -cd  "[:print:]"  "$STRING")"
+        tr -cd  "[:print:]"  "$STRING"
     else
         echo "strip_control_characters_from: error: wrong number of arguments. Usage: strip_control_characters_from STRING" >&2
     fi
@@ -969,11 +955,8 @@ export CLICOLOR=1
 
 #### Convenience functions for printing ANSI SGR 4-bit color codes
 
-set -a
-QANSI='\033['
-QRESET='\033[0m'
-
-set +a
+export QANSI='\033['
+export QRESET='\033[0m'
 
 function color-printf {
     local HELP="COLOR_NAME [STRING ...]
@@ -1009,7 +992,7 @@ For example, color-printf bright-cyan 'Color text' 'and more color text\n'.
     esac
 
     printf '\e[%d;%dm' "$BRIGHTNESS" "$COLORCODE"
-    printf "$@"
+    echo "$@"
     printf '\033[0m'
 }
 
@@ -1067,7 +1050,6 @@ function hex {
 #### Bash prompt settings
 
 unset PROMPT_COMMAND
-PS1_LOGO=""
 
 # # Use Unicode emoji as visual cues for different hosts/apps
 # if [[ "$INSIDE_EMACS" ]]; then
@@ -1132,10 +1114,10 @@ function dashify-path {
     echo "$DASHIFIED"
 }
 
-function cdd { cd ~/Desktop/$1 ;}
-function cdq { cd ~/src/1/qdw-dotfiles/$1 ;}
-function cd3 { cd ~/src-3/$1 ;}
-function cd1 { cd ~/src/1/$1 ;}
+function cdd { cd "$HOME/Desktop/$1" ;}
+function cdq { cd "$HOME/src/1/qdw-dotfiles/$1" ;}
+function cd3 { cd "$HOME/src-3/$1" ;}
+function cd1 { cd "$HOME/src/1/$1" ;}
 
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
@@ -1143,9 +1125,11 @@ function cd1 { cd ~/src/1/$1 ;}
 # If the user passes no arguments, then do that to the directory portion
 # of the previous argument passed ($_).
 function cdl {
+    # shellcheck disable=2016
     local MANNAME='cd to the enclosing dir of a file (or of $_ if none passed)'
     local ARG  REALPATH
-    
+
+    # shellcheck disable=2016
     check-args 0 1 '[TARGET_FILE] # default: $_' "$@" || return 1
     if [[ $# -eq 0 ]]; then
         ARG="$_"
@@ -1167,16 +1151,12 @@ function cdl {
 
 #### Bash history settings
 
-set -a
-
 # Add a timestamp to history(1) output, using strftime(3) formatting.
-HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
+export HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
 
 # Keep all history forever
-HISTFILESIZE=-1
-HISTSIZE=-1
-
-set +a
+export HISTFILESIZE=-1
+export HISTSIZE=-1
 
 ## Bash completion and prompt settings
 ## Dependencies:
@@ -1191,15 +1171,13 @@ set +a
 ##
 ##     - bash-git-prompt, preferably my fork: https://github.com/qdw/bash-git-prompt
 
-set -a
-GIT_PROMPT_THEME="Custom"
-GIT_PROMPT_ONLY_IN_REPO=1
-set +a
+export GIT_PROMPT_THEME="Custom"
+export GIT_PROMPT_ONLY_IN_REPO=1
 
 if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     function use-gitprompt {
         local OPTIONAL_WORKTREE="$1"
-    
+        
         local MY_FORKED_SCRIPT="$HOME/src/forks/bash-git-prompt/gitprompt.sh"
         local ORIGINAL_SCRIPT="$HOMEBREW_ROOT/share/gitprompt.sh"
 
@@ -1210,14 +1188,14 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
                 local BOUNDS="$(get-branch-name-bounds "$OPTIONAL_WORKTREE")"
             
                 if [[ "$BOUNDS" ]]; then
-                    read OFFSET LIMIT <<< "$BOUNDS"
+                    read -r OFFSET LIMIT <<< "$BOUNDS"
                     export GIT_PROMPT_BRANCH_OFFSET="$OFFSET"
                     export GIT_PROMPT_BRANCH_LIMIT="$LIMIT"
                 fi
             fi
             source "$MY_FORKED_SCRIPT"
         else
-            source "/opt/homebrew/share/gitprompt.sh"
+            source "$ORIGINAL_SCRIPT"
         fi
     }
 
@@ -1310,14 +1288,28 @@ if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
     export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
 fi
 
-#### Scheme Shell settings
+#### Scheme Shell
 
 if [[ -d "/opt/scsh" ]]; then
     SCSH_BASE="/opt/scsh"
     SCSH_PATH="${SCSH_BASE}/bin"
-    LATEST_SCSH_VERSION="$(ls "${SCSH_BASE}/lib" | sort --general-numeric-sort | tail -1)"
+    LATEST_SCSH_VERSION="$(find "${SCSH_BASE}/lib" | sort --general-numeric-sort | tail -1)"
     SCSH_LDFLAGS="-L${SCSH_BASE}/lib/${LATEST_SCSH_VERSION}"
 fi
+
+#### Other shells
+
+function shells {
+    MANNAME="list installed Unix shells"
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    (
+        basename "$(which scsh 2>/dev/null)"
+        brew ls \
+            | command grep -E --color=never 'sh$|nushell' \
+            | command grep -vE 'ssh|trash|hash|cash'
+    ) \
+    | sort
+}
 
 #### String manipulation
 
@@ -1375,14 +1367,12 @@ function mistral {
 }
 
 # # Tell man to display pages in color (it uses the deprecated Termcap system)
-# set -a
 # # Section headings? (bold orange)
-# LESS_TERMCAP_mb=$'\e[1;2;130m'
+# export LESS_TERMCAP_mb=$'\e[1;2;130m'
 # # Program name? (bold purple)
-# LESS_TERMCAP_md=$'\e[1;4;20m'
+# export LESS_TERMCAP_md=$'\e[1;4;20m'
 # # Option names (dull blue)
-# LESS_TERMCAP_us=$'\e[0;9;25m'
-# set +a
+# export LESS_TERMCAP_us=$'\e[0;9;25m'
 
 #### AWS settings
 
@@ -1391,7 +1381,7 @@ function mistral {
 MODEL_DIR="$HOME/ai/weights"
 
 function aws-account {
-    echo "$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
+    AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text
 }
 
 function clear-env {
@@ -1436,8 +1426,8 @@ function link-ggufs {
     ORIG_DIR="$(pwd)" || return
     cd "$MODEL_DIR" || return
 
-    while read -r BLOB MODEL_NAME; do
-        local MODEL_NAME="$(echo $MODEL_NAME | sed -e 's/:.*//')"
+    while read -r BLOB MODEL_INFO; do
+        local MODEL_NAME="${MODEL_INFO%%:*}"
         
         if [[ "$VERBOSE" ]]; then
             _stderr "$MODEL_NAME -> $BLOB"
@@ -1459,6 +1449,7 @@ function iam-provision-pgpassword {
     if [[ $# -eq 0 ]]; then
         echo "USAGE:"
         echo
+        # shellcheck disable=SC2016
         echo 'iam --hostname "$host" --port "$port" --region "$region" --username "$user" --profile "$profile"'
     else
         aws rds generate-db-auth-token "$@" | tee >(pbcopy)
@@ -1488,11 +1479,10 @@ function tags {
     ORIG_DIR="$(pwd)"
 
     local GIT_WORKING_COPY_ROOT_DIR
-    GIT_WORKING_COPY_ROOT_DIR="$(git rev-parse --show-toplevel)"
-    if [[ $? -eq 0 ]]; then
+    if GIT_WORKING_COPY_ROOT_DIR="$(git rev-parse --show-toplevel)"; then
         if cd "$GIT_WORKING_COPY_ROOT_DIR/cdk.out"; then
             CDK_OUTPUT_FILES="$(fdd -t f '.json$')"
-            if [[ -n "$CDK)OUTPUT_FILES" ]]; then
+            if [[ -n "$CDK_OUTPUT_FILES" ]]; then
                 for FILENAME in $CDK_OUTPUT_FILES; do
                     gron "$FILENAME" | grep tags | awk "{print \"$FILENAME: \" \$0}"
                 done
@@ -1511,7 +1501,7 @@ function wait_for_proxy_to_come_up {
         while true; do
  
             # Broken
-            STATUS=`aws rds describe-db-proxies | jq ".DBProxies | select(.DBProxyName==\"$PROXY_NAME\") | .Status"`
+            STATUS="$(aws rds describe-db-proxies | jq ".DBProxies | select(.DBProxyName==\"$PROXY_NAME\") | .Status")"
  
  
             if [[ $STATUS = '"creating"' ]]; then
@@ -1613,7 +1603,8 @@ function in-dev {
         err "AWS_ACCOUNT is defined, but not the auth-related AWS_* env vars"
         return 1
     else
-        local ACCOUNT_NUMBER="$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
+        local ACCOUNT_NUMBER
+        ACCOUNT_NUMBER="$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
         if [[ "$ACCOUNT_NUMBER" != "$AWS_DEV_ACCOUNT_NUMBER" ]]; then
             err "You're logged into '$ACCOUNT_NUMBER', but the dev account is '$AWS_DEV_ACCOUNT_NUMBER'"
             return 1
@@ -1704,6 +1695,7 @@ function mac-globalize-fonts {
         TERMINAL_APP_DIR="/Applications/Utilities/Terminal.app"
     fi
 
+    # shellcheck disable=SC2033
     sudo cp -R \
         "$TERMINAL_APP_DIR/Contents/Resources/Fonts" \
         "/Library/Fonts/"
@@ -1766,8 +1758,8 @@ function gfunc {
     check-args 1 varargs '[GREP_FLAGS ...] REGEX' "$@" || return 1
     local -a ARGS=("$@")
     local REGEX="${ARGS[-1]}"
-    unset ARGS[-1]
-    gbr ${ARGS[@]} "function.*${REGEX}.*[{]"
+    unset 'ARGS[-1]'
+    gbr "${ARGS[@]}" "function.*${REGEX}.*[{]"
 }
 
 function g-funk { gfunc "$@" ;}
@@ -1820,8 +1812,7 @@ function path {
         echo "Error: file '$ABS_PATH' does not exist"
     else
         # If path starts with home dir, convert to tilde notation.
-        ABS_PATH="$(echo "$ABS_PATH" | sed -e "s|^${HOME}/|~/|")"
-
+        ABS_PATH="${ABS_PATH/#${HOME}\//~/}"
         echo "$ABS_PATH" | tee >(pbcopy)
     fi
 }
@@ -1886,7 +1877,9 @@ if [[ -f "$HOMEBREW_DIFF" ]]; then
     # hd - header        (35 is SGR magenta, which shows as magenta in my term)
     # ln - line numbers  (34 is SGR blue, which shows as blue in my term)
     # rs - undocumented, but the default seems fine
-    # 
+    #
+
+    # shellcheck disable=SC2089
     MY_GNU_DIFF_OPTIONS='--palette="ad=36:de=31:hd=35:ln=34:rs=0"'
     function gdiff { "$DIFF_PATH/diff" "$@" ;}
     function diff-gnu { gdiff "$@" ;}
@@ -1897,8 +1890,10 @@ fi
 function diff-vanilla {
     local COMMON_DIFF_OPTIONS="-u --color=always"
     if $WE_HAVE_GNU_DIFF; then
+        # shellcheck disable=SC2090
         command diff $MY_GNU_DIFF_OPTIONS $COMMON_DIFF_OPTIONS "$@" | $PAGER
     else
+        # shellcheck disable=SC2090
         command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
     fi
 }
@@ -1966,11 +1961,9 @@ function diff {
 
 #### FTP
 
-set -a
-FTP_LOGIN=anonymous
-FTP_PASSIVE_MODE=yes
-FTP_PASSWORD=""
-set +a
+export FTP_LOGIN=anonymous
+export FTP_PASSIVE_MODE=yes
+export FTP_PASSWORD=""
 
 #### Git, GitHub, gitlawb
 
@@ -1981,8 +1974,7 @@ source-section "06-git.bash" ### Git, GitHub, gitlawb
 function oc {
     if [[ "$1" = "login" ]] && [[ $# -eq 1 ]]; then
         local AUTH_URL
-        AUTH_URL=$(command oc login | sed s'/.*\(https.*\)/\1/')
-        if [[ $? -eq 0 ]]; then
+        if AUTH_URL=$(command oc login | sed s'/.*\(https.*\)/\1/'); then
             open "$AUTH_URL"
         fi
     else
@@ -2051,8 +2043,7 @@ function pql {
             if [[ -n ${pgpasses["$SERVICE"]} ]]; then
                 PASSWORD=${pgpasses["$SERVICE"]}
             else
-                PASSWORD="$("$MY_VIRTUALENV_DIR/qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")";
-                if [[ $? -ne 0 ]]; then
+                if PASSWORD="$("$MY_VIRTUALENV_DIR/qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")"; then
                     err "couldn't retrieve the AWS secret for $SERVICE" 1>&2;
                     return 2
                 fi
@@ -2132,19 +2123,18 @@ function air {
     local RESPONSE_FILE
     RESPONSE_FILE=$(mktemp "$HOME/tmp/air.XXXX")
 
-    curl -L 'https://www.purpleair.com/json?show=119745&key=NPLQPTWKC54229MU' \
-         > "$RESPONSE_FILE" \
-         2> /dev/null
-         
-    if [[ $? -ne 0 ]]; then    
+    if curl -L 'https://www.purpleair.com/json?show=119745&key=NPLQPTWKC54229MU' \
+             > "$RESPONSE_FILE" \
+             2> /dev/null
+    then
         echo "Problem contacting the PurpleAir API server; maybe rate-limiting?"
         echo "Try waiting ten minutes and then re-running."
     else
         local PM25 STATS TSLM NUMBER_OF_MINUTES INFLECTED
 
-        PM25=$(jq --raw-output '.results[0]."PM2_5Value"' < "$RESPONSE_FILE")
-        STATS=$(jq --raw-output '.results[0].Stats' < "$RESPONSE_FILE")
-        TSLM=$(echo "$STATS" | jq --raw-output '.timeSinceModified')
+        PM25="$(jq --raw-output '.results[0]."PM2_5Value"' < "$RESPONSE_FILE")"
+        STATS="$(jq --raw-output '.results[0].Stats' < "$RESPONSE_FILE")"
+        TSLM="$(echo "$STATS" | jq --raw-output '.timeSinceModified')"
 
         # Convert milliseconds to minutes
         NUMBER_OF_MINUTES=$(( TSLM / 60 ))
@@ -2209,6 +2199,11 @@ function todo {
     fi
 }
 
+#### Haskell
+
+# # Nope, defaulting to $HOME/.local/bin instead
+# HASKELL_PATH="$HOME/.cabal/bin"
+
 #### Python
 
 for PREFERRED in "$HOMEBREW_BIN/python3" "/usr/bin/python3"; do
@@ -2233,7 +2228,7 @@ function defs {
     local PTH
     if [[ $# -ne 0 ]]; then
         local PTH="${@[$# - 1]}"
-        unset ${@[$# - 1]}
+        unset "${_[$# - 1]}"
         echo "PTH: $PTH"
         echo "remaining args: $@"
     else
@@ -2351,12 +2346,10 @@ LUA51_CPPFLAGS="-I${LUA51_BASE}/include"
 #### Ruby
 
 if [[ -d "$HOMEBREW_ROOT/opt/ruby" ]]; then
-    set -a
     # RUBYOPT=rubygems
-    RUBY_PATH=$HOMEBREW_ROOT/opt/ruby/bin
-    RUBY_LDFLAGS='-L$HOMEBREW_ROOT/opt/ruby/lib'
-    RUBY_CPPFLAGS='-I$HOMEBREW_ROOT/opt/ruby/include'
-    set +a
+    export RUBY_PATH=$HOMEBREW_ROOT/opt/ruby/bin
+    export RUBY_LDFLAGS="-L${HOMEBREW_ROOT}/opt/ruby/lib"
+    export RUBY_CPPFLAGS="-I${HOMEBREW_ROOT}/opt/ruby/include"
 fi
 
 # gemi GEM1 GEM2 ...: install (Ruby) gems as I think they should be installed.
@@ -2429,7 +2422,7 @@ function mhost {
     COMMAND="$1"; shift
     for NODE in "$@"; do
         echo "$NODE"
-        echo ==
+        echo "=="
         echo
         "$NODE" "$COMMAND"
         echo
@@ -2624,7 +2617,7 @@ function nanp {
     check-args 1 1 'AREA_CODE' "$@" || return 1
     local AREA_CODE="$1"
 
-    local CVS_URL="https://reports.nanpa.com/public/npa_report.csv"
+    local CSV_URL="https://reports.nanpa.com/public/npa_report.csv"
     local CACHED_COPY="$HOME/.site.bash.d/npa_report.csv"
     if [[ ! -f "$CACHED_COPY" ]]; then
         local CURL_ES
@@ -2665,19 +2658,10 @@ function nanp {
 function ssh-keygen { command ssh-keygen -t ed25519 "$@" ;}
 
 function ssh-add-all {
-    for KEY in $(find ~/.ssh -maxdepth 1 -type f -name '*_ed25519'); do
-        ssh-add "$KEY"
-    done
-}
-
-function my_ssh {
-    NODE=$1
-
-    if (! ssh "$NODE" test -e ~/.quinnified > /dev/null 2>&1); then
-        quinnify_host "$NODE"
+    if cd ~/.ssh; then
+        && fd --max-depth 1 --type f '*_ed25519' -x ssh-add
+        cd -
     fi
-
-    ssh "$NODE"
 }
 
 #### News of various sorts
@@ -2689,13 +2673,18 @@ function c-span {
 function newsboat {
     command newsboat \
         --refresh-on-start \
-        --efwklwkml \    
+        --efwklwkml \
         "$@"
 }
 
 # function rss { newsboat --refresh-on-start "$@" ;}
-function usenet { tin "$@" ;}
-function newspapers { cast-text "$@" ;}
+function usenet {
+    tin "$@"
+}
+
+function newspapers {
+    cast-text "$@"
+}
 
 function news {
     err "ambiguous command. Please run one of the following instead:
@@ -3641,7 +3630,7 @@ function qtmake {
 
 ## PATH (to search for executables)
 
-export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$GITLAWB_PATH:$QT_PATH"
+export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$HASKELL_PATH:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$GITLAWB_PATH:$QT_PATH"
 
 ## C libraries
 
