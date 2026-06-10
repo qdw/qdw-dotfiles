@@ -283,8 +283,8 @@ extended-bright-white "#a6acb9")))
      ((t (:foreground ,bright-magenta))))
 
    `(link
-     ((t (:foreground ,yellow :underline t))))     
-   
+     ((t (:foreground ,yellow :underline (:color ,red)))))
+
    ;;;; customize
 
    `(widget-field
@@ -313,7 +313,7 @@ extended-bright-white "#a6acb9")))
    ;;;; font lock
 
    `(font-lock-builtin-face
-    ((t ((:foreground ,blue)))))
+     ((t ((:foreground ,blue)))))
    
    `(font-lock-comment-delimiter-face
      ((t (:foreground ,cyan))))
