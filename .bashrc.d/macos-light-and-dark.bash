@@ -42,8 +42,8 @@ function _set_wallpaper {
     check-args 1 1 "$@" \
         'do not run directly; run change-wallpaper-to instead' || return 1
     local IMAGE_FILENAME="$1"
-    echo "Image filename is '$IMAGE_FILENAME'" >&2
-    echo "real path is" "$(realpath $IMAGE_FILENAME)" >&2
+    # echo "Image filename is '$IMAGE_FILENAME'" >&2
+    # echo "real path is" "$(realpath $IMAGE_FILENAME)" >&2
     
 
     # FIXME: make this work for all desktops, somehow
@@ -54,7 +54,7 @@ function change-wallpaper-to {
     check-args 1 1 "$MODE_SPEC" "$@" || return 1
     local MODE="$1"
     validate-mode "$MODE" || return 1
-    echo "Change wallpaper to '$MODE'" >&2
+    # echo "Change wallpaper to '$MODE'" >&2
     case "$MODE" in
         light) _set_wallpaper "$LIGHT_WALLPAPER";;
         dark) _set_wallpaper "$DARK_WALLPAPER";;
