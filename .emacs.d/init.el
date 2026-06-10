@@ -1,3 +1,42 @@
+;;;; GUI/TUI settings (keywords: 'tty')
+
+(defun for-every-session-qdw (func)
+  "Some built-in Emacs functions must be called once per frame,
+after the frame is created. But they must also be called once
+when Emacs first runs.
+
+`for-every-session' does that for you. It takes a single argument,
+FUNCTION, then 1) runs that function and 2) adds that function
+to `after-make-frame-functions'.
+
+This applies equally to GUI Emacs (where frames are OS windows)
+and TUI emacsclient (where frames are emacsclient sessions;
+this includes the scenario where you run Emacs in --bg-daemon
+or --fg-daemon mode and then connect to the daemon using emacsclient)."
+  (message "in for-every-session-qdw")
+  (funcall func)
+  (add-hook 'server-after-make-frame-hook func))
+
+;; TTY settings. If you're running GUI Emacs, these are no-ops.
+;; They work by telling Emacs to interpret certain magic
+;; escape sequences iff your terminal emulator sends them.
+
+;; This code has two effects:
+;; 
+;; 1) Enable special mouse buttons if your terminal emulator supports them.
+;;
+;; 2) Automagically, transiently turn off electric-indent-mode and
+;;    enable bracketed paste whenever you paste from the OS
+;;    clipboard (e.g., when you do Cmd-V on a Mac).
+;;
+;;    This behavior is the equivalent of vim's :set paste,
+;;    except that you don't need to turn it on and off manually.
+
+(for-every-session-qdw
+  (lambda ()
+    (setenv "TERM" "xterm-256color") ; required for bracketed paste
+    (xterm-mouse-mode +1)))
+
 ;;;; Inhibit superfluous messsages.
 
 (setq inhibit-startup-echo-area-message "quinn")
@@ -10,10 +49,7 @@
 
 ;;;;;; (let ((inhibit-messsage t))
 
-
-;;;; Appearance
-
-;; Remove chrome (menu bar/too lbar/scroll bar).
+;; Remove chrome (menu bar/tool bar/scroll bar).
 
 ;; Behold the inconsistency of Emacs conventions!
 
@@ -48,31 +84,6 @@
 (set-face-font 'default "Menlo-17")
 (blink-cursor-mode -1)
 
-(use-package xterm
-;;;; TTY settings. If you're running GUI Emacs, these are no-ops.
-
-  ;; They work by telling Emacs to interpret certain magic
-  ;; escape sequences iff your terminal emulator sends them.
-  ;; 
-  ;; The way I'm using `xterm', it's doing two things:
-  ;; 
-  ;; 1) Enable special mouse buttons if your terminal emulator supports them.
-  ;;
-  ;; 2) Automagically, transiently turn off electric-indent-mode and
-  ;;    enable bracketed paste whenever you paste from the OS
-  ;;    clipboard (e.g., when you do Cmd-V on a Mac).
-  ;;
-  ;;    This behavior is
-  ;;    the equivalent of vim's :set paste, except that you don't need
-  ;;    to turn it on and off manually.
-    
-  :init
-  (add-hook 'server-after-make-frame-hook
-            (lambda ()
-              (setenv "TERM" "xterm-256color"))) ; required for bracketed paste
-
-  :config
-  (xterm-mouse-mode +1))
 
 ;;;; Color-theme settings
 
@@ -227,9 +238,37 @@
 
 ;;;; Hack org-mode documents
 
-(use-package org :after url-util
+(use-package org
+
+  :after url-util
     
   :config
+
+  (setopt org-archive "::"
+          org-catch-invisible-edits "show"
+          org-cycle-separator-lines 1
+          org-return-follows-link 't
+
+          ;; default org formatting; consider changing
+          ;; org-emphasis-alist '(("*" bold)
+          ;;                      ("/" italic)
+          ;;                      ("_" underline)
+          ;;                      ("=" org-verbatim verbatim)
+          ;;                      ("`" org-code verbatim)
+          ;;                      ("~" (:strike-through t)))
+
+          org-emphasis-alist '(("*" bold)
+                               ("/" italic)
+                               ("_" underline)
+                               ("=" org-verbatim verbatim)
+                               ("`" org-code verbatim)
+                               ("~" (:strike-through t)))
+
+          
+          org-confirm-babel-evaluate nil
+          org-babel-load-languages '((emacs-lisp . t)
+                                     (python . t)
+                                     (shell . t)))
 
   ;; When visiting links to guitar tabs, open them in Emacs itself.
   (add-to-list 'org-file-apps '("\\.crd\\'" . emacs))
@@ -399,35 +438,7 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
              (shell-command-to-string-qdw ;; string  retval is ignored
               (concat
                "open -a 'Audio Overload.app' "
-               (canonical-path-qdw path)))))
-
-  :custom
-
-  org-archive "::"
-  org-catch-invisible-edits "show"
-  org-cycle-separator-lines 1
-  org-return-follows-link 't
-
-  ;; default org formatting; consider changing
-  ;; org-emphasis-alist '(("*" bold)
-  ;;                      ("/" italic)
-  ;;                      ("_" underline)
-  ;;                      ("=" org-verbatim verbatim)
-  ;;                      ("`" org-code verbatim)
-  ;;                      ("~" (:strike-through t)))
-
-  org-emphasis-alist '(("*" underline)
-                       ("/" underline)
-                       ("_" underline)
-                       ("=" org-verbatim verbatim)
-                       ("`" org-code verbatim)
-                       ("~" (:strike-through t)))
-
-  
-  org-confirm-babel-evaluate nil
-  org-babel-load-languages '((emacs-lisp . t)
-                             (python . t)
-                             (shell . t)))
+               (canonical-path-qdw path))))))
 
 
 (use-package ruby-mode)
