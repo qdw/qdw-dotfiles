@@ -11,22 +11,24 @@ function source-section {
     source "$QBASHD/$1"
 }
 
-#### My Bash metaprogramming library
+#### #section-1#  My Bash metaprogramming library
+  ## (helper functions, argument checking, functional programming...)
 
-source-section "00-bash-metaprogramming.bash" ### Bash helper funcs, arg checking, functional programming"
+source-section "00-bash-metaprogramming.bash" ### Bash "
 
 export MY_DEBUG=""
 export MY_VERBOSE_DEBUG_BASH=""
 source "$QBASHD/01-bash-debugging.bash"
 
-#### The following files shouldn't be checked into git
+#### #section-2#  Local-only files (don't commit to git)
+  ## The following files shouldn't be checked into git 
   ## (either because they contain secrets, or because they contain
   ## third-party code with its own license)
 
 source-if-exists "$QSITED/preamble.bash"
 source-if-exists "$HOME/.secrets.bash"
 
-#### Time and date #sec4#
+#### #section-3#  Time and date
 
 function gnu-mtime-seconds {
     check-args 1 1 'FILENAME' "$@" || return 1
@@ -44,9 +46,11 @@ function mtime-in-epoch-seconds {
     check-args 1 1 'FILENAME' "$@" || return 1
     local FILENAME="$1"
 
-    if on-linux || [[ "$(command -V stat | head -1)" = "stat is a function" ]]; then
+    if on-linux || [[ "$(command -V stat | head -1)" = "stat is a function" ]]
+    then
         gnu-mtime-seconds "$FILENAME"
-    elif on-macos; then
+    elif on-macos
+    then
         bsd-mtime-seconds "$FILENAME"
     else
         carp "warning: unrecognized platform; guessing that stat(1) is GNU stat"
@@ -55,6 +59,7 @@ function mtime-in-epoch-seconds {
 }
 
 # Timestamp with time zone, no special chars, OK to interpolate into filenames
+
 function ts {
     check-args 0 0 '[no-arguments]' "$@" || return 1
     date '+%Y-%m-%dT%H%M%S%z' "$@"
@@ -65,6 +70,7 @@ function pg-ts {
 }
 
 # Timestamp in the format used by YAML
+
 function ts-yaml {
     local TIMEZONE_SHORTCODE="$(date +%Z "$@")"
     local TS_WITH_NANOSECONDS="$(date +%Y-%m-%dT%H:%M:%S.%N "$@")"
@@ -73,7 +79,7 @@ function ts-yaml {
     echo "$RETVAL"
 }
 
-#### OS-specific settings #sec 5#
+#### #section-4#  OS-specific settings
 
 MY_OS="$(uname -s)"
 
@@ -132,7 +138,7 @@ function decolonize {
     echo "$STRING" | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
 }
 
-#### Text editor #sec 6#
+#### #section-5#  Text editors
 
 function install-emacs-plus {
     check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 29' "$@" || return 1
@@ -201,7 +207,7 @@ function emacs-package-clean {
         && fd --no-ignore '.el[cn]$' -x rm
 }
 
-### Emacs daemon settings
+## Emacs daemon settings
 
 function emacs-daemon-pid {
     pgrep -U "$USER" -fi "$@" "Emacs --bg-daemon"
@@ -302,7 +308,7 @@ else
     export PSQL_EDITOR="$MY_EDITOR"
 fi
 
-#### Homebrew #sec 7#
+#### #section-6# Homebrew 
 
 export HOMEBREW_BAT=1
 export HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
@@ -565,7 +571,7 @@ function boi {
     fi
 }
 
-#### OS-specific settings for macOS #sec 8#
+## OS-specific settings for macOS
 
 if on-macos; then
     source-section "macos-apps.bash" ### Shortcuts for macOS apps, e.g. Mail, Mail.app, Finder, Finder.app
@@ -626,7 +632,7 @@ if on-macos; then
         plutil -convert xml1 -o - "$FILE"
     }
     
-    ## Safe-ish deletion settings for macOS
+    ## Safer deletion settings for macOS
     
     if [[ -f "$HOMEBREW_BIN/trash" ]]; then
         function trash {
@@ -868,7 +874,7 @@ Maybe you meant 'which \"$APP_NAME\"?'"
         fi
     }
 
-#### OS-specific settings for Linux and other non-macOS Unix variants
+## OS-specific settings for Linux and other non-macOS Unix variants
 
 else
     function which {
@@ -2659,7 +2665,7 @@ function ssh-keygen { command ssh-keygen -t ed25519 "$@" ;}
 
 function ssh-add-all {
     if cd ~/.ssh; then
-        && fd --max-depth 1 --type f '*_ed25519' -x ssh-add
+        fd --max-depth 1 --type f '*_ed25519' -x ssh-add
         cd -
     fi
 }
@@ -3626,7 +3632,7 @@ function qtmake {
     cmake -DCMAKE_PREFIX_PATH=$(brew --prefix qt)
 }
 
-#### Path settings #sec yy#
+#### Path settings #section-7#
 
 ## PATH (to search for executables)
 
@@ -3649,7 +3655,6 @@ export MANPATH=":$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man
 
 set +o pipefail
 
-#### site-specific stuff, not stored in git #sec zz#
+#### #section-9# site-specific stuff, not stored in git
 
 source-if-exists "$HOME/.site.bash.d/postamble.bash"
-
