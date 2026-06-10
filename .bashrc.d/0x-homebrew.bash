@@ -265,3 +265,86 @@ function boi {
         fi
     fi
 }
+
+function tapname2taproot {
+    check-args 1 1 'TAP' "$@" || return 1
+    local RETVAL="$1"
+    RETVAL="$HOMEBREW_ROOT/Library/Taps/$RETVAL"
+    RETVAL="${RETVAL/%\/tap/\/homebrew-tap}"
+
+    # Special-case code because repos don't follow a consistent convention
+    # FIXME: generalize this by splitting $TAP on slash and checking for both "$POSTSLASH" and "homebrew-$POSTSLASH" subdirs
+    RETVAL="${RETVAL/%\/emacs-plus/\/homebrew-emacs-plus}"
+    RETVAL="${RETVAL/%\/keith\/formulae/\/keith\/homebrew-formulae}"
+    echo "$RETVAL"
+}
+
+function tapname2formuladir {
+    check-args 1 1 'TAP' "$@" || return 1
+    local TAPROOT="$(tapname2taproot "$1")"
+
+    local RETVAL
+    if [[ -d "$TAPROOT/Formula" ]]; then
+        RETVAL="$TAPROOT/Formula"
+    else
+        RETVAL="$TAPROOT"
+    fi
+
+    echo "$RETVAL"
+}
+
+function tapname2gitdir {
+    check-args 1 1 'TAP' "$@" || return 1
+    local TAPROOT="$(tapname2taproot "$1")"
+    echo "$TAPROOT/.git"
+}
+
+function brew-tap-ls-formulae {
+    check-args 1 1 'TAP # for instance, username/tapname' "$@" || return 1
+    local DIR="$(tapname2formuladir "$1")"
+    command ls -1 "$DIR" | sed -e 's/[.]rb$//'
+}
+
+function brew-tap-home {
+    check-args 1 1 'TAP # for instance, username/tapname' "$@" || return 1
+    local GIT_DIR="$(tapname2gitdir "$1")"
+    if cd "$GIT_DIR" >/dev/null; then
+        local URL="$(git remote get-url origin)"
+        open -u "$URL"
+        cd - >/dev/null
+    fi
+}
+
+function brew-untrusted {
+    check-args 0 1 '[--verbose]' "$@" || return 1
+
+    function verbose { false ;}
+    if [[ $# -eq 1 ]]; then
+         if [[ "$1" = "--verbose" ]]; then
+             function verbose { true ;}
+         else
+             err "unsupported flag '$1'"
+             return 1
+         fi
+    fi
+    
+    while read -r FORMULA; do
+        if [[ "$FORMULA" =~ ^homebrew/ ]]; then
+            # homebrew/ (built-in) formulae are always trusted
+            if verbose; then
+                echo "trusted: $FORMULA"
+            fi
+            continue
+        elif ! brew trust |command grep -E "^[ ][ ]${FORMULA}$" >/dev/null;then
+            if verbose; then
+                echo "untrusted: $FORMULA"
+            else
+                echo "$FORMULA"
+            fi
+        else
+            if verbose; then
+                echo "trusted: $FORMULA"
+            fi
+        fi
+    done < <(brew tap)
+}

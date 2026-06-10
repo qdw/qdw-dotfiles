@@ -1990,7 +1990,7 @@ function defs {
 #### Aranet4 air quality monitoring settings
 
 function co2  {
-    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read "$MY_ARANET4" 2> /dev/null | jq ".co2"
+    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read -r "$MY_ARANET4" 2> /dev/null | jq ".co2"
 }
 
 function co2-verbose {
