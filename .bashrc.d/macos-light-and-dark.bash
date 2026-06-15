@@ -111,7 +111,7 @@ function toggle-dark-reader {
     done
 }
 
-function mode {
+function current-mode {
     check-args 0 1 '[NEW_MODE]' "$@" || return 1
     if [[ $# -eq 0 ]]; then
         local MODE=$(cat "$LIGHT_OR_DARK_FILE")
@@ -128,11 +128,11 @@ function mode {
 }
 
 function currently-dark {
-    [[ "$(mode)" = "dark" ]]
+    [[ "$(current-mode)" = "dark" ]]
 }
 
 function currently-light {
-    [[ "$(mode)" = "light" ]]
+    [[ "$(current-mode)" = "light" ]]
 }
 
 function toggle-toggles {
@@ -142,19 +142,20 @@ function toggle-toggles {
 }
 
 function light {
-    if currently-dark; then
-        change-macos-to "light"
-        change-wallpaper-to "light"
-        toggle-toggles
-        echo "light" > "$LIGHT_OR_DARK_FILE"
-    fi
+    change-all-to "light"
 }
 
 function dark {
-    if currently-light; then
-        change-macos-to "dark"
-        change-wallpaper-to "dark"
-        change-emacs-to "dark"
+    change-all-to "dark"
+}
+
+function change-all-to {
+    validate-mode "$@"
+    local MODE="$1"
+    if [[ ! "$(current-mode)" = "$MODE" ]]; then
+        change-macos-to "$MODE"
+        change-wallpaper-to "$MODE"
+        change-emacs-to "$MODE"
         toggle-toggles
         echo "dark" > "$LIGHT_OR_DARK_FILE"
     fi
