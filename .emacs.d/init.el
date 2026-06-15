@@ -42,6 +42,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (setq inhibit-startup-echo-area-message "quinn")
 (setq ad-redefinition-action 'accept)
 (setq use-package-always-demand 't)
+(setq warning-suppress-types '((files))) ;; lexical-binding warnings; others?
 
 (remove-hook 'find-file-hook 'vc-refresh-state) ;; we'll use Magit instead.
 (remove-hook 'find-file-hook 'epa-file-find-file-hook)
@@ -527,7 +528,7 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
 ;;;; AI stuff
 
-(load-file (expand-file-name "~/src-3/emacs-copilot/copilot.el"))
+;; (load-file (expand-file-name "~/src-3/emacs-copilot/copilot.el")) ;; by jart
 
 ;;;; Hack: general: automatic indentation
 

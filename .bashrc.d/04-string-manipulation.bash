@@ -83,3 +83,20 @@ function zwj {
 function nbsp {
     zero-width-joiner "$@"
 }
+
+######## Perl
+
+# If some of the variables that I interpolated in my PATH are undefined,
+# then I will wind up with '::' in my PATH. That's equivalent to having
+# '.' (the current working directory) in one's path, which is a security
+# risk, because there's a silly trick that hackers can use where they
+# put a malicious binary named ls or grep or something inside a directory
+# and a privileged user cd's there and accidentally runs it.
+# Plus it looks bad. So remove any instances of two (or more)
+# consecutive colons. Same goes for a single leading or trailing colon.
+
+function decolonize {
+    check-args 1 1 'STRING # like PATH or MANPATH' "$@" || return 1
+    STRING="$1"
+    echo "$STRING" | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
+}

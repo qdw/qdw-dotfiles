@@ -9,10 +9,10 @@ OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
 
 declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app" "Safari.app")
 
-BLEN="${#BROWSERS_USING_DARK_READER[@]}"
-for (( i = 0; i < BLEN; i++ )); do
-    echo "${BROWSERS_USING_DARK_READER[$i]}"
-done
+# BLEN="${#BROWSERS_USING_DARK_READER[@]}"
+# for (( i = 0; i < BLEN; i++ )); do
+#     echo "${BROWSERS_USING_DARK_READER[$i]}"
+# done
 
 function validate-mode {
     check-args 1 1 "$MODE_SPEC # anything else returns false" "$@" || return 1
