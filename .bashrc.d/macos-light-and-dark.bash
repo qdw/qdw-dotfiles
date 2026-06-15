@@ -7,17 +7,21 @@ LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
 MODE_SPEC="'dark' | 'light'"
 OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
 
-declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app")
+declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app" "Safari.app")
+
+BLEN="${#BROWSERS_USING_DARK_READER[@]}"
+for (( i = 0; i < BLEN; i++ )); do
+    echo "${BROWSERS_USING_DARK_READER[$i]}"
+done
 
 function validate-mode {
-    check-args 1 1 "$MODE_SPEC # anything else returns false" "$@" \
-        || return 1
+    check-args 1 1 "$MODE_SPEC # anything else returns false" "$@" || return 1
     local MODE="$1"
     case "$MODE" in
         light|dark)
             return 0;;
         *)
-            _stderr "Invalid  mode '$MODE'. You must pass 'light' or 'dark'."
+            err "invalid  mode '$MODE'. You must pass 'light' or 'dark'."
             return 1;;
     esac
 }
@@ -67,18 +71,24 @@ function change-emacs-to {
     validate-mode "$MODE" || return 1
     local LISP_FUNCTION_NAME
     case "$MODE" in
-        light|dark) LISP_FUNCTION_NAME="$MODE"
-                    emacsclient --eval "($LISP_FUNCTION_NAME)" >/dev/null;;
+        light|dark)
+            LISP_FUNCTION_NAME="$MODE";
+            emacsclient --eval "($LISP_FUNCTION_NAME)" >/dev/null;;
+        *)
+            err "Invalid  mode '$MODE'. You must pass 'light' or 'dark'.";
+            return 1;;
     esac
 }
 
-function _i_am_running {
+function _running {
     check-args 1 1 'MyApp.app' "$@" || return 1
     local APP="$1"
     
-    ps -wux "$USER" \
-        | command grep -v grep \
-        | command grep -F "$APP" > /dev/null
+    ps auxwww \
+        | command grep -F "$USER" \
+        | command grep -F "$APP" \
+        | command grep -vF "grep"  \
+        > /dev/null        
 }
 
 function toggle-dark-reader {
@@ -91,7 +101,7 @@ function toggle-dark-reader {
         "$@" || return 1
     
     for BROWSER in @{BROWSERS_USING_DARK_READER[@]}; do
-        if _i_am_running "$BROWSER"; then
+        if _running "$BROWSER"; then
             local OSA="/usr/bin/osascript"
             local ORIG_APP="$("$OSA" -e 'tell application "System Events" to get name of first process whose frontmost is true')"
             "$OSA" -e 'tell application "Waterfox" to activate' \

@@ -154,53 +154,54 @@ function install-emacs-plus {
     )
 }
 
+# # FIXME: doesn't work. Once it does, fill in DESIRED_PATCHES.
 # Alas, emacs-plus's compile options are no longer adequate to my needs.
 # Build Emacs from the original source, but apply emacs-plus's favored
 # patches first.
 
-function install-emacs {
-    check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 30' "$@" || return 1
-    local VERSION_NUMBER="$1"
+# function install-emacs {
+#     check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 30' "$@" || return 1
+#     local VERSION_NUMBER="$1"
     
-    local INSTALL_DIR="/opt/emacs/$VERSION_NUMBER"
-    local SOURCE_DIR="$HOME/src-3/emacs"
-    local PATCH_DIR="$HOMEBREW_ROOT/Library/Taps/d12frosted/homebrew-emacs-plus/patches/emacs-$VERSION"
+#     local INSTALL_DIR="/opt/emacs/$VERSION_NUMBER"
+#     local SOURCE_DIR="$HOME/src-3/emacs"
+#     local PATCH_DIR="$HOMEBREW_ROOT/Library/Taps/d12frosted/homebrew-emacs-plus/patches/emacs-$VERSION"
     
-    local DESIRED_PATCHES=""
+#     local DESIRED_PATCHES=""
     
-    function dir-is-okay {
-        if [[ -d "$DIR" ]] && \
-           [[ -r "$DIR" ]] && \
-           [[ -w "$DIR" ]] && \
-           [[ -x "$DIR" ]] && \
-           [[ -z "$(command ls -A "$DIR")" ]]
-        then
-            return 0
-        else
-            err "cannot access directory '$DIR'"
-            return 2
-        fi
-    }
+#     function dir-is-okay {
+#         if [[ -d "$DIR" ]] && \
+#            [[ -r "$DIR" ]] && \
+#            [[ -w "$DIR" ]] && \
+#            [[ -x "$DIR" ]] && \
+#            [[ -z "$(command ls -A "$DIR")" ]]
+#         then
+#             return 0
+#         else
+#             err "cannot access directory '$DIR'"
+#             return 2
+#         fi
+#     }
     
-    brew install "$(brew deps "emacs-plus@${VERSION_NUMBER}")" || return    
+#     brew install "$(brew deps "emacs-plus@${VERSION_NUMBER}")" || return    
     
-    for DIRECTORY in "$INSTALL_DIR" "$SOURCE_DIR" "$PATCH_DIR"; do
-        dir-is-okay "$DIRECTORY" || return
-    done
+#     for DIRECTORY in "$INSTALL_DIR" "$SOURCE_DIR" "$PATCH_DIR"; do
+#         dir-is-okay "$DIRECTORY" || return
+#     done
         
-    cd "$SOURCE_DIR" || return
-    command git checkout "emacs-${VERSION_NUMBER}" || return
+#     cd "$SOURCE_DIR" || return
+#     command git checkout "emacs-${VERSION_NUMBER}" || return
     
-    ./autogen.sh || return
-    ./configure \
-        --prefix "$INSTALL_DIR" \
-        ...
+#     ./autogen.sh || return
+#     ./configure \
+#         --prefix "$INSTALL_DIR" \
+#         ...
         
-    for PATCH in $DESIRED_PATCHES; do
-        apply_patch "$PATCH" || return
-    done
+#     for PATCH in $DESIRED_PATCHES; do
+#         apply_patch "$PATCH" || return
+#     done
     
-}
+# }
 
 function emacs-package-clean {
     cd ~/.emacs.d \
@@ -210,7 +211,7 @@ function emacs-package-clean {
 ## Emacs daemon settings
 
 function emacs-daemon-pid {
-    pgrep -U "$USER" -fi "$@" "Emacs --bg-daemon"
+    pgrep -U "$USER" -f -i "Emacs --bg-daemon"
 }
 
 function pe {
@@ -277,8 +278,6 @@ function se {
     else
         echo "Starting the Emacs daemon..."
         local ORIG_DIR="$(pwd)"
-        cd
-        echo "TERM is $TERM"
         command emacs --bg-daemon >/dev/null 2>&1
         cd "$ORIG_DIR" >/dev/null
         

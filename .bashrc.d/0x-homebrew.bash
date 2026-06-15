@@ -8,6 +8,7 @@
 export HOMEBREW_BAT=1
 export HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
 export HOMEBREW_NO_ANALYTICS=1
+export HOMEBREW_NO_ASK=1
 export HOMEBREW_NO_ENV_HINTS=1
 
 ## Homebrewed alternatives to bundled system utilities
