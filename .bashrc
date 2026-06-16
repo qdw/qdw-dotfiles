@@ -14,13 +14,13 @@ function source-section {
     source "$QBASHD/$SECTION"
 }
 
-#### #section-1#  My Bash metaprogramming library
+#### #section-00#  My Bash metaprogramming library
   ## (helper functions, argument checking, functional programming...)
 
 source-section "00-bash-metaprogramming.bash" ### Bash "
 
-export MY_DEBUG=""
-export MY_VERBOSE_DEBUG_BASH=""
+#### #section-01#  Helper functions for debugging Bash code
+
 source-section "01-bash-debugging.bash"
 
 #### #section-2#  Local-only files (don't commit to git)

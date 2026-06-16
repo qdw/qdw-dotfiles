@@ -11,13 +11,9 @@
 function setx {
     unset PROMPT_COMMAND
     export PS1="\u@\h:\w\\$ "
-    export PS4='${BASH_SOURCE}:${LINENO} '
+    export PS4='+ $LINENO: ${BASH_SOURCE}:${LINENO} -> '
     set -x
 }
-
-if [[ "$MY_VERBOSE_DEBUG_BASH" ]]; then
-    setx
-fi
 
 function sb {
     source "$HOME/.bashrc"
