@@ -178,16 +178,8 @@ function check-args {
         # Wrong number of args to check-args itself.
         # Print an error and return.
 
-        local ARGUMENTS_INFLECTED
-        if [[ $# -eq 1 ]]; then
-            ARGUMENTS_INFLECTED="argument"
-        else
-            ARGUMENTS_INFLECTED="arguments"
-        fi
-
-        complain "check-args: error: $CALLER passed the wrong number of arguments to check-args itself" \
-                 "($CALLER called check-args with $# $ARGUMENTS_INFLECTED, but it requires" \
-                 "at least 3.)" \
+        complain "check-args: error: $CALLER passed too few arguments to check-args itself" \
+                 "($CALLER called check-args with ${#}, but it requires at least 3.)" \
                  "Usage: check-args  MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
         return 250
     fi
@@ -199,59 +191,51 @@ function check-args {
     local MIN_ARGS="$1"; shift
     local MAX_ARGS="$1"; shift
     local USAGE="$1"; shift
+    if [[ $# -ge "$MIN_ARGS" ]] && { [[ $# -le "$MAX_ARGS" ]] \
+                                         || [[ "$MAX_ARGS" = "$VARARGS" ]]
+                                   }
+    then
+        # Caller passed a valid number of arguments. Return success.
+        return 0
+    else
+        # Caller passed an invalid number of arguments. Build a detailed error message.
+        local SYNOPSIS="$CALLER $USAGE"
     
-    local SYNOPSIS="$CALLER $USAGE"
-    
-    # Optionally, the caller may set the magic local variable MANNAME.
-    # This should be a one-line string describing the command,
-    # in the same format as the NAME section of a Unix man page.
-    # If MANNAME is set, then we print the whole usage message
-    # in a verbose, man-page-like, multiline format. Otherwise
-    # we print a one-liner.
-
-    if [[ "$MANNAME" ]]; then
-        USAGE="Usage:
-
+        # The caller MAY set the magic local variable MANNAME.
+        # This SHOULD be a one-line string describing the command,
+        # in the same format as the NAME section of a Unix man page.
+        # If MANNAME is set, then we print the whole usage message
+        # in a verbose, man-page-like, multiline format.
+        if [[ "$MANNAME" ]]; then
+            USAGE="
 NAME
-     $CALLER - $MANNAME
-     
+    $CALLER - $MANNAME
 SYNOPSIS
      $SYNOPSIS
 "
-    else
-        USAGE="Usage: $SYNOPSIS"
-    fi
-    
-    # Having formatted the usage string, figure out whether we
-    # actually need to print it, that is, whether the user passed
-    # the right number of arguments or not.
-
-    local ARGC=$#
-    if [[ $ARGC -lt $MIN_ARGS ]]; then
-        local VARARGS_CLAUSE
-        if [[ "$MAX_ARGS" = "varargs" ]]; then
-            VARARGS_CLAUSE=" or more"
         else
-            VARARGS_CLAUSE=""
+            USAGE="Usage: $SYNOPSIS"
         fi
+    
+        # Determine the exact error (too few args? too many?)
+        local ARGC=${#@}
+        if [[ "$ARGC" -lt "$MIN_ARGS" ]]; then
+            local VARARGS_CLAUSE
+            if [[ "$MAX_ARGS" = "varargs" ]]; then
+                VARARGS_CLAUSE=" or more"
+            else
+                VARARGS_CLAUSE=""
+            fi
 
-        complain "$CALLER: error: too few arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)." "" \
-                 "$USAGE"
-        
-        return 1
-    elif [[ "$MAX_ARGS" != "varargs" ]] && ((ARGC > MAX_ARGS)); then
-        complain "check-args: error: $CALLER passed the wrong number of arguments to check-args itself" \
-                 "($CALLER called check-args with $# $ARGUMENTS_INFLECTED, but it requires" \
-                 "at least 3.)" \
-                 "Usage: check-args  MIN_NUM_ARGS  MAX_NUM_ARGS  USAGE_STRING"
-        return 250
-
-
-        complain "$CALLER: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." "" \
-                 "$USAGE"
-        return 2
-    else
-        return 0
+            complain "$CALLER: error: not enough arguments ($ARGC given, ${MIN_ARGS}${VARARGS_CLAUSE} required)." "${USAGE}"
+            return 1
+        elif [[ ! "$MAX_ARGS" = "varargs" ]] && [[ "$ARGC" -gt "$MAX_ARGS" ]]; then
+            complain "$CALLER: error: too many arguments ($ARGC given, $MAX_ARGS allowed)." "${USAGE}"
+            return 1
+        else
+            complain "check-args: error: reached a branch thought to be impossible"
+            return 2
+        fi
     fi
 }
 
