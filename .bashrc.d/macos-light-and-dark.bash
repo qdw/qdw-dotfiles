@@ -3,7 +3,7 @@
 
 DARK_WALLPAPER="$HOME/wallpaper/dark/current-favorite"
 LIGHT_WALLPAPER="$HOME/wallpaper/light/current-favorite"
-LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
+export LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
 MODE_SPEC="'dark' | 'light'"
 OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
 
@@ -15,7 +15,7 @@ declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app" "Safari.app"
 # done
 
 function validate-mode {
-    check-args 1 1 "$MODE_SPEC # anything else returns false" "$@" || return 1
+    check-args 1 1 "$MODE_SPEC" "$@" || return 1
     local MODE="$1"
     case "$MODE" in
         light|dark)
@@ -93,12 +93,10 @@ function _running {
 
 function toggle-dark-reader {
     local MANNAME="use AppleScript to toggle the Dark Reader browser ext on/off
-
     (obsolete for recent versions of Dark Reader, which include a feature
     to auto-follow the system-wide setting)"
 
-    check-args 0 0 'toggle the Dark Reader browser extension on/off' \
-        "$@" || return 1
+    check-args 0 0 '[no arguments]' "$@" || return 1
     
     for BROWSER in @{BROWSERS_USING_DARK_READER[@]}; do
         if _running "$BROWSER"; then
@@ -127,14 +125,6 @@ function current-mode {
     fi
 }
 
-function currently-dark {
-    [[ "$(current-mode)" = "dark" ]]
-}
-
-function currently-light {
-    [[ "$(current-mode)" = "light" ]]
-}
-
 function toggle-toggles {
     for FN in $OBLIGATE_TOGGLE_FUNCTIONS; do
         "$FN"
@@ -149,14 +139,32 @@ function dark {
     change-all-to "dark"
 }
 
+function other-mode {
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    local CURRENT_MODE OTHER_MODE
+    
+    CURRENT_MODE="$(current-mode)"
+    case "$CURRENT_MODE" in
+        dark) OTHER_MODE="light";;
+        light) OTHER_MODE="dark";;
+        *) err "what even is the opposite of '$CURRENT_MODE'?"; return 2;;
+    esac
+
+    echo "$OTHER_MODE"
+}
+
 function change-all-to {
     validate-mode "$@"
-    local MODE="$1"
-    if [[ ! "$(current-mode)" = "$MODE" ]]; then
-        change-macos-to "$MODE"
-        change-wallpaper-to "$MODE"
-        change-emacs-to "$MODE"
-        toggle-toggles
-        echo "dark" > "$LIGHT_OR_DARK_FILE"
-    fi
+    local DESIRED_MODE="$1"
+    local CURRENT_MODE="$(current-mode)"
+
+    if [[ "$CURRENT_MODE" = "$DESIRED_MODE" ]]; then
+        return 0
+    else
+        change-macos-to "$DESIRED_MODE"
+        change-wallpaper-to "$DESIRED_MODE"
+        change-emacs-to "$DESIRED_MODE"
+        toggle-toggles        
+        echo "$DESIRED_MODE" > "$LIGHT_OR_DARK_FILE"
+    fi                                                 
 }
