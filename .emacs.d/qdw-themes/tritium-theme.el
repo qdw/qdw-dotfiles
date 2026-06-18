@@ -243,7 +243,7 @@ extended-bright-white "#a6acb9")))
      ((t (:background magenta :foreground ,black :bold nil))))
 
    `(isearch
-     ((t (:background ,bright-yellow :foreground ,black :bold nil))))
+     ((t (:background ,bright-magenta :foreground ,black :bold nil))))
 
    `(isearch-fail
      ((t (:background ,magenta :foreground ,black :bold nil))))

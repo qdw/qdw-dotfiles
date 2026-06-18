@@ -1,4 +1,4 @@
-;;;; GUI/TUI settings (keywords: 'tty')
+;;;; GUI/TUI settings (keywords: 'tty')  -*- lexical-binding: t; -*-
 
 (defun for-every-session-qdw (func)
   "Some built-in Emacs functions must be called once per frame,
@@ -13,7 +13,6 @@ This applies equally to GUI Emacs (where frames are OS windows)
 and TUI emacsclient (where frames are emacsclient sessions;
 this includes the scenario where you run Emacs in --bg-daemon
 or --fg-daemon mode and then connect to the daemon using emacsclient)."
-  (message "in for-every-session-qdw")
   (funcall func)
   (add-hook 'server-after-make-frame-hook func))
 
@@ -39,10 +38,10 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 
 ;;;; Inhibit superfluous messsages.
 
-(setq inhibit-startup-echo-area-message "quinn")
-(setq ad-redefinition-action 'accept)
-(setq use-package-always-demand 't)
-(setq warning-suppress-types '((files))) ;; lexical-binding warnings; others?
+(setopt inhibit-startup-echo-area-message "quinn"
+        ad-redefinition-action 'accept
+        use-package-always-demand t
+        warning-suppress-types '((files))) ;; lexical-binding warnings
 
 (remove-hook 'find-file-hook 'vc-refresh-state) ;; we'll use Magit instead.
 (remove-hook 'find-file-hook 'epa-file-find-file-hook)
@@ -251,6 +250,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
           org-return-follows-link 't
 
           ;; default org formatting; consider changing
+          ;; 
           ;; org-emphasis-alist '(("*" bold)
           ;;                      ("/" italic)
           ;;                      ("_" underline)
@@ -258,12 +258,14 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
           ;;                      ("`" org-code verbatim)
           ;;                      ("~" (:strike-through t)))
 
-          org-emphasis-alist '(("*" bold)
-                               ("/" italic)
-                               ("_" underline)
-                               ("=" org-verbatim verbatim)
-                               ("`" org-code verbatim)
-                               ("~" (:strike-through t)))
+          ;; custom value
+          ;; 
+          ;; org-emphasis-alist '(("*" bold)
+          ;;                      ("/" italic)
+          ;;                      ("_" underline)
+          ;;                      ("=" org-verbatim verbatim)
+          ;;                      ("`" org-code verbatim)
+          ;;                      ("~" (:strike-through t)))
 
           
           org-confirm-babel-evaluate nil
@@ -1393,7 +1395,6 @@ This command does the reverse of `fill-region'."
    ("C-c :"       eval-expression)
    ("C-h F"       describe-face)
    ("C-c C-f"     multi-occur-in-matching-buffers)
-   ("C-c C-b"     ibuffer)
    ("C-c c"       comment-region)
    ("C-c C-c C-g" rg-in-current-directory-qdw)
    ("C-c i"       indent-region)
@@ -1403,7 +1404,6 @@ This command does the reverse of `fill-region'."
    ("C-c l"       shell)
    ("C-c n"       display-line-numbers-mode)
    ("C-c o"       rotate-windows)
-   ("C-c C-q"     run-qdw-func)
    ("C-c s"       isearch-forward-regexp)
    ("C-c r"       isearch-backward-regexp)
    ("C-c C-c C-t" switch-theme)
@@ -1541,9 +1541,9 @@ This command does the reverse of `fill-region'."
 (use-package popper
   :ensure t ; or :straight t
 
-  :bind (("C-q"    . popper-toggle)
-         ("C-M-i" . popper-cycle)
-         ("C-b" . popper-toggle-type))
+  :bind (("C-c C-q" . popper-toggle)
+         ("C-c TAB" . popper-cycle)
+         ("C-c b"   . popper-toggle-type))
 
   :init (setq popper-reference-buffers '("\\*Messages\\*"
                                          "Output\\*$"
