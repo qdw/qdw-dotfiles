@@ -192,7 +192,7 @@ function check-args {
     local MAX_ARGS="$1"; shift
     local USAGE="$1"; shift
     if [[ $# -ge "$MIN_ARGS" ]] && { [[ $# -le "$MAX_ARGS" ]] \
-                                         || [[ "$MAX_ARGS" = "$VARARGS" ]]
+                                         || [[ "$MAX_ARGS" = "varargs" ]]
                                    }
     then
         # Caller passed a valid number of arguments. Return success.
