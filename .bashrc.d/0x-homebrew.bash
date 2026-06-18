@@ -160,16 +160,16 @@ function brew-is-stale {
         return 0
     else
         local NOW="$(date +%s)"
-        _debug "$NOW since the Epoch"
+        _debug "It is now $NOW seconds since the Epoch"
         local LAST_BREW_UPDATE="$(mtime-in-epoch-seconds "$BREW_UPDATE_TIMESTAMP_FILE")"
-        _debug "$LAST_BREW_UPDATE seconds since brew"
+        _debug "We last brewed $LAST_BREW_UPDATE seconds past the Epoch"
         local SECONDS_OLD=$(( NOW - LAST_BREW_UPDATE ))
-        _debug "elapsed seconds: $SECONDS_OLD"
+        _debug "    Elapsed seconds: $SECONDS_OLD"
         if [[ $SECONDS_OLD -gt $BREW_UPDATE_STALENESS_THRESHOLD ]]; then
-            _debug "$SECONDS_OLD > $BREW_UPDATE_STALENESS_THRESHOLD, so the brew is stale"
+            _debug "$SECONDS_OLD > $BREW_UPDATE_STALENESS_THRESHOLD, so our brew is stale"
             return 0
         else
-            _debug "$SECONDS_OLD is less than $BREW_UPDATE_STALENESS_THRESHOLD, so the brew is still fresh"
+            _debug "$SECONDS_OLD <= $BREW_UPDATE_STALENESS_THRESHOLD, so our brew is still fresh"
             return 1
         fi
     fi
