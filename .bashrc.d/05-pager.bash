@@ -43,3 +43,34 @@ set +a
 ######## Pager settings: experimental
 
 export PPA='fmt -s -uw "$COLUMNS" | less'
+
+### bat, a colorizing cat(1) that understands many file formats
+
+# export BAT_THEME="tritium" # can't get 'bat cache --build' to work
+export BAT_THEME="base16"
+function bat {
+    command bat \
+        --color "always" \
+        --decorations "auto" \
+        --style "rule,snip" \
+        "$@" \
+      | $PAGER
+}
+
+# bat-head FILENAME NUMBER: use color bat to show a file's first n lines
+function bat-head {
+    local FILENAME="$1"
+    local NUMBER="$2"
+    
+    bat --line-range ":${NUMBER}" "$FILENAME"
+}
+
+# bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub).
+
+function bbat {
+    local TMPFILE
+    
+    TMPFILE=$(gmktemp --suffix .html /tmp/bbat.XXXXXX) \
+        && pandoc --from markdown --to html --reference-links "$@" > "$TMPFILE" \
+        && elinks "$TMPFILE"
+}

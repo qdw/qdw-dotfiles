@@ -25,7 +25,7 @@ source-section "macos-app-completion.bash" ### Make 'la SUBSTRING tab' complete 
 ## When on macOS, prefer Homebrewed GNU tools to their built-in
 ## equivalents, iff they're available
 
-for GNU_COMMAND in cut date dircolors find head roff sed sort stat tac tail
+for GNU_COMMAND in cut date dircolors find head roff sed sort tac tail
 do
     BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
     if [[ -e "$BREWED_GNU" ]]; then

@@ -445,3 +445,41 @@ function deps-bash {
 
     cd "$ORIG_DIR"
 }
+
+# func - show the source code of a bash function, with syntax highlighting
+function func {
+    # check-args 1 1 "type SOME_FUNCTION_NAME" "$@"
+    local FUNCTION_NAME="$1"
+    local FIRST_LINE="$(command type "$FUNCTION_NAME" | head -1)"
+    if [[ "$FIRST_LINE" = "$FUNCTION_NAME is a function" ]]; then
+        command type "$FUNCTION_NAME" | tail -n +2 | bat --language bash
+    else
+        echo "$FUNCTION_NAME is not defined as a function" >&2
+        return 1
+    fi
+}
+
+# Save-to-file a function that you defined in an interactive shell
+function save-function {
+    check-args 1 2 'BASH_FUNCTION_NAME [FILENAME] # default: ~/.bashrc' "$@" \
+        || return 1;
+
+    local FUNCTION_NAME="$1"
+    local DEST_FILE="${2:-$HOME/.bashrc}"
+    
+    echo >> "$DEST_FILE"
+    func "$FUNCTION_NAME" | bnw >> "$DEST_FILE"
+}
+
+# Search for functions whose name match a regex
+function gfunc {
+    check-args 1 varargs '[GREP_FLAGS ...] REGEX' "$@" || return 1
+    local -a ARGS=("$@")
+    local REGEX="${ARGS[-1]}"
+    unset 'ARGS[-1]'
+    gbr "${ARGS[@]}" "function.*${REGEX}.*[{]"
+}
+
+function g-funk {
+    gfunc "$@"
+}
