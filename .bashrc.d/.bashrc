@@ -412,39 +412,6 @@ unset PROMPT_COMMAND
 export PS1="\\[\\e[33m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
 export DEFAULT_PS1="$PS1"
 
-#### Environment variable functions
-
-function enva {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    env | ggrep --color=always -P '^AWS_[^=]*' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
-}
-
-function envp {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    env | ggrep --color=always -P '^PG_[^=]*' | sort
-}
-
-function envap {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    enva
-    envp
-}
-
-function xkcd-automate-p {
-    local XKCD_CHART="$HOME/doc/is_it_worth_the_time_2x.png"
-    if [[ -f "$XKCD_CHART" ]]; then
-        open "$XKCD_CHART"
-    else
-        echo "Missing file '$XKCD_CHART'. Go grab it from https://xkcd.com/1205/"
-    fi
-}
-
-function xkcd {
-    check-args 1 1 'COMIC_NUMBER' "$@" || return 1
-    local COMIC_NUMBER="$1"
-    open "https://xkcd.com/$COMIC_NUMBER"
-}
-
 #### Filename/path/dir/cd-related functions
 
 function dashify-path {
@@ -692,7 +659,9 @@ source-section "ai.bash"
 
 #### AWS
 
-source-section "aws.bash"
+if [[ "$USE_FEATURE_AWS" ]]; then
+    source-section "aws.bash"
+fi
 
 # cdr ("CD Realpath") - cd to the enclosing directory that a symlink points to
 
