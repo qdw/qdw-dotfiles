@@ -1763,6 +1763,32 @@ function brow { defaultbrowser "$@" ;}
 function brc { brow "chrome" ;}
 function brs { brow "safari" ;}
 
+function is-it-worth-automating {
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    
+    for URL in https://xkcd.com/1205/
+               https://agileadam.com/worth-automating/
+               https://iiwtt.seadev.tools/
+    do
+        open "$URL"
+    done
+}
+
+function xkcd-automate-p {
+    local XKCD_CHART="$HOME/doc/is_it_worth_the_time_2x.png"
+    if [[ -f "$XKCD_CHART" ]]; then
+        open "$XKCD_CHART"
+    else
+        echo "Missing file '$XKCD_CHART'. Go grab it from "
+    fi
+}
+
+function xkcd {
+    check-args 1 1 'COMIC_NUMBER' "$@" || return 1
+    local COMIC_NUMBER="$1"
+    open "https://xkcd.com/$COMIC_NUMBER"
+}
+
 # Adapted from a function posted by user Chubler_XL, in a comment on https://www.unix.com/shell-programming-and-scripting/277083-url-encoding-string-using-sed.html
 
 function urlencode {
