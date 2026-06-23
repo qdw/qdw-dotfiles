@@ -898,43 +898,12 @@ function pd_encode {
 }
 
 #### PostgreSQL
+  ## (for additional PostgreSQL-realted settings, see the following files):
+  ##    ~/.psqlrc*
+  ##    ~/.pg_service
+  ##    ~/.pgpass
 
-# For additional PostgreSQL-realted settings, see the following files:
-#    ~/.psqlrc*
-#    ~/.pg_service
-#    ~/.pgpass
-
-source "$HOME/.bashrc.d/postgresql.bash"
-
-declare -Ax pgpasses
-
-function pql {
-    check-args 1 1 '"stanza name from pg_service.conf"' "$@" || return 1
-    
-    local SERVICE  PASSWORD
-    if [[ $# -ne 1 ]]; then
-        err "missing argument. Usage: pql pg_service.conf-stanza-name | psql --clear-cache"
-        return 1
-    else
-        if [[ "$1" = "--clear-cache" ]]; then
-            unset pgpasses
-            return
-        else
-            SERVICE="$1";
-            if [[ -n ${pgpasses["$SERVICE"]} ]]; then
-                PASSWORD=${pgpasses["$SERVICE"]}
-            else
-                if PASSWORD="$("$MY_VIRTUALENV_DIR/qql/bin/python" "$HOME/bin/site/pql" "$SERVICE")"; then
-                    err "couldn't retrieve the AWS secret for $SERVICE" 1>&2;
-                    return 2
-                fi
-            fi
-
-            pgpasses["$SERVICE"]="$PASSWORD"
-            echo "$PASSWORD"
-        fi
-    fi
-}
+source-section "postgresql.bash"
 
 # replication-role -  say whether this is a primary or a replica (suitable for inclusion in your shell and/or psql prompt)
 
@@ -1735,10 +1704,9 @@ function brs { brow "safari" ;}
 function is-it-worth-automating {
     check-args 0 0 '[no arguments]' "$@" || return 1
     
-    for URL in https://xkcd.com/1205/
-               https://agileadam.com/worth-automating/
-               https://iiwtt.seadev.tools/
-    do
+    for URL in "https://xkcd.com/1205/" \
+               "https://agileadam.com/worth-automating/" \
+               "https://iiwtt.seadev.tools/"; do
         open "$URL"
     done
 }
