@@ -13,6 +13,12 @@ function pb {
     ~/perl5/perlbrew/bin/perlbrew "$@"
 }
 
+function pw {
+    local MANNAME="find a Perl library in PERL5LIB"
+    check-args 1 1 'MyModule::Name | MyModule/Name.pm' "$@" || return 1
+    perldoc -l "$1"
+}
+
 function inc {
     echo -n "perl = "; which perl
     echo

@@ -58,6 +58,14 @@ function ts-yaml {
 
 source-section "04-string-manipulation.bash" ### String manipulation
 
+function lw {
+    local MANNAME="show the real (non-symlink) path to an executable program"
+    check-args 1 1 'PROGRAM_NAME' "$@" || return 1
+    local PROG="$1"
+    local PTH=$(which "$PROG")
+    realpath "$PTH"
+}
+
 #### #section-4#  OS-specific settings
 
 MY_OS="$(uname -s)"
@@ -1406,9 +1414,6 @@ function mr {
     mount | command grep ^/
 }
 
-# lw Perl::Module, lw Perl/Module.pm ("library which") - show the path to Perl module in PERL5LIB.
-function lw { perldoc -l "$1" ;}
-
 # elw Perl::Module, elw Perl/Module.pm ("edit library which") - find a perl module in PER5LIB and open it in VISUAL. #FIXME: test behavior.
 # elw { $VISUAL $(lw "$@") ;}
 
@@ -1591,13 +1596,16 @@ function http-200 {
 }
 
 function gmail {
-    check-args 0 1 '[SEARCH_TERMS_STRING]' "$@" || return 1
+    check-args 0 2 '[SEARCH_STRING [BROWSER]]' "$@" || return 1
+    local URL="https://mail.google.com/mail/u/0"
     
     if [[ $# -eq 1 ]]; then
         local SEARCH_STRING="$1"
         gmail-search "$SEARCH_STRING"
-    elif [[ $# -eq 0 ]]; then
-        open -u "https://mail.google.com/mail/u/0"
+    elif [[ $# -eq 2 ]]; then
+        "$BROWSER" "$URL"
+    else
+        open -u "$URL"
     fi
 }
 
