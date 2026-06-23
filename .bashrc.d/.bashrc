@@ -397,21 +397,6 @@ function hex {
     fi
 }
 
-#### Bash prompt settings
-
-unset PROMPT_COMMAND
-
-# # Use Unicode emoji as visual cues for different hosts/apps
-# if [[ "$INSIDE_EMACS" ]]; then
-#     PS1_LOGO=$'\u2130' # Cursive uppercase E
-# elif [[ -n "$LAPTOP_HOSTNAME" ]] && [[ $HOSTNAME = "$LAPTOP_HOSTNAME" ]]; then
-#     PS1_LOGO=$'\uF8FF' # Apple logo
-# fi
-# export PS1="\\[\\e[33m\\]${PS1_LOGO}\\u@${PS1_HOSTNAME}:\\w\\$\\[\\e[0m\\] "
-
-export PS1="\\[\\e[33m\\]\\u@\\h:\\w\\$\\[\\e[0m\\] "
-export DEFAULT_PS1="$PS1"
-
 #### Filename/path/dir/cd-related functions
 
 function dashify-path {
@@ -461,7 +446,19 @@ function cdl {
     fi
 }
 
-#### Bash history settings
+#### Bash
+
+### Bash completion
+
+source-section "completion.bash"
+
+### Bash shell prompt
+
+# BASH_PROMPT_USE_PREFIX_EMOJI="yes"
+source-section "prompt.bash"
+source-section "git-prompt.bash"
+
+### Bash history settings
 
 # Add a timestamp to history(1) output, using strftime(3) formatting.
 export HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
@@ -469,136 +466,6 @@ export HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
 # Keep all history forever
 export HISTFILESIZE=-1
 export HISTSIZE=-1
-
-## Bash completion and prompt settings
-## Dependencies:
-##     - Homebrew itself
-##     - Homebrewed bash >= 5 (set as your login shell)
-##     - The following additional Homebrew formulas:
-##         - bash-completion@2
-##         - gh
-##         - docker
-##         - rclone
-##         - openshift
-##
-##     - bash-git-prompt, preferably my fork: https://github.com/qdw/bash-git-prompt
-
-export GIT_PROMPT_THEME="Custom"
-export GIT_PROMPT_ONLY_IN_REPO=1
-
-if [[ -r "$HOMEBREW_ROOT/etc/profile.d/bash_completion.sh" ]]; then
-    function use-gitprompt {
-        local OPTIONAL_WORKTREE="$1"
-        
-        local MY_FORKED_SCRIPT="$HOME/src/forks/bash-git-prompt/gitprompt.sh"
-        local ORIGINAL_SCRIPT="$HOMEBREW_ROOT/share/gitprompt.sh"
-
-        if [[ -f "$MY_FORKED_SCRIPT" ]]; then
-            if [[ "$OPTIONAL_WORKTREE" ]]; then
-
-                # (function get-branch-name-bounds is defined in ~/.site.bash.d/preamble.bash)
-                local BOUNDS="$(get-branch-name-bounds "$OPTIONAL_WORKTREE")"
-            
-                if [[ "$BOUNDS" ]]; then
-                    read -r OFFSET LIMIT <<< "$BOUNDS"
-                    export GIT_PROMPT_BRANCH_OFFSET="$OFFSET"
-                    export GIT_PROMPT_BRANCH_LIMIT="$LIMIT"
-                fi
-            fi
-            source "$MY_FORKED_SCRIPT"
-        else
-            source "$ORIGINAL_SCRIPT"
-        fi
-    }
-
-    export BASH_COMPLETION_DIR="$HOMEBREW_ROOT/etc/bash_completion.d"
-    # comp - activate shell completion
-    function comp {
-        function sc {
-            for FILENAME in "$@"; do
-                source "$BASH_COMPLETION_DIR/$FILENAME"
-            done
-        }
-
-        case "$1" in
-            aws*)
-                sc "aws_bash_completer"
-                ;;
-                
-            brew)
-                my-source "$HOMEBREW_ROOT/completions/bash/brew"
-                ;;
-            
-            docker)
-                sc docker \
-                   docker-compose \
-                   docker-machine-prompt.bash \
-                   docker-machine-wrapper.bash \
-                   docker-machine.bash
-                ;;
-        
-            gh|github)
-                sc "gh"
-                ;;
-        
-            git)
-                use-gitprompt "$(realpath "$PWD")"
-                sc "gh" \
-                   "git-completion.bash"
-                ;;
-
-            m|macos|macOS)
-                sc "m"
-                ;;
-
-            ollama)
-                source-if-exists "$HOME/src-3/ollama-bash-completion-plugin/plugin.sh"
-                ;;
-            
-            openshift|oc|kubernetes|kube|k8s)
-                sc "oc" \
-                   "kubecfg" \
-                   "kubectl" \
-                   "minikube"
-                ;;
-
-            *)
-                sc "$1"
-                ;;
-        esac
-    }
-
-    function ag {
-        comp "git"
-        export GIT_COMPLETION_ACTIVATED=1
-    }
-    
-    # AWS command completion - pretty fast,
-    # so it's OK to run this at shell startup time if you want
-    function aw {
-        comp "aws_bash_completer"
-    }
-    
-    function my_prompt_function {
-        local REALPATH="$(realpath "$PWD")"
-        
-        if [[ -d "$REALPATH/.git" \
-              && ( ! "$REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION" \
-                       || \
-                   ! "$REALPATH" =~ $REGEX_FOR_REPOS_TO_EXCLUDE_FROM_GIT_COMPLETION ) ]];
-        then
-            use-gitprompt "$REALPATH"
-            if [[ ! "$GIT_COMPLETION_ACTIVATED" ]]; then
-                my-source "$BASH_COMPLETION_DIR/gh"
-                my-source "$BASH_COMPLETION_DIR/git-completion.bash"
-                export GIT_COMPLETION_ACTIVATED=1
-            fi
-        fi
-    }
-    
-    MY_PROMPT_FUNCTION_DEFINITION=$(command -V my_prompt_function | tail -n +2)
-    export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"
-fi
 
 #### Scheme Shell
 
@@ -623,13 +490,13 @@ function shells {
     | sort
 }
 
-#### Pager: GNU less plus bat
+#### Pagers: GNU less and bat
 
 source-section "05-pager.bash" ### Pager (GNU less plus bash)
 
 ### man
 
-# # Tell man to display pages in color (it uses the deprecated Termcap system)
+# # Tell man to display pages in color
 # # Section headings? (bold orange)
 # export LESS_TERMCAP_mb=$'\e[1;2;130m'
 # # Program name? (bold purple)
