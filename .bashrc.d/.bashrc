@@ -1595,6 +1595,8 @@ function http-200 {
     [[ "$STATUS" = 200 ]]
 }
 
+GMAIL_URL="https://mail.google.com/mail/u/0"
+
 function gmail {
     check-args 0 2 '[SEARCH_STRING [BROWSER]]' "$@" || return 1
     local URL="https://mail.google.com/mail/u/0"

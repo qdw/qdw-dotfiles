@@ -6,11 +6,12 @@
 function pg {
     MANNAME="manage multiple Homebrewed PostgreSQL versions
 CAVEATS
-    For this command to work, you must first set up each version's server
-    on its own port, then populate ~/.pg_service.conf accordingly."
+    For this command to work, you must first set up each version's
+    postgresql.conf and pg_hba.conf so that it accepts local connections
+    on port 54xy, where xy is its major version name (example: 5318).
+"
 
     check-args 1 varargs 'VERSION [PROGRAM [ARG1 [ARG2 ...]]]' "$@" || return 1
-
     local VERSION="$1"
     shift
 
@@ -23,7 +24,7 @@ CAVEATS
     fi
     
     local BINARY="$HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/${PROGRAM}"
-    PGSERVICE="pg${VERSION}" "$BINARY" "$@"
+    PGPORT="54${VERSION}" PGHOST="/tmp" PGUSER="$USER" "$BINARY" "$@"
 }
 
 function pg_dump_roles {

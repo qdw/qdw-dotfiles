@@ -228,11 +228,6 @@ function enva {
     env | ggrep --color=always -P '^AWS_[^=]*' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
 }
 
-function envp {
-    check-args 0 0 "[no arguments]" "$@" || return 1
-    env | ggrep --color=always -P '^PG_[^=]*' | sort
-}
-
 function envap {
     check-args 0 0 "[no arguments]" "$@" || return 1
     enva
