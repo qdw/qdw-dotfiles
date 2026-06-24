@@ -17,9 +17,11 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
   (add-hook 'server-after-make-frame-hook func))
 
 ;; TTY settings. If you're running GUI Emacs, these are no-ops.
+
+(setopt multiple-terminals-merge-keyboards t) ;; fewer lock-ups
+
 ;; They work by telling Emacs to interpret certain magic
 ;; escape sequences iff your terminal emulator sends them.
-
 ;; This code has two effects:
 ;; 
 ;; 1) Enable special mouse buttons if your terminal emulator supports them.
@@ -78,7 +80,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
    (set-face-attribute face nil :weight 'normal))
  (face-list))
 
-;;;; GUI settings. If you're running in a terminal emulator, these are no-ops.
+;;;; GUI settings (these are no-ops when running in a terminal emulator)
 
 (set-face-font 'default "Menlo-17")
 (blink-cursor-mode -1)
