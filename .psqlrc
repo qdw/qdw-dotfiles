@@ -17,6 +17,6 @@
 
 -- -- Prompt
 
-SELECT CASE WHEN pg_is_in_recovery() THEN 'replica 💧' ELSE 'PRIMARY ⚠️' END
+SELECT CASE WHEN pg_is_in_recovery() THEN '💧replica💧 ' ELSE '⚠️PRIMARY⚠️  ' END
        AS sigil \gset
 \set PROMPT1 '🐘 %n@%m:%/ %:sigil: %# '

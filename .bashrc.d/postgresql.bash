@@ -24,7 +24,17 @@ CAVEATS
     fi
     
     local BINARY="$HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/${PROGRAM}"
-    PGPORT="54${VERSION}" PGHOST="/tmp" PGUSER="$USER" "$BINARY" "$@"
+
+    env \
+        -i \
+        HOME="$HOME" \
+        PATH="$PATH" \
+        PGDATABASE="postgres" \
+        PGPORT="54${VERSION}" \
+        PGHOST="/tmp" \
+        PGUSER="$USER" \
+        USER="$USER" \
+        "$HOMEBREW_BIN/bash" -c "'$BINARY' $@"
 }
 
 function pg_dump_roles {
