@@ -50,8 +50,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;;;;;; (let ((inhibit-messsage t))
 
 ;; Remove chrome (menu bar/tool bar/scroll bar).
-
-;; Behold the inconsistency of Emacs conventions!
+;; (Behold the inconsistency of Emacs conventions!)
 
 (setopt inhibit-startup-screen t)
 (menu-bar-mode -1)
@@ -84,8 +83,13 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (set-face-font 'default "Menlo-17")
 (blink-cursor-mode -1)
 
-
 ;;;; Color-theme settings
+
+;; Performance tweak: don't color my text as I'm typing. Wait for me to stop.
+
+(setq redisplay-skip-fontification-on-input t)
+
+;; My personal bespoke color themes.
 
 (defvar themes-qdw '("amber" "amber-without-bold" "mariana" "tritium"))
 
@@ -98,7 +102,8 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (setopt custom-enabled-themes '())
 (defvar my-chosen-theme "tritium")
 
-;; Load my current favorite theme. But keep the cursor bright orange for visibility.
+;; Load my current favorite theme.
+;; But keep the cursor bright orange, no matter the theme, for visibility.
 
 (load-theme (intern my-chosen-theme) 't)
 (set-cursor-color "DarkOrange1")
@@ -150,13 +155,25 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
              (setq i (1+ i))))))
              
   (other-window -1))
-  
+
 ;;;; Basic text-editing behavior
- 
-;; Text-entry settings: overwrite or delete the "region" (selected text)
+
+;; Turn off right-to-left language support,
+;; improving performance slightly.
+
+(setq-default bidi-display-reordering 'left-to-right
+(setq-default bidi-paragraph-direction 'left-to-right)
+(setq bidi-inhibit-bpa t)
+
+;; Copypasta settings: overwrite or delete the "region" (selected text)
 ;; when I type, in keeping with modern UI conventions.
 
 (delete-selection-mode +1)
+
+;; Copypasta settings: before overwriting the syustem clipboard,
+;; save its contents in the Emacs kill-ring so I can get it back.
+
+(setq save-interprogram-paste-before-kill t)
 
 ;; Display long lines as ......$,
 ;; rather than displaying the whole text-line on multiple terminal-lines
@@ -235,6 +252,20 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (use-package markdown-mode)
 
 (use-package url-util)
+
+;;;; Hack stuff
+
+;; Increase the size of the buffer that Emacs
+;; uses to communicate with the LSP server,
+;; speeding up reads.
+
+(setq read-process-output-max (* 4 1024 1024))
+
+;;;; Hack regexes interactively (M-x re-builder)
+
+;; Don't require double backslashes when escaping - only single.
+
+(setq reb-re-syntax 'string)
 
 ;;;; Hack org-mode documents
 
