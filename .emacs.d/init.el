@@ -783,6 +783,7 @@ but it calls defvar under the hood."
             ("POSTPONED" . ,yellow)
             ("INFO" . ,yellow)
             ("PROJECT" . ,blue)
+            ("RECOMMENDATION" . ,yellow)
             ("SUBPROJECT" . ,bright-cyan)
             )))
 
