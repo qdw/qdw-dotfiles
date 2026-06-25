@@ -8,7 +8,14 @@
 ########         00-bash-metaprogramming.bash
 ########         pager.bash
 
+function bisect-emacs-init {
+    local MANNAME="load only the first FRACTION of init.el, for debugging
+    (automatically expanded to the next top-level sexp)"
 
+    check-args 1 1 'FRACTION' "$@" || return 1
+    local FRAC="$1"
+    BISECT_EMACS="$FRAC" command emacs --debug-init "$HOME/.emacs.d/init.el"
+}
 
 function install-emacs-plus {
     check-args 1 1 'EMACS_VERSION_NUMBER # e.g., 29' "$@" || return 1

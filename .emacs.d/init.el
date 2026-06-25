@@ -1,3 +1,34 @@
+;;;; Debugging this init file
+
+(defun bisect-load-init (fraction)
+  "Load the first FRACTION (0.0–1.0) of init.el (for debugging purposes)"
+  (interactive "nFraction to load (0.0–1.0): ")
+  (let* ((init-file (expand-file-name "~/.emacs.d/init.el"))
+         (tmpfile (make-temp-file "emacs-bisect" nil ".el")))
+    (with-temp-file tmpfile
+      (insert-file-contents init-file)
+      (let* ((total-lines (count-lines (point-min) (point-max)))
+             (target-line (round (* total-lines fraction))))
+	(goto-char (point-min))
+        (forward-line target-line)
+
+        ;; Advance to the end of the current top-level form (if any)
+        ;; so we don't truncate mid-expression.
+        (condition-case nil
+          (beginning-of-defun 1)
+          (forward-sexp 1)
+          (error nil))
+        (delete-region (point) (point-max))
+	(message "Loading first ~%d/%d lines of init.el (temp file %s)..."
+		 target-line
+		 total-lines
+		 tmpfile)
+	(load-file tmpfile)))))
+
+(let* ((val (getenv "BISECT_EMACS")))
+  (when (and val (not (equal "" val)))
+    (bisect-load-init (string-to-number val))))
+
 ;;;; GUI/TUI settings (keywords: 'tty')  -*- lexical-binding: t; -*-
 
 (defun for-every-session-qdw (func)
@@ -163,7 +194,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;; Turn off right-to-left language support,
 ;; improving performance slightly.
 
-(setq-default bidi-display-reordering 'left-to-right
+(setq-default bidi-display-reordering 'left-to-right)
 (setq-default bidi-paragraph-direction 'left-to-right)
 (setq bidi-inhibit-bpa t)
 
