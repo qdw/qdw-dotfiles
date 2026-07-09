@@ -1,6 +1,6 @@
 -- -*- mode: sql -*-
 
--- -- Important semantics
+-- ---- Important semantics
 
 \set ON_ERROR_ROLLBACK interactive
 \set HISTSIZE -1
@@ -8,15 +8,36 @@
 \set idle_session_timeout = '2 days';
 \set idle_in_transaction_session_timeout = '5 minutes';
 
--- -- Output formatting
+-- ---- Output formatting
 
 \x auto
-\pset null '        [NULL]'
+\pset null '[NULL]'
 -- \pset null 🐙
 -- \set QUIET on
 
--- -- Prompt
+-- ---- Prompt
 
-SELECT CASE WHEN pg_is_in_recovery() THEN '💧replica💧 ' ELSE '⚠️PRIMARY⚠️  ' END
-       AS sigil \gset
-\set PROMPT1 '🐘 %n@%m:%/ %:sigil: %# '
+-- Customize my prompt to reassure me when I'm on a replica (read-only)
+-- and warn me when I'm on a primary (writeable!)
+
+SELECT
+CASE WHEN inet_client_addr() IS NULL
+    THEN ''
+ELSE
+    CASE WHEN pg_is_in_recovery()
+        -- green text; chr(27) is the ESC character, used for ANSI SGR color
+        THEN ' 💧%[' || chr(27) || '[32m%]replica' || chr(27) || '[0m%]💧'
+    ELSE
+        -- red text
+        ' ⚠️%[' || chr(27) || '[31m%]PRIMARY' || chr(27) || '[0m%]⚠️'
+    END
+END
+AS replication_role_marker \gset
+
+-- ---- psql built-in escape codes:
+-- %n - (n)ame of user
+-- %m - (m)achine, that is, host (for Unix domain sockets, will be '[local]')
+-- %/ - database, e.g. 'postgres'
+-- %# - '#' if logged in as a role with SUPERUSER; '>' otherwise.
+
+\set PROMPT1 '🐘 %n@%m:%/' :replication_role_marker ' %# '
