@@ -1,0 +1,110 @@
+;; (defun 0x (color-name)
+;;   (letrec ((rgb (color-name-to-rgb color-name))
+;; 	   (hex (color-rgb-to-hex rgb)))
+;;     (message "equivalent exchange: %s" color-name)))
+
+(cond
+  ;;; For terminals that support full 24-bit color
+  ((string= "iTerm.app" (getenv "TERM_PROGRAM"))
+   (setqu
+
+    white "#010101"
+    bright-white black
+
+    red "#a26321"
+    bright-red "#ff7f00"
+    
+    green "#377f46"
+    bright-green "#00ff00"
+    
+    yellow "#9164ff"
+    bright-yellow yellow
+    
+    blue "#6495ed"
+    bright-blue blue
+    
+    magenta "#af5faf"
+    bright-magenta "#f5b5ff"
+    
+    cyan "#008080"
+    bright-cyan cyan
+    
+    black "#f5deb3"
+    bright-black white
+    ))
+  
+  ;;; For terminals that support 256 colors
+  ;;; (i.e., almost every non-24-bit terminal emulator in use today)
+  ('t 
+   (setqu
+
+    black "#1c1c1c"        ;; "Grey15"     == 235
+    ;; black "#000000"  ;; Use the terminal emulator's ANSI-black color.    
+    ;; black "color-16" ;; Use the terminal emulator's background color.
+
+    bright-black "#5f5f5f" ;; "Grey37"     ==  59
+
+    red "#c65916"
+    bright-red "#ff7f00"
+
+    green "#008700"        ;; "Green4"     ==  28
+    bright-green "#00ff00" ;; "Green1"     ==  46
+    
+    yellow "#5c0a5c"
+    bright-yellow yellow
+
+    blue "#00afff" ;; "DeepSkyBlue1"   ==  39
+    bright-blue blue
+
+    magenta "#af00af"        ;; "Magenta3" == 127
+    bright-magenta "#ff87ff" ;; "Orchid1"  == 213
+    
+    cyan "#00af87"           ;; "DarkCyan" ==  36
+    bright-cyan cyan
+
+    white "#949494"          ;; "Grey58" == 246
+    bright-white white
+    ))
+)
+
+(defvar *colors-loaded-p* 't)
+
+;;; [Untested; might not work] For terminals that support only 16 colors
+;; (setqu
+;;  black "#000000"        ;; "Black (SYSTEM)"  ==  0  == ANSI black
+;;  bright-black           ;; "Grey (SYSTEM)"   == 8 == ANSI bright-black
+;;  red "#800000"          ;; "Maroon (SYSTEM)" ==  1  == ANSI red
+;;  bright-red red
+;;  green "#008000"        ;; "Green (SYSTEM)"  ==  2  == ANSI green
+;;  bright-green "#00ff00" ;; "Lime"            == 10 == ANSI bright-green
+;;  yellow "#800080"       ;; "Purple (SYSTEM)" ==  5  == ANSI magenta
+;;  blue "#000080"         ;; "Navy (SYSTEM)"   ==  4  == ANSI blue
+;;  bright-blue blue
+;;  magenta "#800080"      ;; "Purple (SYSTEM)" ==  5  == ANSI magenta
+;;  bright-magenta "Aqua"
+;;  cyan "#008080"         ;; "Teal (SYSTEM)"   ==  6  == ANSI cyan
+;;  bright-cyan cyan
+;;  white bright-black
+;;  bright-white white
+;;  )
+
+
+;;; [Untested; might not work] For terminals that support only 8 colors
+;; (setqu
+;; black "#000000"        ;; "Black (SYSTEM)"   ==  0  == ANSI black
+;; bright-black black ;; "Silver (SYSTEM)"  ==  7  == ANSI white
+;; red "#800000"          ;; "Maroon (SYSTEM)"  ==  1  == ANSI red
+;; bright-red red
+;; green "#008000"        ;; "Green (SYSTEM)"   ==  2  == ANSI green
+;; bright-green green
+;; yellow "#800080"       ;; "Purple (SYSTEM)"  ==  5  == ANSI magenta
+;; bright-yellow yellow
+;; blue "#000080"         ;; "Navy (SYSTEM)"    ==  4  == ANSI blue
+;; bright-blue blue
+;; magenta "#800080"      ;; "Fuchsia (SYSTEM)" == 13  == ANSI bright-magenta
+;; bright-magenta magenta        ;; "Red (SYSTEM)"     == 9  == ANSI bright-red
+;; cyan "#008080"         ;; "Teal (SYSTEM)"   ==   6  == ANSI cyan
+;; bright-cyan cyan
+;; white "#111111"
+;; bright-white white
+;; )

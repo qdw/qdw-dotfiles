@@ -260,6 +260,7 @@ function cdd { cd "$HOME/Desktop/$1" ;}
 function cdq { cd "$HOME/src/1/qdw-dotfiles/$1" ;}
 function cd3 { cd "$HOME/src-3/$1" ;}
 function cd1 { cd "$HOME/src/1/$1" ;}
+function cds { cd "$HOME/symlinks" ;}
 
 # If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
@@ -366,6 +367,20 @@ function markdown2html {
 #### AI
 
 source-section "ai.bash"
+
+#### fortune(1), an ancient BSD app that prints a random message from a file
+
+function fortune {
+    check-args 0 1 '[MY_FORTUNE_FILE] # default is "$HOME/fortunes/default"' \
+        "$@" || return 1
+    FILE="${1:-$HOME/fortunes/default}"
+    
+    if [[ -f "$FILE" ]] && [[ "$FILE" -nt "${FILE}.dat" ]]; then
+        command strfile -rs "$FILE" || return
+    fi
+
+    command fortune "$FILE"
+}
 
 #### AWS
 
@@ -699,46 +714,16 @@ function todo {
     fi
 }
 
+function yak {
+    todo "$@"
+}
+
 #### Haskell
 
 # # Nope, defaulting to $HOME/.local/bin instead
 # HASKELL_PATH="$HOME/.cabal/bin"
 
-#### Python
-
-for PREFERRED in "$HOMEBREW_BIN/python3" "/usr/bin/python3"; do
-    if [[ -f "$PREFERRED" ]]; then
-        PYTHON_INTERPRETER_PATH="$PREFERRED"
-        break
-    fi
-done
-
-function python {
-    python3 "$@"
-}
-
-function defs {
-    # Show Python function names
-    check-args 0 varargs \
-               '[GREP_ARG_1 [GREP-ARG_2 ...]] [DIRECTORY] # defaults to .' \
-               "$@" \
-        || return 1
-
-    # Get the last argument, and remove it from $@
-    local PTH
-    if [[ $# -ne 0 ]]; then
-        local PTH="${@[$# - 1]}"
-        unset "${_[$# - 1]}"
-        echo "PTH: $PTH"
-        echo "remaining args: $@"
-    else
-         PTH="."
-    fi
-    
-    command fd -t f '.py$' \
-        -x command grep -RiE --color=always "$@"  "^[ ]*def[ ]"  "{}" \; \
-        "$PTH"
-}
+source-section "python.bash"
 
 #### Aranet4 air quality monitoring settings
 
@@ -828,6 +813,25 @@ function mp3-to-m4r {
            "$BASE.m4a" \
         && mv "$BASE.m4a" "$BASE.m4r"
 }
+
+#### Text-to-speech (TTS)
+
+# # Broken.
+# function tts {    
+#     local MANNAME="take a file of plain text and read it aloud"
+#     check-args 1 1 'FILE' "$@" || return 1
+#     local FILE="$1"
+
+#     local VOICE="en-US-AndrewMultilingualNeural"
+#     local RATE="+25%"
+
+#     if ! edge-tts --file "$FILE" --write-media "$MP3_FILE" --voice "$VOICE" --rate="$RATE"
+#     then
+#          edge-tts --text "Uh, sorry, I couldn't read the article, because the edge-tts command failed" --write-media "$MP3_FILE" --voice "$VOICE" --rate="$RATE"
+#     fi
+
+#     ffplay -nodisp -autoexit -loglevel quiet "$MP3_FILE"
+# }
 
 #### golang
 
@@ -949,6 +953,11 @@ function p {
         | command grep -vE 'grep|rg' \
         | $MY_GREP $MY_GREP_OPTIONS $GREP_COLOR_FLAGS "$@" \
         | $PAGER
+}
+
+function ph {
+    ps auxwwwwww | head -1
+    p "$@"
 }
 
 # Display only processes that belong to me.
@@ -2101,6 +2110,15 @@ function qtmake {
 ## PATH (to search for executables)
 
 export PATH="$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$HASKELL_PATH:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$GITLAWB_PATH:$QT_PATH"
+
+# Account for the fact that some of those interpolated env vars may be empty.
+
+ORIG_EXTGLOB=$(shopt -p extglob)
+shopt -s extglob
+PATH="${PATH//+(:)/:}"    # Collapse runs of colons to single colon.
+PATH="${PATH#:}"          # Strip leading colon, if any.
+PATH="${PATH%:}"          # Strip trailing colon, if any.
+$ORIG_EXTGLOB
 
 ## C libraries
 
