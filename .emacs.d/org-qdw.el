@@ -12,6 +12,7 @@
   ;; (org-hide-drawers-mode +1)
 
   (setopt org-archive "::"
+          org-auto-align-tags nil
           org-cycle-separator-lines 1
           
           org-cycle-hide-drawer-startup t
@@ -228,6 +229,7 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
                           "SUBPROJECT(s)"
                           "POSTPONED(p)"
                           "RECOMMENDATION(c)"
+                          "INBOX"
                           
                           "|"
 
@@ -255,6 +257,7 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
                ("INFO" . ,yellow)
                ("PROJECT" . ,blue)
                ("RECOMMENDATION" . ,yellow)
+               ("INBOX" . ,bright-yellow)
                ("SUBPROJECT" . ,bright-cyan)
             )))
 
@@ -265,7 +268,6 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
 
   (overlay-org-colors-qdw))
-
 
 ;; (use-package 'org-ql :straight (:host :repo :local-repo)
 ;;   ...)
