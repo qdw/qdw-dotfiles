@@ -519,7 +519,7 @@ function ginit {
     fi
 }
 
-function gll {
+function gl {
     local N_COMMITS
 
     if [[ $# -eq 0 ]]; then
@@ -533,6 +533,10 @@ function gll {
     fi
 
     git log -n "$N_COMMITS" "$@"
+}
+
+function gitlawb {
+    /opt/gitlawb/gl "$@"
 }
 
 function merge {

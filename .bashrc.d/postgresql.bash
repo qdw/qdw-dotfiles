@@ -1,40 +1,82 @@
 ########     dependencies:
 ########         00-bash-metaprogramming.bash
+########         0x-homebrew.bash
 ########     third-party dependencies:
 ########         PostgreSQL itself, of course
 
-function pg {
-    MANNAME="manage multiple Homebrewed PostgreSQL versions
-CAVEATS
-    For this command to work, you must first set up each version's
-    postgresql.conf and pg_hba.conf so that it accepts local connections
-    on port 54xy, where xy is its major version name (example: 5318).
-"
+export POSTGRESQL_SUPPORTED_VERSIONS="15 16 17 18"
+export POSTGRESQL_RC_VERSION="19"
 
-    check-args 1 varargs 'VERSION [PROGRAM [ARG1 [ARG2 ...]]]' "$@" || return 1
-    local VERSION="$1"
-    shift
+function _pg_run_binary {
+    check-args 1 varargs \
+               '[--debug] PROGRAM [ARG1 [ARG2 ... ]]' "$@" \
+        || return 1
 
-    local PROGRAM
-    if [[ "$1" ]]; then
-        PROGRAM="$1"
+    if [[ "$1" = "--debug" ]]; then
         shift
+        DEBUG_FLAG="--debug"
+        BINARY="/bin/echo"
+        local ADDL_ENV_FLAGS="v"
     else
-        PROGRAM="psql"
+        if [[ "$1" ]]; then
+            local BINARY="$1"
+            shift
+        else
+            local BINARY="psql"
+        fi
     fi
-    
-    local BINARY="$HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/${PROGRAM}"
 
     env \
-        -i \
+        "-i${ADDL_ENV_FLAGS}" \
         HOME="$HOME" \
-        PATH="$PATH" \
+        PGDATA="$HOMEBREW_ROOT/var/postgresql@${VERSION}" \
         PGDATABASE="postgres" \
         PGPORT="54${VERSION}" \
         PGHOST="/tmp" \
         PGUSER="$USER" \
         USER="$USER" \
-        "$HOMEBREW_BIN/bash" -c "'$BINARY' $@"
+        "$BINARY" \
+        "$@"
+}
+
+function pg {
+    local DEFAULT_VER="18"
+    
+    MANNAME="manage multiple Homebrewed PostgreSQL versions
+CAVEATS
+    For this command to work, you must first set up each version's
+    postgresql.conf and pg_hba.conf so that it accepts local
+    connections on port 54xy, where xy is its major version name
+    (example: 5418).
+"
+    check-args 0 varargs \
+               "[--debug] [VERSION] [PROG [ARG1 [ARG2 ...]]] # default version is $DEFAULT_VER" \
+               "$@" \
+        || return 1
+
+    if [[ "$1" = "--debug" ]]; then
+        local DEBUG=0
+        shift
+    fi
+    
+    local VERSION="${1:-$DEFAULT_VER}"
+    shift
+
+    local PROG
+    if [[ "$1" ]]; then
+        PROG="$1"
+        shift
+    else
+        PROG="psql"
+    fi
+    
+    local BINARY=$HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/${PROG}
+
+    if [[ "$DEBUG" ]]; then
+        _pg_run_binary --debug "$BINARY" "$@"
+    fi
+
+    _pg_run_binary "$BINARY" "$@"
 }
 
 function pg_dump_roles {
@@ -75,11 +117,12 @@ function replication_role {
 # ser - display sections of my ~/.pg_service.conf, or the whole thing
 
 function ser {
+    check-args 0 1 '[PGSERVICE_NAME]' "$@" || return 1    
     local COLORIZE="bat --language ini"
 
     if [[ $# -eq 0 ]]; then
         $COLORIZE ~/.pg_service.conf
-    else
+    elif [[ $# -eq 1 ]]; then
         local SERVICE_NAME_SUBSTRING="$1"
         para "$SERVICE_NAME_SUBSTRING" ~/.pg_service.conf | $COLORIZE
     fi

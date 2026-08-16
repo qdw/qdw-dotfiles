@@ -9,23 +9,24 @@ function _stderr {
 }
 
 function err {
-    local CALLER="${FUNCNAME[1]}"
+    local CALLER="${FUNCNAME[1]:-toplevel}"
     _stderr "$CALLER: error:" "$@"
 }
 
+function warn {
+    local CALLER="${FUNCNAME[1]:-toplevel}"
+    _stderr "$CALLER:" "$@"
+}
+
 function carp {
-    local CALLER="${FUNCNAME[1]}"
+    local CALLER="${FUNCNAME[2]:-toplevel}"
     _stderr "$CALLER:" "$@"
 }
 
 function _debug {
     if [[ "$MY_DEBUG_BASH" ]]; then
-        local CALLER="${FUNCNAME[1]}"
-        if [[ "$CALLER" ]]; then
-            _stderr "$CALLER: debug:" "$@"
-        else
-            _stderr "debug:" "$@"
-        fi
+        local CALLER="${FUNCNAME[1]:-toplevel}"
+        _stderr "$CALLER: debug:" "$@"
     fi
 }
 

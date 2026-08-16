@@ -459,3 +459,20 @@ function vm {
         -no-reboot \
         `# Optional: forks QEMU to background after startup; default runs in foreground`
 }
+
+function run-anyway {
+    check-args 1 1 'SomeApp.app' "$@" || return 1
+    local FILE="$1"
+    local FULL_PATH=""
+
+    if [[ ! "$FILE" =~ [.]app$ ]]; then
+        err "Malformed argument; it should end in .app"
+        return 1
+    elif [[ "$FILE" =~ / ]]; then
+        FULL_PATH="$FILE"
+    else
+        FULL_PATH="$(which "$FILE")" || return 1
+    fi
+        
+    xattr -dr com.apple.quarantine "$FULL_PATH"
+}

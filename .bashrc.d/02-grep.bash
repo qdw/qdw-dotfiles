@@ -16,7 +16,7 @@ set -a
 if installed "rg"; then
     # Use ripgrep if installed.
     MY_GREP="rg"
-    MY_GREP_OPTIONS="--color=always" # --column" --no-line-number"
+    MY_GREP_OPTIONS="--color=always --follow" # --column --no-line-number"
     GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
     GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
     GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
@@ -66,6 +66,13 @@ function grep {
         
     set +o pipefail
 }
+
+
+if [[ "$MY_GREP" = "rg" ]]; then
+    function highlight {
+        grep --passthru "$@"
+    }
+fi
 
 function gi {
     grep -i "$@"

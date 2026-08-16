@@ -7,9 +7,15 @@
 
 export HOMEBREW_BAT=1
 export HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
+export HOMEBREW_CASK_OPTS="--require-sha"
 export HOMEBREW_NO_ANALYTICS=1
 export HOMEBREW_NO_ASK=1
 export HOMEBREW_NO_ENV_HINTS=1
+export HOMEBREW_NO_INSECURE_REDIRECT="1"
+export HOMEBREW_NO_INSTALL_UPGRADE="1"
+export HOMEBREW_NO_UPDATE_REPORT_NEW="1"
+export HOMEBREW_NO_UPGRADE_QUIT_CASKS="1"
+export HOMEBREW_VERIFY_ATTESTATIONS="1"
 
 ## Homebrewed alternatives to bundled system utilities
 
@@ -57,16 +63,6 @@ function bser { brew services "$@" ;}
 function brew-service-names {
     local MANNAME="list Homebrew services (names only)"
     brew services list --json | jq -r '.[].name'
-}
-
-function bls {
-    MANNAME="search for package (first installed packages, then uninstalled)"
-    check-args 1 1 'REGEX' "$@" || return 1
-    local REGEX="$1"
-
-    if brew ls | grep "$REGEX"; then
-        brew search "/$REGEX/"
-    fi
 }
 
 ## Functions for inspecting Homebrew dependencies
