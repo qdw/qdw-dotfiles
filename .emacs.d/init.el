@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; no-native-compile: t; -*-
+
 ;;;; Debugging this init file
 
 (defun bisect-load-init (fraction)
@@ -9,7 +11,7 @@
       (insert-file-contents init-file)
       (let* ((total-lines (count-lines (point-min) (point-max)))
              (target-line (round (* total-lines fraction))))
-	(goto-char (point-min))
+        (goto-char (point-min))
         (forward-line target-line)
 
         ;; Advance to the end of the current top-level form (if any)
@@ -19,11 +21,11 @@
           (forward-sexp 1)
           (error nil))
         (delete-region (point) (point-max))
-	(message "Loading first ~%d/%d lines of init.el (temp file %s)..."
-		 target-line
-		 total-lines
-		 tmpfile)
-	(load-file tmpfile)))))
+        (message "Loading first ~%d/%d lines of init.el (temp file %s)..."
+                 target-line
+                 total-lines
+                 tmpfile)
+        (load-file tmpfile)))))
 
 (let* ((val (getenv "BISECT_EMACS")))
   (when (and val (not (equal "" val)))
@@ -69,11 +71,16 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
     (setenv "TERM" "xterm-256color") ; required for bracketed paste
     (xterm-mouse-mode +1)))
 
+;;;; Basic behavior of Emacs itself
+;; (use-package emacs
+;;     :custom 
+;;     (search-default-mode 'char-fold-to-regexp ;; already done elsewhere
+;; ))
+
 ;;;; Inhibit superfluous messsages.
 
 (setopt inhibit-startup-echo-area-message "quinn"
         ad-redefinition-action 'accept
-        use-package-always-demand t
         warning-suppress-types '((files))) ;; lexical-binding warnings
 
 (remove-hook 'find-file-hook 'vc-refresh-state) ;; we'll use Magit instead.
@@ -116,21 +123,79 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (set-face-font 'default "Menlo-17")
 (blink-cursor-mode -1)
 
+;;;; Emacs Lisp native-compilation
+
+;; Compile ahead-of-time, or don't compile at all.
+;; This reduces judder from Emacs randmoly reciding to native-compile .elc
+;; files during editing.
+
+(setopt native-comp-jit-compilation nil
+        load-prefer-newer 't)
+
+;;;; Basic text-editing behavior
+
+;; Turn off right-to-left language support,
+;; improving performance slightly.
+
+(setq-default bidi-display-reordering 'left-to-right)
+(setq-default bidi-paragraph-direction 'left-to-right)
+(setq bidi-inhibit-bpa t)
+
+;; Copypasta settings: overwrite or delete the "region" (selected text)
+;; when I type, in keeping with modern UI conventions.
+
+(delete-selection-mode +1)
+
+;; Copypasta settings: before overwriting the syustem clipboard,
+;; save its contents in the Emacs kill-ring so I can get it back.
+
+(setq save-interprogram-paste-before-kill t)
+
+;; Display long lines as ......$,
+;; rather than displaying the whole text-line on multiple terminal-lines
+;; using Emacs ......\ notation
+
+(defalias #'vim-newlines #'toggle-truncate-lines)
+
+(defun start-lines-at-col (one-based-column-number)
+  (interactive "n")
+  (toggle-truncate-lines +1)
+  (set-window-hscroll (selected-window) (- one-based-column-number 1))
+  (setq-local auto-hscroll-mode nil))
+
+(defun start-lines-at-1 ()
+  (interactive)
+  (set-window-hscroll (selected-window) 0)
+  (setq-local auto-hscroll-mode 't))
+
+(defun move-line-up-qdw ()
+  (interactive)
+  (transpose-lines 1)
+  (forward-line -2))
+
+(defun move-line-down-qdw ()
+  (interactive)
+  (forward-line 1)
+  (transpose-lines 1)
+  (forward-line -1))
+
 ;;;; Color-theme settings
 
-;; Performance tweak: don't color my text as I'm typing. Wait for me to stop.
+;; ;; Performance tweak: don't color my text as I'm typing; wait for me to stop
+;; (setq redisplay-skip-fontification-on-input t)
 
-(setq redisplay-skip-fontification-on-input t)
+(defvar self-authored-themes-dir
+        ;; (expand-file-name "qdw/qdw-themes" user-emacs-directory))
+  (expand-file-name "qdw-themes" user-emacs-directory))
 
-;; My personal bespoke color themes.
+(defvar themes-qdw
+        '("amber" "amber-without-bold" "mariana" "tritium"))
 
-(defvar themes-qdw '("amber" "amber-without-bold" "mariana" "tritium"))
+(add-to-list 'custom-theme-load-path self-authored-themes-dir)
 
-(mapc
- (lambda (file-name)
-         (add-to-list 'custom-theme-load-path (expand-file-name file-name)))
- '("~/.emacs.d/qdw-themes"
-   "~/src/forks/mariana-theme"))
+;; A tweaked version of someone else's Emacs port of Sublime Text mariana
+
+(add-to-list 'custom-theme-load-path "~/src/forks/mariana-theme")
 
 (setopt custom-enabled-themes '())
 (defvar my-chosen-theme "tritium")
@@ -147,20 +212,34 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;; parlance a pane or viewport. This is because Emacs was written before
 ;; your primitive human GUIs existed.
 
-(defun split-window-into-thirds ()
-  "Split the current frame into three equal-width vertical windows."
-  (interactive)
-  (delete-other-windows)
-  (let* ((total-width (window-total-width))
-         (third (/ total-width 3)))
-    (split-window-right third)
-    (other-window 1)
-    (split-window-right third)
-    (balance-windows)))
+(setopt
+ window-combination-resize t
+ recenter-positions '(top 0.33 bottom)
+ display-fill-column-indicator-column 80 ;; noop if fill-column is nil=default
+)
+
+;;; Moving the point (cursor) among and within windows
+
+(setopt set-mark-command-repeat-pop t)
 
 (defun other-window-reverse ()
   (interactive)
   (other-window -1))
+
+;; (use-package popper
+;;   :bind (("C-c C-q" . popper-toggle)
+;;          ("C-c TAB" . popper-cycle)
+;;          ("C-c b"   . popper-toggle-type))
+
+;;   :init (setq popper-reference-buffers '("\\*Messages\\*"
+;;                                          "Output\\*$"
+;;                                          "\\*Async Shell Command\\*"
+;;                                          help-mode
+;;                                          compilation-mode))
+;;         (popper-mode +1)
+;;         (popper-echo-mode +1))
+
+;;; Rearranging windows
 
 (defun rotate-windows ()
   "Rotate your windows (from whattheemacsd.com)"
@@ -189,63 +268,14 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
              
   (other-window -1))
 
-;;;; Basic text-editing behavior
-
-;; Turn off right-to-left language support,
-;; improving performance slightly.
-
-(setq-default bidi-display-reordering 'left-to-right)
-(setq-default bidi-paragraph-direction 'left-to-right)
-(setq bidi-inhibit-bpa t)
-
-;; Copypasta settings: overwrite or delete the "region" (selected text)
-;; when I type, in keeping with modern UI conventions.
-
-(delete-selection-mode +1)
-
-;; Copypasta settings: before overwriting the syustem clipboard,
-;; save its contents in the Emacs kill-ring so I can get it back.
-
-(setq save-interprogram-paste-before-kill t)
-
-;; Display long lines as ......$,
-;; rather than displaying the whole text-line on multiple terminal-lines
-;; using Emacs ......\ notation
-
-(defalias 'vim-newlines 'toggle-truncate-lines)
-
-(defun start-lines-at-col (one-based-column-number)
-  (interactive "n")
-  (toggle-truncate-lines +1)
-  (set-window-hscroll (selected-window) (- one-based-column-number 1))
-  (setq-local auto-hscroll-mode nil))
-
-(defun start-lines-at-1 ()
+(winner-mode +1)
+(defun toggle-delete-other-windows ()
+  "Delete other windows in frame if any, or restore previous window config."
   (interactive)
-  (set-window-hscroll (selected-window) 0)
-  (setq-local auto-hscroll-mode 't))
-
-(defun move-line-up-qdw ()
-  (interactive)
-  (transpose-lines 1)
-  (forward-line -2))
-
-(defun move-line-down-qdw ()
-  (interactive)
-  (forward-line 1)
-  (transpose-lines 1)
-  (forward-line -1))
-
-;;;; Dependency settings
-
-;; Settings for the Emacs package system
-
-(setopt package-archives
-        '(("gnu"    . "https://elpa.gnu.org/packages/")
-          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-          ("melpa"  . "https://melpa.org/packages/")))
-
-(add-to-list 'load-path (expand-file-name "site-lisp" user-emacs-directory))
+  (if (and winner-mode
+           (equal (selected-window) (next-window)))
+      (winner-undo)
+    (delete-other-windows)))
 
 ;; Explicitly load everything at Emacs init time,
 ;; since I'm running in --fg-daemon mode and I don't
@@ -255,25 +285,20 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;;
 ;; https://github.com/jwiegley/use-package-examples
 
-(setq use-package-always-demand t)  ;; load at Emacs init time
+(setopt use-package-always-demand t)  ;; load at Emacs init time
 ;; use-package-always-ensure t) ;; auto-install from repo if not installed
 
 (use-package ansi-color)
 (use-package cc-mode)
 (use-package comint)
 (use-package compile)
+(load (expand-file-name "org-qdw.el" user-emacs-directory))
 (use-package cperl-mode
   :mode ("\\.pl\\'" . cperl-mode)
   :interpreter ("perl" . cperl-mode)
   :custom (cperl-indent-level 4))
 (use-package dired)
 (use-package dirtrack)
-(use-package ellama)
-(use-package hide-lines
-  :config (defun org-skel-qdw ()
-            (interactive)
-            (hide-lines-not-matching "PROJECT\|SUBPROJECT\|NEXT_ACTION")))
-
 (use-package imenu)
 (use-package sh-script
     :init (advice-add 'sh-set-shell
@@ -281,12 +306,11 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
                       (lambda (orig &rest args)
                         (let ((inhibit-message 't))
                           (apply orig args)))))
-(use-package json)
+(use-package json) (setq-default json-encoding-default-indentation "    ")
 (use-package markdown-mode)
-
 (use-package url-util)
 
-;;;; Hack stuff
+;;;; LSP
 
 ;; Increase the size of the buffer that Emacs
 ;; uses to communicate with the LSP server,
@@ -297,221 +321,15 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;;;; Hack regexes interactively (M-x re-builder)
 
 ;; Don't require double backslashes when escaping - only single.
-
 (setq reb-re-syntax 'string)
 
-;;;; Hack org-mode documents
-
-(use-package org
-
-  :after url-util
-    
-  :config
-
-  (setopt org-archive "::"
-          org-catch-invisible-edits "show"
-          org-cycle-separator-lines 1
-          org-return-follows-link 't
-
-          ;; default org formatting; consider changing
-          ;; 
-          ;; org-emphasis-alist '(("*" bold)
-          ;;                      ("/" italic)
-          ;;                      ("_" underline)
-          ;;                      ("=" org-verbatim verbatim)
-          ;;                      ("`" org-code verbatim)
-          ;;                      ("~" (:strike-through t)))
-
-          ;; custom value
-          ;; 
-          ;; org-emphasis-alist '(("*" bold)
-          ;;                      ("/" italic)
-          ;;                      ("_" underline)
-          ;;                      ("=" org-verbatim verbatim)
-          ;;                      ("`" org-code verbatim)
-          ;;                      ("~" (:strike-through t)))
-
-          
-          org-confirm-babel-evaluate nil
-          org-babel-load-languages '((emacs-lisp . t)
-                                     (python . t)
-                                     (shell . t)))
-
-  ;; When visiting links to guitar tabs, open them in Emacs itself.
-  (add-to-list 'org-file-apps '("\\.crd\\'" . emacs))
-
-  ;; On macOS, open files of certain types with GUI apps (not Emacs).
-  (when (string= system-type "darwin")
-      (add-to-list 'org-file-apps
-		           (cons "png" "/usr/bin/open %s")
-                   (cons "pdf" "/usr/bin/open %s")))
-
-    (defun org-linkify-buffer-qdw ()
-    "Make each line in the buffer into an org-mode style link
-by enclosing it in [[double square brackets]]. This works
-for files of local paths produced by running, e.g., fd,
-which is its intended use."
-    (interactive)
-    (goto-char (point-min))
-    (replace-regexp "^" "[[")
-    (goto-char (point-min))
-    (replace-regexp "$" "]]"))
-
-  (defun org-insert-jira-link-qdw ()
-    (interactive)
-    (letrec ((pre-filled-text (if (boundp 'jira-default-project-qdw)
-                                  (concat jira-default-project-qdw "-")
-                                ""))
-             (issue-name (read-string
-                          "Issue name (e.g. MYPROJ-0000): "
-                          pre-filled-text
-                          nil
-                          nil
-                          nil)))
-      (message (format "jira-default-project-qdw: %s\npre-filled-text: %s"
-		               jira-default-project-qdw
-		               pre-filled-text))
-
-      (org-insert-link nil
-		               (concat jira-base-url "/browse/" issue-name)
-		               issue-name)))
-
-  (defun org-link-word-at-point-qdw ()
-    "Wrap word at point in an org link, prompting for URL with org completion."
-    (interactive)
-    (let* ((bounds (bounds-of-thing-at-point 'word))
-           (word (buffer-substring-no-properties (car bounds) (cdr bounds)))
-           (start (copy-marker (car bounds)))
-           (end (copy-marker (cdr bounds)))
-           (offset (- (point) (car bounds))))
-      (goto-char end)
-      (condition-case nil
-          (progn
-            (org-insert-link nil nil word)
-            (delete-region start end)
-            ;; Link is now at start: [[url][word]]
-            ;; Jump to description part and apply original offset
-            (goto-char start)
-            (when (looking-at "\\[\\[[^]]*\\]\\[")
-              (goto-char (+ (match-end 0) offset))))
-        (quit (goto-char (+ (marker-position start) offset))))))
-
-  (defun org-fold-qdw ()
-    "In org-mode, set the VISIBILITY property of the element at point
-  to 'folded'."
-    (interactive)
-    (when (org-at-heading-p)
-      (org-set-property "VISIBILITY" "folded")))
-
-  (defun org-insert-file-link-qdw ()
-    "Insert a link to a local file"
-    (interactive)
-    (let* ((filename
-            (read-file-name "Link to file: "))
-
-           (link-text
-            (read-string "Link text: " (file-name-nondirectory filename))))
-      (insert (format "[[file:%s][%s]]" filename link-text))))
-
-  (defun org-insert-slack-link-qdw (channel-name)
-    (interactive "MSlack channel (without the '#'): ")
-    (org-insert-link
-     nil
-     (concat "https://" slack-team ".slack.com/channels/#" channel-name)
-     (concat "#" channel-name)))
-          
-  (defun org-just-eval-blocks-qdw ()
-    "Automatically evaluate specific org-mode #+CALL: lines on buffer visit."
-    (interactive)
-    (when (derived-mode-p 'org-mode)
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward "^#\\+CALL:" nil t)
-          (org-babel-lob-execute-maybe)))))
-
-  (add-hook 'org-mode-hook #'org-just-eval-blocks-qdw)
-
-  (defun org-insert-subheading-respect-content-qdw (arg)
-    (interactive "P")
-    (org-insert-todo-subheading-respect-content arg)
-    (cond ((org-at-heading-p) (org-do-demote))
-          ((org-at-item-p) (org-indent-item))))
-
-  ;;; Music playlists in org-mode
-  ;;; (this code depends on Emacs's built-in url-util package
-  ;;; being loaded first, hence the :after url-util at the top of
-  ;;; my org-mode use-package expression).
-
-   ;; Apple Music
-
-  (org-link-set-parameters
-   "play"
-   :follow (lambda (song-name _)
-             (noninteractive-shell-command-qdw
-              (concat "play " (shell-quote-argument song-name)))))
-             ;; ^ The 'play' shell function is defined in my ~/.bashrc.
-
-  (org-link-set-parameters
-   "play-album"
-   :follow (lambda (album-id _)
-             (noninteractive-shell-command-qdw
-              (concat "play-album-untested "
-                      (shell-quote-argument album-id)))))
-             ;; ^ The 'play-album' shell function is defined in my ~/.bashrc.
-
-  (defun org-insert-current-song-qdw ()
-  "Insert an org-mode link to the currently playing song.
-On click or RET, the link will replay the song.
-Depends on my Bash function `play', defined in ~/.bashrc."
-    (interactive)
-    (let* ((song-name (shell-command-to-string-qdw "song-name"))
-           (org-code (format "[[play:%s][%s]]" song-name song-name)))
-      (insert org-code)))
-
-;; (defun insert-current-album-qdw ()
-;;   (interactive)
-;;   (let*
-
-  (defun insert-vgm-qdw (path)
-    "Insert an org-mode link to a local file containing video game music.
-On click or RET, the link will automatically play in a (hard-coded)
-player that I have chosen for its filetype. Currently supported
-file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
-    (interactive (list (read-file-name "File: ")))
-    (let* ((track-name (file-name-base path))
-           (link-type (upcase (file-name-extension path)))
-           (urlencoded-path (url-hexify-string path))
-           (org-code (format "[[%s:%s][%s]]"
-                             link-type
-                             urlencoded-path
-                             track-name)))
-      (insert org-code)))
-
-  ;; C64
-
-  (org-link-set-parameters
-   "SID"
-   :follow (lambda (path _no-prefix-arg)
-             (shell-command-to-string-qdw ;; string  retval is ignored
-              (concat
-               "open -a Cog.app "
-               (canonical-path-qdw path)))))
-
-  ;; NES
-
-  (org-link-set-parameters
-   "NSF"
-   :follow (lambda (path _no-prefix-arg)
-             (shell-command-to-string-qdw ;; string  retval is ignored
-              (concat
-               "open -a 'Audio Overload.app' "
-               (canonical-path-qdw path))))))
-
+;;;; Hack Ruby
 
 (use-package ruby-mode)
-(use-package whitespace)
 
-(setopt load-prefer-newer 't)
+;;;; Hack 
+
+(use-package whitespace)
 
 ;;;; Basic comfort
 
@@ -528,10 +346,7 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
  ;; Don't auto-hard-wrap lines
  auto-fill-mode nil
 
- cperl-indent-level 4
- elisp-indent-level 2
- json-encoding-default-indentation "  "
- org-indent-indentation-per-level 4)
+ elisp-indent-level 2)
 
 (setopt
 
@@ -554,9 +369,6 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
  ;; Single-space. Always.
  sentence-end-double-space nil
 
- ;; Indentation: use spaces, not tabs.
- indent-tabs-mode nil
-
  ;; The first day of the week is Monday.
  calendar-week-start-day 1
  
@@ -575,9 +387,16 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
  ;; Instead of beeping, flash screen
  visible-bell 't
+ )
 
- ;; Make tabs-as-indentation visible, so I can eliminate them
+;;;; Whitespace-handling
+
+;; Indentation: use spaces, not tabs.
+(setopt
+ indent-tabs-mode nil
  tab-width 4
+ ;; Make tabs-as-indentation visible, so I can eliminate them
+ ;; (takes effect iff whitespace-mode is true)
  whitespace-style '(face
                     ;; empty
                     indentation
@@ -587,14 +406,10 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
  whitespace-display-mappings '((tab-mark 9 [187 9] [92 9])))
 
-;; Actually, turn off the foregoing for now; I haven't yet found
-;; a way of displaying these things that I actually like.
+;; Turn off the display of whitespace for now; I haven't yet found
+;; a way of displaying things that I actually like.
 
-(global-whitespace-mode -1)
-
-;;;; AI stuff
-
-;; (load-file (expand-file-name "~/src-3/emacs-copilot/copilot.el")) ;; by jart
+(global-whitespace-mode nil)
 
 ;;;; Hack: general: automatic indentation
 
@@ -638,8 +453,15 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
 
 ;;;; Hack Emacs Lisp
 
-(setq major-mode-remap-alist '((elisp-mode . elisp-ts-mode)
-                               (lisp-data-mode . lisp-data-ts-mode)))
+;; In Emacs Lisp, I often use idiosyncratic "horizontal"
+;; coding for readability, and I don't want electric-indent to undo it.
+
+(use-package lisp-mode
+  :hook (emacs-lisp-mode . (lambda () (electric-indent-local-mode -1))))
+
+;;;; Miscellaneous helper/convenience functions
+
+(defalias #'linum-mode #'display-line-numbers-mode)
 
 (defun lfi ()
   (interactive)
@@ -694,16 +516,14 @@ but it calls defvar under the hood."
 ;; in the minibuffer),
 ;; add the opening parenthesis for me.
 (add-hook 'eval-expression-minibuffer-setup-hook
-	  (lambda ()
-	    (insert "(")))
-  
+          (lambda ()
+            (insert "(")))
+
 ;;;; Settings for Emacs Lisp I wrote
 
-(add-to-list 'load-path
-             (expand-file-name "qdw-themes" user-emacs-directory))
+(add-to-list 'load-path self-authored-themes-dir)
 
-(add-to-list 'load-path
-             (expand-file-name "~/src/forks/mariana-theme"))
+(add-to-list 'load-path (expand-file-name "~/src/forks/mariana-theme"))
 
 (load-file-if-exists-qdw "secrets.el")
 (load-file-if-exists-qdw "site.el")
@@ -789,73 +609,22 @@ but it calls defvar under the hood."
 
 (defun ini ()
   (interactive)
-  (find-file user-init-file))
-  
+  (find-file user-init-file)
+
+  (let ((line 350)
+         (column 1))
+
+     (widen)
+     (goto-char (point-min))
+     (forward-line (- line 1))
+
+     (move-to-column (- column 1))))
+
 ;;;; Edit my ~/.bashrc
 
 (defun edit-bashrc ()
   (interactive)
   (find-file (expand-file-name "~/.bashrc")))
-
-;;;; Further theme settings
-
-(defun if-file-is-theme-reload-theme ()
-  (let ((base-name (file-name-nondirectory (file-truename buffer-file-name))))
-    (when (string-match "\\(.*\\)-theme\\.el$" base-name)
-      (let ((theme-name (match-string 1 base-name)))
-        (when (string-in theme-name custom-enabled-themes)
-          (load-theme (intern theme-name) 't 't))))))
-
-(add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
-
-(setq org-todo-keywords '("DEFER(e)"
-                          "TODO(t)"
-                          "NEXT_ACTION(n)"
-                          "IN_PROGRESS(i)"
-                          "GET_HELP(h)"
-                          "AWAITING_RESPONSE(a)"          
-                          "QUESTION(q)"
-                          "YAK_SHAVING(y)"
-                          "INFO(f)"
-                          "PROJECT(r)"
-                          "SUBPROJECT(s)"
-                          "POSTPONED(p)"
-                          "RECOMMENDATION(c)"
-                          
-                          "|"
-
-                          "DONE(d)"
-                          "WONTFIX(w)"
-                          ))
-
-(defun overlay-org-colors-qdw () 
-  (interactive)
-  (when (or (member 'tritium custom-enabled-themes)
-            (member 'mariana custom-enabled-themes))
-    (let ((org-keyword-to-color-qdw
-          `(("DEFER" . ,bright-cyan)
-            ("TODO" . ,bright-magenta)
-            ("NEXT_ACTION" . ,bright-red)
-            ("IN_PROGRESS" . ,bright-yellow)
-            ("GET_HELP" . ,bright-red)
-            ("AWAITING_RESPONSE" . ,bright-magenta)
-            ("QUESTION" . ,bright-magenta)
-            ("YAK_SHAVING" . ,yellow)
-
-            ("DONE" . ,green)
-            ("WONTFIX" . ,green)
-            ("POSTPONED" . ,yellow)
-            ("INFO" . ,yellow)
-            ("PROJECT" . ,blue)
-            ("RECOMMENDATION" . ,yellow)
-            ("SUBPROJECT" . ,bright-cyan)
-            )))
-
-      (setopt org-todo-keyword-faces
-              (mapc (lambda (pair) (add-to-list 'org-todo-keyword-faces pair))
-                    org-keyword-to-color-qdw)))))
-
-(overlay-org-colors-qdw)
 
 ;;;; Color-theme-related utility functions
 
@@ -946,7 +715,7 @@ but it calls defvar under the hood."
   (interactive)
   (load
    (read-file-name "Color definition file: "
-                   (expand-file-name "~/.emacs.d/qdw-themes/")))
+                   (expand-file-name self-authored-themes-dir)))
   (tritium-reload))
 
 ;; Interpret any ANSI escape codes in this buffer,
@@ -1101,6 +870,7 @@ use `dired-find-file' to open it in a new buffer."
                ('t          (1- num)))))
     (move-to-column one-based-column-number)))
 
+
 (defun open-thing-at-point ()
   "Open the file or URL at point, with line and column if applicable."
   (interactive)
@@ -1124,30 +894,28 @@ use `dired-find-file' to open it in a new buffer."
     ('t
      (message "Don't know how to handle thing at point"))))
 
-(defalias #'dwim #'open-thing-at-point)
 
 ;;;; Settings specific to GUI Emacs
-
-  ;; When I delete files in dired, send them to the macOS Trash
-
-  ;; (osx-trash-setup)
-  ;; (setopt delete-by-moving-to-trash 't)
-  ;; (defun system-move-file-to-trash (path)
-  ;;   "Moves file at PATH to the macOS Trash
-  ;;   according to `move-file-to-trash' convention.
-
-  ;;   Relies on the command-line utility 'trash' to be installed.
-  ;;   Get it from:  <http://hasseg.org/trash/>"
-  ;;   (shell-command (concat "trash -vF \"" path "\""
-  ;;                          "| sed -e 's/^/Trashed: /'")
-  ;;                  nil ;; Name of output buffer
-  ;;                  "*Trash Error Buffer*"))
-
-  ;; macOS's bundled BSD ls doesn't play well with Emacs,
-;; so use Homebrewed GNU ls instead
-
 ;;;; dired
-  
+
+;; ;; When I delete files in dired, send them to the macOS Trash; don't rm.
+;; 
+;; (osx-trash-setup)
+;; (setopt delete-by-moving-to-trash 't)
+;; (defun system-move-file-to-trash (path)
+;;   "Moves file at PATH to the macOS Trash
+;;   according to `move-file-to-trash' convention.
+;; 
+;;   Relies on the command-line utility 'trash' to be installed.
+;;   Get it from:  <http://hasseg.org/trash/>"
+;;   (shell-command (concat "trash -vF \"" path "\""
+;;                          "| sed -e 's/^/Trashed: /'")
+;;                  nil ;; Name of output buffer
+;;                  "*Trash Error Buffer*"))
+
+;; ;; macOS's bundled BSD ls doesn't play well with Emacs,
+;; ;; so use Homebrewed GNU ls instead.
+
 ;; (dolist (gnu-ls '("/opt/homebrew/bin/gls" "/usr/local/bin/gls"))
 ;;   (when (file-exists-p gnu-ls)
 ;;     (setopt insert-directory-program
@@ -1159,7 +927,7 @@ use `dired-find-file' to open it in a new buffer."
 ;;             dired-listing-switches
 ;;             "-aBhl --group-directories-first")))
 
-;;;; Human-language settings (including English)
+;;;; Human languages
 
 ;; Adapted from xahlee.org
 
@@ -1183,14 +951,14 @@ This command does the reverse of `fill-region'."
  eldoc-idle-delay 0
  elpher-default-url-type "gemini"
  isearch-allow-scroll 'unlimited
+ search-default-mode 'char-fold-to-regexp
  ls-lisp-use-insert-directory-program nil
  mode-line-position-column-format '(" %C")
  mode-line-position-column-line-format '(" (%l,%C)")
  neo-cwd-line-style 'text
  neo-theme 'classic
  ns-alternate-modifier 'none
- ns-right-alternate-modifier 'meta
- recenter-positions '(top middle bottom))
+ ns-right-alternate-modifier 'meta)
 
 ;;;; Reading ePub ebooks
 
@@ -1202,10 +970,40 @@ This command does the reverse of `fill-region'."
 ;;      (load-file (expand-file-name "~/src-3/nov.el/nov.el"))
 ;;      (nov-mode))))
 
-;;;; Reading RSS and Atom feeds
+;;;; elfeed: enjoy podcasts and other RSS and Atom feeds
 
-;; (use-package elfeed
-;;   :)
+(use-package elfeed
+  :config
+  (setopt elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory)
+          elfeed-feeds '("https://rss.art19.com/tides-of-history"))
+
+  (defun play-podcast-episode-at-point-qdw ()
+    (interactive)
+    (let* ((episode (if (eq major-mode 'elfeed-show-mode)
+                        elfeed-show-entry
+                        (elfeed-search-selected :single)))
+
+           (episode-url (elt (elfeed-entry-enclosures episode) 0)))
+
+      (run-applescript-qdw
+       "-e" "tell application \"QuickTime Player\""
+            "-e" (format "open location \"%s\"" episode-url)
+            "-e" "activate"
+            "-e" "play front document"
+       "-e" "end tell")))
+
+  ;; ;; elfeed uses the built-in Emacs package shr.el to open links.
+  ;; ;; Override it iff in elfeed.
+  ;; ;;
+  ;; ;; (Hm, or maybe I should just remap RET in elfeed-mode?)
+  ;; (advice-add 'shr-browse-url
+  ;;             ...)
+
+  ;; :bind
+  ;; (("C-c C-c ." play-podcast-episode-at-point-qdw))
+)
+
+  
 
 ;;;; Hack Bash/Bourne shell
 
@@ -1259,7 +1057,7 @@ This command does the reverse of `fill-region'."
     (shell-command-to-string
       (concat "source ~/.bashrc && INSIDE_EMACS=1 " command))))
 
-(defun noninteractive-shell-command-qdw (command)
+(defun noninteractive-shell-command-qdw1 (command)
   (shell-command
     (concat "source ~/.bashrc && INSIDE_EMACS=1 " command)
     "*qdw-stdout*"
@@ -1304,6 +1102,25 @@ This command does the reverse of `fill-region'."
     (apply 'start-process
            procname nil "/usr/bin/osascript" "-e" applescript-args)))
 
+;;;; More macOS-specific stuff
+
+(defun run-applescript-qdw (&rest osascript-args)
+  (let ((process-name "emacs-dot-ini-function-run-applescript-qdw")
+        (stdouterr-buffer-name "*applescript*")) ;; maybe change to nil later
+    (apply #'start-process process-name
+                           stdouterr-buffer-name
+                           "/usr/bin/osascript"
+                           osascript-args)))
+
+(defun open-url-in-quicktime-player-app-qdw (url)
+  (interactive "MURL: ")
+  (run-applescript-qdw
+       "-e" "tell application \"QuickTime Player\""
+       "-e"     (format "open location \"%s\"" url)
+       "-e"     "activate"
+       "-e"     "play front document"
+       "-e" "end tell"))
+
 ;;;; Time and date
 
 (defun ts()
@@ -1322,8 +1139,7 @@ This command does the reverse of `fill-region'."
 ;; Write (grep) results; Emacs auto-saves them to the right buffer.
 (use-package wgrep ;; built in
     :init (setq-default wgrep-auto-save-buffer t)  
-    ;; :config (setq wgrep-auto-save-buffer t)
-    )
+    :config (setq wgrep-auto-save-buffer t))
 
 ;; (defun rg-in-current-directory-qdw (regexp)
 ;;   (interactive "srg ")
@@ -1428,64 +1244,97 @@ This command does the reverse of `fill-region'."
 
 ;;;; Editor MACroS
 
-;;; Global keybindings that get overridden by major and minor modes' bindings.
+;; (defun remove-annoying-sh-mode-map-bindings ()
+;;   "C-c is supposed to be the prefix for user-defined keybindings, generally speaking, but shell-script-mode sets a bunch of C-c bindings that do dumb stuff like inserting syntactic constructs like case statements, for loops, and so on. I'm fine with typing those out like a normal person, so I don't want these features, and they're clobbering my personal keybindings. So unmap them."
+;;   (interactive)
+;;   (let ((c-c-bindings
+;;          (list "C-c C-d"  ;; sh-cd-here             
+;;                "C-c C-f"  ;; sh-for                 
+;;                "C-c TAB"  ;; sh-if                  
+;;                "C-c C-l"  ;; sh-indexed-loop        
+;;                "C-c C-n"  ;; sh-send-line-or-region-
+;;                "C-c C-o"  ;; sh-while-getopts       
+;;                "C-c C-r"  ;; sh-repeat              
+;;                "C-c C-s"  ;; sh-select              
+;;                "C-c C-t"  ;; sh-tmp-file            
+;;                "C-c C-u"  ;; sh-until               
+;;                "C-c C-w"  ;; sh-while               
+;;                "C-c C-x"  ;; executable-interpret   
+;;                "C-c C-z"  ;; sh-show-shell          
+;;                "C-c C-\\" ;; sh-backslash-region    
+;;                "C-c ("    ;; sh-function            
+;;                "C-c +"    ;; sh-add                 
+;;                "C-c :"    ;; sh-set-shell
+;;                "C-c <"    ;; }
+;;                "C-c ="    ;; }}
+;;                "C-c >"    ;; }}} indentation-related functions
+;;                "C-c ?"    ;; }}
+;;                           ;; }
+;;                )))
+;;     (dolist (binding c-c-bindings)
+;;       (keymap-unset sh-mode-map binding))))
+;; (remove-annoying-sh-mode-map-bindings)
 
-(keymap-global-set "C-c C-c C-p"
-                   (lambda ()
-                     (interactive)
-                     (find-file (expand-file-name "~/personal.org"))))
 
 ;;; Global keybindings that override major and minor modes' bindings.
 
-
-
 (defvar override-mode-map-qdw (make-sparse-keymap)
   "Keymap for `qdw-override-mode', used to override other modes' keymaps.")
+
+(define-minor-mode keymap-override-mode-qdw
+  "Minor mode that, when on, overrides other modes' keybindings."
+  :global t
+  :keymap override-mode-map-qdw)
+
+(keymap-override-mode-qdw +1)
 
 (mapc
  (lambda (ls) (define-key override-mode-map-qdw
                           (kbd (car ls))
                           (cadr ls)))
 
- '(("C-c <up>"     move-line-up-qdw)
-   ("C-c <down>" move-line-down-qdw)
-   ("M-!"         shell-command-qdw)
-   ("M-`"         unfill-paragraph-xah)
-   ("C-c u"       uncomment-region)
-   ("C-c ."       open-thing-at-point)
-   ("C-c /"       grep-buffer-qdw)
-   ("C-c C-c ."   grep-all-buffers-qdw)
-   ("C-c g"       search-in-buffers)
-   ("C-c 1"       async-shell-command)
-   ("C-c :"       eval-expression)
-   ("C-h F"       describe-face)
-   ("C-c C-f"     multi-occur-in-matching-buffers)
-   ("C-c c"       comment-region)
-   ("C-c C-c C-g" rg-in-current-directory-qdw)
-   ("C-c i"       indent-region)
-   ("C-c C-c b"   edit-bashrc)
-   ("C-c C-c TAB" ini)
-   ("C-c SPC"     iterm2-here)
-   ("C-c l"       shell)
-   ("C-c n"       display-line-numbers-mode)
-   ("C-c o"       rotate-windows)
-   ("C-c s"       isearch-forward-regexp)
-   ("C-c r"       isearch-backward-regexp)
-   ("C-c C-c C-t" switch-theme)
-   ("C-c t"       toggle-theme-qdw)
-   ("C-c u"       uncomment-region)
-   ("C-c v"       vscode)
-   ("C-x 6"       split-window-into-thirds)
-   ("M-("         eval-expression)
-   ("M-5"         query-replace-regexp)
-   ("M-o"         other-window-reverse)))
+ '(
+   ("C-h F"    describe-face)
 
-(define-minor-mode keymap-override-mode-qdw
-  "Minor mode to override major and minor mode keybindings."
-  :global t
-  :keymap override-mode-map-qdw)
-
-(keymap-override-mode-qdw +1) ; enable the override mode
+   ("M-!"  shell-command-qdw)
+   ("M-("  eval-expression)
+   ("M-5"  query-replace-regexp)
+   ("M-w"  unfill-paragraph-xah)
+   ("M-o"  other-window-reverse)
+   
+   ("C-c <down>"   move-line-down-qdw)
+   ("C-c <up>"     move-line-up-qdw)
+   ("C-x C-t"      move-line-up-qdw) ;; override transpose-lines
+   ("C-c C-c /"    grep-all-buffers-qdw)
+   ("C-c C-c C-b"  edit-bashrc)
+   ("C-c C-c C-g"  rg-in-current-directory-qdw)
+   ("C-c C-c SPC"  iterm2-here)
+   ("C-c C-c TAB"  ini) ;; a.k.a. C-c C-c C-i
+   ("C-c C-c C-o"  (lambda ()
+                     (interactive)
+                     (find-file (expand-file-name "~/personal.org"))))
+   ("C-c C-c C-t"  switch-theme)
+   ("C-c ."    open-thing-at-point)
+   ("C-c /"    grep-buffer-qdw)
+   ("C-c |"    display-fill-column-inficator-mode)
+   ("C-c 1"    async-shell-command)
+   ("C-c :"    eval-expression)
+   ("C-c ;"    comment-dwim)
+   ("C-c C-f"  multi-occur-in-matching-buffers)
+   ("C-c c"    comment-region)
+   ("C-c g"    search-in-buffers)
+   ("C-c i"    indent-region)
+   ("C-c l"    shell)
+   ("C-c n"    display-line-numbers-mode)
+   ("C-c o"    rotate-windows)
+   ("C-c r"    isearch-backward-regexp)
+   ("C-c s"    isearch-forward-regexp)
+   ("C-c t"    toggle-theme-qdw)
+   ("C-c u"    uncomment-region)
+   ("C-c u"    uncomment-region)
+   ("C-c v"    vscode)
+   ("C-c 6"    split-window-into-thirds))
+ )
 
 ;;; C keybindings
 
@@ -1534,16 +1383,12 @@ This command does the reverse of `fill-region'."
 
 ;; (use-package paredit
 ;;   :hook ((lisp-mode . paredit-mode)
-;;          (emacs-lisp-mode . paredit-mode)))
+;;          (emacs-lisp-mode . paredit-mode)
+;;          (scheme-mode . paredit-mode)))
 
 
-;; Experimenting with org-superagenda
-
-;; (use-package org-superagenda)
-
-;; Experimenting with the equovalent of modern UIs' "Open Recent"
-
-;; (use-package recentf)
+;; Experimenting with the equivalent of modern UIs' "Open Recent"
+(use-package recentf)
 
 ;;;; Experimenting with special settings for viewing binary files
 
@@ -1554,8 +1399,7 @@ This command does the reverse of `fill-region'."
 ;;        
 ;; (add-hook 'find-file-hook #'use-hexl-mode-if-binary)
 
-;;;; Experimenting with Git/Magit settings (note to self: re-enable now that that bug is fixed!)
-
+;; Experiment: broken: go to line in Git(Hub?)
 ;; (defun gline-qdw ()
 ;;   (interactive)
 ;;   (let* ((dir (file-name-directory buffer-file-name))
@@ -1601,23 +1445,6 @@ This command does the reverse of `fill-region'."
 ;;   (magit-commit)
 ;;   (magit-push))
 
-;; Experimenting with poppers
-
-(use-package popper
-  :ensure t ; or :straight t
-
-  :bind (("C-c C-q" . popper-toggle)
-         ("C-c TAB" . popper-cycle)
-         ("C-c b"   . popper-toggle-type))
-
-  :init (setq popper-reference-buffers '("\\*Messages\\*"
-                                         "Output\\*$"
-                                         "\\*Async Shell Command\\*"
-                                         help-mode
-                                         compilation-mode))
-        (popper-mode +1)
-        (popper-echo-mode +1))
-
 ;;; Toggle-able keybindings
 
 (defun unkill ()
@@ -1651,17 +1478,18 @@ This command does the reverse of `fill-region'."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-theme-directory "~/.emacs.d/qdw-themes")
+ '(custom-theme-directory self-authored-themes-dir)
  '(package-selected-packages
    '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed
      elisp-slime-nav ellama elpher evil exec-path-from-shell fd-dired
      fish-mode flymake flymake-hlint fretboard go-mode helpful
      hide-lines imenu-list jenkinsfile-mode json-mode julia-mode
      lua-mode magit markdown-mode moonscript nnreddit nushell-mode
-     org-alert org-caldav org-super-agenda org-transclusion osx-trash
-     paredit plz-see popper popup slime-repl-ansi-color smartparens
-     terraform-mode tidal tide tree-sitter-langs typescript-mode
-     vimrc-mode wgrep yaml-mode yaml-pro yaml-tomato))
+     org-alert org-caldav org-hide-drawers org-super-agenda
+     org-transclusion osx-trash paredit plz-see popper popup
+     slime-repl-ansi-color smartparens terraform-mode tidal tide
+     tree-sitter-langs typescript-mode vimrc-mode wgrep yaml-mode
+     yaml-pro yaml-tomato))
  '(safe-local-variable-values '((eval keymap-local-unset "C-x k"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

@@ -1,0 +1,141 @@
+#+title Personal Tasks and Projects
+#+author Quinn Weaver <quinn.weaver@gmail.com>
+
+#+STARTUP: show2levels
+
+* Prolegomena to any future AI usage
+
+So far I haven't found any genuinely useful packages for integrating
+AI coding agents with Emacs. So I gave up, and now I'm looking into
+Toad, an app that integrates with Unix shells instead.
+Anyway, for posterity, here are the packages that I investigated:
+
+** WONTFIX use emacs-copilot
+
+jart's code autocompletion tool.
+Brilliant like all of her work.
+But do I want AI autocompletion???
+
+#+BEGIN_SRC emacs-lisp-mode
+  ;;;; Code from https://github.com/jart/emacs-copilot/blob/main/README.md
+
+  (defun copilot-complete ()
+    (interactive)
+    (let* ((spot (point))
+           (inhibit-quit 't)
+           (current-file (buffer-file-name))
+           (cash (concat current-file ".cache"))
+           (hist (concat current-file ".prompt"))
+           (lang (file-name-extension current-file))
+
+           ;; extract current line, to left of the caret
+           ;; plus the previous line. We will pass
+           ;; these to the LLM.
+           (code (save-excursion
+                   (dotimes (i 2)
+                     (when (> (line-number-at-pos) 1)
+                       (previous-line)))
+                   (beginning-of-line)
+                   (buffer-substring-no-properties (point) spot)))
+
+           ;; create an English-langiage prompt for this interaction
+           (system "\
+  You are an Emacs code generator. \
+  Writing comments is forbidden. \
+  Writing test code is forbidden. \
+  Writing English explanations is forbidden. ")
+           (prompt (format
+                    "[INST]%sGenerate %s code to complete:[/INST]\n```%s\n%s"
+                    (if (file-exists-p cash) "" system) lang lang code)))
+
+      ;; iterate text deleted within editor then purge it from prompt
+      (when kill-ring
+        (save-current-buffer
+          (find-file hist)
+          (dotimes (i 10)
+            (let ((substring (current-kill i t)))
+              (when (and substring (string-match-p "\n.*\n" substring))
+                (goto-char (point-min))
+                (while (search-forward substring nil t)
+                  (delete-region (- (point) (length substring)) (point))))))
+          (save-buffer 0)
+          (kill-buffer (current-buffer))))
+
+      ;; append prompt for current interaction to the big old prompt
+      (write-region prompt nil hist 'append 'silent)
+
+      ;; run llamafile streaming stdout into buffer catching ctrl-g
+      (with-local-quit
+        (call-process "wizardcoder-python-34b-v1.0.Q5_K_M.llamafile"
+                      nil (list (current-buffer) nil) t
+                      "--prompt-cache" cash
+                      "--prompt-cache-all"
+                      "--silent-prompt"
+                      "--temp" "0"
+                      "-c" "1024"
+                      "-ngl" "35"
+                      "-r" "```"
+                      "-r" "\n}"
+                      "-f" hist))
+
+      ;; get rid of most markdown syntax
+      (let ((end (point)))
+        (save-excursion
+          (goto-char spot)
+          (while (search-forward "\\_" end t)
+            (backward-char)
+            (delete-backward-char 1 nil)
+            (setq end (- end 1)))
+          (goto-char spot)
+          (while (search-forward "```" end t)
+            (delete-backward-char 3 nil)
+            (setq end (- end 3))))
+
+        ;; append generated code to prompt
+    ;;       (write-region spot end hist 'append 'silent))))
+#+END_SRC
+
+** WONTFIX use agent-shell
+
+A bridge between Emacs and the frontier labs' TUIs.
+30,000 vibecoded lines.
+
+Implements ACP (the Agent Control Protocol), and
+works with any model that supports ACP.
+
+Includes convenience functions for:
+
+- Writing prompts in a separate Emacs buffer.
+
+- Navigating the TUI.
+
+- Passing files and clips of text or images to the TUI.
+
+Relies on Magit and manual find-file to get you from the
+TUI to actual files.
+
+#+BEGIN_SRC emacs-lisp-mode
+(use-package agent-shell
+    :config
+    :straight (:host github :repo "emacs-straight/org-mode" :local-repo "org")
+              (:host github :repo "xenodium/agent-shell")
+    (setopt agent-shell-anthropic-authentication ...
+            local-ollama-whatever ...
+            agent-shell-prefer-viewport-interaction t
+           
+    )
+)
+;;;; --------------------------------------------------
+#+END_SRC
+
+** IN_PROGRESS decide whether to use [[https://github.com/batrachianai/toad][Toad]]
+
+** TODO decide whether to use ellama
+
+works with apps that support the OpenAI API, e.g. ollama.
+Written on top of llm.el.
+18,000 additional vibecoded lines of Emacs Lisp.
+
+#+BEGIN_SRC emacs-lisp-mode
+(use-package-ellama ...)
+#+END_SRC
