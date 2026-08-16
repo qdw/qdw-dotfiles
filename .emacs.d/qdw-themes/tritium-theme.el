@@ -54,7 +54,7 @@
 
    (setq
            black  "#000000"  ;; in iTerm2, displayed as the terminal's bg color
-    bright-black  "#333333"
+    bright-black  "#555555"
              red  "#af5f00"  ;; orange
       bright-red  "#ff7f00"  ;; bright orange
            green  "#3b8560"
@@ -283,7 +283,7 @@ extended-bright-white "#a6acb9")))
      ((t (:foreground ,bright-magenta))))
 
    `(link
-     ((t (:foreground ,yellow :underline (:color ,red)))))
+     ((t (:foreground ,yellow :underline (:color ,yellow)))))
 
    ;;;; customize
 
@@ -848,22 +848,73 @@ extended-bright-white "#a6acb9")))
       ((t (:foreground ,bright-black))))
       
     ;;;; Markdown
+
+    `(markdown-markup-face
+      ((t (:foreground ,bright-black))))
     
     `(markdown-language-keyword-face
-      ((t (:foreground ,bright-red))))
+      ((t (:foreground ,bright-black))))
 
     ;; Bullets, meaning either '-' or '*'
     `(markdown-list-face
       ((t (:foreground ,red))))
 
-    `(markdown-code-face
-      ((t (:foreground ,cyan))))
+    `(markdown-header-rule-face
+      ((t (:inherit markdown-header-delimiter-face))))
 
-    `(markdown-inline-code-face
-      ((t (:inherit markdown-code-face))))
-    
-    `(markdown-header-delimiter-face
-      ((t :inherit font-lock-comment-delimiter-face)))
+    `(markdown-header-face-1
+      ((t (:foreground ,blue))))
+
+    `(markdown-header-delimiter-face ;; ###
+      ((t (:inherit markdown-header-face-1))))
+
+    `(markdown-hr-face ;; --------
+      ((t (:inherit markdown-markup-face))))
+
+    `(markdown-header-face-2
+      ((t (:inherit markdown-header-face-1))))
+
+    `(markdown-header-face-3
+      ((t (:inherit markdown-header-face-1))))
+
+    `(markdown-header-face-4
+      ((t (:inherit markdown-header-face-1))))
+
+    `(markdown-header-face-5
+      ((t (:inherit markdown-header-face-1))))
+
+    `(markdown-header-face-6
+      ((t (:inherit markdown-header-face-1))))
+
+    `(markdown-blockquote-face
+      ((t (:foreground ,red))))
+
+    `(markdown-code-face
+      ((t (:foreground ,green))))
+
+    `(markdown-url-face
+      ((t (:foreground ,magenta))))
+
+    `(markdown-bold-face
+      ((t (:foreground ,bright-red))))
+
+    `(markdown-italic-face
+      ((t (:foreground ,red))))
+
+    `(markdown-reference-face
+       ((t (:foreground ,bright-magenta))))
+
+    `(markdown-table-face
+      ((t (:foreground ,magenta))))
+
+    `(markdown-gfm-checkbox-face
+      ((t (:foreground ,bright-red))))
+
+    `(markdown-html-tag-name-face
+      ((t (:foreground ,bright-red))))
+
+    `(markdown-html-tag-delimiter-face
+      ((t (:inherit markdown-html-tag-name-face))))
 
     ;;;; whitespace
 
