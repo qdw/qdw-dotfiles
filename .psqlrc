@@ -20,6 +20,9 @@
 -- Customize my prompt to reassure me when I'm on a replica (read-only)
 -- and warn me when I'm on a primary (writeable!)
 
+---- Unfortunately, both emoji and ANSI SGR colors cause readline to wrap
+---- lines wrong, which makes writing queries hard. So use plain ASCII for now.
+
 SELECT
 CASE WHEN inet_client_addr() IS NULL
     THEN ''
@@ -28,8 +31,14 @@ ELSE
         -- green text; chr(27) is the ESC character, used for ANSI SGR color
         THEN ' 💧%[' || chr(27) || '[32m%]replica' || chr(27) || '[0m%]💧'
     ELSE
-        -- red text
-        ' ⚠️%[' || chr(27) || '[31m%]PRIMARY' || chr(27) || '[0m%]⚠️'
+        -- red text with emoji
+        -- ' ⚠️%[' || chr(27) || '[31m%]PRIMARY' || chr(27) || '[0m%]⚠️'
+
+        -- red text without emoji
+        -- chr(27) || '[31m%]PRIMARY' || chr(27) || '[0m%]️'
+
+        -- colorless text
+        '!!! PRIMARY !!!'
     END
 END
 AS replication_role_marker \gset
@@ -40,4 +49,8 @@ AS replication_role_marker \gset
 -- %/ - database, e.g. 'postgres'
 -- %# - '#' if logged in as a role with SUPERUSER; '>' otherwise.
 
-\set PROMPT1 '🐘 %n@%m:%/' :replication_role_marker ' %# '
+-- Full prompt with emoji
+-- \set PROMPT1 '🐘 %n@%m:%/' :replication_role_marker ' %# '
+
+-- Full prompt without emoji
+\set PROMPT1 '%n@%m:%/ ' :replication_role_marker ' %# '
