@@ -361,11 +361,10 @@ extended-bright-white "#a6acb9")))
      ((t (:foreground ,magenta))))
 
    `(font-lock-variable-name-face
-     ;; ((t (:foreground ,magenta))))
      ((t (:inherit default-face))))
 
    `(font-lock-variable-use-face
-     ((t (:inherit font-lock-variable-name-face))))
+     ((t (:inherit default-face))))
 
    `(font-lock-warning-face
      ((t ((:foreground ,bright-magenta
@@ -376,7 +375,16 @@ extended-bright-white "#a6acb9")))
      
    `(sh-font-lock-quoted-subshell-face
      ((t ((:foreground ,bright-black)))))
+
+   ;;;; font-lock: mode-specific consistency for certain languages modes
+
+;;   `(cperl-hash-face
+;;      ((t ((:inherit font-lock-variable-name-face)))))
      
+;;    `(cperl-array-face
+;;      ((t ((:inherit font-lock-variable-name-face)))))
+;; `
+   
    ;;;; flycheck/flymake
    
    `(flycheck-error
@@ -777,7 +785,7 @@ extended-bright-white "#a6acb9")))
       ((t (:inherit font-lock-doc-face))))
 
     `(org-special-keyword
-      ((t (:inherit font-lock-keyword))))
+      ((t (:inherit font-lock-keyword-face))))
 
     ;;;; dired+
 
