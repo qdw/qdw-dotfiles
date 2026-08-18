@@ -27,7 +27,7 @@
 	highlightRecent = 22,6.months.ago,28,3.months.ago,34,6.weeks.ago,40,3.weeks.ago,47,10.days.ago,120
 
 [core]
-	excludesFile = /Users/quinn.weaver/.config/git/ignore
+	excludesFile = ~/.config/git/ignore
 	ignorecase = false
 	## whitespace = space-before-tab,tab-in-indent
 	
