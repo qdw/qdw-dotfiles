@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+;; -*- Lexical-binding: t; no-native-compile: t; -*-
 
 ;;;; Experimental: use a newer org-mode than the bundled one (via straight.el)
 

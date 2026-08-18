@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; no-native-compile: t; -*-
+;; -*- Lexical-binding: t; no-native-compile: t; -*-
 
 ;;;; Debugging this init file
 
@@ -285,27 +285,39 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;;
 ;; https://github.com/jwiegley/use-package-examples
 
-(setopt use-package-always-demand t)  ;; load at Emacs init time
-;; use-package-always-ensure t) ;; auto-install from repo if not installed
+(setopt use-package-always-demand t) ;; load at Emacs init time
+;;      use-package-always-ensure t) ;; auto-install from repo if not installed
+                                     ;; Uncomment this when running Emacs
+                                     ;; for the first time on a new machine.
+
+(defun load-qdw-module (el-file-name)
+  (load (expand-file-name el-file-name "~/.emacs.d/qdw-modules")))
+
+(defun load-file-if-exists-qdw (file-name)
+  "Load FILE-NAME if it exists, and do nothing otherwise."
+  (let ((inhibit-message t))
+    (condition-case nil
+        (load (expand-file-name file-name user-emacs-directory) 't 't)
+      (error nil))))
 
 (use-package ansi-color)
-(use-package cc-mode)
+(load-qdw-module "c-qdw.el")
 (use-package comint)
 (use-package compile)
-(load (expand-file-name "org-qdw.el" user-emacs-directory))
-(use-package cperl-mode
-  :mode ("\\.pl\\'" . cperl-mode)
-  :interpreter ("perl" . cperl-mode)
-  :custom (cperl-indent-level 4))
+(load-qdw-module "cperl-qdw.el")
+(load-qdw-module "org-qdw.el")
 (use-package dired)
 (use-package dirtrack)
 (use-package imenu)
+(load-qdw-module "make-mode-qdw.el")
+(load-qdw-module "pgsql-hackers-qdw.el") ;; :after (cperl-qdw make-mode-qdw)
 (use-package sh-script
     :init (advice-add 'sh-set-shell
                       :around
                       (lambda (orig &rest args)
                         (let ((inhibit-message 't))
                           (apply orig args)))))
+(load-qdw-module "sql-qdw.el")
 (use-package json) (setq-default json-encoding-default-indentation "    ")
 (use-package markdown-mode)
 (use-package url-util)
@@ -416,40 +428,8 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (electric-indent-mode +1)
 
 ;;;; Hack: general: tree-sitter
-;;;; Hack C
-
-(c-add-style
- "qdw"
- '("stroustrup"
-   (c-offsets-alist
-    ;; Indent case statements 1 level beyond the enclosing 'switch() {' line
-    (case-label . +)
-    (statement-case-intro . +)
-    (statement-case-open . 0)
-
-    ;; When breaking stuff onto multiple lines, always indent 1 level
-    (arglist-cont . +)
-    (arglist-cont-nonempty . +)
-    (arglist-intro . +)
-    
-    (statement-cont . +)
-    (topmost-intro-cont . +)
-    (arglist-cont . +)
-    (arglist-cont-nonempty . +)
-    (statement-cont . +)
-    (topmost-intro-cont . +)
-    (brace-list-entry . +)
-    (brace-list-intro . +)
-    (brace-entry-open . +))
-
-    ;; Keep the opening brace of a function body
-    ;; on the same line as the function signature:
-    ;; 
-    ;; int foo(int arg1) {
-    (c-hanging-braces-alist
-     (defun-open . (nil . t)))))   ;; no newline before {, newline after
-
-(setopt c-default-style "qdw")
+;;
+;; nothing here yet
 
 ;;;; Hack Emacs Lisp
 
@@ -466,13 +446,6 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (defun lfi ()
   (interactive)
   (load-file-if-exists-qdw "site.el"))
-
-(defun load-file-if-exists-qdw (file-name)
-  "Load FILE-NAME if it exists, and do nothing otherwise."
-  (let ((inhibit-message t))
-    (condition-case nil
-        (load (expand-file-name file-name user-emacs-directory) 't 't)
-      (error nil))))
       
 (defmacro setqu (&rest args)
   "Set multiple variables globally, overriding them if they are
@@ -1202,12 +1175,6 @@ This command does the reverse of `fill-region'."
                           (blacken-mode +1)
                         (blacken-mode -1)))))
 
-;;;; Hack Makefiles
-
-(add-hook 'makefile-mode-hook
-          (lambda ()
-            (setq indent-tabs-mode 't)))
-
 ;;;; tail -f settings
 
 (defalias 'tail 'auto-revert-tail-mode)
@@ -1490,7 +1457,7 @@ This command does the reverse of `fill-region'."
      slime-repl-ansi-color smartparens terraform-mode tidal tide
      tree-sitter-langs typescript-mode vimrc-mode wgrep yaml-mode
      yaml-pro yaml-tomato))
- '(safe-local-variable-values '((eval keymap-local-unset "C-x k"))))
+ '(safe-local-variable-values '((Lexical-binding . t) (eval keymap-local-unset "C-x k"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
