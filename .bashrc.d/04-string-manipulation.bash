@@ -100,3 +100,14 @@ function decolonize {
     STRING="$1"
     echo "$STRING" | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
 }
+
+function 1nd {
+    local MANNAME="print the nth whitespace-separated element
+of each input line (with 1-based indexing).
+Simple wrapper around awk."
+    check-args 1 1 'ONE_BASED_INDEX' "$@"
+    local INDEX="$1"
+
+    # NF+n+1 trick supports negative indexes by looping around from the end
+    awk -v n="$INDEX" '{print (n<0) ? $(NF+n+1) : $n}'
+}
