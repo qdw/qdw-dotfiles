@@ -1,4 +1,4 @@
-;; -*- Lexical-binding: t; no-native-compile: t; -*-
+;; -*- lexical-binding: t; no-native-compile: t; -*-
 
 ;;;; Debugging this init file
 
@@ -311,6 +311,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (use-package imenu)
 (load-qdw-module "make-mode-qdw.el")
 (load-qdw-module "pgsql-hackers-qdw.el") ;; :after (cperl-qdw make-mode-qdw)
+(use-package ruby-mode)
 (use-package sh-script
     :init (advice-add 'sh-set-shell
                       :around
@@ -335,12 +336,6 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;; Don't require double backslashes when escaping - only single.
 (setq reb-re-syntax 'string)
 
-;;;; Hack Ruby
-
-(use-package ruby-mode)
-
-;;;; Hack 
-
 (use-package whitespace)
 
 ;;;; Basic comfort
@@ -348,8 +343,6 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (put 'upcase-region     'disabled nil)
 (put 'downcase-region   'disabled nil)
 (put 'narrow-to-region  'disabled nil)
-
-(setopt word-wrap nil)
 
 (setq-default
  ;; If I write non-ASCII chars in a buffer, then save the file as Unicode
@@ -361,7 +354,8 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
  elisp-indent-level 2)
 
 (setopt
-
+ word-wrap nil
+ 
  ;; Open symlinks' targets, with the targets' parents directory as buffer cwd
  find-file-visit-truename t
  
@@ -945,10 +939,12 @@ This command does the reverse of `fill-region'."
 
 ;;;; elfeed: enjoy podcasts and other RSS and Atom feeds
 
+;; I define individual subscriptions in ./site.el for now
+;; (machine-specific; deliberately .gitignore'd).
+
 (use-package elfeed
   :config
-  (setopt elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory)
-          elfeed-feeds '("https://rss.art19.com/tides-of-history"))
+  (setopt elfeed-db-directory (expand-file-name "elfeed" user-emacs-directory))
 
   (defun play-podcast-episode-at-point-qdw ()
     (interactive)
@@ -963,7 +959,7 @@ This command does the reverse of `fill-region'."
             "-e" (format "open location \"%s\"" episode-url)
             "-e" "activate"
             "-e" "play front document"
-       "-e" "end tell")))
+       "-e" "end tell"))))
 
   ;; ;; elfeed uses the built-in Emacs package shr.el to open links.
   ;; ;; Override it iff in elfeed.
@@ -973,8 +969,8 @@ This command does the reverse of `fill-region'."
   ;;             ...)
 
   ;; :bind
-  ;; (("C-c C-c ." play-podcast-episode-at-point-qdw))
-)
+  ;; (("C-c C-c ." play-podcast-episode-at-point-qdw)))
+
 
   
 
@@ -1249,7 +1245,7 @@ This command does the reverse of `fill-region'."
   "Keymap for `qdw-override-mode', used to override other modes' keymaps.")
 
 (define-minor-mode keymap-override-mode-qdw
-  "Minor mode that, when on, overrides other modes' keybindings."
+  "Minor mode that, when on, overrides other modes' keybindings. I do this be3cause some packages fail to respect the convention that `C-c [letter]' bindings should be reserved for the user's personal use"
   :global t
   :keymap override-mode-map-qdw)
 
@@ -1261,6 +1257,7 @@ This command does the reverse of `fill-region'."
                           (cadr ls)))
 
  '(
+   ;; FIXME: C-c [number] and C-c C-c aren't reserved for the user; some packages use them. Therefore change my number and C-c C-c mappings to one of the following: 1) C-c [letter] (capital letters allowed); 2) C-c [letter-as-prefix] [additional-letter]; or 3) xah-prefix-style bindings.
    ("C-h F"    describe-face)
 
    ("M-!"  shell-command-qdw)
@@ -1281,9 +1278,9 @@ This command does the reverse of `fill-region'."
                      (interactive)
                      (find-file (expand-file-name "~/personal.org"))))
    ("C-c C-c C-t"  switch-theme)
-   ("C-c ."    open-thing-at-point)
+   ("C-c o"    open-thing-at-point)
    ("C-c /"    grep-buffer-qdw)
-   ("C-c |"    display-fill-column-inficator-mode)
+   ("C-c |"    display-fill-column-indicator-mode)
    ("C-c 1"    async-shell-command)
    ("C-c :"    eval-expression)
    ("C-c ;"    comment-dwim)
@@ -1293,7 +1290,7 @@ This command does the reverse of `fill-region'."
    ("C-c i"    indent-region)
    ("C-c l"    shell)
    ("C-c n"    display-line-numbers-mode)
-   ("C-c o"    rotate-windows)
+   ("C-c O"    rotate-windows)
    ("C-c r"    isearch-backward-regexp)
    ("C-c s"    isearch-forward-regexp)
    ("C-c t"    toggle-theme-qdw)

@@ -1,4 +1,4 @@
-;; -*- Lexical-binding: t; no-native-compile: t; -*-
+;; -*- lexical-binding: t; no-native-compile: t; -*-
 
 (use-package sql
     :config (font-lock-add-keywords

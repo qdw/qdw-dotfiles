@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (when (load-file-if-exists-qdw
         (expand-file-name
           "~/src-3/pg/postgresql/src/tools/editors/emacs.samples"))

@@ -1,11 +1,11 @@
-;; -*- Lexical-binding: t; no-native-compile: t; -*-
+;; -*- lexical-binding: t; no-native-compile: t; -*-
 
 ;;;; Experimental: use a newer org-mode than the bundled one (via straight.el)
 
 (use-package org
   :after url-util
   :straight (:host github :repo "emacs-straight/org-mode" :local-repo "org")
-
+  
   :config
 
   ;; (setopt org-hide-drawers ('top-level-property-drawer ""))
@@ -230,6 +230,7 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
                           "POSTPONED(p)"
                           "RECOMMENDATION(c)"
                           "INBOX"
+                          "FACT_CHECK"
                           
                           "|"
 
@@ -250,12 +251,13 @@ file formats: SID (Commodore 64), NSF (Nintendo Entertainment System)."
                ("AWAITING_RESPONSE" . ,bright-magenta)
                ("QUESTION" . ,bright-magenta)
                ("YAK_SHAVING" . ,yellow)
+               ("FACT_CHECK" . ,bright-red)
                
                ("DONE" . ,green)
                ("WONTFIX" . ,green)
                ("POSTPONED" . ,yellow)
                ("INFO" . ,yellow)
-               ("PROJECT" . ,blue)
+               ("PROJECT" . ,bright-cyan)
                ("RECOMMENDATION" . ,yellow)
                ("INBOX" . ,bright-yellow)
                ("SUBPROJECT" . ,bright-cyan)
