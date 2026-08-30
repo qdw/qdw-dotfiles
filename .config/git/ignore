@@ -47,7 +47,7 @@ desktop
 
 # Other editor/IDE/OS droppings
 
-**/.DS_Store
+.DS_Store
 .idea
 *.sw?
 .cursorignore
