@@ -164,3 +164,19 @@ function envp {
         fi
     fi
 }
+
+# A tool for PostgreSQL C developers.
+# If using this, consider also installing include-what-you-use.
+
+function headerscheck {
+    check-args 2 varargs '[FLAG1 [FLAG2] ...]' "$@" || return 1
+    
+    local PGINCLUDE_DIR="$HOME/src-3/pg/postgresql/src"
+
+    local REAL_DIR
+    REAL_DIR="$(realpath "$PGINCLUDE_DIR")" \
+        && cd "$REAL_DIR" \
+        && ./headerscheck "$@"
+
+    
+}

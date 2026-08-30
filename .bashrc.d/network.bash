@@ -5,8 +5,10 @@ function ip {
 
     if [[ $# -eq 0 ]] || [[ "$1" = "v4" ]]; then
         curl -4 "$SERVICE"
+        echo
     elif [[ "$1" = "v6" ]]; then
         curl -6 "$SERVICE"
+        echo
     else
         err "unsupported IP version '$1'. Valid values: 'v4', 'v6'"
         return 1
