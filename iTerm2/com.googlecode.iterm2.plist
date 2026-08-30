@@ -12215,6 +12215,8 @@
 	<false/>
 	<key>VisualIndicatorForEsc</key>
 	<false/>
+	<key>WordCharacters</key>
+	<string>!"#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~</string>
 	<key>findMode_iTerm</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewPreferredModeKey</key>
