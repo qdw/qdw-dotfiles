@@ -25,9 +25,9 @@ function install-emacs-plus {
         set -euo pipefail
         brew install --formula \
                      --build-from-source \
-                     "emacs-plus@${VERSION_NUMBER}" \
                      --with-mailutils \
-                     --without-cocoa
+                     --without-cocoa \
+                     "d12frosted/emacs-plus/emacs-plus@${VERSION_NUMBER}"  # "emacs-plus@${VERSION_NUMBER}"
     )
 }
 
