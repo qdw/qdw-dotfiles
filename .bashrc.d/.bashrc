@@ -88,9 +88,9 @@ fi
 
 source-section "network.bash"
 
-#### Text editors, particularly Emacs
+#### Editors, particularly Emacs
 
-source-section "text-editors.bash"
+source-section "editors.bash"
 
 #### search: grep
 
