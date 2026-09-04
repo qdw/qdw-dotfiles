@@ -1,8 +1,7 @@
 # shellcheck shell=bash
 
-umask 0022
-
 set -o pipefail
+umask 0022
 
 QSITED="$HOME/.site.bash.d" # not checked into git; specific to this machine
 
@@ -937,11 +936,15 @@ function pstree {
 
 function p {
     check-args 1 varargs '[GREP_FLAGS] REGEX' "$@" || return 1
+
+    local ORIG_OPTS="$(set +o)"
     
     ps auxwwwwww \
         | command grep -vE 'grep|rg' \
         | $MY_GREP $MY_GREP_OPTIONS $GREP_COLOR_FLAGS "$@" \
         | $PAGER
+
+    eval "$ORIG_OPTS"
 }
 
 function ph {
@@ -1351,7 +1354,6 @@ function guit { # download guitar tabs from ultimate-guitar.com
     # and probably more [/pseudo-tags]. I will address them as I notice
     # them in tablature that I actually read.
     
-    set -o pipefail
     curl -s "$URL" \
         | perl -0777 -ne 'print "$1" if $_ =~ m|{&quot;wiki_tab&quot;:{&quot;content&quot;:&quot;(.*?)(?=&quot;,&quot;revision_id)|smx;' \
         | sed -e "s|\\\r\\\n|\n|g" \
@@ -1359,7 +1361,6 @@ function guit { # download guitar tabs from ultimate-guitar.com
         | sed -e 's|\[ch\]||g'  -e 's|\[/ch\]||g' \
         | sed -e "s|&#039;|'|g"
     local EXIT_STATUS=$?
-    set +o pipefail
     echo
     return $EXIT_STATUS
 }
@@ -1484,8 +1485,6 @@ fi
 ## man settings
 
 export MANPATH=":$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man:$HOME/share/man:/usr/share/man:/usr/local/share/man:/usr/local/man"
-
-set +o pipefail
 
 #### #section-8#  Site-specific stuff, not stored in git
 

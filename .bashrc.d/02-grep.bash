@@ -42,8 +42,6 @@ fi
 set +a
 
 function grep {
-    set -o pipefail
-    
     # When using rg as my grep implementation, I often type -R out of habit,
     # but rg has no -R flag (and it's recursive by default).
     # So, if I try to pass that flag to rg, just remove it.
@@ -63,10 +61,7 @@ function grep {
         $MY_GREP_OPTIONS \
         $GREP_COLOR_FLAGS \
         $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
-        
-    set +o pipefail
 }
-
 
 if [[ "$MY_GREP" = "rg" ]]; then
     function highlight {

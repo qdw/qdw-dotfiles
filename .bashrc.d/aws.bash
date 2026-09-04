@@ -154,15 +154,11 @@ function secret { get-secret "$@" ;}
 ### AWS logs/CloudWatch/LogGroup/log group settings
 
 function rds-ls-log-groups {
-    set -o pipefail
-
     aws logs describe-log-groups --log-group-name-prefix "/aws/rds" \
         | command grep logGroupName \
         | command grep -v "proxy" \
         | sort \
         | sed -e 's|.*/aws/rds/instance/||; s|/postgresql",$||'
-    
-    set +o pipefail
 }
 
 ### AWS S3 setttings

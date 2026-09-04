@@ -291,7 +291,6 @@ SYNOPSIS
     esac
 }
 
-
 ## Implementations of simple Unix commands in bash, to save fork overhead
 
 function basenam {

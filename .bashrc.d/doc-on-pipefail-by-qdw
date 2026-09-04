@@ -1,0 +1,77 @@
+
+# function with-pipefail: run a command and return its exit status,
+# but set -o pipefail first (and restore the original value of
+# pipefail afterwards).
+#
+# Explanation for those who haven't had the displeasure of dealing
+# with pipefail:
+#
+# In Unix, if a command's exit status is 0, this indicates success,
+# and is true in a Boolean context. Any value other than 0 indicates
+# an error, and is false in a Boolean context.
+# 
+# Bash works the same way. After you call a function, its exit status
+# will be in the special variable $?, like this:
+#
+# user@localhost:~$ /usr/bin/true
+# user@localhost:~$ echo $?
+# 0
+#
+# user@localhost:~$ /usr/bin/false
+# user@localhost:~$ echo $?
+# 1
+#
+# user@localhost:~$ if /usr/bin/true || /usr/bin/false; then echo "True"; else echo "False"; fi
+# True
+#
+# user@localhost:~$ if /usr/bin/true && /usr/bin/false; then echo "True"; else echo "False"; fi
+# $ if /usr/bin/true && /usr/bin/false; then echo "True"; else echo "False"; fi
+# False
+#
+# user@localhost:~$ echo "splendid" > ~/tmp/text-file
+# user@localhost:~$ grep "nonexistent string" ~/tmp/text-file
+# user@localhost:~$ echo $?
+# 1
+#
+# So far, so good. However - and this is the important part, and the motivation
+# for writing the function 'with-pipefail in the first place - Bash behaves
+# in the following counterintuitive way:
+# 
+# user@localhost:~$ grep "nonexistent string" ~/tmp/text-file | less
+# user@localhost:~$ echo $?
+# 0
+#
+# Wait, what? Why does this command give exit status 0 (true)
+# when we know that grep returned 1 (false)?
+# 
+# The answer is that, counterintuitively, a bash command with a pipe ('|')
+# will poppulate $? with the exit status of the *last command in the pipeline*,
+# which in this case is 'less', which succeeds at its own job (paginating
+# the output grep), and gives exit status 1.
+#
+# This is probably not the behavior that you expect or want.
+# Probably you want the whole pipeline to indicate failure,
+# with the exit status of the pipeline being nonzero.
+# The way to achieve this is to run this command:
+#
+# set -o pipefail
+#
+# and *then* run this: grep "nonexistent string" ~/tmp/text-file | less
+# which will return 1, the exit status of grep.
+#
+# More generally, if you have a pipeline of many commands, 'set -o pipefail'
+# ensures that the exit status will be that of the leftmost command
+# that fails.
+#
+# Great! We have a fix for Bash's weird default semantics!
+#
+# However, if we 'set -o pipefail' inside a function, that will
+# set it globally for the duration of the Bash process, which
+# may mess up the caller of our function (if they wrote their own
+# code to assume the default behavior... which is obviously
+# a reasonable thing to do).
+# 
+# Therefore, if you want to 'set -o pipefail' inside a function,
+# you must first record the original value of pipefail and then
+# reset it at the end (unless pipefail was already on, in which
+# case you don't need to do anything).
