@@ -1,2 +1,6 @@
 [font]
-normal = { family = "menlo", style = "<string>" }
+size = 15
+normal = { family = "Menlo", style = "Regular" }
+bold = { style = "Regular" }
+italic = { style = "Regular" }
+bold_italic = { style = "Regular" }
