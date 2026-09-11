@@ -107,141 +107,9 @@ source-section "03-fd.bash" ### fd, a fast, modern replacement for find(1)
 
 source-section "dot-ignore.bash" ### helper functions for the .ignore files honored by git, fd, and rg
 
-#### Terminal emulators
+#### Terminal emulators (including functions for working with ANSI SGR colors)
 
-function strip_control_characters_from {
-    local STRING
-    if [[ $# -eq 1 ]]; then
-        tr -cd  "[:print:]"  "$STRING"
-    else
-        echo "strip_control_characters_from: error: wrong number of arguments. Usage: strip_control_characters_from STRING" >&2
-    fi
-}
-
-# title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
-# This works by using a special ANSI-like escape code that not all terminal
-# emulators support.
-
-function title {
-    echo -ne "\033]2;" "$1" "\007"
-}
-
-#### iTerm2-specific terminal settings
-
-# See https://iterm2.com/documentation-captured-output.html
-function cl {
-    printf "\e]1337;ClearCapturedOutput\e\\"
-}
-
-function activate-iTerm2-integration {
-    # Enable "iTerm2 integration," that is, a bunch of fancy features
-    # specific to the iTerm2 terminal emulator (example: click-to-download
-    # over ssh plus lots more).
-    #
-    # It would slow down shell startup considerably if I automatically
-    # sourced this code, so I've separated it into a function that you
-    # can call explicitly when you want it.
-    my-source ~/.iterm2_shell_integration.bash
-}
-
-#### Terminal color settings
-
-export COLORTERM="truecolor"
-export CLICOLOR=1
-
-#### Convenience functions for printing ANSI SGR 4-bit color codes
-
-export QANSI='\033['
-export QRESET='\033[0m'
-
-function color-printf {
-    local HELP="COLOR_NAME [STRING ...]
-
-For example, color-printf bright-cyan 'Color text' 'and more color text\n'.
-"
-
-    check-args 2 varargs "$HELP" "$@" || return 1
-    local COLOR_NAME="$1"
-    shift
-
-    local COLORCODE BRIGHTNESS
-    case "$COLOR_NAME" in
-        black)    COLORCODE=30; BRIGHTNESS=0;;
-        red)      COLORCODE=31; BRIGHTNESS=0;;
-        green)    COLORCODE=32; BRIGHTNESS=0;;
-        yellow)   COLORCODE=33; BRIGHTNESS=0;;
-        blue)     COLORCODE=34; BRIGHTNESS=0;;
-        magenta)  COLORCODE=35; BRIGHTNESS=0;;
-        cyan)     COLORCODE=36; BRIGHTNESS=0;;
-        white)    COLORCODE=37; BRIGHTNESS=0;;
-  
-        bright-black)    COLORCODE=90; BRIGHTNESS=1;;
-        bright-red)      COLORCODE=91; BRIGHTNESS=1;;
-        bright-green)    COLORCODE=92; BRIGHTNESS=1;;
-        bright-yellow)   COLORCODE=93; BRIGHTNESS=1;;
-        bright-blue)     COLORCODE=94; BRIGHTNESS=1;;
-        bright-magenta)  COLORCODE=95; BRIGHTNESS=1;;
-        bright-cyan)     COLORCODE=96; BRIGHTNESS=1;;
-        bright-white)    COLORCODE=96; BRIGHTNESS=1;;
-  
-        *) echo "Unsupported color '$COLOR_NAME'" >&2; return 2;;
-    esac
-
-    printf '\e[%d;%dm' "$BRIGHTNESS" "$COLORCODE"
-    echo "$@"
-    printf '\033[0m'
-}
-
-function bash-color-test-pattern {
-    for COLORNAME in black red green yellow blue magenta cyan white; do
-        for PREFIX in "" "bright-"; do
-            FULLCOLORNAME="${PREFIX}${COLORNAME}"
-            color-printf "$FULLCOLORNAME" "$FULLCOLORNAME"
-            echo
-        done
-    done
-}
-
-# bnw (Black 'n' White): remove non-printable chars,
-# such as ANSI color codes. Works as a filter, e.g. 'git diff a b | bnw'
-
-function bnw {
-    while IFS="" read -r LINE; do
-
-        # Strip ANSI color codes
-        CLEAN_LINE="$(echo "$LINE" | sed -r 's/\x1B\[[0-9;]*[a-zA-Z]//g')"
-
-        # Strip control characters
-        CLEAN_LINE="$(echo "$CLEAN_LINE" | tr -d '[:cntrl:]')"
-        
-        echo "$CLEAN_LINE"
-    done
-}
-
-# Take a hex triplet, and print it in the indicated color.
-# Requires a terminal that supports (ANSI SGR) 24-bit color,
-# a.k.a. true color
-
-function hex {
-    if [[ $# -ne 1 ]]; then
-        err "Wrong number of arguments. Usage: hex RRGGBB"
-        return 1
-    else
-        # Extract the RGB values from the hex color code
-        local hex=${1#"#"}
-        local r=$(printf '0x%0.2s' "$hex")
-        local g=$(printf '0x%0.2s' "${hex#??}")
-        local b=$(printf '0x%0.2s' "${hex#????}")
-        
-        # Convert the hex values to decimal
-        local R=$(printf '%d' "$r")
-        local G=$(printf '%d' "$g")
-        local B=$(printf '%d' "$b")
-    
-        # Print the string in the specified color
-        printf "\e[38;2;%d;%d;%dm%s\e[0m\n" "$R" "$G" "$B" "$hex"
-    fi
-}
+source-section "terminal.bash"
 
 #### Filename/path/dir/cd-related functions
 
@@ -921,192 +789,25 @@ function mhost {
     done
 }
 
-# mshost ("Map Ssh [to] Host(s)") - execute an ssh command on a list of hosts, with paragraphized output
-function mshost {
-    REMOTE_COMMAND="$1"; shift
-    COMMAND="ssh $REMOTE_COMMAND"
-    mhost "$COMMAND" "$@"
-}
-
 #### Processes
 
-function pstree {
-    command pstree -g 3 -u $USER "$@" | $PAGER
-}
-
-function p {
-    check-args 1 varargs '[GREP_FLAGS] REGEX' "$@" || return 1
-
-    local ORIG_OPTS="$(set +o)"
-    
-    ps auxwwwwww \
-        | command grep -vE 'grep|rg' \
-        | $MY_GREP $MY_GREP_OPTIONS $GREP_COLOR_FLAGS "$@" \
-        | $PAGER
-
-    eval "$ORIG_OPTS"
-}
-
-function ph {
-    ps auxwwwwww | head -1
-    p "$@"
-}
-
-# Display only processes that belong to me.
-function pu { p "$USER" ;}
+source-section "proc.bash"
 
 #### Set operations
 
-## All these operators take a list of two or more files,
-## where each file consists of one or more lines.
-## Each file is treated as a set,
-## and each line is treated as an element of that set.
-
-## Totally broken: gives wrong results and fails to match OP
-
-# function set-op {
-#     local OP="$1"
-#     shift
-    
-#     if [[ $# -ne 2 ]]; then
-#         echo "set-op: error: expected 2 arguments but got $#"
-#     else
-#         case OP in
-#             union | +)
-#                 sort -u "$1" "$2" ;;
-#             intersection | intersect | isect | ^)
-#                 comm -12 <(sort "$1") <(sort "$2") ;;
-#             difference | diff | subtraction | subtract | minus | -)
-#                 comm -23 <(sort "$1") <(sort "$2") ;;
-#             membership | in | E)
-#                 grep -Fxq "$1" "$2" ;;
-#             *)
-#                 err "unsupported set operation '$OP'"
-#                 return 255 ;;
-#         esac
-#     fi
-# }            
-
-# function set-intersection {
-#     check-args 2 2 'SET_1_FILE SET_2_FILE' "$@" || return 1
-#     comm -12 "$1" "$2"
-# }
-
-function set-difference {
-    check-args 2 2 'SET_1_FILE SET_2_FILE' "$@" || return 1
-    comm -23 <(sort -u "$1") <(sort -u "$2")
-}
-
-# function set-disjunctive-union {
-#     set-difference "$@"
-# }
-
-# function set-union {
-#     check-args 2 2 'SET_1_FILE SET_2_FILE' "$@" || return 1
-#     cat "$1" "$2" | sort | uniq
-# }
+# source-section "sets.bash"
 
 #### Slack
 
-function slack-channel {
-    check-args \
-        1 \
-        1 \
-        "slack-channel CHANNEL_NAME # (with or without the leading '#'; doesn't matter)" \
-        "$@" \
-     || return 1
+# source-section "slack.bash"
 
-    # Remove leading '#' if present
-    local CHANNEL_NAME="${1/##/}"
-    
-    if on-macos; then
-        macos-open-slack-channel.scpt "$CHANNEL_NAME"
-    else
-        open "https://${SLACK_TEAM}.slack.com/channels/${CHANNEL_NAME}"
-    fi
-}
+#### POTS telephony
 
-function channel {
-    slack-channel "$@"
-}
+source-section "phone.bash"
 
-SLACK_EXTRAS="$HOME/.site.bash.d/slack-urls.bash"
-if [[ -f "$SLACK_EXTRAS" ]] && (( BASH_VERSINFO[0] >= 5 )); then
-    source "$SLACK_EXTRAS"
+#### SSH
 
-    function msg {
-        check-args 1 1 'SLACK_USERNAME' "$@" || return 1
-        URL="$(slack-username2url "$1")"
-        if [[ $URL ]]; then
-            open "$URL"
-        fi
-    }
-
-    function slack-username2url {
-        check-args 1 1 'SLACK_USERNAME # e.g. alice.hacker' "$@" || return 1
-        local SLACK_USERNAME="$1"
-
-        local URL="${SLACK_USERNAME2URL["$SLACK_USERNAME"]}"
-        if [[ -z "$URL" ]]; then
-            error "the URL for $SLACK_USERNAME is unknown"
-            error "Add it to var SLACK_USERNAME2URL in file $SLACK_EXTRAS"
-            return 2
-        else
-            echo "$URL"
-        fi
-    }
-fi
-
-function nanp {
-    check-args 1 1 'AREA_CODE' "$@" || return 1
-    local AREA_CODE="$1"
-
-    local CSV_URL="https://reports.nanpa.com/public/npa_report.csv"
-    local CACHED_COPY="$HOME/.site.bash.d/npa_report.csv"
-    if [[ ! -f "$CACHED_COPY" ]]; then
-        local CURL_ES
-        curl -L "$CSV_URL" > "$CACHED_COPY"
-        CURL_ES=$?
-        if [[ $CURL_ES -ne 0 ]]; then
-            return $CURL_ES
-        fi
-    fi
-
-    # Don't try to parse out location fields,
-    # since they aren't consistently filled in,
-    # and since the CSV file doesn't use proper double-quoting
-    # Or escaping, which makes it hard to parse.
-
-    # Column names
-    local HEADER
-    HEADER="$(head -2 "$CACHED_COPY" | tail -1 | grep ",")"
-
-    local -a MATCHING_LINES
-    mapfile -t MATCHING_LINES \
-            < <(tail -n "+2" "$CACHED_COPY" | grep "^${AREA_CODE}")
-
-    if [[ ${#MATCHING_LINES} -gt 0 ]]; then
-        echo "$HEADER"
-        echo
-        echo "${MATCHING_LINES[@]}" | grep "," # highlight field separators
-        return 0
-    else
-        return 2
-    fi
-}
-
-# funcalias "nanpa" "nanp"
-
-#### SSH settings
-
-function ssh-keygen { command ssh-keygen -t ed25519 "$@" ;}
-
-function ssh-add-all {
-    if cd ~/.ssh; then
-        fd --max-depth 1 --type f '*_ed25519' -x ssh-add
-        cd -
-    fi
-}
+source-section "ssh.bash"
 
 #### News of various sorts
 
@@ -1121,7 +822,6 @@ function newsboat {
         "$@"
 }
 
-# function rss { newsboat --refresh-on-start "$@" ;}
 function usenet {
     tin "$@"
 }
@@ -1129,18 +829,6 @@ function usenet {
 function newspapers {
     cast-text "$@"
 }
-
-function news {
-    err "ambiguous command. Please run one of the following instead:
-
-    - usenet
-    - newspapers"
-}
-
-#### Emacs-merge
-
-# cel FILE.el ("compile LISP") - byte-compile an emacs LISP file.
-function cel { command emacs -nw -q -batch -f batch-byte-compile "$@" ;}
 
 #### Miscellaneous-merge
 
@@ -1458,18 +1146,26 @@ source-section "c.bash"
 
 #### PATH
 
-CURL_PATH="/opt/homebrew/opt/curl/bin"
+CURL_PATH="$HOMEBREW_ROOT/opt/curl/bin"
 
-export PATH="$CURL_PATH:$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$HASKELL_PATH:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$GITLAWB_PATH:$QT_PATH"
+export PATH="$CURL_PATH:$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$HASKELL_PATH:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$GITLAWB_PATH:$QT_PATH:$ALACRITTY_PATH"
 
 # Account for the fact that some of those interpolated env vars may be empty.
 
-ORIG_EXTGLOB=$(shopt -p extglob)
-shopt -s extglob
-PATH="${PATH//+(:)/:}"    # Collapse runs of colons to single colon.
-PATH="${PATH#:}"          # Strip leading colon, if any.
-PATH="${PATH%:}"          # Strip trailing colon, if any.
-$ORIG_EXTGLOB
+function print-without-empty-paths {
+    check-args 1 1 'MY_PATH' "$@" || return 1
+    local PTH="$1"
+
+    ORIG_EXTGLOB=$(shopt -p extglob)
+    shopt -s extglob
+    PTH="${PTH//+(:)/:}"    # Collapse runs of colons to single colon.
+    PTH="${PTH#:}"          # Strip leading colon, if any.
+    PTH="${PTH%:}"          # Strip trailing colon, if any.
+    $ORIG_EXTGLOB
+    echo "$PTH"
+}
+
+export PATH="$(print-without-empty-paths "$PATH")"
 
 ## C libraries
 
@@ -1484,7 +1180,9 @@ fi
 
 ## man settings
 
-export MANPATH=":$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man:$HOME/share/man:/usr/share/man:/usr/local/share/man:/usr/local/man"
+export MANPATH="$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man:$HOME/share/man:/usr/share/man:/usr/local/share/man:/usr/local/man:$ALACRITTY_MANPATH"
+
+export MANPATH="$(print-without-empty-paths "$MANPATH")"
 
 #### #section-8#  Site-specific stuff, not stored in git
 

@@ -277,10 +277,10 @@ function macos-version-for-darwin-version {
         VERSION="$(sw_vers --productVersion)"
     fi
 
-    _format-macos_version "$CODENAME" "$MACOS" "$MACOSVER"
+    _format_macos_version "$CODENAME" "$MACOS" "$MACOSVER"
 }
 
-function _format-macos-version {
+function _format_macos_version {
     check-args \
         3 4 \
         '[--codename-only | --macos-only] MACOS CODENAME VERSION' "$@" \
