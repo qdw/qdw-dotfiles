@@ -1,6 +1,95 @@
+[general]
+import = [
+    "themes/tritium.toml"
+]
+
+[terminal]
+osc52 = "Disabled"
+
+[cursor]
+style = { shape = "Block", blinking = "Never" }
+unfocused_hollow = true
+
 [font]
 size = 15
 normal = { family = "Menlo", style = "Regular" }
 bold = { style = "Regular" }
 italic = { style = "Regular" }
 bold_italic = { style = "Regular" }
+
+[mouse]
+hide_when_typing = true
+bindings = [
+    {
+        mouse = "Right",
+        mods = "Control",
+        action = "None"
+    },
+    {
+        mouse = "Middle",
+        mode = "~Vi",
+        action = "None"
+    },
+]
+
+[[hints.enabled]]
+mouse = { enabled = true, mods = "Command" }
+# Match a filename as listed by 'ls -1', minus any char tacked on by 'ls -F'.
+regex = "\\S.*[^\\s/*@=%|>]|\\S"
+command = { program = "/opt/homebrew/bin/subl" }
+post_processing = true
+
+[[hints.enabled]]
+mouse = { enabled = true, mods = "Shift" }
+regex = "\\S.*[^\\s/*@=%|>]|\\S"
+command = { program = "/opt/homebrew/bin/emacsclient", args=["--no-wait"] }
+post_processing = true
+
+[keyboard]
+bindings = [
+    {
+        key = "G",
+        mods = "Control",
+        mode = "Search",
+        action = "SearchCancel"
+    },
+    {
+        key = "W",
+        mods = "Control",
+        mode = "Search",
+        action = "None"
+    },
+    {
+        key = "Backspace",
+        mods = "Alt",
+        mode = "Search",
+        action = "SearchDeleteWord"
+    },
+    {
+        key = "S",
+        mods = "Control",
+        mode = "Search",
+        action = "SearchFocusNext"
+    },
+    {
+        key = "R",
+        mods = "Control",
+        mode = "Search",
+        action = "SearchFocusPrevious"
+    },
+    {
+        key = "H",
+        mods = "Command",
+        action = "None"
+    },
+    {
+        key = "Tab",
+        mods = "Command",
+        action = "None"
+    },
+    {
+        key = "Tab",
+        mods = "Command|Shift",
+        action = "None"
+    },
+]

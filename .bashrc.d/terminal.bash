@@ -92,12 +92,11 @@ function bash-color-test-pattern {
 # title STRING: set the window title of an xterm/iTerm2/rxvt window to STRING.
 # This works by using a special ANSI-like escape code that not all terminal
 # emulators support.
-
 function title {
     echo -ne "\033]2;" "$1" "\007"
 }
 
-## Extensions specific to iTerm2
+#### iTerm2
 
 # See https://iterm2.com/documentation-captured-output.html
 function iterm2-cl {
@@ -137,31 +136,108 @@ LIMITATIONS
     printf "\e[38;2;%d;%d;%dm%s\e[0m\n" "$R" "$G" "$B" "$hex"
 }
 
-## Env vars specific to Alacritty on macOS
+#### Alacritty
+#### (see also the following section, "Install Alacritty from source on MacOS".
 
-if on-macos; then
-    export ALACRITTY_ROOT
-    ALACRITTY_ROOT="$(which Alacritty.app 2>/dev/null)" \
-        && export ALACRITTY_PATH="$ALACRITTY_ROOT/Contents/MacOS" \
-        && export ALACRITTY_MANPATH="$ALACRITTY_ROOT/Contents/Resources/man"
-    # Alacritty's macOS 'make install' doesn't put the man pages
-    # into subdirectories, so you have to do it yourself.
-    # This is the dir structure that I use:
-    # 
-    # quinn@au:/Applications/Alacritty.app/Contents/Resources$ echo;fd -t f man
-    # 
-    # man/man1/alacritty-msg.1.gz
-    # man/man1/alacritty.1.gz
-    # man/man5/alacritty-bindings.5.gz
-    # man/man5/alacritty.5.gz
-    # man/man7/alacritty-escapes.7.gz
+## Alacritty daemon support. Doesn't work, becuase of a bug.
+## 
+## In theory, this code should run the alacritty daemon (if not already
+## running) when you first run Bash. Then you should be able to create
+## new Alacritty sessions by running the 'alacritty' CLI command,
+## or by clicking the Alacritty.app icon. The idea was to run the daemon
+## at login time, making it faster to open your first Alacritty window.
+## 
+## In practice, this doesn't work - at least, not in the version I use,
+## alacritty 0.18.0-dev (d692748d). Instead, running the daemon causes
+## both the CLI and the app icon to become no-ops. Too bad I didn't know
+## that before I wrote this code! Maybe it'll work someday, so I'll leave
+## it in place but commented out.
 
+# if on-macos; then
+#     export ALACRITTY_ROOT
+#     ALACRITTY_ROOT="$(which Alacritty.app 2>/dev/null)" \
+#         && export ALACRITTY_PATH="$ALACRITTY_ROOT/Contents/MacOS" \
+#         && export ALACRITTY_MANPATH="$ALACRITTY_ROOT/Contents/Resources/man"
+# fi
 
-    # Likewise, the macOS 'make install' doesn't install alacritty's
-    # terminfo entries for you. You have to do something like this:
-    #
-    # mkdir -p ~/.terminfo/61
-    # cd ~/.terminfo/61
-    # ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty
-    # ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty-direct
-fi
+# function alacritty-daemon-pid {
+#     pgrep -U "$USER" -f -i "alacritty --daemon"
+# }
+
+# function the-alacritty-daemon-is-running {
+#     alacritty-daemon-pid > /dev/null
+# }
+
+# function start-alacritty-daemon {
+#     if the-alacritty-daemon-is-running; then
+#         err "Looks like the alacritty daemon is already running"
+#         return 1
+#     else
+#         local ORIG_DIR="$(pwd)"
+#         cd
+#         (
+#             nohup "$ALACRITTY_PATH/alacritty" --daemon >/dev/null 2>&1 &
+#             disown
+#         )
+#         cd "$ORIG_DIR" > /dev/null
+#     fi
+# }
+
+# function kill-alacritty-daemon {
+#     check-args 0 1 '[SIGNAL]' "$@" || return 1
+#     local SIGNAL="$1"
+
+#     case "$SIGNAL" in
+#         "") SIGNAL="-TERM";;
+#         "-9"|"-KILL") :;;
+#         *) err "unsupported signal '$SIGNAL'"; return 1;;
+#     esac
+
+#     local PID="$(alacritty-daemon-pid)"
+#     if [[ "$PID" ]]; then
+#         kill "$SIGNAL" "$PID"
+#     else
+#         err "alacritty daemon PID not found"
+#         return 2
+#     fi
+# }
+
+# function restart-alacritty-daemon {
+#     kill-alacritty-daemon
+#     start-alacritty-daemon
+# }
+
+# if ! the-alacritty-daemon-is-running; then
+#     (
+#         start-alacritty-daemon
+#     )
+# fi
+
+#### Install Alacritty from source on MacOS
+
+# Homebrew disabled the Alacritty Cask. This is because it doesn't play Apple's
+# executable-signing game, so macOS Gatekeeper rejects it by default.
+#
+# So you're best off installing Alacritty from source, which is not hard.
+# However, there are a few manual steps.
+# 
+# Alacritty's macOS 'make install' doesn't put the man pages
+# into subdirectories, so you have to do it yourself.
+# This is the dir structure that I use:
+# 
+# quinn@au:/Applications/Alacritty.app/Contents/Resources$ echo;fd -t f man
+# 
+# man/man1/alacritty-msg.1.gz
+# man/man1/alacritty.1.gz
+# man/man5/alacritty-bindings.5.gz
+# man/man5/alacritty.5.gz
+# man/man7/alacritty-escapes.7.gz
+# 
+# Likewise, the macOS 'make install' doesn't install alacritty's
+# terminfo entries for you. You have to do something like this:
+#
+# mkdir -p ~/.terminfo/61
+# cd ~/.terminfo/61
+# ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty
+# ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty-direct
+

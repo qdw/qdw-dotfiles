@@ -1,0 +1,37 @@
+# Base16 tritum - alacritty color config
+# Quinn Weaver <quinn.weaver@gmail.com>
+
+[colors]
+draw_bold_text_with_bright_colors = true
+
+# Default colors
+[colors.primary]
+background = '0x000000'
+foreground = '0x767676'
+
+# Colors the cursor will use if `custom_cursor_colors` is true
+[colors.cursor]
+text = '0x000000'
+cursor = '0xff7f00'
+
+# Normal colors
+[colors.normal]
+black = '0x141414'
+red = '0xaf5f00'
+green = '0x3b8560'
+yellow = '0x9164ff'
+blue = '0x6495ed'
+magenta = '0xaf5faf'
+cyan = '0x028080'
+white = '0x767676'
+
+# Bright colors
+[colors.bright]
+black = '0x555555'
+red = '0xff7f00'
+green = '0x00a400'
+yellow = '0xb5b500'
+blue = '0x6495ed'
+magenta = '0xd8a0d0'
+cyan = '0x4bbfc4'
+white = '0x767676'
