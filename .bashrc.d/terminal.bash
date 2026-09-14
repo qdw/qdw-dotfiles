@@ -139,79 +139,90 @@ LIMITATIONS
 #### Alacritty
 #### (see also the following section, "Install Alacritty from source on MacOS".
 
-## Alacritty daemon support. Doesn't work, becuase of a bug.
-## 
-## In theory, this code should run the alacritty daemon (if not already
-## running) when you first run Bash. Then you should be able to create
-## new Alacritty sessions by running the 'alacritty' CLI command,
-## or by clicking the Alacritty.app icon. The idea was to run the daemon
-## at login time, making it faster to open your first Alacritty window.
-## 
-## In practice, this doesn't work - at least, not in the version I use,
-## alacritty 0.18.0-dev (d692748d). Instead, running the daemon causes
-## both the CLI and the app icon to become no-ops. Too bad I didn't know
-## that before I wrote this code! Maybe it'll work someday, so I'll leave
-## it in place but commented out.
+## Use the Alacritty daemon, even though it is somewhat buggy.
 
-# if on-macos; then
-#     export ALACRITTY_ROOT
-#     ALACRITTY_ROOT="$(which Alacritty.app 2>/dev/null)" \
-#         && export ALACRITTY_PATH="$ALACRITTY_ROOT/Contents/MacOS" \
-#         && export ALACRITTY_MANPATH="$ALACRITTY_ROOT/Contents/Resources/man"
-# fi
+export ALACRITTY_SOCKET="$HOME/tmp/alacritty-socket"
 
-# function alacritty-daemon-pid {
-#     pgrep -U "$USER" -f -i "alacritty --daemon"
-# }
+if on-macos; then
+    export ALACRITTY_ROOT
+    ALACRITTY_ROOT="$(which Alacritty.app 2>/dev/null)" \
+        && export ALACRITTY_PATH="$ALACRITTY_ROOT/Contents/MacOS" \
+        && export ALACRITTY_MANPATH="$ALACRITTY_ROOT/Contents/Resources/man"
+fi
 
-# function the-alacritty-daemon-is-running {
-#     alacritty-daemon-pid > /dev/null
-# }
+function alacritty-daemon-pid {
+    pgrep -U "$USER" -f -i "alacritty --daemon"
+}
 
-# function start-alacritty-daemon {
-#     if the-alacritty-daemon-is-running; then
-#         err "Looks like the alacritty daemon is already running"
-#         return 1
-#     else
-#         local ORIG_DIR="$(pwd)"
-#         cd
-#         (
-#             nohup "$ALACRITTY_PATH/alacritty" --daemon >/dev/null 2>&1 &
-#             disown
-#         )
-#         cd "$ORIG_DIR" > /dev/null
-#     fi
-# }
+function the-alacritty-daemon-is-running {
+    alacritty-daemon-pid > /dev/null
+}
 
-# function kill-alacritty-daemon {
-#     check-args 0 1 '[SIGNAL]' "$@" || return 1
-#     local SIGNAL="$1"
+function the-alacritty-socket-is-present {
+    test -f "$ALACRITTY_SOCKET"
+}
 
-#     case "$SIGNAL" in
-#         "") SIGNAL="-TERM";;
-#         "-9"|"-KILL") :;;
-#         *) err "unsupported signal '$SIGNAL'"; return 1;;
-#     esac
+function start-alacritty-daemon {
+    if the-alacritty-daemon-is-running; then
+        err "looks like the alacritty daemon is already running"
+        if the-alacritty-socket-is-present; then
+            return 1
+        else
+            err "but the alacritty socket, '$ALACRITTY_SOCKET', is missing"
+            return 2
+        fi
+    else
+        local ORIG_DIR="$(pwd)"
+        cd
+        (
+            # nohup "$ALACRITTY_PATH/alacritty" --daemon >/dev/null 2>&1 &
+            "$ALACRITTY_PATH/alacritty" --daemon &
+            NOHUP_ES=$?
+            disown
+            exit $NOHUP_ES
+        )
+        local EXIT_STATUS=$?
+        cd "$ORIG_DIR" > /dev/null
+        return $EXIT_STATUS
+    fi
+}
 
-#     local PID="$(alacritty-daemon-pid)"
-#     if [[ "$PID" ]]; then
-#         kill "$SIGNAL" "$PID"
-#     else
-#         err "alacritty daemon PID not found"
-#         return 2
-#     fi
-# }
+function kill-alacritty-daemon {
+    check-args 0 2 '[SIGNAL]' "$@" || return 1
+    local SIGNAL="$1"
 
-# function restart-alacritty-daemon {
-#     kill-alacritty-daemon
-#     start-alacritty-daemon
-# }
+    case "$SIGNAL" in
+        "") SIGNAL="-TERM";;
+        "-9"|"-KILL") :;;
+        *) err "unsupported signal '$SIGNAL'"; return 1;;
+    esac
 
-# if ! the-alacritty-daemon-is-running; then
-#     (
-#         start-alacritty-daemon
-#     )
-# fi
+    local PID="$(alacritty-daemon-pid)"
+    if [[ "$PID" ]]; then
+        if [[ -f "$ALACRITTY_SOCKET" ]]; then
+            kill "$SIGNAL" "$PID"
+        else
+            err "daemon is running with PID '$PID', but socket '$ALACRITTY_SOCKET' is missing"
+            if [[ "$SIGNAL" = "-9" ]] || [[ "SIGNAL" = "-KILL" ]]; then
+                echo "trying to kill anyway, since the user passed SIGNAL '$SIGNAL'" >&2               kill "$SIGNAL" "$PID"
+            else
+                echo "not killing, since the user didn't pass signal -9 or -KILL" >&2
+                return 3
+            fi
+        fi
+    else
+        err "alacritty daemon PID not found"
+        return 2
+    fi
+}
+
+function restart-alacritty-daemon {
+    kill-alacritty-daemon && start-alacritty-daemon
+}
+
+if ! the-alacritty-daemon-is-running; then
+    start-alacritty-daemon
+fi
 
 #### Install Alacritty from source on MacOS
 

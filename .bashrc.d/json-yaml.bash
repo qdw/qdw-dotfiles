@@ -1,5 +1,24 @@
 #### JSON and YAML
 
+export JQ_COLORS="1;31:1;31:1;31:0;38:0;32:0;38:0:33"
+
+function pp {
+    local MANNAME="pretty-print
+SYNOPSIS
+    my-json-generating-program | pp [--json]
+    my-yaml-generating-program | pp --yaml
+
+    --json is the default. Only json and yaml are supported at present."
+
+    check-args 0 1 '[--json]' "$@" || return 1
+
+    case "$1" in
+        "" | "--json") jq -C | $PAGER ;;
+        "--yml" | "--yaml") yq -c | $PAGER ;;
+        *) err "unsupported format '$1'"; return 1 ;;
+    esac
+}
+
 function yv {
     if [[ $# -ne 1 ]]; then
         echo "yv: error: wrong number of arguments. Usage: yv YAML_KEY_NAME"
