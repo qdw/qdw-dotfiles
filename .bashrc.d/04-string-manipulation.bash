@@ -50,39 +50,37 @@ function paraln {
     awk "/$PARALN_REGEX/ {if (!f) {print NR \": \" \$0}; f=1} f && NF && !/$PARALN_REGEX/ {print NR \": \" \$0} /^$/ {f=0}"   "$@"
 }
 
-# fip (Filter In Place) - filter lines matching regex from a file,
-# modifying the file in-place to remove those lines. If you specify
-# multiple files, it does this to all of them.
 function fip {
-    # check-args 2 varargs
+    local MANNAME="filter in place
+SYNOPSIS
+    remove lines matching REGEX from FILE(s), modifying the files in-place.
+    Motivation: I prefer grep-style regexes to sed."
     
-    local FIP_REGEX="$1"
+    check-args 2 varargs 'REGEX FILE [FILE...]' "$@" || return 1
+    
+    local NEGEX="$1"
     shift
     
-    # if [[ "$1" = "-"  ]]; then
-    #     local LINE
-    #     while true; do
-    #         LINE="$(read)"
-    #         if [[ "$LINE" = "" ]]; then
-    
     for FILE in "$@"; do
-        command grep -vE "$FIP_REGEX" "$FILE" | sponge "$FILE"
+        command grep -vE "$NEGEX" "$FILE" | sponge "$FILE"
     done
 }
 
 ######## Unicode
 
-function zero-width-joiner {
-    echo -en '\u200D' | pbcopy
-}
+if on-macos; then
+    function zero-width-joiner {
+        echo -en '\u200D' | pbcopy
+    }
 
-function zwj {
-    zero-width-joiner "$@"
-}
+    function zwj {
+        zero-width-joiner "$@"
+    }
 
-function nbsp {
-    zero-width-joiner "$@"
-}
+    function nbsp {
+        zero-width-joiner "$@"
+    }
+fi
 
 ######## Perl
 

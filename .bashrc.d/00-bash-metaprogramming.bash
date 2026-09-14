@@ -350,18 +350,6 @@ function dirdo {
     return 0
 }
 
-function filter {
-    check-args 1 varargs "filter FUNCTION_NAME [FUNCTION_ARGUMENT ...]"
-
-    local FUNCTION_NAME="$1"
-    shift    
-    if [[ $# -eq 0 ]]; then
-        cat | "$FUNCTION_NAME"
-    else
-        "$FUNCTION_NAME" "$@"
-    fi
-}
-
 # # Broken somehow. Shell-quoting sucks.
 # function funcalias {
 #     check-args 2 2 'FUNCTION ALIAS' "$@" || return 1
