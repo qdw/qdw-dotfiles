@@ -67,16 +67,6 @@ function lw {
 
 #### #section-4#  OS-specific settings
 
-MY_OS="$(uname -s)"
-
-function on-macos {
-    [[ "$MY_OS" = "Darwin" ]]
-}
-
-function on-linux {
-    [[ "$MY_OS" =~ Linux ]]
-}
-
 if on-macos; then
     source-section "macos.bash"
 else

@@ -14,6 +14,7 @@ function printable {
 
 function bnw {
     local MANNAME="filter: remove ANSI color codes and control characters
+
 SYNOPSIS
     cat SOME_FILE SOME_OTHER_FILE | bnw | less
 "

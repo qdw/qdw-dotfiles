@@ -52,8 +52,9 @@ function paraln {
 
 function fip {
     local MANNAME="filter in place
+
 SYNOPSIS
-    remove lines matching REGEX from FILE(s), modifying the files in-place.
+    Remove lines matching REGEX from FILE(s), modifying the files in-place.
     Motivation: I prefer grep-style regexes to sed."
     
     check-args 2 varargs 'REGEX FILE [FILE...]' "$@" || return 1
@@ -82,7 +83,7 @@ if on-macos; then
     }
 fi
 
-######## Perl
+#### Perl
 
 # If some of the variables that I interpolated in my PATH are undefined,
 # then I will wind up with '::' in my PATH. That's equivalent to having

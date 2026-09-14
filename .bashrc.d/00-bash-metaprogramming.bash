@@ -211,6 +211,7 @@ function check-args {
             USAGE="
 NAME
     $CALLER - $MANNAME
+
 SYNOPSIS
      $SYNOPSIS
 "
@@ -470,4 +471,14 @@ function gfunc {
 
 function g-funk {
     gfunc "$@"
+}
+
+MY_OS="$(uname -s)"
+
+function on-macos {
+    [[ "$MY_OS" = "Darwin" ]]
+}
+
+function on-linux {
+    [[ "$MY_OS" =~ Linux ]]
 }

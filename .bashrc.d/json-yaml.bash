@@ -4,6 +4,7 @@ export JQ_COLORS="1;31:1;31:1;31:0;38:0;32:0;38:0:33"
 
 function pp {
     local MANNAME="pretty-print
+
 SYNOPSIS
     my-json-generating-program | pp [--json]
     my-yaml-generating-program | pp --yaml
