@@ -13,8 +13,7 @@ function source-section {
     source "$QBASHD/$SECTION"
 }
 
-#### #section-00#  My Bash metaprogramming library
-  ## (helper functions, argument checking, functional programming...)
+#### My Bash metaprogramming library
 
 source-section "00-bash-metaprogramming.bash" ### Bash "
 
@@ -159,9 +158,7 @@ source-section "completion.bash"
 
 ### Bash shell prompt
 
-# BASH_PROMPT_USE_PREFIX_EMOJI="yes"
 source-section "prompt.bash"
-source-section "git-prompt.bash"
 
 ### Bash history settings
 

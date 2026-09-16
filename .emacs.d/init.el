@@ -1034,7 +1034,10 @@ This command does the reverse of `fill-region'."
 
 ;;;; Settings for running interactive shells inside Emacs (via `M-x shell`)
 
-(setq-default shell-prompt-regexp "[~][/].*[$][ ]")
+;; Automatically update Emacs's variable that tracks the current working dir,
+;; iff the shell tells it to use by emitting OSC 7.
+(add-hook 'comint-output-filter-functions #'comint-osc-process-output)
+;; (setq-default shell-prompt-regexp "[~][/].*[$][ ]")
 
 (defun shell-dirstack-update (output)
   (when (string-match-p comint-prompt-regexp output)

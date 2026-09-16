@@ -140,16 +140,14 @@ LIMITATIONS
 #### Alacritty
 #### (see also the following section, "Install Alacritty from source on MacOS".
 
-## Use the Alacritty daemon, even though it is somewhat buggy.
-
-export ALACRITTY_SOCKET="$HOME/tmp/alacritty-socket"
-
 if on-macos; then
     export ALACRITTY_ROOT
     ALACRITTY_ROOT="$(which Alacritty.app 2>/dev/null)" \
         && export ALACRITTY_PATH="$ALACRITTY_ROOT/Contents/MacOS" \
         && export ALACRITTY_MANPATH="$ALACRITTY_ROOT/Contents/Resources/man"
 fi
+
+## Use the Alacritty daemon, even though it is somewhat buggy.
 
 function alacritty-daemon-pid {
     pgrep -U "$USER" -f -i "alacritty --daemon"
@@ -160,7 +158,7 @@ function the-alacritty-daemon-is-running {
 }
 
 function the-alacritty-socket-is-present {
-    test -f "$ALACRITTY_SOCKET"
+    [[ "$ALACRITTY_SOCKET" ]] && [[ -f "$ALACRITTY_SOCKET" ]]
 }
 
 function start-alacritty-daemon {
