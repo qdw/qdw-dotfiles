@@ -153,6 +153,16 @@ function other-mode {
     echo "$OTHER_MODE"
 }
 
+function change-alacritty-to {
+    check-args 1 1 "$MODE_SPEC" "$@" || return 1
+    local MODE="$1"
+    validate-mode "$MODE" || return 1
+
+    if [[ "$MODE" != "$(current-mode)" ]]; then
+        alacritty-change-theme-to "${MODE}-default.toml" # see ./terminal.bash
+    fi
+}
+
 function change-all-to {
     validate-mode "$@"
     local DESIRED_MODE="$1"
@@ -161,6 +171,7 @@ function change-all-to {
     if [[ "$CURRENT_MODE" = "$DESIRED_MODE" ]]; then
         return 0
     else
+        change-alacritty-to "$DESIRED_MODE"
         change-macos-to "$DESIRED_MODE"
         change-wallpaper-to "$DESIRED_MODE"
         change-emacs-to "$DESIRED_MODE"

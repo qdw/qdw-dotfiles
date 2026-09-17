@@ -2,7 +2,7 @@
 ########     00-bash-metaprogramming.bash
 ########     04-string-manipulation.bash
 ########     05-pager.bash
-########     [editor/emacs code in ~/.bashrc]
+########     06-editors.bash
 
 ######## Git: general settings (not specific to GitHub)
 

@@ -1,7 +1,6 @@
 ######## dependencies:
 ########     00-bash-metaprogramming.bash
-########     05-pager.bash
-########     [editor/emacs code in ~/.bashrc]
+########     04-pager.bash
 
 ######## Homebrew settings
 
@@ -17,7 +16,7 @@ export HOMEBREW_NO_UPDATE_REPORT_NEW="1"
 export HOMEBREW_NO_UPGRADE_QUIT_CASKS="1"
 export HOMEBREW_VERIFY_ATTESTATIONS="1"
 
-## Homebrewed alternatives to bundled system utilities
+## Homebrewed alternatives to bundled system utilities (mostly GNU)
 
 MY_LS_BASE_OPTIONS="--color=always -1F"
 MY_GNU_SPECIFIC_LS_OPTIONS="--group-directories-first"
@@ -206,7 +205,7 @@ function boser {
 
     # shellcheck disable=SC2068
     for FORMULA_NAME in ${OUTDATED_FORMULAE[@]}; do
-        if [[ -v ${BREW_SERVICE_NAMES[$FORMULA_NAME]} ]]; then
+        if [[ -v "${BREW_SERVICE_NAMES[$FORMULA_NAME]}" ]]; then
             echo "$FORMULA_NAME"
         fi
     done

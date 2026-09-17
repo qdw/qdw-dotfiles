@@ -1,35 +1,65 @@
 # shellcheck shell=bash
+# export QDW_DEBUG_BASH="yeah"
 
-set -o pipefail
 umask 0022
+set -o pipefail
 
-QSITED="$HOME/.site.bash.d" # not checked into git; specific to this machine
-
-function source-section {
-    local QBASHD="$HOME/.bashrc.d" # checked into git
-
-    local SECTION="$1" # filename including the ".bash"
-    # echo "sourcing section '$SECTION'"
-    source "$QBASHD/$SECTION"
+function source-if-exists {
+    if [[ -f "$1" ]]; then
+        source "$1"
+    else
+        return 254
+    fi
 }
 
-#### My Bash metaprogramming library
+# export QDW_TIMESTAMP="${EPOCHREALTIME/./}"
+function source-section {
+    local FILE="$1"
+    source "$HOME/.bashrc.d/$FILE"
 
-source-section "00-bash-metaprogramming.bash" ### Bash "
+    if [[ "$QDW_DEBUG_BASH" ]]; then
+        local WIDTH ELAPSED UNIT FILE
 
-#### #section-01#  Helper functions for debugging Bash code
+        if [[ "$QDW_TIMESTAMP" ]]; then
+            NOW="${EPOCHREALTIME/./}"
+
+            WIDTH=8
+            ELAPSED="$(( NOW - QDW_TIMESTAMP ))"
+            UNIT=" μs "
+
+            QDW_TIMESTAMP="$NOW"
+        else
+            WIDTH=0
+            ELAPSED=""
+            UNIT=""
+        fi
+
+        printf "%*s%ssourced section %s\n" "$WIDTH" "$ELAPSED" "$UNIT" "$FILE"
+    fi
+}
+
+## Numbered sections must be sourced in order.
+
+source-section "00-bash-metaprogramming.bash"
+
+QSITED="$HOME/.site.bash.d"
+source-if-exists "$QSITED/preamble.bash" ### machine-specific; git-ignored
+source-if-exists "$HOME/.secrets.bash" ### also exclulded from git
 
 source-section "01-bash-debugging.bash"
+source-section "02-grep.bash" ### grep; rg if present. Lots of customizations.
+source-section "03-pagers.bash" ### less; bat; pandoc->elinks for Markdown
+source-section "04-man.bash"
+source-section "04-fd.bash" ### search for files (modern find(1) replacement).
+source-section "04-string-manipulation.bash"
+source-section "05-homebrew.bash"
+source-section "06-editors.bash" ### text editors, especially the Emacs daemon.
+source-section "07-git.bash" ### generic git, plus GitHub.
 
-#### #section-2#  Local-only files (don't commit to git)
-  ## The following files shouldn't be checked into git 
-  ## (either because they contain secrets, or because they contain
-  ## third-party code with its own license)
+## Non-numbered sections SHOULD be sourced after numbered sections,
+## and MUST be sourced after 00-bash-metaprogramming.bash
 
-source-if-exists "$QSITED/preamble.bash"
-source-if-exists "$HOME/.secrets.bash"
-
-#### #section-3#  Time and date
+#### Time and date
 
 # Timestamp with time zone, no special chars, OK to interpolate into filenames
 
@@ -52,11 +82,21 @@ function ts-yaml {
     echo "$RETVAL"
 }
 
-#### String manipulation
+# d ("date") - give today's date in YYYY-MM-DD format.
+function d {
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    date +%Y-%m-%d
+}
 
-source-section "04-string-manipulation.bash" ### String manipulation
+function epoch2human {
+    # check-args 1 1 "epoch2human EPOCH_SECONDS"
+    local EPOCH_SECONDS="$1"
+    date -d "@${EPOCH_SECONDS}"
+}
 
-function lw {
+#### Files and stuff (maybe move to 00-bash-metaprogramming.bash?)
+
+function which-realpath {
     local MANNAME="show the real (non-symlink) path to an executable program"
     check-args 1 1 'PROGRAM_NAME' "$@" || return 1
     local PROG="$1"
@@ -64,7 +104,9 @@ function lw {
     realpath "$PTH"
 }
 
-#### #section-4#  OS-specific settings
+#### OS-specific settings
+
+source-section "unix.bash"
 
 if on-macos; then
     source-section "macos.bash"
@@ -76,27 +118,15 @@ fi
 
 source-section "network.bash"
 
-#### Editors, particularly Emacs
+#### Search: fzf
 
-source-section "editors.bash"
+# source-section "fzf.bash"
 
-#### search: grep
+#### .ignore files (honored by git, fd, and rg)
 
-source-section "02-grep.bash" ### grep (or rg, if installed). Lots of customizations.
+source-section "dot-ignore.bash"
 
-#### search: fd
-
-source-section "03-fd.bash" ### fd, a fast, modern replacement for find(1)
-
-#### search: fzf
-
-# source-section "04-fzf.bash"
-
-#### .ignore files
-
-source-section "dot-ignore.bash" ### helper functions for the .ignore files honored by git, fd, and rg
-
-#### Terminal emulators (including functions for working with ANSI SGR colors)
+#### Terminal emulators (including helper functions for ANSI SGR colors)
 
 source-section "terminal.bash"
 
@@ -122,7 +152,7 @@ function cd3 { cd "$HOME/src-3/$1" ;}
 function cd1 { cd "$HOME/src/1/$1" ;}
 function cds { cd "$HOME/symlinks" ;}
 
-# If the argument is a symlink, resolve it and then cd to the enclosing dir
+# #FIXME: clean up comments; move to SYNOPSIS -> If the argument is a symlink, resolve it and then cd to the enclosing dir
 # of the file that it point to.
 #
 # If the user passes no arguments, then do that to the directory portion
@@ -150,17 +180,77 @@ function cdl {
     fi
 }
 
-#### Bash
+# cdr ("CD Realpath") - cd to the enclosing directory that a symlink points to
 
-### Bash completion
+function cdr {
+    check-args 1 1 'FILE_OR_DIRECTORY' "$@" || return 1
+    REALPATH="$(realpath "$1")"
+
+    local DIR
+    if [[ -d "$REALPATH" ]]; then
+        DIR="$1"
+    else
+        DIR="$(dirname "$REALPATH")"
+    fi
+    
+    cd "$REALDIR"
+}
+
+function mcd {
+    local DIRNAME
+    DIRNAME="$1"
+    mkdir "$DIRNAME" \
+        && cd "$DIRNAME"
+}
+
+# Tell file(1) to report symlinks as symlinks.
+
+function file { command file --no-dereference "$@" ;}
+
+# path - given a relative path, print its relative path. Does not dereference symlinks. Does not work on absolute paths; hence does not work for tilde expansion.
+function path {
+    local REL_PATH ABS_PATH
+    REL_PATH="$1"
+    ABS_PATH="$(pwd)/$REL_PATH"
+
+    if [[ ! -e "$ABS_PATH" ]]; then
+        echo "Error: file '$ABS_PATH' does not exist"
+    else
+        # If path starts with home dir, convert to tilde notation.
+        ABS_PATH="${ABS_PATH/#${HOME}\//~/}"
+        echo "$ABS_PATH" | tee >(pbcopy)
+    fi
+}
+
+# flast - print the first and last lines of a file
+function flast {
+    local FILENAME
+    FILENAME="$1"
+
+    head -1 "$FILENAME" | awk '{ print $1, $2; }'
+    tail -1 "$FILENAME" | awk '{ print $1, $2; }'
+}
+
+# line N FILE - show line N of file FILE
+function line {
+    local LINE_NUMBER FILENAME
+    LINE_NUMBER="$1"
+    FILENAME="$2"
+
+    head "-${LINE_NUMBER}" "$FILENAME" | tail -1
+}
+
+######## Bash customizations
+
+#### Bash completion
 
 source-section "completion.bash"
 
-### Bash shell prompt
+#### Bash shell prompt
 
 source-section "prompt.bash"
 
-### Bash history settings
+#### Bash history settings
 
 # Add a timestamp to history(1) output, using strftime(3) formatting.
 export HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
@@ -192,20 +282,6 @@ function shells {
     | sort
 }
 
-#### Pagers: GNU less and bat
-
-source-section "05-pager.bash" ### Pager (GNU less plus bash)
-
-### man
-
-# # Tell man to display pages in color
-# # Section headings? (bold orange)
-# export LESS_TERMCAP_mb=$'\e[1;2;130m'
-# # Program name? (bold purple)
-# export LESS_TERMCAP_md=$'\e[1;4;20m'
-# # Option names (dull blue)
-# export LESS_TERMCAP_us=$'\e[0;9;25m'
-
 #### Makefiles
 
 function make-targets {
@@ -216,17 +292,11 @@ function make-rules {
     command grep -E --color=never '[[:alpha:]]+:' Makefile
 }
 
-#### Markdown
-
-function markdown2html {
-    pandoc "$1" -t html
-}
-
 #### AI
 
 source-section "ai.bash"
 
-#### fortune(1), an ancient BSD app that prints a random message from a file
+#### fortune(1), an old BSD app that prints a random message from a file
 
 function fortune {
     check-args 0 1 '[MY_FORTUNE_FILE] # default is "$HOME/fortunes/default"' \
@@ -242,49 +312,12 @@ function fortune {
 
 #### AWS
 
-if [[ "$USE_FEATURE_AWS" ]]; then
-    source-section "aws.bash"
-fi
+# source-section "aws.bash" ### slow, so just source manually if needed
 
-# cdr ("CD Realpath") - cd to the enclosing directory that a symlink points to
+#### Improvements on core Unix commands #FIXME: maybe move this to macos.bash/linux.bash... actually, I should have a unix.bash, shouldn't I?
 
-function cdr {
-    check-args 1 1 'FILE_OR_DIRECTORY' "$@" || return 1
-    REALPATH="$(realpath "$1")"
-
-    local DIR
-    if [[ -d "$REALPATH" ]]; then
-        DIR="$1"
-    else
-        DIR="$(dirname "$REALPATH")"
-    fi
-    
-    cd "$REALDIR"
-}
-
-# Tell file(1) to report symlinks as symlinks.
-
-function file { command file --no-dereference "$@" ;}
-
-# path - given a relative path, print its relative path. Does not dereference symlinks. Does not work on absolute paths; hence does not work for tilde expansion.
-function path {
-    local REL_PATH ABS_PATH
-    REL_PATH="$1"
-    ABS_PATH="$(pwd)/$REL_PATH"
-
-    if [[ ! -e "$ABS_PATH" ]]; then
-        echo "Error: file '$ABS_PATH' does not exist"
-    else
-        # If path starts with home dir, convert to tilde notation.
-        ABS_PATH="${ABS_PATH/#${HOME}\//~/}"
-        echo "$ABS_PATH" | tee >(pbcopy)
-    fi
-}
-
-# qp ("qdw-dotfiles Push")
-function qp { cdq && git add . && git commit && git push && cd - ;}
-
-#### Improvements on core Unix commands
+function dos2unix { perl -pie 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
+function unix2dos { perl -pie ' s{$}{\r}x; ' "$@" ;}
 
 if command-exists rsync; then
     function cp {
@@ -429,10 +462,6 @@ export FTP_LOGIN=anonymous
 export FTP_PASSIVE_MODE=yes
 export FTP_PASSWORD=""
 
-#### Git, GitHub, gitlawb
-
-source-section "06-git.bash" ### Git, GitHub, gitlawb
-
 #### Kubernetes (and OpenShift) settings
 
 function oc {
@@ -473,9 +502,19 @@ function minilube { minikube "$@" ;}
 
 source-section "postgresql.bash"
 
-#### IRL settings
+######## ometers
 
-## PurpleAir air quality monitor settings
+#### Aranet4 air quality monitoring settings
+
+function co2  {
+    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read -r "$MY_ARANET4" 2> /dev/null | jq ".co2"
+}
+
+function co2-verbose {
+    echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
+}
+
+#### PurpleAir air quality monitor settings
 
 function air {
     local RESPONSE_FILE
@@ -561,27 +600,13 @@ function yak {
     todo "$@"
 }
 
-#### Haskell
-
-# # Nope, defaulting to $HOME/.local/bin instead
-# HASKELL_PATH="$HOME/.cabal/bin"
+#### Python
 
 source-section "python.bash"
-
-#### Aranet4 air quality monitoring settings
-
-function co2  {
-    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read -r "$MY_ARANET4" 2> /dev/null | jq ".co2"
-}
-
-function co2-verbose {
-    echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
-}
 
 #### Tor
 
 function tor-curl { curl --socks4a 127.0.0.1:9050 "$@" ;}
-function torcurl { tor-curl "$@" ;}
 
 #### TypeScript/Deno
 
@@ -714,67 +739,7 @@ source "$HOME/.cargo/env"
 
 #### Network
 
-function ips {
-    /sbin/ifconfig -a \
-        | command grep --color=never 'inet ' \
-        | command grep --color=never -v 'inet6 ' \
-        | grep 'inet'
-}
-
-function ipv6 {
-    /sbin/ifconfig -a \
-        | grep 'inet6 '
-}
-
-function whois {
-    carp "warning: whois is deprecated; using rdap instead"
-    rdap "$@" 2>&1 | $PAGER 
-}
-
-#### Miscellaneous
-
-# Change this terminal's background to the hex triplet passed in.
-function bghex {
-    # Example: 'bghex ff0000' to use a red background.
-    printf '\e]11;%s\a' "#${1}"
-}
-
-# flast - print the first and last lines of a file
-function flast {
-    local FILENAME
-    FILENAME="$1"
-
-    head -1 "$FILENAME" | awk '{ print $1, $2; }'
-    tail -1 "$FILENAME" | awk '{ print $1, $2; }'
-}
-
-# line N FILE - show line N of file FILE
-function line {
-    local LINE_NUMBER FILENAME
-    LINE_NUMBER="$1"
-    FILENAME="$2"
-
-    head "-${LINE_NUMBER}" "$FILENAME" | tail -1
-}
-
-function mcd {
-    local DIRNAME
-    DIRNAME="$1"
-    mkdir "$DIRNAME" \
-        && cd "$DIRNAME"
-}
-
-# mhost ("Map to Host(s)") - repeatedly execute a command on a list of hostnames (passing in each hostname as the command's last arg)
-function mhost {
-    COMMAND="$1"; shift
-    for NODE in "$@"; do
-        echo "$NODE"
-        echo "=="
-        echo
-        "$NODE" "$COMMAND"
-        echo
-    done
-}
+source-section "network.bash"
 
 #### Processes
 
@@ -782,11 +747,7 @@ source-section "proc.bash"
 
 #### Set operations
 
-# source-section "sets.bash"
-
-#### Slack
-
-# source-section "slack.bash"
+# source-section "set-operations.bash"
 
 #### POTS telephony
 
@@ -817,80 +778,6 @@ function newspapers {
     cast-text "$@"
 }
 
-#### Miscellaneous-merge
-
-# d ("date") - give today's date in YYYY-MM-DD format.
-function d {
-    check-args 0 0 '[no arguments]' "$@" || return 1
-    date +%Y-%m-%d
-}
-
-function epoch2human {
-    # check-args 1 1 "epoch2human EPOCH_SECONDS"
-    local EPOCH_SECONDS="$1"
-    date -d "@${EPOCH_SECONDS}"
-}
-
-function dos2unix { perl -pe 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
-
-#### Mac-specific settings-merge
-
-function macos-gui {
-    on-macos && test -t 1 && pgrep -xq WindowServer
-}
-
-function df {
-    if on-macos; then
-        dfr "$@"
-    else
-        df "$@"
-    fi
-}
-
-function dfr {
-    local MANNAME="show mounted disks only, not other devices"
-    check-args 0 1 '--no-gui' "$@" || return 1
-    local NO_GUI="$1"
-
-    if ! on-macos; then
-        df -h | head -1
-        df -h | command grep ^/
-        return
-    else
-        err "CLI df is broken on macOS; it doesn't grok APFS pooling"
-        if [[ "$NO_GUI" ]]; then
-            err "and you passed --no-gui, so I'm bailing out"
-            return 2
-        elif ! macos-gui; then
-            err "can't find the GUI. Are you in single-user mode?"
-            return 3
-        else
-            function open_settings_storage {
-                _stderr "dfr: opening Settings.app > Storage"
-                open "x-apple.systempreferences:com.apple.settings.Storage"
-            }
-
-            if [[ "$DF_USE_MACOS_GUI" ]]; then
-                open_settings_storage
-                return 3
-            else
-                local USER_REPLY
-                read -rp \
-                     "Open the Settings > Storage GUI? [y/N] " \
-                     USER_REPLY
-                case "$USER_REPLY" in
-                    [yY]) open_settings_storage; return 4;;
-                       *) return 5;;
-                esac
-            fi
-        fi
-    fi
-}
-
-function mac-free-space {
-    open "x-apple.systempreferences:com.apple.settings.Storage"
-}
-
 # ff [PROFILE_NAME] - run Firefox with a profile. No args? Open the dialog box to list/create profiles.
 function ff {
     FIREFOX_EXECUTABLE="/Applications/Firefox.app/Contents/MacOS/firefox-bin"
@@ -903,8 +790,6 @@ function ff {
         "$FIREFOX_EXECUTABLE" -p & exit
     fi
 }
-
-function ho { command grep -E "Host .*${1}" ~/.ssh/*conf* ;}
 
 # mr ("mount real") - show all mounted devices that are actually disks (see also dfr).
 function mr {
@@ -922,20 +807,6 @@ function rmds {
     rmdir "$1"
 }
 
-# FIXME: doesn't work
-# function stanza {
-#     check-args 1 1 'PATTERN' "$@" || return 1
-#     local PATTERN="$1"
-
-#     para "$PATTERN" ~/.ssh/*.config \
-#         | command grep -e '^' -e "$PATTERN"
-# }
-
-# shn ("SSH hostname") - print the canonical hostname for a ~/.ssh/config alias.
-function shn {
-    command grep -A 1 "$1" ~/.ssh/*config* | tail -1 | awk '{ print $3; }'
-}
-
 #### tmux
 
 # ta $SESSION_NAME ("Tmux Attach") - attach to named session, creating if needed
@@ -946,7 +817,7 @@ function ta {
         local SESSION_NAME="$1"
 
         if ! tmux has-session -t "$SESSION_NAME" 2> /dev/null; then
-	        tmux new-session -s "$SESSION_NAME"
+            tmux new-session -s "$SESSION_NAME"
         else
             tmux attach-session -t "$SESSION_NAME"
         fi
@@ -958,6 +829,8 @@ function tl {
     check-args 0 0 '[no arguments]' "$@" || return 1
     tmux list-sessions 2>/dev/null
 }
+
+#### Tor
 
 # tor_wget URL1 [DEST_PATH]: get the contents of a URL, using Tor for anonymity.
 function tor_wget {
@@ -972,37 +845,17 @@ function tor_on { export HTTP_PROXY="http://127.0.0.1:8118/"; export http_proxy=
 # tor_off: stop proxying this shell's HTTP traffic through Tor.
 function tor_off { unset HTTP_PROXY http_proxy ;}
 
-# unix2dos FILE1 ...: translate-in-place newlines to the DOS convention (CRLF).
-function unix2dos { /usr/bin/perl -pi -e ' s{$}{\r}x; ' "$@" ;}
-
 # unrar_plural FILE1 ...: because unraring files one by one is tiresome.
 function unrar_plural { for f in *rar; do unrar x -o+ "$f" .; done ;}
 
 # xb ("xbindkeys") - reload custom (xbindkeys) X11 keybindings.
 function xb { killall --user "$USER" xbindkeys && xbindkeys ;}
 
-# Make it so Ctrl-S and Ctrl-Q aren't interpreted as software flow control
-# characters, messing up your terminal (see http://catern.com/posts/terminal_quirks.html).
-# This also frees up Ctrl-Q for use as the tmux prefix key.
-if (shopt -q login_shell   &&  tty > /dev/null 2>&1); then
-    stty -ixon -ixoff > /dev/null 2>&1
-fi
-
-#### Perl-merge: Perlbrew settings (this must come after the part in this file where PATH is set):
-
-function activate-perlbrew { my-source ~/perl5/perlbrew/etc/bashrc ;}
-function perlbrew-activate { activate-perlbrew ;}
-
-function psql-tips { links ~/src/psql-tips/html/psql_tips_all.html ;}
-function tips { psql-tips "$@" ;}
 function mutt { neomutt "$@" ;}
 
 #### Functions for exercising various web APIs
 
 source-section "www.bash"
-# source-section "jenkins.bash"
-# source-section "jira.bash"
-
 
 #### Music
 
@@ -1131,46 +984,21 @@ source-section "json-yaml.bash"
 
 source-section "c.bash"
 
-#### PATH
+#### Apps that I don't really like, but use for work
 
-CURL_PATH="$HOMEBREW_ROOT/opt/curl/bin"
+# source-section "jenkins.bash"
+# source-section "jira.bash"
+# source-section "slack.bash"
 
-export PATH="$CURL_PATH:$SUBL_PATH:$RUST_PATH:/usr/local/opt/ccache/libexec:$LUA51_PATH:/bin:$LUAROCKS_PATH:$NODE_PATH:$RUBY_PATH:$PYTHON_INTERPRETER_PATH:$PYTHON_PIPX_PATH:$PGPATH:/usr/local/bin:/usr/local/sbin:$HASKELL_PATH:$MY_HOMEBREW_PATH:/usr/bin:/usr/sbin:/bin:/sbin:$GOPATH/bin:$HOME/bin:$HOME/bin/color:$HOME/bin/iterm2:$HOME/bin/macos:$HOME/bin/emacs:$HOME/bin/3:$HOME/.local/bin:/usr/local/opt/ncurses/bin:$HOME/bin/site:$HOME/bin/site/upsa:$SCSH_PATH:$HOME/ai/bin:/opt/sidplayfp/bin:$GITLAWB_PATH:$QT_PATH:$ALACRITTY_PATH"
+#### Set PATH, MANPATH, et cetera
 
-# Account for the fact that some of those interpolated env vars may be empty.
+# BASH_PID=$$
+# echo; echo "Bash PID is $BASH_PID"; echo
+# read -p "Press enter once you've started ptrace> "
+# setx
+source-section "zz-paths.bash"
+# set -x
 
-function print-without-empty-paths {
-    check-args 1 1 'MY_PATH' "$@" || return 1
-    local PTH="$1"
+#### Source any final machine-specific code.
 
-    ORIG_EXTGLOB=$(shopt -p extglob)
-    shopt -s extglob
-    PTH="${PTH//+(:)/:}"    # Collapse runs of colons to single colon.
-    PTH="${PTH#:}"          # Strip leading colon, if any.
-    PTH="${PTH%:}"          # Strip trailing colon, if any.
-    $ORIG_EXTGLOB
-    echo "$PTH"
-}
-
-export PATH="$(print-without-empty-paths "$PATH")"
-
-## C libraries
-
-# "CPP" in this case means "C preprocesor," not C++.
-export CPPFLAGS="$LUA51_CPPFLAGS $RUBY_CPPFLAGS"
-export LDFLAGS="$LUA51_LDFLAGS $SCSH_LDFLAGS $RUBY_LDFLAGS"
-export PKG_CONFIG_PATH="${RUBY_PKG_CONFIG_PATH}"
-
-if on-macos; then
-    export SDKROOT="$(xcrun --show-sdk-path)"
-fi
-
-## man settings
-
-export MANPATH="$HOME/.local/share/man:$HOMEBREW_MANPATH:/usr/share/openssl/man:$HOME/share/man:/usr/share/man:/usr/local/share/man:/usr/local/man:$ALACRITTY_MANPATH"
-
-export MANPATH="$(print-without-empty-paths "$MANPATH")"
-
-#### #section-8#  Site-specific stuff, not stored in git
-
-source-if-exists "$HOME/.site.bash.d/postamble.bash"
+source-if-exists "$QSITED/postamble.bash"

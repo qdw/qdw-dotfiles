@@ -25,8 +25,8 @@ function tsgrep {
 
 function gfd {
     check-args 1 1 'gfd REGEX' "$@" || return 1
-	local GFD_REGEX="$1"
-	(fd -i "$GFD_REGEX"; g -i "$GFD_REGEX") | $PAGER
+    local GFD_REGEX="$1"
+    (fd -i "$GFD_REGEX"; g -i "$GFD_REGEX") | $PAGER
 }
 
 function fdgrep {

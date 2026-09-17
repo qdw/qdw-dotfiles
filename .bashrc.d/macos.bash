@@ -5,7 +5,6 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-source-section "0x-homebrew.bash"
 if [[ -f "$HOMEBREW_BIN/trash" ]]; then
     # function rm {
     #     "$HOMEBREW_BIN/trash" -F "$@"
@@ -15,9 +14,7 @@ if [[ -f "$HOMEBREW_BIN/trash" ]]; then
     }
 fi
 
-
-
-source-section "macos-apps.bash" ### Shortcuts for macOS apps, e.g. Mail, Mail.app, Finder, Finder.app
+# source-section "macos-apps.bash" ### Shortcuts for macOS apps, e.g. Mail, Mail.app, Finder, Finder.app
 
 source-section "macos-light-and-dark.bash" ### Set light/dark mode in all apps, web pages, and other contexts
 source-section "macos-app-completion.bash" ### Make 'la SUBSTRING tab' complete on macOS app names
@@ -144,9 +141,8 @@ function exe {
         err "couldn't find a macOS app named '$APP_NAME_INCLUDING_EXT'"
     else
         local EXE_DIR="$APP_DIR/Contents/MacOS"
-        shopt -s nullglob
+        trap - DEBUG
         local -a EXE_FILES=($EXE_DIR/*)
-        shopt -u nullglob
         N_EXE=${#EXE_FILES[@]}
         if [[ "$N_EXE" -eq 0 ]]; then
             err "found no executables in '$EXE_DIR'"
@@ -158,159 +154,79 @@ function exe {
     fi
 }
 
-function darwin-version {
-    uname -r
+function macos-or-osx {
+    sw_vers -productName
+}
+
+function macos-codename {
+    macos-codename-for-darwin-version
 }
 
 function macos-version {
-    echo "$(sw_vers -productName) $(sw_vers -productVersion)"
+    sw_vers -productVersion
 }
 
-function macos-version-for-darwin-version {
-    check-args 0 2 '[--codename-only | --number-only] DARWIN_VERSION_NUMBER # example: 24.6.5' "$@" \
-        || return 1
+function kernel-name {
+    uname -s
+}
 
-    local DARWIN_VERSION CODENAME MACOS MACOSVER
+function kernel-version {
+    uname -r
+}
+
+function darwin-version {
+    kernel-version
+}
+
+function build-version {
+    sw_vers -buildVersion
+}
+
+function macos-version-verbose {
+    echo "$(macos-or-osx) $(macos-codename) $(macos-version) ($(kernel-name) $(kernel-version)), build $(build-version)"
+}
+
+function macos-codename-for-darwin-version {
+    check-args 0 1 '[DARWIN_VERSION_NUMBER]' "$@" || return 1
+
+    local DARWIN_VERSION
     if [[ $# -eq 0 ]]; then
         DARWIN_VERSION="$(darwin-version)" # the currently running version
     else
-        DARWIN_VERSION="${_[-1]}"
+        DARWIN_VERSION="$1"
     fi
     
     local DARWIN_MAJOR_VERSION="${DARWIN_VERSION%%.*}"
+
     case "$DARWIN_MAJOR_VERSION" in
-        "1.3") CODENAME="Cheetah"
-               MACOS="Mac OS X"
-               MACOSVER="10.0"
-               ;;
-        "1.4"|"1.5") CODENAME="Puma"
-                     MACOS="Mac OS X"
-                     MACOSVER="10.1"
-                     ;;
-        "6") CODENAME="Jaguar"
-             MACOS="Mac OS X"
-             MACOSVER="10.2"
-             ;;
-        "7") CODENAME="Panther"
-             MACOS="Mac OS X"
-             MACOSVER="10.3"
-             ;;
-        "8") CODENAME="Tiger"
-             MACOS="Mac OS X"
-             MACOSVER="10.4"
-             ;;
-        "9") CODENAME="Leopard"
-             MACOS="Mac OS X"
-             MACOSVER="10.5"
-             ;;
-       "10") CODENAME="Snow Leopard"
-             MACOS="Mac OS X"
-             MACOSVER="10.6"
-             ;;
-       "11") CODENAME="Lion"
-             MACOS="Mac OS X"
-             MACOSVER="10.7"
-             ;;
-       "12") CODENAME="Mountain Lion"
-             MACOS="Mac OS X"
-             MACOSVER="10.8"
-             ;;
-       "13") CODENAME="Mavericks"
-             MACOS="Mac OS X"
-             MACOSVER="10.9"
-             ;;
-       "14") CODENAME="Yosemite"
-             MACOS="Mac OS X"
-             MACOSVER="10.10"
-             ;;
-       "15") CODENAME="El Capitan"
-             MACOS="Mac OS X"
-             MACOSVER="10.11"
-             ;;
-       "16") CODENAME="Sierra"
-             MACOS="macOS"
-             VERSION="10.12"
-             ;;
-       "17") CODENAME="High Sierra"
-             MACOS="macOS"
-             VERSION="10.13"
-             ;;
-       "18") CODENAME="Mojave"
-             MACOS="macOS"
-             VERSION="10.14"
-             ;;
-       "19") CODENAME="Catalina"
-             MACOS="macOS"
-             VERSION="10.15"
-             ;;
-       "20") CODENAME="Big Sur"
-             MACOS="macOS"
-             VERSION="11"
-             ;;
-       "21") CODENAME="Monterey"
-             MACOS="macOS"
-             VERSION="12"
-             ;;
-       "22") CODENAME="Ventura"
-             MACOS="macOS"
-             VERSION="13"
-             ;;
-       "23") CODENAME="Sonoma"
-             MACOS="macOS"
-             VERSION="14"
-             ;;
-       "24") CODENAME="Sequoia"
-             MACOS="macOS"
-             VERSION="15"
-             ;;
-       "25") CODENAME="Tahoe"
-             MACOS="macOS"
-             VERSION="26"
-             ;;
-          *) err "unrecognized Darwin version '${DARWIN_MAJOR_VERSION}'; update this bash function"
-             return 2
-             ;;
+        "1.3") CODENAME="Cheetah";;
+        "1.4"|"1.5") CODENAME="Puma";;
+        "6") CODENAME="Jaguar";;
+        "7") CODENAME="Panther";;
+        "8") CODENAME="Tiger";;
+        "9") CODENAME="Leopard";;
+       "10") CODENAME="Snow Leopard";;
+       "11") CODENAME="Lion";;
+       "12") CODENAME="Mountain Lion";;
+       "13") CODENAME="Mavericks";;
+       "14") CODENAME="Yosemite";;
+       "15") CODENAME="El Capitan";;
+       "16") CODENAME="Sierra";;
+       "17") CODENAME="High Sierra";;
+       "18") CODENAME="Mojave";;
+       "19") CODENAME="Catalina";;
+       "20") CODENAME="Big Sur";;
+       "21") CODENAME="Monterey";;
+       "22") CODENAME="Ventura";;
+       "23") CODENAME="Sonoma";;
+       "24") CODENAME="Sequoia";;
+       "25") CODENAME="Tahoe";;
+
+       *) err "unrecognized Darwin version '${DARWIN_MAJOR_VERSION}'" >&2
+          return 1;;
     esac
 
-    if [[ $# -eq 0 ]]; then
-        MACOS="$(sw_vers --productName)"
-        VERSION="$(sw_vers --productVersion)"
-    fi
-
-    _format_macos_version "$CODENAME" "$MACOS" "$MACOSVER"
-}
-
-function _format_macos_version {
-    check-args \
-        3 4 \
-        '[--codename-only | --macos-only] MACOS CODENAME VERSION' "$@" \
-      || return 1
-
-    local FLAG MACOS CODENAME VERSION
-
-    if [[ $# -eq 3 ]]; then
-        FLAG="$1"
-        shift
-    fi
-
-    MACOS="$1"
-    CODENAME="$1"
-    VERSION="$2"
-
-    case "$FLAG" in
-        "") echo "$CODENAME ($MACOS $VERSION)";;
-        "--codename-only") echo "$CODENAME";;
-        "--macos-only") echo "$MACOS $VERSION";;
-        *) err "invalid option '$FLAG'"; return 1;;
-    esac
-}
-
-function uname {
-    if [[ $# -eq 1 ]] && [[ "$1" = "-x" ]]; then
-        print-macos-version-codename
-    else
-        command uname "$@"
-    fi
+    echo "$CODENAME"
 }
 
 function gnu-mtime-seconds {
@@ -475,4 +391,60 @@ function run-anyway {
     fi
         
     xattr -dr com.apple.quarantine "$FULL_PATH"
+}
+
+function macos-gui {
+    on-macos && test -t 1 && pgrep -xq WindowServer
+}
+
+function df {
+    if on-macos; then
+        dfr "$@"
+    else
+        df "$@"
+    fi
+}
+
+function dfr {
+    local MANNAME="show mounted disks only, not other devices"
+    check-args 0 1 '--no-gui' "$@" || return 1
+    local NO_GUI="$1"
+
+    if ! on-macos; then
+        df -h | head -1
+        df -h | command grep ^/
+        return
+    else
+        err "CLI df is broken on macOS; it doesn't grok APFS pooling"
+        if [[ "$NO_GUI" ]]; then
+            err "and you passed --no-gui, so I'm bailing out"
+            return 2
+        elif ! macos-gui; then
+            err "can't find the GUI. Are you in single-user mode?"
+            return 3
+        else
+            function open_settings_storage {
+                _stderr "dfr: opening Settings.app > Storage"
+                open "x-apple.systempreferences:com.apple.settings.Storage"
+            }
+
+            if [[ "$DF_USE_MACOS_GUI" ]]; then
+                open_settings_storage
+                return 3
+            else
+                local USER_REPLY
+                read -rp \
+                     "Open the Settings > Storage GUI? [y/N] " \
+                     USER_REPLY
+                case "$USER_REPLY" in
+                    [yY]) open_settings_storage; return 4;;
+                       *) return 5;;
+                esac
+            fi
+        fi
+    fi
+}
+
+function mac-free-space {
+    open "x-apple.systempreferences:com.apple.settings.Storage"
 }

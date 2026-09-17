@@ -4,7 +4,7 @@
 
 ## Part 1/2: user-configurable settings
 
-PROMPT_EMIT_OSC_7="yes"
+# PROMPT_EMIT_OSC_7="yes"
 PROMPT_INCLUDE_HOST_EMOJI=
 PROMPT_INCLUDE_GIT="yes"
 PROMPT_ENABLE_GIT_COMPLETION="yes"

@@ -6,10 +6,10 @@ for MODEL_DIR in "$HOME/ai/models"/*; do
     MODEL_NAME="$(basename "$MODEL_DIR")"
     if [[ $MODEL_NAME =~ [a-zA-Z]+ ]]; then
         SHORT_NAME="${BASH_REMATCH[0]}"
-        LC="${SHORT_NAME,,}"
+        SHORTNAME="${SHORT_NAME,,}"
     
-        OLLAMA_FUNCNAME="$LC-ollama"
-        LLAMAFILE_FUNCNAME="$LC-llamafile"
+        OLLAMA_FUNCNAME="$SHORTNAME-ollama"
+        LLAMAFILE_FUNCNAME="$SHORTNAME-llamafile"
 
         eval "
             function $OLLAMA_FUNCNAME {

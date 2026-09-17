@@ -1,16 +1,16 @@
 ########     dependencies:
 ########         00-bash-metaprogramming.bash
 ########         02-grep.bash
-########         pager.bash
+########         03-pager.bash
 ########     third-party dependencies:
-########         moreutils (for the sponge-command):
+########         moreutils (for the 'sponge' command):
 ########         One True Awk (preferred, but your OS's awk probably works).
 ########     optional third-party dependencies:
-########         a terminal emulator that supports Unicode
-########         a terminal-emulator font that supports Unicode
+########         a terminal emulator that supports Unicode,
+########             using a font that supports Unicode
 
 function lisp-case {
-    local MANNAME='"A Phrase with mixed Case" -> "a-phrase-with-mixed-case"'
+    local MANNAME='convert "A Phrase with mixed Case" to "a-phrase-with-mixed-case"'
     check-args 1 1 'STRING' "$@" || return 1
     local INPUT_STRING="$1"
     echo "$INPUT_STRING" | tr '[:upper:]' '[:lower:]' | sed 's/ /-/g'
@@ -67,7 +67,7 @@ SYNOPSIS
     done
 }
 
-######## Unicode
+#### Unicode
 
 if on-macos; then
     function zero-width-joiner {

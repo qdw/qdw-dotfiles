@@ -103,8 +103,13 @@ function g {
 
 function gbr {
     check-args 1 varargs 'gbr [ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
+
+    local REGEX="$1"
+    shift
+
     g \
         "$@" \
+        "$REGEX" \
         ~/.bashr* \
         ~/.*profile* \
         ~/.site.bash*

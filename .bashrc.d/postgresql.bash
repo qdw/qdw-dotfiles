@@ -79,6 +79,10 @@ CAVEATS
     _pg_run_binary "$BINARY" "$@"
 }
 
+function p-tips {
+    psql-tips "$@"
+}
+
 function pg_dump_roles {
     pg_dumpall --roles-only --no-role-passwords "$@"
 }

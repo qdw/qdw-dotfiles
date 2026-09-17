@@ -1,14 +1,25 @@
 [general]
 import = [
-    "themes/tritium.toml"
+    "themes/current.toml"
 ]
 
+[colors.cursor]
+text = '0x000000'
+cursor = '0xff7f00'
+
 [terminal]
+# osc52 = "OnlyCopy"
 osc52 = "Disabled"
+
+[window]
+position = { x = 0, y = 0 }
+dimensions = { lines = 25, columns = 80 }
+option_as_alt = "OnlyRight"
 
 [cursor]
 style = { shape = "Block", blinking = "Never" }
 unfocused_hollow = true
+
 
 [font]
 size = 15

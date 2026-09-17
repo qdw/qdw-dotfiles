@@ -367,32 +367,6 @@ function exalias {
     eval "function $FUNCTION_NAME { command $EXE \"\$@\" ;}"
 }
 
-function source-if-exists {
-    check-args 1 1 'FILE' "$@"
-    local FILE="$1"
-    if [[ -f "$FILE" ]]; then
-        my-source "$FILE"
-    else
-        return 2
-    fi
-}
-
-function my-source {
-    check-args 1 1 "my-source FILE" "$@"
-    local FILE="$1"
-
-    if [[ "$MY_DEBUG_BASH" ]]; then
-        SECONDS=0
-    fi
-
-    source "$FILE" || return 1
-
-    if [[ "$MY_DEBUG_BASH" ]]; then
-        echo "sourced '$FILE' in $SECONDS seconds"
-    fi
-}
-
-
 # USE_GREP_TO_PRINT_BASH_DEPS="yeah"
 function deps-bash {
     local ORIG_DIR="$(pwd)"
@@ -473,12 +447,10 @@ function g-funk {
     gfunc "$@"
 }
 
-MY_OS="$(uname -s)"
-
 function on-macos {
-    [[ "$MY_OS" = "Darwin" ]]
+    [[ "$OSTYPE" =~ darwin ]]
 }
 
 function on-linux {
-    [[ "$MY_OS" =~ Linux ]]
+    [[ "$OSTYPE" =~ Linux ]]
 }

@@ -1,5 +1,15 @@
 ######## Terminal emulators (including functions for working with ANSI SGR colors)
 
+# Make it so Ctrl-S and Ctrl-Q aren't interpreted as software flow
+# control characters, messing up your terminal[1]. This also frees up
+# Ctrl-Q for use as the tmux prefix key.
+# 
+# [1] http://catern.com/posts/terminal_quirks.html
+
+if tty > /dev/null 2>&1; then
+    stty -ixon -ixoff > /dev/null 2>&1
+fi
+
 ## Strip non-printable characters
 
 function printable {
@@ -86,6 +96,18 @@ function bash-color-test-pattern {
             echo
         done
     done
+}
+
+# Change this terminal's background to the hex triplet passed in.
+function bghex {
+    local MANPATH="change this terminal's background to HEX_COLOR
+EXAMPLE
+    # Use a red background.
+    bghex ff0000"
+
+    check-args 1 1 'HEX_COLOR' "$@" || return 1
+
+    printf '\e]11;%s\a' "#${1}"
 }
 
 ## Extensions common to most terminal emulators
@@ -219,9 +241,105 @@ function restart-alacritty-daemon {
     kill-alacritty-daemon && start-alacritty-daemon
 }
 
-if ! the-alacritty-daemon-is-running; then
-    start-alacritty-daemon
-fi
+function am {
+    alacritty msg "$@"
+}
+
+function amc {
+    local MANNAME="get alacritty config (or a subset thereof)
+
+SYNOPSIS
+    This function has two forms. The first is intended for interactive use,
+    and the seconds is intended for programmatic use.
+
+    amc # get all config as JSON with indentation, color, paging
+    amc JQ_EXPRESSION # get a value extracted by jq(1), no indent/color/paging
+
+SEE ALSO
+    jq(1)"
+
+    check-args 0 1 '[JQ_EXPRESSION]' "$@" || return 1
+    if [[ $# -eq 0 ]]; then
+        am get-config | jq --raw-output --color-output | $PAGER
+    else
+        local JQ_EXPR="$1"
+        am get-config | jq --raw-output --monochrome-output "$JQ_EXPR"
+    fi
+}
+
+function alacritty-get-imports {
+    amc '.["general"].["import"]'
+}
+
+function alacritty-change-theme-to {
+    check-args 1 1 'TOML_FILENAME' "$@" || return 1
+    local DESIRED_THEME_FILE="$1"
+    local LIVE_IMPORT_LIST="$(alacritty-get-imports)"
+    if [[ "$LIVE_IMPORT_LIST" =~ $DESIRED_THEME_FILE ]]; then
+        return
+    fi
+
+    local DRY_RUN
+    if [[ "$QDW_DEBUG_BASH" ]]; then
+        DRY_RUN="echo"
+    fi
+    
+    local ALACRITTY_CONFIG_DIR="$XDG_CONFIG_HOME/alacritty"
+    local THEME_DIR="$ALACRITTY_CONFIG_DIR/themes"
+    local DESIRED_THEME_PATH="$THEME_DIR/$DESIRED_THEME_FILE"
+    
+    local CURRENT_SYMLINK="$THEME_DIR/current.toml"
+    local CURRENT_THEME_PATH="$(realpath "$CURRENT_SYMLINK")"
+
+    if [[ "$DESIRED_THEME_PATH" != "$CURRENT_THEME_PATH" ]]; then
+        $DRY_RUN ln -sf "$DESIRED_THEME_PATH" "$CURRENT_SYMLINK"
+    fi
+
+    $DRY_RUN touch "$ALACRITTY_CONFIG_DIR/alacritty.toml"
+}
+
+function get-pos {
+    local AXIS="$1"
+    am get-config | jq '.["window"].["position"]["$AXIS"]'
+}
+
+X_ALACRITTY=
+Y_ALACRITTY=
+
+function an {
+    if [[ ! "$X_ALACRITTY" ]]; then
+        X_ALACRITTY="$(get-pos x)"
+        Y_ALACRITTY="$(get-pos y)"
+    else
+        X_ALACRITTY+=20
+        Y_ALACRITTY+=20
+    fi
+
+    am create-window \
+       -o "window.position.x=$X_ALACRITTY" \
+       -o "window.position.y=$Y_ALACRITTY"
+}
+
+function alacritty-rejigger-window-sizes {
+    osascript <<'END_REJ'
+    tell application "System Events"
+    tell process "Alacritty"
+        repeat with w in windows
+            try
+                set {ww, hh} to size of w
+                set size of w to {ww + 1, hh}
+                delay 0.05
+                set size of w to {ww, hh}
+            end try
+        end repeat
+    end tell
+end tell
+END_REJ
+}
+
+# if ! the-alacritty-daemon-is-running; then
+#     start-alacritty-daemon
+# fi
 
 #### Install Alacritty from source on MacOS
 
@@ -251,3 +369,14 @@ fi
 # ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty
 # ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty-direct
 
+# mhost ("Map to Host(s)") - repeatedly execute a command on a list of hostnames (passing in each hostname as the command's last arg)
+function mhost {
+    COMMAND="$1"; shift
+    for NODE in "$@"; do
+        echo "$NODE"
+        echo "=="
+        echo
+        "$NODE" "$COMMAND"
+        echo
+    done
+}

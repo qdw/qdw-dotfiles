@@ -15,3 +15,19 @@ function ip {
     fi
 }
 
+function ips {
+    /sbin/ifconfig -a \
+        | command grep --color=never 'inet ' \
+        | command grep --color=never -v 'inet6 ' \
+        | grep 'inet'
+}
+
+function ipv6 {
+    /sbin/ifconfig -a \
+        | grep 'inet6 '
+}
+
+function whois {
+    carp "warning: whois is deprecated; using rdap instead"
+    rdap "$@" 2>&1 | $PAGER 
+}

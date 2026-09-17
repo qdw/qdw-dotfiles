@@ -4,17 +4,14 @@
 [colors]
 draw_bold_text_with_bright_colors = true
 
-# Default colors
 [colors.primary]
 background = '0x000000'
 foreground = '0x767676'
 
-# Colors the cursor will use if `custom_cursor_colors` is true
 [colors.cursor]
 text = '0x000000'
 cursor = '0xff7f00'
 
-# Normal colors
 [colors.normal]
 black = '0x141414'
 red = '0xaf5f00'
@@ -25,7 +22,6 @@ magenta = '0xaf5faf'
 cyan = '0x028080'
 white = '0x767676'
 
-# Bright colors
 [colors.bright]
 black = '0x555555'
 red = '0xff7f00'

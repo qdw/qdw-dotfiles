@@ -34,3 +34,7 @@ function lwhich {
     done
     return 2
 }
+
+function perlbrew-activate {
+    source "$HOME/perl5/perlbrew/etc/bashrc"
+}

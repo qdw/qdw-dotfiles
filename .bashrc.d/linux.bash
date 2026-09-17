@@ -1,8 +1,4 @@
-function ldd {
-    command ldd "$@" | $PAGER
-}
-
-if command-exists xdg-open; then
+if command-exists "xdg-open"; then
     function open {
         xdg-open "$@"
     }

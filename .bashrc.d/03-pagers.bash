@@ -3,9 +3,9 @@
 ########     third-party dependencies:
 ########         GNU less
 
-set -a
+#### pager: less
 
-LESS="--RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
+export LESS="--RAW-CONTROL-CHARS --quit-if-one-screen --no-init --mouse"
 
 if [[ "$INSIDE_EMACS" ]]; then
     # Emacs shell-mode is a dumb terminal, so use special pager settings there.
@@ -34,17 +34,15 @@ else
     export PSQL_PAGER="less --no-init --mouse"
 fi
 
-ACK_PAGER="$PAGER"
-BAT_PAGER="$PAGER"
-MANPAGER="$PAGER"
+export ACK_PAGER="$PAGER"
+export BAT_PAGER="$PAGER"
+export MANPAGER="$PAGER"
 
-set +a
-
-######## Pager settings: experimental
+#### pager: alt experimental pager for, uh, I forget what
 
 export PPA='fmt -s -uw "$COLUMNS" | less'
 
-### bat, a colorizing cat(1) that understands many file formats
+#### pager: bat, a colorizing cat(1) that understands many file formats
 
 # export BAT_THEME="tritium" # can't get 'bat cache --build' to work
 export BAT_THEME="base16"
@@ -65,6 +63,8 @@ function bat-head {
     bat --line-range ":${NUMBER}" "$FILENAME"
 }
 
+#### Markdown
+
 # bbat - alternative pager hack for Markdown files with excessive inline hyperlinks that make them unreadable (for example, most README.md files on GitHub).
 
 function bbat {
@@ -73,4 +73,8 @@ function bbat {
     TMPFILE=$(gmktemp --suffix .html /tmp/bbat.XXXXXX) \
         && pandoc --from markdown --to html --reference-links "$@" > "$TMPFILE" \
         && elinks "$TMPFILE"
+}
+
+function markdown2html {
+    pandoc "$1" -t html
 }

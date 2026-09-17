@@ -8,7 +8,7 @@
 ########         00-bash-metaprogramming.bash
 ########         pager.bash
 
-#### Default text editor
+#### Default text editor(s)
 
 # Use Emacs as my default text editor,
 # but use Sublime Text (if installed) for certain apps.

@@ -1,5 +1,7 @@
 #### Web
 
+export CURL_PATH="$HOMEBREW_ROOT/opt/curl/bin"
+
 function brow { defaultbrowser "$@" ;}
 function brc { brow "chrome" ;}
 function brs { brow "safari" ;}
