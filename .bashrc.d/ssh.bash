@@ -6,6 +6,18 @@ function ssh-keygen {
     command ssh-keygen -t ed25519 "$@"
 }
 
+# mhost ("Map to Host(s)") - repeatedly execute a command on a list of hostnames (passing in each hostname as the command's last arg)
+function mhost {
+    COMMAND="$1"; shift
+    for NODE in "$@"; do
+        echo "$NODE"
+        echo "=="
+        echo
+        "$NODE" "$COMMAND"
+        echo
+    done
+}
+
 # mshost ("Map Ssh [to] Host(s)") - execute an ssh command on a list of hosts, with paragraphized output
 function mshost {
     REMOTE_COMMAND="$1"; shift

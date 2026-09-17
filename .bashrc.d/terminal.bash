@@ -160,7 +160,7 @@ LIMITATIONS
 }
 
 #### Alacritty
-#### (see also the following section, "Install Alacritty from source on MacOS".
+  ## (see also the following section, "Install Alacritty from source on MacOS".
 
 if on-macos; then
     export ALACRITTY_ROOT
@@ -168,8 +168,6 @@ if on-macos; then
         && export ALACRITTY_PATH="$ALACRITTY_ROOT/Contents/MacOS" \
         && export ALACRITTY_MANPATH="$ALACRITTY_ROOT/Contents/Resources/man"
 fi
-
-## Use the Alacritty daemon, even though it is somewhat buggy.
 
 function alacritty-daemon-pid {
     pgrep -U "$USER" -f -i "alacritty --daemon"
@@ -237,11 +235,26 @@ function kill-alacritty-daemon {
     fi
 }
 
+function ka {
+    kill-alacrittydaemon "$@"
+}
+
 function restart-alacritty-daemon {
     kill-alacritty-daemon && start-alacritty-daemon
 }
 
+function ra {
+    restart-alacritty-daemon
+}
+
+# if ! the-alacritty-daemon-is-running; then
+#     start-alacritty-daemon
+# fi
+
 function am {
+    check-args 1 varargs \
+               'WORD [WORD ...] # words' \
+               "$@" || return 1
     alacritty msg "$@"
 }
 
@@ -299,47 +312,20 @@ function alacritty-change-theme-to {
 }
 
 function get-pos {
+    check-args 1 1 'x|y' "$@" || return 1
     local AXIS="$1"
-    am get-config | jq '.["window"].["position"]["$AXIS"]'
+    local JQ_EXPR="$(printf '.["window"].["position"].["%s"]' "$AXIS")"
+    amc "$JQ_EXPR"
 }
-
-X_ALACRITTY=
-Y_ALACRITTY=
 
 function an {
-    if [[ ! "$X_ALACRITTY" ]]; then
-        X_ALACRITTY="$(get-pos x)"
-        Y_ALACRITTY="$(get-pos y)"
-    else
-        X_ALACRITTY+=20
-        Y_ALACRITTY+=20
-    fi
+    X=$(( 20 + $(get-pos x) ))
+    Y=$(( 20 + $(get-pos y) ))
 
     am create-window \
-       -o "window.position.x=$X_ALACRITTY" \
-       -o "window.position.y=$Y_ALACRITTY"
+       -o "$(printf 'window.position.x=%d' $X)" \
+       -o "$(printf 'window.position.y=%d' $Y)"
 }
-
-function alacritty-rejigger-window-sizes {
-    osascript <<'END_REJ'
-    tell application "System Events"
-    tell process "Alacritty"
-        repeat with w in windows
-            try
-                set {ww, hh} to size of w
-                set size of w to {ww + 1, hh}
-                delay 0.05
-                set size of w to {ww, hh}
-            end try
-        end repeat
-    end tell
-end tell
-END_REJ
-}
-
-# if ! the-alacritty-daemon-is-running; then
-#     start-alacritty-daemon
-# fi
 
 #### Install Alacritty from source on MacOS
 
@@ -368,15 +354,34 @@ END_REJ
 # cd ~/.terminfo/61
 # ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty
 # ln -s /Applications/Alacritty.app/Contents/Resources/61/alacritty-direct
-
-# mhost ("Map to Host(s)") - repeatedly execute a command on a list of hostnames (passing in each hostname as the command's last arg)
-function mhost {
-    COMMAND="$1"; shift
-    for NODE in "$@"; do
-        echo "$NODE"
-        echo "=="
-        echo
-        "$NODE" "$COMMAND"
-        echo
-    done
-}
+#
+# Finally, you may want to hide the Alacritty icon from the Cmd-tab
+# interface (and from the Dock):
+#
+# /usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" /Applications/Alacritty.app/Contents/Info.plist
+#
+# You might as well, because, when you're
+# in daemon mode (or whenever there's no Alacritty window), tabbing
+# or dock-clicking to bring Alacritty to the foreground is useless,
+# because it won't let you create windows--that is Cmd-N and Cmd-T won't work
+# -- so you have to use a global shortcut key anyway. I did that by
+# installing Hammerspoon and then putting this in my ~/.hammerspoon/init.lua:
+#
+# function amh(word_list)
+#     local path = "/Applications/Alacritty.app/Contents/MacOS/alacritty"
+#     local args = { "msg" }
+#     for i = 1,#word_list do
+#         args[#args + 1] = word_list[i]
+#     end
+# 
+#    hs.task.new(path, nil, args):start()
+# end
+# 
+# hs.hotkey.bind(
+#     {"cmd"}, "b",
+#     function()
+#        amh({ "config", "window.position.x = 100" })
+#        amh({ "config", "window.position.y = 100" })
+#        amh({ "create-window" })
+#     end
+# )
