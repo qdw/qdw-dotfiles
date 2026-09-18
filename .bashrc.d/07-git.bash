@@ -267,10 +267,9 @@ function branch {
     open "https://github.com/$GITHUB_ORG/$REPO_NAME/branches"
 }
 
-function gclone {
+function clone {
     check-args 1 1 'URL' "$@" || return 1
     local URL="$1"
-    shift
     
     local SSH_REGEX="^git[@]"
     local HTTPS_REGEX="^https://"
@@ -278,12 +277,21 @@ function gclone {
     if [[ "$URL" =~ $SSH_REGEX ]]; then
         git clone "$URL"
     elif [[ "$URL" =~ $HTTPS_REGEX ]]; then
-        local SSH_URL="$(github-https-to-ssh "$URL")"
-        [[ "$SSH_URL" ]] || return 2
-        git clone "$URL"
+        local SSH_URL
+        SSH_URL="$(github-https-to-ssh "$URL")"
+        SED_EXIT_STATUS=$?
+        if [[ $SED_EXIT_STATUS -ne 0 ]]; then
+            err "regex substitution failed for URL '$URL'"
+            return $SED_EXIT_STATUS
+        elif [[ ! "$SSH_URL" ]]; then
+            err "regex substitution succeeeded for URL '$URL', but returned the empty string"
+            return 2
+        else
+            git clone "$SSH_URL"
+        fi
     else
-        err "unrecognized URL format in '$URL'"
-        return 3
+        err "unrecognized URL format in URL '$URL'"
+        return 1
     fi
 }
 
@@ -587,6 +595,13 @@ function repos {
         verbose-print
         open "https://github.com/search?type=repositories&q=${PATTERN}"
     }
+}
+
+function github-repo-search {
+    local MANNAME="search GitHub for repos whose names match PATTERN"
+    check-args 1 1 'PATTERN' "$@" || return 1
+    local PATTERN="$1"
+    open "https://github.com/search?type=repositories&q=${PATTERN}"
 }
 
 # repo - open a named GitHub named repo in a web browser
