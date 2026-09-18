@@ -409,6 +409,8 @@ function deps-bash {
     cd "$ORIG_DIR"
 }
 
+QDW_FUNC_VERBOSE="yes"
+
 # func - show the source code of a bash function, with syntax highlighting
 function func {
     check-args 1 2 '[-v|--verbose] FUNCTION_NAME' "$@" || return 1
@@ -425,6 +427,10 @@ function func {
                 err "invalid flag '$FLAG'. For usage, run with --help"
                 return 1;;
         esac
+    fi
+
+    if [[ "$QDW_FUNC_VERBOSE" ]]; then
+        VERBOSE=1
     fi
 
     FUNCTION_NAME="$1"
