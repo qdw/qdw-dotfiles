@@ -169,6 +169,10 @@ if on-macos; then
         && export ALACRITTY_MANPATH="$ALACRITTY_ROOT/Contents/Resources/man"
 fi
 
+#### The Alacritty daemon
+
+source-if-exists "$HOME/tmp/set-alacritty-socket-var.bash"
+
 function alacritty-daemon-pid {
     pgrep -U "$USER" -f -i "alacritty --daemon"
 }
@@ -194,15 +198,17 @@ function start-alacritty-daemon {
         local ORIG_DIR="$(pwd)"
         cd
         (
-            # nohup "$ALACRITTY_PATH/alacritty" --daemon >/dev/null 2>&1 &
-            "$ALACRITTY_PATH/alacritty" --daemon &
+            nohup "$ALACRITTY_PATH/alacritty" --daemon > "$HOME/tmp/set-alacritty-socket-var.bash" &
             NOHUP_ES=$?
             disown
             exit $NOHUP_ES
         )
-        local EXIT_STATUS=$?
+        local SUBSHELL_EXIT_STATUS=$?
+        if [[ $SUBSHELL_EXIT_STATUS -eq 0 ]]; then
+            source-if-exists "$HOME/tmp/set-alacritty-socket-var.bash"
+        fi
         cd "$ORIG_DIR" > /dev/null
-        return $EXIT_STATUS
+        return $SUBSHELL_EXIT_STATUS
     fi
 }
 
