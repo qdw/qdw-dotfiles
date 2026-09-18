@@ -411,14 +411,59 @@ function deps-bash {
 
 # func - show the source code of a bash function, with syntax highlighting
 function func {
-    # check-args 1 1 "type SOME_FUNCTION_NAME" "$@"
+    check-args 1 2 '[-v|--verbose] FUNCTION_NAME' "$@" || return 1
+    local FLAG VERBOSE FUNCTION_NAME FIRST_LINE
+    
+    if [[ $# -eq 2 ]]; then
+        FLAG="$1"
+        shift
+
+        case "$FLAG" in
+            -v|--verbose)
+                VERBOSE="yes";;
+            *)
+                err "invalid flag '$FLAG'. For usage, run with --help"
+                return 1;;
+        esac
+    fi
+
+    FUNCTION_NAME="$1"
+
+    if [[ "$VERBOSE" ]]; then
+        rg "function $FUNCTION_NAME [{]" ~/.bashr* ~/.*profile* ~/.site.bash* \
+            || return
+    fi
+    
     local FUNCTION_NAME="$1"
     local FIRST_LINE="$(command type "$FUNCTION_NAME" | head -1)"
     if [[ "$FIRST_LINE" = "$FUNCTION_NAME is a function" ]]; then
-        command type "$FUNCTION_NAME" | tail -n +2 | bat --language bash
-    else
-        echo "$FUNCTION_NAME is not defined as a function" >&2
-        return 1
+        local SKIP_LINES
+        if [[ "$VERBOSE" ]]; then
+            # Formatting detail: if we just ran rg because the user passed -v,
+            # then it has already printed a line like this:
+            # 
+            # 341:function foo {
+            # 
+            # That means that we won't need these, the first 3 lines of output
+            # from the 'type' command:
+            # 
+            # foo is a function
+            # foo ()
+            # {
+            SKIP_LINES="3"
+        else
+            # If, in contrast, the user didn't pass -v/verbose, then
+            # all we need to skip is this line:
+            #
+            # foo is a function
+            SKIP_LINES="1"
+        fi
+
+        # Account for an off-by-one quirk in the semantics of the 'tail' cmd.
+        SKIP_LINES=$(( SKIP_LINES + 1 ))            
+        command type "$FUNCTION_NAME" \
+            | tail -n "+${SKIP_LINES}" \
+            | bat --language bash
     fi
 }
 

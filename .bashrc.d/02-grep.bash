@@ -48,7 +48,6 @@ function grep {
     local ARGS=()
     if [[ "$MY_GREP" = "rg" ]]; then
         for ARG in "$@"; do
-            # FIXME: rewrite this properly, using Bash's builtin getopt
             if [[ "$ARG" != "-R" ]]; then
                 ARGS+=("$ARG")
             fi

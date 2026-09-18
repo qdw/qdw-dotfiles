@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# export QDW_DEBUG_BASH="yeah"
+# export QDW_DEBUG_BASH="yeah"; # export QDW_TIMESTAMP="${EPOCHREALTIME/./}"
 
 umask 0022
 set -o pipefail
@@ -12,7 +12,6 @@ function source-if-exists {
     fi
 }
 
-# export QDW_TIMESTAMP="${EPOCHREALTIME/./}"
 function source-section {
     local FILE="$1"
     source "$HOME/.bashrc.d/$FILE"
