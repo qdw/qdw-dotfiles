@@ -47,15 +47,15 @@ function fdoccur {
     fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
 }
 
-function _file-types { #FIXME: don't hard-code extensions
+function ftypes {
     fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq \
-        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+        | command grep -Fv ' .git/' \
+        | uniq
 }
 
-function file-type-counts { #FIXME: don't hard-code extensions
+function file-type-counts {
     fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
         | uniq -c \
-        | sort --reverse --general-numeric-sort \
-        | grep '|(rb|kt|kts|py|jar|java|sql|ts|js|json)|yaml|yml'
+        | command grep -Fv ' .git/' \
+        | sort --reverse --general-numeric-sort
 }
