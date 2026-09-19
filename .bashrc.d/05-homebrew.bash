@@ -4,12 +4,12 @@
 
 ######## Homebrew settings
 
-export HOMEBREW_BAT=1
+export HOMEBREW_BAT="1"
 export HOMEBREW_BAT_CONFIG_PATH="$HOME/.config/bat/config"
 export HOMEBREW_CASK_OPTS="--require-sha"
-export HOMEBREW_NO_ANALYTICS=1
-export HOMEBREW_NO_ASK=1
-export HOMEBREW_NO_ENV_HINTS=1
+export HOMEBREW_NO_ANALYTICS="1"
+export HOMEBREW_NO_ASK="1"
+export HOMEBREW_NO_ENV_HINTS="1"
 export HOMEBREW_NO_INSECURE_REDIRECT="1"
 export HOMEBREW_NO_INSTALL_UPGRADE="1"
 export HOMEBREW_NO_UPDATE_REPORT_NEW="1"
@@ -137,39 +137,6 @@ function brew-n-deps {
     fi
 }
 
-## Functions for running Homebrew upgrades
-
-BREW_UPDATE_TIMESTAMP_FILE="$HOME/tmp/brew_updated_at"
-BREW_UPDATE_STALENESS_THRESHOLD="600" # = 10 min. in seconds
-
-function brew-update-timestamp {
-    check-args 0 0 '' "$@" || return 1
-    touch "$BREW_UPDATE_TIMESTAMP_FILE"
-}
-
-function brew-is-stale {
-    check-args 0 0 '' "$@" || return 1
-
-    if [[ ! -f "$BREW_UPDATE_TIMESTAMP_FILE" ]]; then
-        _debug "file '$BREW_UPDATE_TIMESTAMP_FILE' missing, so brew is stale"
-        return 0
-    else
-        local NOW="$(date +%s)"
-        _debug "It is now $NOW seconds since the Epoch"
-        local LAST_BREW_UPDATE="$(mtime-in-epoch-seconds "$BREW_UPDATE_TIMESTAMP_FILE")"
-        _debug "We last brewed $LAST_BREW_UPDATE seconds past the Epoch"
-        local SECONDS_OLD=$(( NOW - LAST_BREW_UPDATE ))
-        _debug "    Elapsed seconds: $SECONDS_OLD"
-        if [[ $SECONDS_OLD -gt $BREW_UPDATE_STALENESS_THRESHOLD ]]; then
-            _debug "$SECONDS_OLD > $BREW_UPDATE_STALENESS_THRESHOLD, so our brew is stale"
-            return 0
-        else
-            _debug "$SECONDS_OLD <= $BREW_UPDATE_STALENESS_THRESHOLD, so our brew is still fresh"
-            return 1
-        fi
-    fi
-}
-
 function brew-force-update {
     check-args 0 0 '' "$@" || return 1
     brew update \
@@ -178,22 +145,13 @@ function brew-force-update {
      && brew-update-timestamp
 }
 
-function brew-update-if-stale {
-    check-args 0 0 '' "$@" || return 1
-    if brew-is-stale; then
-        brew-force-update
-    fi
-}
-
 function bo {
     check-args 0 0 '' "$@" || return 1
-    brew-update-if-stale
     brew outdated
 }
 
 function boser {
     local MANNAME="show outdated Homebrew services"
-    brew-update-if-stale
 
     local -a OUTDATED_FORMULAE
     mapfile -t OUTDATED_FORMULAE < <(bo)
@@ -213,9 +171,8 @@ function boser {
 
 function bu {
     local MANNAME="upgrade Homebrew packages, and restart services if needed"
-    check-args 0 0 '' "$@" || return 1
-
-    brew-update-if-stale
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    
     local -a OUTDATED_SERVICES
     mapfile -t OUTDATED_SERVICES < <(boser)
 
@@ -233,7 +190,6 @@ function bu {
 
 function boi {
     local MANNAME="show outdated Homebrew packages, and prompt to upgrade them"
-    brew-update-if-stale
 
     local -a OUTDATED_FORMULAE OUTDATED_CASKS
     mapfile -t OUTDATED_FORMULAE < <(brew outdated --formula)

@@ -1,13 +1,3 @@
-######## Dependencies:
-######## 00-bash-metaprogramming.bash
-######## 0x-homebrew.bash
-########     00-bash-metaprogramming.bash
-########     05-pager.bash
-########     this file, argh, circular dependency
-######## 03-fd.bash
-########         00-bash-metaprogramming.bash
-########         pager.bash
-
 #### Default text editor(s)
 
 # Use Emacs as my default text editor,
@@ -15,7 +5,7 @@
 
 MY_EDITOR="$HOME/bin/emacs-wrapper"
 if [[ ! -x "$MY_EDITOR" ]]; then
-    if echo <<END_EMACS_WRAPPER >> "$MY_EDITOR"
+    if echo <<'END_EMACS_WRAPPER' >> "$MY_EDITOR"
 \#\!${HOMEBREW_BIN}/bash
 
 source ~/.bashrc
@@ -174,3 +164,39 @@ function vimacs {
 function vl {
     "$HOMEBREW_ROOT/share/vim/vim91/macros/less.sh" "$@"
 }
+
+#### Cursor (abandoned)
+
+# function back-up-cursor-settings {
+#     local GIT_WORKING_COPY_ROOT="$HOME/src/1/qdw-dotfiles"
+#     local GIT_CURSOR_SUBDIR="Cursor"
+#     local GIT_FULL_CURSOR_PATH="$GIT_WORKING_COPY_ROOT/$GIT_CURSOR_SUBDIR"
+#     cd "$GIT_WORKING_COPY_ROOT" || return 1
+#     local -a CHCHCHCHCHANGES=( "$(git status | grep "$GIT_CURSOR_SUBDIR.*")" )
+# 
+#     if [[ "$CHCHCHCHCHANGES" ]]; then
+#         echo "You have uncommitted changes in $GIT_FULL_CURSOR_PATH/" >&2
+#         echo "Commit these, then rerun:" >&2
+#         echo "$CHCHCHCHCHANGES" >&2
+#         return 2
+#     else
+#         local FILES_DIFFER=""
+#         for FILE in \
+#             "$HOME/Library/Application Support/Cursor/User/settings.json" \
+#             "$HOME/Library/Application Support/Cursor/User/keybindings.json"
+#         do
+#             local PATH_IN_GIT="$GIT_FULL_CURSOR_PATH/$(basename "$FILE")"
+#             if ! cmp --silent "$FILE" "$PATH_IN_GIT"; then
+#                 FILES_DIFFER="yup"
+#                 echo command cp -pv "$FILE" "$PATH_IN_GIT"
+#             fi
+#         done
+# 
+#         if [[ $FILES_DIFFER ]]; then
+#             git add "$GIT_CURSOR_SUBDIR"
+#             echo "Okay, now do a git commit in $GIT_WORKING_COPY_ROOT." >&2
+#         else
+#             echo "No differences to back up" >&2
+#         fi
+#     fi
+# }

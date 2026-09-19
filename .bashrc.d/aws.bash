@@ -1,7 +1,7 @@
 ### Generic AWS settings
 
 function aws-account {
-    AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text
+    AWS_PAGER="cat" aws sts get-caller-identity --query "Account" --output text
 }
 
 function clear-env {
@@ -170,7 +170,7 @@ function in-dev {
         return 1
     else
         local ACCOUNT_NUMBER
-        ACCOUNT_NUMBER="$(AWS_PAGER=cat aws sts get-caller-identity --query "Account" --output text)"
+        ACCOUNT_NUMBER="$(AWS_PAGER="cat" aws sts get-caller-identity --query "Account" --output text)"
         if [[ "$ACCOUNT_NUMBER" != "$AWS_DEV_ACCOUNT_NUMBER" ]]; then
             err "You're logged into '$ACCOUNT_NUMBER', but the dev account is '$AWS_DEV_ACCOUNT_NUMBER'"
             return 1

@@ -317,11 +317,11 @@ function member {
     
     for elem in "$@"; do
         if [[ "$ELEM" = "$elem" ]]; then
-            return true
+            return 0
         fi
     done
 
-    return false
+    return 1
 }
 
 function dirdo {

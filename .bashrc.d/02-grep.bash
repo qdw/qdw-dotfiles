@@ -31,10 +31,10 @@ else
     MY_GREP_OPTIONS="-EIin --color=always"
     GREP_RECURSE="-R"
     GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
-    local GREEN="32"
-    local YELLOW="33"
-    local FILENAME_COLOR="fn=${GREEN}"
-    local LINE_NUMBER_COLOR="ln=${YELLOW}"
+    GREEN="32"
+    YELLOW="33"
+    FILENAME_COLOR="fn=${GREEN}"
+    LINE_NUMBER_COLOR="ln=${YELLOW}"
     GREP_COLOR_FLAGS=""
     GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
 fi
@@ -45,7 +45,7 @@ function grep {
     # When using rg as my grep implementation, I often type -R out of habit,
     # but rg has no -R flag (and it's recursive by default).
     # So, if I try to pass that flag to rg, just remove it.
-    local ARGS=()
+    local -a ARGS=()
     if [[ "$MY_GREP" = "rg" ]]; then
         for ARG in "$@"; do
             if [[ "$ARG" != "-R" ]]; then
@@ -53,7 +53,7 @@ function grep {
             fi
         done
     else
-        ARGS=($@)
+        ARGS=("$@")
     fi
 
     $MY_GREP \
@@ -129,9 +129,10 @@ function grep-settings {
     
     function file-ext-in {
         local FILE
-        
+
+        EXT_REGEX="[.]${EXT}$"
         for EXT in "$@"; do
-            if [[ "$FILE" =~ "[.]${EXT}$" ]]; then
+            if [[ "$FILE" =~ $EXT_REGEX ]]; then
                 return 0
             fi
         done
@@ -173,10 +174,12 @@ function count_one_level {
     PATTERN="$1"
     shift
 
-    (for FILE in $@; do
+    (
+        for FILE in "$@"; do
          COUNT=$(command grep -REio -E $GREP_EXCLUDE_FLAGS --exclude "cdk.out" --exclude "*.js" --exclude "*.json"  "$FILE" | wc -l)
          echo "$COUNT $FILE"
-    done) \
+        done
+    ) \
     | command grep -vE "^0 " \
     | sort --reverse --general-numeric-sort
 }

@@ -102,56 +102,8 @@ function back-up-git-working-copy {
     git-backup "$@"
 }
 
-function back-up-cursor-settings {
-    local GIT_WORKING_COPY_ROOT="$HOME/src/1/qdw-dotfiles"
-    local GIT_CURSOR_SUBDIR="Cursor"
-    local GIT_FULL_CURSOR_PATH="$GIT_WORKING_COPY_ROOT/$GIT_CURSOR_SUBDIR"
-    cd "$GIT_WORKING_COPY_ROOT" || return 1
-    local -a CHCHCHCHCHANGES=( "$(git status | grep "$GIT_CURSOR_SUBDIR.*")" )
-
-    if [[ "$CHCHCHCHCHANGES" ]]; then
-        echo "You have uncommitted changes in $GIT_FULL_CURSOR_PATH/" >&2
-        echo "Commit these, then rerun:" >&2
-        echo "$CHCHCHCHCHANGES" >&2
-        return 2
-    else
-        local FILES_DIFFER=""
-        for FILE in \
-            "$HOME/Library/Application Support/Cursor/User/settings.json" \
-            "$HOME/Library/Application Support/Cursor/User/keybindings.json"
-        do
-            local PATH_IN_GIT="$GIT_FULL_CURSOR_PATH/$(basename "$FILE")"
-            if ! cmp --silent "$FILE" "$PATH_IN_GIT"; then
-                FILES_DIFFER="yup"
-                echo command cp -pv "$FILE" "$PATH_IN_GIT"
-            fi
-        done
-
-        if [[ $FILES_DIFFER ]]; then
-            git add "$GIT_CURSOR_SUBDIR"
-            echo "Okay, now do a git commit in $GIT_WORKING_COPY_ROOT." >&2
-        else
-            echo "No differences to back up" >&2
-        fi
-    fi
-}
-
 # gbs (Git Branches) - list (local) git branches
 function gbs { git branch ;}
-
-# For any subdirs of . that are git working copies,
-# show my local branches.
-function gbss {
-    local ORIG_DIR="$(pwd)"
-    for DIR in $(fdd --max-depth 1 --type d); do
-        if [[ -d "${DIR}.git" ]] && cd "$DIR" >/dev/null; then
-             echo "$(color "$DIR" "blue")"
-             gbs
-             echo
-        fi
-        cd "$ORIG_DIR" >/dev/null    
-    done
-}
 
 # gr (git repo) - print repo name (if your cwd is in a git working copy)
 function gr {
@@ -178,10 +130,8 @@ function greldir {
 # 'gcd python' will change the cwd to ~/src/my-project/python
 function gcd {
     check-args 0 1 'gcd [RELATIVE_DIR]' "$@" || return 1
-    local ABS_DIR="$(greldir "$@")"
-    if [[ $? -eq 0 ]]; then
-        cd "$ABS_DIR"
-    fi
+    local ABSDIR
+    ABSDIR="$(greldir "$@")" && cd "$ABSDIR"
 }
 
 # branchify - munge a branch description into a branch name
@@ -189,7 +139,7 @@ function gcd {
 function branchify {
     check-args 1 1 'DESCRIPTIVE_STRING' "$@" || return 1
     local DESTR="$1"
-    echo "$DESTR" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr '[[:punct:]]' '-'
+    echo "$DESTR" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr '[:punct:]' '-'
 }
 
 function gb-jira {
@@ -214,7 +164,7 @@ function git-hist-grep {
     local FILENAME="$2"
 
     git log --format='%H' -- "$FILENAME" \
-        | while read COMMIT; do
+        | while read -r COMMIT; do
               git show "$COMMIT:path/to/file" 2>/dev/null \
                   | grep -HnE "$REGEX" && echo "There was a match in commit '$COMMIT'"
           done
@@ -309,7 +259,8 @@ function github-https-to-ssh {
     local MANNAME="convert a GitHub web URL to ssh format, which you can clone"
     check-args 1 1 'HTTPS_URL' "$@" || return 1
     local HTTPS_URL="$1"
-    echo "$HTTPS_URL" | sed -e s'|^https://github.com|git@github.com:|'
+
+    echo "${HTTPS_URL/#https:\/\/github.com/git@github.com:}"
 }
 
 function gists {
@@ -321,38 +272,66 @@ function readme {
     local FILE="$1"
     local REPO_URL
 
-    if [[ "$FILE" ]]; then
+    # shellcheck disable=SC2077
+    if [[ $# -eq 1 ]]; then
         bat "$FILE"
-    elif [[ REPO_URL="$(gurl)" ]] && {
-             [[ "$REPO_URL" =~ git@github.com ]] || \
-             [[ "$REPO_URL" =~ https://github.com/ ]] }; then
-        gh repo view "$@"
-    elif [[ "$(echo README* | wc -w)" -gt 1 ]]; then
-        ERRMSG="$(printf "There are multiple README files. Pass the one you want as an arg\n%s" \
-                        "$(echo README*)")"
-        err "$ERRMSG"
-    elif [[ -f "README.md" ]]; then
-        bat README.md
-    elif [[ -f "README" ]]; then
-        bat README
-    else
-        err "No README.md/README. Re-run and pass the filename as an arg"
+        return
     fi
+
+    for FILENAME in "README" "README.txt"; do
+        if [[ -f "$FILENAME" ]]; then
+            bat "$FILENAME"
+            return
+        fi
+    done
+
+    for FNAME in "README.md" "README.markdown"; do
+        if [[ -f "$FNAME" ]]; then
+            bbat "$FNAME"
+            return
+        fi
+    done
+
+    REPO_URL="$(gurl)"
+    if [[ "$REPO_URL" =~ ^https:// ]]; then
+        open "$REPO_URL"
+        return
+    fi
+
+    if [[ "$REPO_URL" =~ github[.]com ]]; then
+        repo
+        return
+    fi
+
+    err "not found"
+    return 2
 }
 
 function team {
     check-args 0 1 '[GITHUB_TEAM_NAME]' "$@" || return 1
+
+    if [[ ! "$GITHUB_ORG" ]]; then
+        err "environment variable GITHUB_ORG is not set"
+        return 2
+    fi
+    
     local TEAM_NAME="$1" # may be empty, which is okay
     open "https://github.com/orgs/$GITHUB_ORG/teams/$TEAM_NAME"
 }
 
-function owner_echo {
-    local OWNER="$(head -1 CODEOWNERS | sed 's/^[*] [@]//')"
-    echo "$OWNER"
+function codeowner {
+    head -1 CODEOWNERS | sed -e 's/^[*] [@]//'
 }
 
 function owner {
-    local TEAM_NAME="$(owner_echo | sed s"|^$GITHUB_ORG[/]||")"
+    check-args 0 0 '[no arguments]' "$@" || return 1
+
+    if [[ ! "$GITHUB_ORG" ]]; then
+        err "environment variable GITHUB_ORG is not set"
+        return 2
+    fi
+
+    local TEAM_NAME="$(owner_echo | sed s"|^${GITHUB_ORG}[/]||")"
     team "$TEAM_NAME"
 }
 
@@ -416,10 +395,12 @@ function gist {
     
     local DESCRIPTION_CLAUSE
     if [[ "$DESCRIPTION" ]]; then
-        DESCRIPTION_CLAUSE="--desc '$DESCRIPTION'"
+        # shellcheck disable=SC2089
+        DESCRIPTION_CLAUSE="--desc='$DESCRIPTION'"
     fi
-    
-    gh gist create --web --filename "$FILENAME" $DESCRIPTION_CLAUSE
+
+    # shellcheck disable=SC2090
+    gh gist create --web --filename "$FILENAME" "$DESCRIPTION_CLAUSE"
 }
 
 # gtr (Git Team and Repo) - run this in any dir inside a working copy of a GitHub repo to show the team name plus repo name in GitHub notation, e.g., myorg/myrepo
@@ -467,33 +448,6 @@ function lst {
 
         git diff "$@" HEAD^ HEAD -- "$LAST_ARG_IS_THE_FILENAME"
     fi
-}
-
-function gclp {
-    local MANNAME="gclp (Git CLone Public) - quickly clone a GitHub repo"
-    check-args 1 varargs '${USER}/${REPO} [ENCLOSING_DIR] [GITARGS...]' "$@" \
-        || return 1
-    
-    local USER_SLASH_REPO="$1"
-    shift
-
-    local ENCLOSING_DIR
-    if [[ "$1" ]]; then
-        ENCLOSING_DIR="$1"
-        shift
-    else
-        ENCLOSING_DIR="$HOME/src-3"
-    fi
-    
-    echo "cd $ENCLOSING_DIR"
-    cd "$ENCLOSING_DIR" \
-        && git clone "git@github.com:$USER_SLASH_REPO" "$@"
-    EC=$?
-    
-    echo "cd -"
-    cd - >/dev/null
-
-    return $EC
 }
 
 # gclo (Git CLone Organization) - quickly clone a repo in a GitHub organization
@@ -777,7 +731,7 @@ function git-e {
        -H "Accept: application/vnd.github.v3+json" \
         --silent \
         --method GET \
-        --output /dev/null
+        --output /dev/null \
         --show-response-status \
             | tail -1)
                 

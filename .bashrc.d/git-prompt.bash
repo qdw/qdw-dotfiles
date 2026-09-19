@@ -21,8 +21,8 @@ function my_prompt_function {
     local REALPATH="$(realpath "$PWD")"
     
     if [[ -d "$REALPATH/.git" \
-              && ( -z "DO_NOT_COMPLETE_REPOS_MATCHING" \
-                   || ! "$REALPATH" =~ "DO_NOT_COMPLETE_REPOS_MATCHING" ) ]]
+              && ( -z "$DO_NOT_COMPLETE_REPOS_MATCHING" \
+                   || ! "$REALPATH" =~ $DO_NOT_COMPLETE_REPOS_MATCHING ) ]]
     then
         use-gitprompt "$REALPATH"
         if [[ ! "$GIT_COMPLETION_ACTIVATED" ]]; then
@@ -33,5 +33,5 @@ function my_prompt_function {
     fi
 }
     
-MY_PROMPT_FUNCTION_DEFINITION=$(command -V my_prompt_function | tail -n +2)
+MY_PROMPT_FUNCTION_DEFINITION="$(command -V my_prompt_function | tail -n +2)"
 export PROMPT_COMMAND="$MY_PROMPT_FUNCTION_DEFINITION; my_prompt_function"

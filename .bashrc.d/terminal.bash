@@ -228,6 +228,8 @@ function kill-alacritty-daemon {
             kill "$SIGNAL" "$PID"
         else
             err "daemon is running with PID '$PID', but socket '$ALACRITTY_SOCKET' is missing"
+
+            # shellcheck disable=SC2050
             if [[ "$SIGNAL" = "-9" ]] || [[ "SIGNAL" = "-KILL" ]]; then
                 echo "trying to kill anyway, since the user passed SIGNAL '$SIGNAL'" >&2               kill "$SIGNAL" "$PID"
             else

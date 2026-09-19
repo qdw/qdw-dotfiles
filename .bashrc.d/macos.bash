@@ -26,6 +26,7 @@ for GNU_COMMAND in cut date dircolors find head roff sed sort tac tail
 do
     BREWED_GNU="${HOMEBREW_BIN}/g${GNU_COMMAND}"
     if [[ -e "$BREWED_GNU" ]]; then
+        # shellcheck disable=SC2139
         alias "${GNU_COMMAND}=${BREWED_GNU}"
     fi
 done
@@ -130,27 +131,6 @@ function which {
         fi
     else
         type -P "$PROGRAM_NAME"
-    fi
-}
-
-function exe {
-    check-args 1 1 'My.app' "$@" || return 1
-    local APP_NAME_INCLUDING_EXT="$1"
-    local APP_DIR="$(which "$APP_NAME_INCLUDING_EXT")"
-    if [[ ! "$APP_DIR" ]]; then
-        err "couldn't find a macOS app named '$APP_NAME_INCLUDING_EXT'"
-    else
-        local EXE_DIR="$APP_DIR/Contents/MacOS"
-        trap - DEBUG
-        local -a EXE_FILES=($EXE_DIR/*)
-        N_EXE=${#EXE_FILES[@]}
-        if [[ "$N_EXE" -eq 0 ]]; then
-            err "found no executables in '$EXE_DIR'"
-        elif [[ "$N_EXE" -gt 1 ]]; then
-            err "found multiple executables in '$EXE_DIR'"
-        else
-            echo ${EXE_FILES[0]}
-        fi
     fi
 }
 

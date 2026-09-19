@@ -7,7 +7,7 @@ export LIGHT_OR_DARK_FILE="$HOME/tmp/light-or-dark-state"
 MODE_SPEC="'dark' | 'light'"
 OBLIGATE_TOGGLE_FUNCTIONS="toggle-dark-reader"
 
-declare -A BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app" "Safari.app")
+declare -a BROWSERS_USING_DARK_READER=("Firefox.app" "Waterfox.app" "Safari.app")
 
 # BLEN="${#BROWSERS_USING_DARK_READER[@]}"
 # for (( i = 0; i < BLEN; i++ )); do
@@ -98,7 +98,7 @@ function toggle-dark-reader {
 
     check-args 0 0 '[no arguments]' "$@" || return 1
     
-    for BROWSER in @{BROWSERS_USING_DARK_READER[@]}; do
+    for BROWSER in "${BROWSERS_USING_DARK_READER[@]}"; do
         if _running "$BROWSER"; then
             local OSA="/usr/bin/osascript"
             local ORIG_APP="$("$OSA" -e 'tell application "System Events" to get name of first process whose frontmost is true')"

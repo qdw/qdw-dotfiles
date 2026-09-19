@@ -33,7 +33,7 @@ function pd_encode {
 #### SDL2 game dev settings (FIXME: port to SDL 3)
 
 function sd2lcompile {
-    gcc -o "$@"  `sdl2-config --cflags --libs`
+    gcc -o "$@"  $(sdl2-config --cflags --libs)
 }
 
 function sdd { sdl2compile "$@" ;}

@@ -242,13 +242,9 @@ function _jql2url {
     
     local JQL_BASE_URL="${JIRA_BASE_URL}/issues/?jql="
     local URLENCODED_QUERY
-    URLENCODED_QUERY=$(urlencode "$QUERY")
-    if [[ $? -ne 0 ]]; then
-        return $?
-    else
-        local FULL_URL="${JQL_BASE_URL}${URLENCODED_QUERY}"
-        echo "$FULL_URL"
-    fi
+    URLENCODED_QUERY="$(urlencode "$QUERY")" || return
+    local FULL_URL="${JQL_BASE_URL}${URLENCODED_QUERY}"
+    echo "$FULL_URL"
 }
 
 function jql {

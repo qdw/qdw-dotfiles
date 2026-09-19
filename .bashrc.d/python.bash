@@ -17,29 +17,6 @@ function python {
     python3 "$@"
 }
 
-function defs {
-    # Show Python function names
-    check-args 0 varargs \
-               '[GREP_ARG_1 [GREP-ARG_2 ...]] [DIRECTORY] # defaults to .' \
-               "$@" \
-        || return 1
-
-    # Get the last argument, and remove it from $@
-    local PTH
-    if [[ $# -ne 0 ]]; then
-        local PTH="${@[$# - 1]}"
-        unset "${_[$# - 1]}"
-        echo "PTH: $PTH"
-        echo "remaining args: $@"
-    else
-         PTH="."
-    fi
-    
-    command fd -t f '.py$' \
-        -x command grep -RiE --color=always "$@"  "^[ ]*def[ ]"  "{}" \; \
-        "$PTH"
-}
-
 function venv {
     check-args 1 varargs 'NAME_FOR_THE_NEW_VIRTUALENV [UV_ARG1 [UV_ARG2 ...]]' "$@" \
         || return 1

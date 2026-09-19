@@ -121,10 +121,6 @@ source-section "network.bash"
 
 # source-section "fzf.bash"
 
-#### .ignore files (honored by git, fd, and rg)
-
-source-section "dot-ignore.bash"
-
 #### Terminal emulators (including helper functions for ANSI SGR colors)
 
 source-section "terminal.bash"
