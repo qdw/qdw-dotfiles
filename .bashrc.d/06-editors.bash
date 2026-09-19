@@ -1,3 +1,5 @@
+# shellcheck disable=SC2034
+
 #### Default text editor(s)
 
 # Use Emacs as my default text editor,
@@ -5,6 +7,7 @@
 
 MY_EDITOR="$HOME/bin/emacs-wrapper"
 if [[ ! -x "$MY_EDITOR" ]]; then
+    # shellcheck disable=SC2217
     if echo <<'END_EMACS_WRAPPER' >> "$MY_EDITOR"
 \#\!${HOMEBREW_BIN}/bash
 

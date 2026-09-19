@@ -1,3 +1,5 @@
+# shellcheck disable=SC2086,SC2089,SC2090
+
 ########     dependencies:
 ########        01-bash-debugging.bash
 ########        ./pager.bash
@@ -18,7 +20,7 @@ if installed "rg"; then
     MY_GREP="rg"
     MY_GREP_OPTIONS="--color=always --follow" # --column --no-line-number"
     GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
-    GREP_EXCLUDE="" # rg uses a .ignore file, not command-line flags
+    GREP_EXCLUDE_FLAGS="" # rg uses a .ignore file, not command-line flags
     GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
 else
     # Use the actual grep command.
@@ -30,13 +32,13 @@ else
     
     MY_GREP_OPTIONS="-EIin --color=always"
     GREP_RECURSE="-R"
-    GREP_EXCLUDE="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
+    GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
     GREEN="32"
     YELLOW="33"
     FILENAME_COLOR="fn=${GREEN}"
     LINE_NUMBER_COLOR="ln=${YELLOW}"
     GREP_COLOR_FLAGS=""
-    GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
+    export GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
 fi
 
 set +a
@@ -166,22 +168,6 @@ function count {
         | command grep -v ':0$' \
         | sed -e 's/\(.*\):\(.*\)/\2 \1/' \
         | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
-}
-
-function count_one_level {
-    local COUNT  PATTERN
-
-    PATTERN="$1"
-    shift
-
-    (
-        for FILE in "$@"; do
-         COUNT=$(command grep -REio -E $GREP_EXCLUDE_FLAGS --exclude "cdk.out" --exclude "*.js" --exclude "*.json"  "$FILE" | wc -l)
-         echo "$COUNT $FILE"
-        done
-    ) \
-    | command grep -vE "^0 " \
-    | sort --reverse --general-numeric-sort
 }
 
 # occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.

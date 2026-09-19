@@ -100,6 +100,7 @@ function bash-color-test-pattern {
 
 # Change this terminal's background to the hex triplet passed in.
 function bghex {
+    # shellcheck disable=SC2034
     local MANPATH="change this terminal's background to HEX_COLOR
 EXAMPLE
     # Use a red background.
@@ -267,6 +268,7 @@ function am {
 }
 
 function amc {
+    # shellcheck disable=SC2034
     local MANNAME="get alacritty config (or a subset thereof)
 
 SYNOPSIS

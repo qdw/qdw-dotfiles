@@ -23,14 +23,15 @@ function comp {
     # sc - source completion file (from installed homebrew bash completions)
     function sc {
         for FILENAME in "$@"; do
+            # shellcheck disable=SC1090
             source "$BASH_COMPLETION_DIR/$FILENAME"
         done
     }
 
     case "$1" in
         alacritty)
-            if [[ "$ALACRITTY_ROOT" ]] # if installed, var set in terminal.bash
-            then
+            if [[ "$ALACRITTY_ROOT" ]]; then # if installed, var set in terminal.bash
+                # shellcheck disable=SC1091
                 source "$ALACRITTY_ROOT/Contents/Resources/completions/alacritty.bash"
             else
                 err "idk where alacritty.bash is; query your package manager"

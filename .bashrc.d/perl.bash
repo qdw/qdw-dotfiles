@@ -14,6 +14,7 @@ function pb {
 }
 
 function pw {
+    # shellcheck disable=SC2034
     local MANNAME="find a Perl library in PERL5LIB"
     check-args 1 1 'MyModule::Name | MyModule/Name.pm' "$@" || return 1
     perldoc -l "$1"
@@ -36,5 +37,6 @@ function lwhich {
 }
 
 function perlbrew-activate {
+    # shellcheck disable=SC1091
     source "$HOME/perl5/perlbrew/etc/bashrc"
 }

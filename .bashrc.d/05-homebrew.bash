@@ -1,3 +1,5 @@
+# shellcheck disable=SC2120,SC2034
+
 ######## dependencies:
 ########     00-bash-metaprogramming.bash
 ########     04-pager.bash
@@ -146,7 +148,8 @@ function brew-force-update {
 }
 
 function bo {
-    check-args 0 0 '' "$@" || return 1
+    # shellcheck disable=SC2120
+    check-args 0 0 '[no arguments]' "$@" || return 1
     brew outdated
 }
 
@@ -180,8 +183,7 @@ function bu {
 
     if [[ ${#OUTDATED_SERVICES[@]} -gt 0 ]]; then
         color-printf "blue" "==> "; color-printf "red" "Restarting services:\n"
-        # shellcheck disable=SC2068
-        for SVC in ${OUTDATED_SERVICES[@]}; do
+        for SVC in "${OUTDATED_SERVICES[@]}"; do
             color-printf "green" "==> "; color-printf "red" "Restarting "; color-printf "bright-green" "$SVC\n"
             brew services restart "$SVC"
         done

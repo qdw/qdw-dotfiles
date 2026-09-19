@@ -1,3 +1,5 @@
+# shellcheck disable=SC2086
+
 ########     dependencies:
 ########         00-bash-metaprogramming.bash
 ########         pager.bash
@@ -31,14 +33,11 @@ function gfd {
 
 function fdgrep {
     # check-args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"; shift    
-    (fdd --type f "$FILENAME_REGEX" -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@" \;)
-}
+    local FILENAME_REGEX="$1"
+    shift
 
-# Recursively search the current working directory for files that don't
-# end in a single newline, and print their names
-function newlineless {
-    fd -t f -x bash -c 'tail -c 1 "$1" | command grep -qvE "^$" && echo "$1"' _ {} \;
+    fdd --type f "$FILENAME_REGEX" \
+        -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@"
 }
 
 function fdoccur {

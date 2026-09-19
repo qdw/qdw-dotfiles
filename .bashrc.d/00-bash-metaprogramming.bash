@@ -1,7 +1,3 @@
-########     dependencies:
-########         QBASHD env var setting in ~/.bashrc
-########         optional: USE_GREP_TO_PRINT_BASH_DEPS override in ~/.bashrc
-
 ############ Diagnostics
 
 function _stderr {
@@ -380,7 +376,7 @@ function deps-bash {
     fi
 
     function _deps_search_for_regex_in_file {
-        local FILENAME="$1"
+        local FILE="$1"
         if ! installed "rg" || [[ "$USE_GREP_TO_PRINT_BASH_DEPS"  ]]; then
             echo "$FILE"
 

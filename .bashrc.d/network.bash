@@ -1,4 +1,5 @@
 function ip {
+    # shellcheck disable=SC2034
     local MANNAME="show this machine's public IP address"
     check-args 0 1 '[v6|v4] # default is v4' "$@" || return 1
     local SERVICE="ifconfig.me"

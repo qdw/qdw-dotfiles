@@ -977,7 +977,7 @@ source-section "json-yaml.bash"
 
 #### C/C++ dev
 
-source-section "c.bash"
+# source-section "c.bash"
 
 #### Apps that I don't really like, but use for work
 

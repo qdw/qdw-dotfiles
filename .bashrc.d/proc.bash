@@ -1,5 +1,7 @@
+# shellcheck disable=SC2086
+
 function pstree {
-    command pstree -g 3 -u $USER "$@" | $PAGER
+    command pstree -g 3 -u "$USER" "$@" | $PAGER
 }
 
 function p {

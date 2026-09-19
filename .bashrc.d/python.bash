@@ -8,7 +8,7 @@
 
 for PREFERRED in "$HOMEBREW_BIN/python3" "/usr/bin/python3"; do
     if [[ -f "$PREFERRED" ]]; then
-        PYTHON_INTERPRETER_PATH="$PREFERRED"
+        export PYTHON_INTERPRETER_PATH="$PREFERRED"
         break
     fi
 done
@@ -23,6 +23,8 @@ function venv {
     local VENV_NAME="$1"
     shift
     uv venv "$@" "$VENV_NAME"
+
+    # shellcheck disable=SC1090
     source "$VENV_NAME"
 }
 

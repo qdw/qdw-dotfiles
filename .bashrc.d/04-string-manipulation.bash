@@ -101,6 +101,7 @@ function decolonize {
 }
 
 function 1nd {
+    # shellcheck disable=SC2034
     local MANNAME="print the nth whitespace-separated element
 of each input line (with 1-based indexing).
 Simple wrapper around awk."

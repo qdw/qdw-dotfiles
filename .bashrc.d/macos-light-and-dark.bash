@@ -92,6 +92,7 @@ function _running {
 }
 
 function toggle-dark-reader {
+    # shellcheck disable=SC2034
     local MANNAME="use AppleScript to toggle the Dark Reader browser ext on/off
     (obsolete for recent versions of Dark Reader, which include a feature
     to auto-follow the system-wide setting)"

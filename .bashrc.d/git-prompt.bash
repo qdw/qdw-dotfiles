@@ -1,3 +1,5 @@
+# shellcheck disable=SC1090
+
 ## Dependencies:
 ##     - bash-git-prompt, preferably my fork: https://github.com/qdw/bash-git-prompt
 

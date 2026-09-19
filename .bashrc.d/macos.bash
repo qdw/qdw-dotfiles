@@ -386,6 +386,7 @@ function df {
 }
 
 function dfr {
+    # shellcheck disable=SC2034
     local MANNAME="show mounted disks only, not other devices"
     check-args 0 1 '--no-gui' "$@" || return 1
     local NO_GUI="$1"

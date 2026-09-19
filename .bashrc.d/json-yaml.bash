@@ -3,6 +3,7 @@
 export JQ_COLORS="1;31:1;31:1;31:0;38:0;32:0;38:0:33"
 
 function pp {
+    # shellcheck disable=SC2034
     local MANNAME="pretty-print
 
 SYNOPSIS

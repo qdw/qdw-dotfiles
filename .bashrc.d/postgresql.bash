@@ -26,7 +26,7 @@ function _pg_run_binary {
         fi
     fi
 
-    env \
+    env "$DEBUG_FLAG" 
         "-i${ADDL_ENV_FLAGS}" \
         HOME="$HOME" \
         PGDATA="$HOMEBREW_ROOT/var/postgresql@${VERSION}" \
@@ -35,7 +35,7 @@ function _pg_run_binary {
         PGHOST="/tmp" \
         PGUSER="$USER" \
         USER="$USER" \
-        "$BINARY" \
+        "$BINARY" "$DEBUG_FLAG" \
         "$@"
 }
 
@@ -153,6 +153,7 @@ function snip {
 }
 
 function envp {
+    # shellcheck disable=SC2034
     local MANNAME="show (or clear) PostgreSQL-related env vars"
     check-args 0 1 "[--clear]" "$@" || return 1
     if [[ $# -eq 0 ]]; then

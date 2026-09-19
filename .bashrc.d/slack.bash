@@ -18,6 +18,7 @@ function slack-channel {
 
 SLACK_EXTRAS="$HOME/.site.bash.d/slack-urls.bash"
 if [[ -f "$SLACK_EXTRAS" ]] && (( BASH_VERSINFO[0] >= 5 )); then
+    # shellcheck disable=SC1090
     source "$SLACK_EXTRAS"
 
     function msg {

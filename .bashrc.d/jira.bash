@@ -117,7 +117,7 @@ function jas { # assign an existing issue
     local ASSIGNEE="${2:-$JIRA_USERNAME}"
     
     local STDOUT EXIT_STATUS
-    STDOUT="$(jira issue assign "$ISSUE" "$JIRA_USERNAME")"
+    STDOUT="$(jira issue assign "$ISSUE" "$ASSIGNEE")"
     EXIT_STATUS="$?"
     if [[ "$EXIT_STATUS" -ne 0 ]]; then
         echo "$STDOUT" >&2

@@ -1,3 +1,5 @@
+# shellcheck disable=SC2034
+
 ######## dependencies:
 ########     00-bash-metaprogramming.bash
 ########     04-string-manipulation.bash
@@ -77,8 +79,10 @@ function git-backup-helper {
         && rsync -qa \
             "$REPO_NAME" \
             "$HOME/git-backups/${REPO_NAME}-$(date +%Y-%m-%d-%H%M%S%z)"
+        EXIT_STATUS=$?
 
-        cd "$ORIG_DIR"
+        cd "$ORIG_DIR" >/dev/null
+        return "$EXIT_STATUS"
     fi
 }
 
@@ -195,19 +199,15 @@ function git-show-all-commits-of {
     check-args 1 1 'git-show-all-commits-of FILE' "$@" || return $?    
     local FILE="$1"
     
-    local GIT_PAGER=cat
     for COMMIT in $(git rev-list HEAD); do
         color-printf "red"  "$(git show  --pretty='tformat:%ci %an %H'  "$COMMIT" | head -1)"
-        echo
-        git show "${COMMIT}:${FILE}"
+        GIT_PAGER="cat" git show "${COMMIT}:${FILE}"
         echo
     done
 }
 
-function commits { git-show-all-commits-of "$@" ;}    
-
-function git-show-name-only-diffs {
-    for-all-commits 'git diff --name-only --color=always $COMMIT HEAD'
+function commits {
+    git-show-all-commits-of "$@"
 }
 
 ######## GitHub-specific settings
@@ -560,7 +560,8 @@ function github-repo-search {
 
 # repo - open a named GitHub named repo in a web browser
 function repo {
-    REPO_NAME="$1"
+    check-args 1 1 'REPO_NAME' "$@" || return 1
+    local REPO_NAME="$1"
     if [[ -z "$REPO_NAME" ]]; then
        gh repo view --web
     elif [[ "$REPO_NAME" = "list" ]]; then
@@ -714,11 +715,11 @@ function git-list-all-repos-in-org {
         gh api "/orgs/$GITHUB_ORG/repos" \
             --paginate \
             --jq '.[] | [.name, .updated_at] | @tsv' \
-            -F per_page=$PER_PAGE \
+            -F per_page="$LINES" \
             -F sort=updated \
             -F direction=desc \
-            -F page=$PAGE || break
-        ((PAGE++))
+            -F page="$PAGE" || break
+        (( PAGE++ ))
     done
 }
 

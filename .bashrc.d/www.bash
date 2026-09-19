@@ -92,7 +92,7 @@ GMAIL_URL="https://mail.google.com/mail/u/0"
 
 function gmail {
     check-args 0 2 '[SEARCH_STRING [BROWSER]]' "$@" || return 1
-    local URL="https://mail.google.com/mail/u/0"
+    local URL="$GMAIL_URL"
     
     if [[ $# -eq 1 ]]; then
         local SEARCH_STRING="$1"
@@ -107,7 +107,7 @@ function gmail {
 function gmail-search {
     check-args 0 1 'QUERY [BASE_URL' "$@" || return 1
     local QUERY="$1"
-    local BASE_URL="${2:-https://mail.google.com/mail/u/0}"
+    local BASE_URL="${2:-$GMAIL_URL}"
     
     local URL="$BASE_URL/#search"
     local URLENCODED_QUERY="$(urlencode "$QUERY")"
@@ -156,6 +156,7 @@ EXAMPLE
 }
 
 function wi {
+    # shellcheck disable=SC2034
     local MANNAME="search Wikipedia (via DuckDuckGo)"
     check-args 1 1 'SEARCH_QUERY' "$@" || return 1
     local SEARCH_QUERY="$1"

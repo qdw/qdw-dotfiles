@@ -38,10 +38,6 @@ export ACK_PAGER="$PAGER"
 export BAT_PAGER="$PAGER"
 export MANPAGER="$PAGER"
 
-#### pager: alt experimental pager for, uh, I forget what
-
-export PPA='fmt -s -uw "$COLUMNS" | less'
-
 #### pager: bat, a colorizing cat(1) that understands many file formats
 
 # export BAT_THEME="tritium" # can't get 'bat cache --build' to work
