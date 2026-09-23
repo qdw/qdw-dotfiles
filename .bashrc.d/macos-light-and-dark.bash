@@ -159,7 +159,8 @@ function change-alacritty-to {
     local MODE="$1"
     validate-mode "$MODE" || return 1
 
-    if [[ "$MODE" != "$(current-mode)" ]]; then
+    if [[ ! "$MODE" = "$(current-mode)" ]] && [[ -f "$ALACRITTY_SOCKET" ]]
+    then
         alacritty-change-theme-to "${MODE}-default.toml" # see ./terminal.bash
     fi
 }
