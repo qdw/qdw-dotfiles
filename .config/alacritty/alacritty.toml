@@ -8,8 +8,7 @@ text = '0x000000'
 cursor = '0xff7f00'
 
 [terminal]
-# osc52 = "OnlyCopy"
-osc52 = "Disabled"
+osc52 = "OnlyCopy"
 
 [window]
 position = { x = 0, y = 0 }
