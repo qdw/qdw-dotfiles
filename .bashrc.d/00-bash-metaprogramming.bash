@@ -405,34 +405,27 @@ function deps-bash {
     cd "$ORIG_DIR"
 }
 
-QDW_FUNC_VERBOSE="yes"
-
-# func - show the source code of a bash function, with syntax highlighting
-function func {
-    check-args 1 2 '[-v|--verbose] FUNCTION_NAME' "$@" || return 1
-    local FLAG VERBOSE FUNCTION_NAME FIRST_LINE
+function _func_helper {
+    check-args 1 2 '[-d|--in-dotfiles] FUNCTION_NAME' "$@" || return 1
+    local FLAG FIND_IN_DOTFILES FUNCTION_NAME FIRST_LINE
     
     if [[ $# -eq 2 ]]; then
         FLAG="$1"
         shift
 
         case "$FLAG" in
-            -v|--verbose)
-                VERBOSE="yes";;
+            -d|--in-dotfiles)
+                FIND_IN_DOTFILES="yes";;
             *)
                 err "invalid flag '$FLAG'. For usage, run with --help"
                 return 1;;
         esac
     fi
 
-    if [[ "$QDW_FUNC_VERBOSE" ]]; then
-        VERBOSE=1
-    fi
-
     FUNCTION_NAME="$1"
 
-    if [[ "$VERBOSE" ]]; then
-        rg "function $FUNCTION_NAME [{]" ~/.bashr* ~/.*profile* ~/.site.bash* \
+    if [[ "$FIND_IN_DOTFILES" ]]; then
+        grep "function $FUNCTION_NAME [{]" ~/.bashr* ~/.*profile* ~/.site.bash* \
             || return
     fi
     
@@ -440,7 +433,7 @@ function func {
     local FIRST_LINE="$(command type "$FUNCTION_NAME" | head -1)"
     if [[ "$FIRST_LINE" = "$FUNCTION_NAME is a function" ]]; then
         local SKIP_LINES
-        if [[ "$VERBOSE" ]]; then
+        if [[ "$FIND_IN_DOTFILES" ]]; then
             # Formatting detail: if we just ran rg because the user passed -v,
             # then it has already printed a line like this:
             # 
@@ -452,7 +445,7 @@ function func {
             # foo is a function
             # foo ()
             # {
-            SKIP_LINES="3"
+            SKIP_LINES="2"
         else
             # If, in contrast, the user didn't pass -v/verbose, then
             # all we need to skip is this line:
@@ -460,13 +453,18 @@ function func {
             # foo is a function
             SKIP_LINES="1"
         fi
-
-        # Account for an off-by-one quirk in the semantics of the 'tail' cmd.
-        SKIP_LINES=$(( SKIP_LINES + 1 ))            
-        command type "$FUNCTION_NAME" \
-            | tail -n "+${SKIP_LINES}" \
-            | bat --language bash
     fi
+
+    # Account for the off-by-one semantics of tail(1)
+    SKIP_LINES=$(( SKIP_LINES + 1 ))
+
+    command type "$FUNCTION_NAME" \
+        | tail -n "+${SKIP_LINES}"
+}
+
+function func {
+    local MANNAME="show bash function, with syntax highlighting"
+    _func_helper "$@" | bat --language bash
 }
 
 # Save-to-file a function that you defined in an interactive shell
@@ -485,9 +483,14 @@ function save-function {
 function gfunc {
     check-args 1 varargs '[GREP_FLAGS ...] REGEX' "$@" || return 1
     local -a ARGS=("$@")
+
     local REGEX="${ARGS[-1]}"
     unset 'ARGS[-1]'
-    gbr "${ARGS[@]}" "function.*${REGEX}.*[{]"
+
+    gbr "-F" "${ARGS[@]}" "function.*${REGEX}.*[{]" \
+        | bnw \
+        | sed -e 's/function[ ]\(\w+\)[ ][{]/\1' \
+        | sort
 }
 
 function g-funk {
