@@ -288,7 +288,7 @@ extended-bright-white "#a6acb9")))
    ;;;; customize
 
    `(widget-field
-     ((t (:foreground ,black :background ,bright-red))))
+     ((t (:foreground ,black :background ,red))))
      
    ;;;; window dressing (including the mode-line)
    
@@ -310,7 +310,7 @@ extended-bright-white "#a6acb9")))
    `(mode-line-inactive
      ((t (:foreground ,cyan :background ,bright-black))))
      
-   ;;;; font lock
+   ;;;; font-lock
 
    `(font-lock-builtin-face
      ((t ((:foreground ,blue)))))
@@ -384,6 +384,9 @@ extended-bright-white "#a6acb9")))
 ;;    `(cperl-array-face
 ;;      ((t ((:inherit font-lock-variable-name-face)))))
 ;; `
+
+   `(swift-mode:type-face
+       ((t (:inherit font-lock-function-call-face))))
    
    ;;;; flycheck/flymake
    

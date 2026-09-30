@@ -213,7 +213,7 @@
    `(mode-line-inactive
      ((t (:foreground ,white :background ,bright-black))))
      
-   ;;;; font lock
+   ;;;; font-lock
 
    `(font-lock-builtin-face
      ((t ((:foreground ,blue)))))

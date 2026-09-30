@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; no-native-compile: t; -*-
+;; -*- lexical-binding: t; no-byte-compile: t; no-native-compile: t; -*-
 
 ;;;; Debugging this init file
 
@@ -300,13 +300,15 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
         (load (expand-file-name file-name user-emacs-directory) 't 't)
       (error nil))))
 
+;; (setopt treesit-auto-install-grammar 'always)
+(load-qdw-module "swift-qdw.el")
 (use-package ansi-color)
 (load-qdw-module "c-qdw.el")
 (use-package comint)
 (use-package compile)
 (load-qdw-module "cperl-qdw.el")
 (load-qdw-module "org-qdw.el")
-(use-package dired)
+(load-qdw-module "dired-qdw.el")
 (use-package dirtrack)
 (use-package imenu)
 (load-qdw-module "make-mode-qdw.el")
@@ -420,10 +422,6 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;;;; Hack: general: automatic indentation
 
 (electric-indent-mode +1)
-
-;;;; Hack: general: tree-sitter
-;;
-;; nothing here yet
 
 ;;;; Hack Emacs Lisp
 
@@ -740,19 +738,6 @@ but it calls defvar under the hood."
 ;;; Dark mode:
 
 ;; (load-theme 'modus-vivendi)  ;; max-contrast dark theme
-
-;;;; dired
-
-(defun dired-find-file-qdw ()
-  "In Dired, visit the file or directory on the cursor.
-If the file is a directory, use `dired-find-alternate-file'
-to avoid creating many buffers. If the file is a regular file,
-use `dired-find-file' to open it in a new buffer."
-  (interactive)
-  (let ((is-dir (file-directory-p (dired-get-file-for-visit))))
-    (if is-dir
-      (dired-find-alternate-file)
-      (dired-find-file))))
 
 ;;;; Buffer list
 
@@ -1300,8 +1285,11 @@ This command does the reverse of `fill-region'."
    ("C-c u"    uncomment-region)
    ("C-c u"    uncomment-region)
    ("C-c v"    vscode)
-   ("C-c 6"    split-window-into-thirds))
- )
+   ("C-c 6"    split-window-into-thirds)
+   ;; ("C-x C-c"  (lambda ()
+   ;;               (interactive)
+   ;;               (ignore)
+))
 
 ;;; C keybindings
 
@@ -1445,6 +1433,7 @@ This command does the reverse of `fill-region'."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-enabled-themes '(tritium))
  '(custom-theme-directory self-authored-themes-dir)
  '(package-selected-packages
    '(applescript-mode blacken company copilot csv-mode dumb-jump elfeed

@@ -1,9 +1,7 @@
 ;; -*- lexical-binding: t; no-native-compile: t; -*-
 
-;;;; Experimental: use a newer org-mode than the bundled one (via straight.el)
-
 (use-package org
-  :after url-util
+  :after (url-util)
   :straight (:host github :repo "emacs-straight/org-mode" :local-repo "org")
   
   :config
