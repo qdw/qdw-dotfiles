@@ -566,16 +566,9 @@ function buy {
             list-things-you-can-buy /dev/stderr
             return 3
         else
-            local URL="$(cat "$URL_FILE")"
-            CAT_EXIT_STATUS=$?
-            if [[ $CAT_EXIT_STATUS -ne 0 ]]; then
-                return $CAT_EXIT_STATUS
-            elif [[ -z "$URL" ]]; then
-                err "URL file '$URL_FILE' is empty"
-                return 4
-            else
+            while IFS= read -r URL || [[ -n "$URL" ]]; do
                 firefox "$URL"
-            fi
+            done < "$URL_FILE"
         fi
     fi
 }
