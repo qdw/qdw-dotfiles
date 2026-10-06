@@ -130,7 +130,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;; files during editing.
 
 (setopt native-comp-jit-compilation nil
-        load-prefer-newer 't)
+        load-prefer-newer t)
 
 ;;;; Basic text-editing behavior
 
@@ -166,7 +166,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (defun start-lines-at-1 ()
   (interactive)
   (set-window-hscroll (selected-window) 0)
-  (setq-local auto-hscroll-mode 't))
+  (setq-local auto-hscroll-mode t))
 
 (defun move-line-up-qdw ()
   (interactive)
@@ -185,13 +185,19 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;; (setq redisplay-skip-fontification-on-input t)
 
 (defvar self-authored-themes-dir
-        ;; (expand-file-name "qdw/qdw-themes" user-emacs-directory))
   (expand-file-name "qdw-themes" user-emacs-directory))
 
 (defvar themes-qdw
         '("amber" "amber-without-bold" "mariana" "tritium"))
 
 (add-to-list 'custom-theme-load-path self-authored-themes-dir)
+
+(setopt font-lock-global-modes '(not fundamental-mode)
+        global-font-lock-mode t)
+
+(add-to-list 'load-path self-authored-themes-dir)
+
+(add-to-list 'load-path (expand-file-name "~/src/forks/mariana-theme"))
 
 ;; A tweaked version of someone else's Emacs port of Sublime Text mariana
 
@@ -203,7 +209,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 ;; Load my current favorite theme.
 ;; But keep the cursor bright orange, no matter the theme, for visibility.
 
-(load-theme (intern my-chosen-theme) 't)
+(load-theme (intern my-chosen-theme)t)
 (set-cursor-color "DarkOrange1")
 
 ;;;; Window manipulation settings.
@@ -297,7 +303,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
   "Load FILE-NAME if it exists, and do nothing otherwise."
   (let ((inhibit-message t))
     (condition-case nil
-        (load (expand-file-name file-name user-emacs-directory) 't 't)
+        (load (expand-file-name file-name user-emacs-directory)tt)
       (error nil))))
 
 ;; (setopt treesit-auto-install-grammar 'always)
@@ -318,14 +324,14 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
     :init (advice-add 'sh-set-shell
                       :around
                       (lambda (orig &rest args)
-                        (let ((inhibit-message 't))
+                        (let ((inhibit-messaget))
                           (apply orig args)))))
 (load-qdw-module "sql-qdw.el")
 (use-package json) (setq-default json-encoding-default-indentation "    ")
 (use-package markdown-mode)
 (use-package url-util)
 
-;;;; LSP
+;;;; Hack: LSP
 
 ;; Increase the size of the buffer that Emacs
 ;; uses to communicate with the LSP server,
@@ -369,7 +375,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 
  ;; Some Unix command-line utilities work properly only when files
  ;; end in a newline, for example, 'wc -l'
- require-final-newline 't
+ require-final-newline t
 
  ;; Single-space: always.
  colon-double-space nil 
@@ -382,20 +388,16 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
  
  ;; If I have a region selected, then make commands like query-replace
  ;; operate on that region only
- transient-mark-mode 't
+ transient-mark-mode t
 
  ;; Don't leave *~ droppings.
  make-backup-files nil
  
  cursor-type 'box
  column-number-mode nil
- 
- ;; 't means always highlight as much distinct syntax as is supported
- global-font-lock-mode 't
 
  ;; Instead of beeping, flash screen
- visible-bell 't
- )
+ visible-bell t)
 
 ;;;; Whitespace-handling
 
@@ -486,10 +488,6 @@ but it calls defvar under the hood."
 
 ;;;; Settings for Emacs Lisp I wrote
 
-(add-to-list 'load-path self-authored-themes-dir)
-
-(add-to-list 'load-path (expand-file-name "~/src/forks/mariana-theme"))
-
 (load-file-if-exists-qdw "secrets.el")
 (load-file-if-exists-qdw "site.el")
 
@@ -558,12 +556,12 @@ but it calls defvar under the hood."
 (defun kill-all-file-buffers-without-prompting-qdw ()
   "Kill all file buffers, first saving any that need it (without prompting)"
   (interactive)
-  (buffer-saver-killer-helper 't))
+  (buffer-saver-killer-helpert))
 
 (defun kill-emacs-qdw ()
   "Save file buffers and kill emacs, all without prompting"
   (interactive)
-  (buffer-saver-killer-helper 't)
+  (buffer-saver-killer-helpert)
   (kill-emacs))
 
 (defun start-at-column-qdw (col-num-zero-based)
@@ -598,7 +596,7 @@ but it calls defvar under the hood."
     (when (string-match "\\(.*\\)-theme\\.el$" base-name)
       (let ((theme-name (match-string 1 base-name)))
         (when (string-in theme-name themes-qdw)
-          (load-theme (intern theme-name) 't 't))))))
+          (load-theme (intern theme-name)tt))))))
 
 (add-hook 'after-save-hook #'if-file-is-theme-reload-theme)
 
@@ -668,11 +666,11 @@ but it calls defvar under the hood."
 
 (defun amber-reload ()
   (interactive)
-  (load-theme 'amber 't 't))
+  (load-theme 'ambertt))
 
 (defun tritium-reload ()
   (interactive)
-  (load-theme 'tritium 't 't))
+  (load-theme 'tritiumtt))
 
 (defun tritium-re-theme ()
   "Load a file that defines the 16 4-bit ANSI colors;
@@ -705,7 +703,7 @@ but it calls defvar under the hood."
 ;;; Loud themes, for prod boxes
 ;; T  birds-of-paradise-plus: very loud red theme,
 ;;    for use on production boxes
-;; (load-theme 'birds-of-paradise-plus 't)
+;; (load-theme 'birds-of-paradise-plust)
 
 (defun switch-theme ()
   (interactive)
@@ -758,7 +756,7 @@ but it calls defvar under the hood."
 
 ;; (setopt auto-revert-verbose nil)
 ;; (when (not global-auto-revert-mode)
-;;       (global-auto-revert-mode 't))
+;;       (global-auto-revert-modet))
 
 (defun alt-editor (program &rest program-args)
   (interactive)
@@ -828,10 +826,10 @@ but it calls defvar under the hood."
   (interactive)
   (cond
     ((thing-at-point 'url)
-     (call-process "/usr/bin/open" nil 0 nil (thing-at-point 'url 't)))
+     (call-process "/usr/bin/open" nil 0 nil (thing-at-point 'urlt)))
 
     ((thing-at-point 'filename)
-     (let* ((parts (split-string (thing-at-point 'filename 't) ":"))
+     (let* ((parts (split-string (thing-at-point 'filenamet) ":"))
             (file-name (or (nth 0 parts) parts))
             (lineno (if (and (nth 1 parts) (string-match-p "^[0-9]+$" (nth 1 parts)))
                         (string-to-number (nth 1 parts))
@@ -853,12 +851,12 @@ but it calls defvar under the hood."
 ;; ;; When I delete files in dired, send them to the macOS Trash; don't rm.
 ;; 
 ;; (osx-trash-setup)
-;; (setopt delete-by-moving-to-trash 't)
+;; (setopt delete-by-moving-to-trasht)
 ;; (defun system-move-file-to-trash (path)
 ;;   "Moves file at PATH to the macOS Trash
 ;;   according to `move-file-to-trash' convention.
 ;; 
-;;   Relies on the command-line utility 'trash' to be installed.
+;;   Relies on the command-line utility `trash' to be installed.
 ;;   Get it from:  <http://hasseg.org/trash/>"
 ;;   (shell-command (concat "trash -vF \"" path "\""
 ;;                          "| sed -e 's/^/Trashed: /'")
@@ -898,8 +896,8 @@ This command does the reverse of `fill-region'."
     (fill-region start end))))
 
 (setopt
- column-number-mode 't
- custom-safe-themes 't
+ column-number-mode t
+ custom-safe-themes t
  eldoc-idle-delay 0
  elpher-default-url-type "gemini"
  isearch-allow-scroll 'unlimited
@@ -971,7 +969,7 @@ This command does the reverse of `fill-region'."
 ;;   (advice-add 'sh-set-shell
 ;;               :around
 ;;               (lambda (orig &rest args)
-;;                 (let ((inhibit-message 't))
+;;                 (let ((inhibit-messaget))
 ;;                   (apply orig args)))))
 
 ;; Don't auto-insert '<< EOF'-style heredocs when I type '<<',
@@ -1126,7 +1124,7 @@ This command does the reverse of `fill-region'."
         ;; Momentarily disable underlining; it looks bad in compilation-mode
         (set-face-attribute 'underline nil :underline t)
         (compile (concat command-string " " buffer-file-name)
-                 't)))
+                t)))
     (set-face-attribute 'underline nil :underline original-underline-face)))
 
 ;;;; Hack macOS sandbox-exec (.sb) files, which are written in a Lisp dialect
