@@ -4,79 +4,70 @@
 ########     third-party dependencies:
 ########         PostgreSQL itself, of course
 
+export POSTGRESQL_DEFAULT_VER="18"
 export POSTGRESQL_SUPPORTED_VERSIONS="15 16 17 18"
 export POSTGRESQL_RC_VERSION="19"
 
 function _pg_run_binary {
-    check-args 1 varargs \
-               '[--debug] PROGRAM [ARG1 [ARG2 ... ]]' "$@" \
-        || return 1
+    check-args 1 varargs 'PROGRAM [ARG1 [ARG2 ... ]]' "$@" || return 1
+    local BINARY="$1"
+    shift
 
-    if [[ "$1" = "--debug" ]]; then
-        shift
-        DEBUG_FLAG="--debug"
-        BINARY="/bin/echo"
-        local ADDL_ENV_FLAGS="v"
-    else
-        if [[ "$1" ]]; then
-            local BINARY="$1"
-            shift
-        else
-            local BINARY="psql"
-        fi
-    fi
-
-    env "$DEBUG_FLAG" 
-        "-i${ADDL_ENV_FLAGS}" \
+    /usr/bin/env \
         HOME="$HOME" \
         PGDATA="$HOMEBREW_ROOT/var/postgresql@${VERSION}" \
         PGDATABASE="postgres" \
-        PGPORT="54${VERSION}" \
         PGHOST="/tmp" \
+        PGPORT="54${VERSION}" \
         PGUSER="$USER" \
         USER="$USER" \
-        "$BINARY" "$DEBUG_FLAG" \
+        "$BINARY" \
         "$@"
 }
 
 function pg {
-    local DEFAULT_VER="18"
+    local VERSION PROG
     
-    MANNAME="manage multiple Homebrewed PostgreSQL versions
+    local MANNAME="manage multiple Homebrewed PostgreSQL versions
 CAVEATS
     For this command to work, you must first set up each version's
     postgresql.conf and pg_hba.conf so that it accepts local
     connections on port 54xy, where xy is its major version name
     (example: 5418).
 "
+    
     check-args 0 varargs \
-               "[--debug] [VERSION] [PROG [ARG1 [ARG2 ...]]] # default version is $DEFAULT_VER" \
+               "[VERSION] [PROG [ARG1 [ARG2 ...]]] # default VERSION is $POSTGRESQL_DEFAULT_VERSION; default PROG is psql" \
                "$@" \
         || return 1
 
-    if [[ "$1" = "--debug" ]]; then
-        local DEBUG=0
+    if [[ "$1" ]]; then
+        VERSION="$1"
         shift
+    else
+        VERSION="$POSTGRESQL_DEFAULT_VERSION"
     fi
-    
-    local VERSION="${1:-$DEFAULT_VER}"
-    shift
 
-    local PROG
     if [[ "$1" ]]; then
         PROG="$1"
         shift
     else
         PROG="psql"
     fi
-    
-    local BINARY=$HOMEBREW_ROOT/opt/postgresql@${VERSION}/bin/${PROG}
 
-    if [[ "$DEBUG" ]]; then
-        _pg_run_binary --debug "$BINARY" "$@"
+    if [[ "$VERSION" = "$POSTGRESQL_RC_VERSION" ]]; then
+        setx
+        # Hand-compiled release candidate; lives in a different
+        # location, with a different directory structure, than
+        # Homebrewed PostgreSQL
+        PGDATA="/opt/postgresql/$VERSION/data" PGDATABASE="postgres" PGHOST="/tmp" PGPORT="54${VERSION}" PGUSER="$USER" "/opt/postgresql/$VERSION/bin/$PROG" \
+            "$@"
+        set +x
+    else
+        _pg_run_binary \
+            "${HOMEBREW_ROOT}/opt/postgresql@${VERSION}/bin/${PROG}" \
+            "$@"
     fi
-
-    _pg_run_binary "$BINARY" "$@"
 }
 
 function p-tips {
@@ -182,6 +173,4 @@ function headerscheck {
     REAL_DIR="$(realpath "$PGINCLUDE_DIR")" \
         && cd "$REAL_DIR" \
         && ./headerscheck "$@"
-
-    
 }
