@@ -34,6 +34,21 @@ function complain { # for multiline msgs (pass each line as a separate arg)
 
 ############ Utilty functions
 
+function remove-arg {
+    check-args 2 varargs 'ARGUMENT_TO_REMOVE ARGS_ARRAYREF' "$@" || return 1
+    local ARG_TO_REMOVE="$1"
+    local -n OUT_ARR="$2"
+    shift 2
+    
+    for ARG in "$@"; do
+        if [[ ! "$ARG" = "$ARG_TO_REMOVE" ]]; then
+            OUT_ARR+=("$ARG")
+        fi
+    done
+
+    echo "${ARGS[@]}"
+}
+
 # Check for functions, aliases, and executables.
 function command-exists {
     check-args 1 1 'COMMAND_NAME' "$@" || return 1
@@ -425,8 +440,9 @@ function _func_helper {
     FUNCTION_NAME="$1"
 
     if [[ "$FIND_IN_DOTFILES" ]]; then
-        grep "function $FUNCTION_NAME [{]" ~/.bashr* ~/.*profile* ~/.site.bash* \
-            || return
+        grep -R "function $FUNCTION_NAME [{]" \
+             ~/.bashr* ~/.*profile* ~/.site.bash* \
+          || return
     fi
     
     local FUNCTION_NAME="$1"
@@ -465,6 +481,11 @@ function _func_helper {
 function func {
     local MANNAME="show bash function, with syntax highlighting"
     _func_helper "$@" | bat --language bash
+}
+
+function funk {
+    local MANNAME="show bash function as it appears in ~/.bashrc.d/*"
+    func --in-dotfiles "$@"
 }
 
 # Save-to-file a function that you defined in an interactive shell

@@ -16,27 +16,28 @@
 set -a
 
 if installed "rg"; then
-    # Use ripgrep if installed.
+    # Use rg if installed.
     MY_GREP="rg"
     MY_GREP_OPTIONS="--color=always --follow" # --column --no-line-number"
-    GREP_RECURSE="--no-heading --follow --no-one-file-system --no-line-number"
+    GREP_RECURSE="--no-heading --follow --no-one-file-system" # --no-line-number"
     GREP_EXCLUDE_FLAGS="" # rg uses a .ignore file, not command-line flags
-    GREP_COLOR_FLAGS="--colors path:fg:blue --colors line:fg:yellow --colors column:fg:cyan --colors match:fg:red"
+
+    # These are the default colors; change them if you like.
+    # $MAGENTA and the other color names are defined in ./terminal.bash
+    # GREP_COLOR_FLAGS="--colors path:fg:$MAGENTA --colors line:fg:$GREEN --colors column:fg:$CYAN --colors match:fg:$RED" # the defaults
 else
-    # Use the actual grep command.
+    # rg not installed? Use the actual grep command.
     if on-macos && installed "ggrep"; then
         MY_GREP="ggrep"
     else
         MY_GREP="command grep"
     fi
     
-    MY_GREP_OPTIONS="-EIin --color=always"
+    MY_GREP_OPTIONS="-EIi --color=always"
     GREP_RECURSE="-R"
     GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
-    GREEN="32"
-    YELLOW="33"
-    FILENAME_COLOR="fn=${GREEN}"
-    LINE_NUMBER_COLOR="ln=${YELLOW}"
+    FILENAME_COLOR="fn=${MAGENTA}"
+    LINE_NUMBER_COLOR="ln=${GREEN}"
     GREP_COLOR_FLAGS=""
     export GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
 fi
@@ -45,23 +46,27 @@ set +a
 
 function grep {
     # When using rg as my grep implementation, I often type -R out of habit,
-    # but rg has no -R flag (and it's recursive by default).
-    # So, if I try to pass that flag to rg, just remove it.
-    local -a ARGS=()
+    # but rg has no -R flag (it's recursive by default). So ignore it.
     if [[ "$MY_GREP" = "rg" ]]; then
-        for ARG in "$@"; do
-            if [[ "$ARG" != "-R" ]]; then
-                ARGS+=("$ARG")
-            fi
-        done
-    else
-        ARGS=("$@")
+        local -a ARGS
+        remove-arg "-R" ARGS "$@"
+        set -- "${ARGS[@]}"
     fi
 
-    $MY_GREP \
-        $MY_GREP_OPTIONS \
-        $GREP_COLOR_FLAGS \
-        $GREP_EXCLUDE_FLAGS "${ARGS[@]}" | $PAGER
+    $MY_GREP $MY_GREP_OPTIONS $GREP_COLOR_FLAGS $GREP_EXCLUDE_FLAGS "$@" \
+        | $PAGER
+}
+
+function g {
+    check-args 1 varargs 'REGEX [PATH1 [PATH2 [...]]]' "$@" || return 1
+ 
+    local REGEX="$1"
+    shift
+    if [[ $# -eq 0 ]]; then
+        grep $GREP_RECURSE "$REGEX" "."
+    else
+        grep $GREP_RECURSE "$REGEX" "$@"
+    fi
 }
 
 if [[ "$MY_GREP" = "rg" ]]; then
@@ -69,10 +74,6 @@ if [[ "$MY_GREP" = "rg" ]]; then
         grep --passthru "$@"
     }
 fi
-
-function gi {
-    grep -i "$@"
-}
 
 function grep-terms {
     check-args 2 varargs 'FILENAME PATTERN [PATTERN ...]' "$@" || return 1
@@ -88,18 +89,6 @@ function grep-terms {
     
     # echo "$REGEX" >&2 # for debugging
     grep "$REGEX" $FILENAMES
-}
-
-function g {
-    check-args 1 varargs 'REGEX [PATH1 [PATH2 [...]]]' "$@" || return 1
- 
-    local REGEX="$1"
-    shift
-    if [[ $# -eq 0 ]]; then
-        grep -i $GREP_RECURSE "$REGEX" "."
-    else
-        grep -i $GREP_RECURSE "$REGEX" "$@"
-    fi
 }
 
 function gbr {
