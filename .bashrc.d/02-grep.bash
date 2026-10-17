@@ -2,7 +2,9 @@
 
 ########     dependencies:
 ########        01-bash-debugging.bash
-########        ./pager.bash
+########        013-homebrew.bash
+########        015-terminal.bash
+########        04-pager.bash
 
 # Use the best available grep-like tool, and make them all behave the same.
 # 
@@ -92,7 +94,7 @@ function grep-terms {
 }
 
 function gbr {
-    check-args 1 varargs 'gbr [ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
+    check-args 1 varargs '[ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
 
     local REGEX="$1"
     shift

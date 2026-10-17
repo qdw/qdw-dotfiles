@@ -73,7 +73,7 @@ function brew-deps-all {
 }
 
 function brew-leaves {
-    brew-deps-all | command grep -E '^[[:alpha:]]' | sort | uniq | $PAGER
+    brew-deps-all | command grep --color=never -E '^[[:alpha:]]' | sort | uniq | $PAGER
 }
 
 function brew-leaf {
@@ -118,7 +118,7 @@ function _brew-n-deps {
     if ! brew ls --formula "$PACKAGE_NAME" >/dev/null 2>&1; then
         echo -1
     else
-        RAW_COUNT=$(brew deps --tree --installed | command grep -c "$PACKAGE_NAME")
+        RAW_COUNT=$(brew deps --tree --installed | command grep --color=never -c "$PACKAGE_NAME")
         N_DEPENDERS=$(( RAW_COUNT - 1 ))
         echo $N_DEPENDERS
     fi
@@ -143,7 +143,7 @@ function brew-force-update {
     check-args 0 0 '' "$@" || return 1
     brew update \
          --quiet \
-         2> >(grep -v "No remote 'origin' in /opt/homebrew/Library/Taps/quinn/homebrew-old-nethack" >&2) \
+         2> >(command grep -v "No remote 'origin' in /opt/homebrew/Library/Taps/quinn/homebrew-old-nethack" >&2) \
      && brew-update-timestamp
 }
 
@@ -289,7 +289,7 @@ function brew-untrusted {
                 echo "trusted: $FORMULA"
             fi
             continue
-        elif ! brew trust |command grep -E "^[ ][ ]${FORMULA}$" >/dev/null;then
+        elif ! brew trust | command grep --color=never -E "^[ ][ ]${FORMULA}$" >/dev/null; then
             if verbose; then
                 echo "untrusted: $FORMULA"
             else
