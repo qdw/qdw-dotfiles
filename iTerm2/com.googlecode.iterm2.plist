@@ -30,6 +30,8 @@
 	<string>https://api.openai.com/v1/responses</string>
 	<key>AllowClipboardAccess</key>
 	<true/>
+	<key>Bidi</key>
+	<false/>
 	<key>CheckTestRelease</key>
 	<false/>
 	<key>CommandSelection</key>
