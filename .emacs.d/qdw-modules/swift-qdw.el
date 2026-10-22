@@ -11,5 +11,5 @@
 ;;     (setopt treesit-auto-install-grammar 'always))
 
 (use-package swift-mode
-    :straight (:host github :repo "swift-emacs/swift-mode")
+    ;; :straight (:host github :repo "swift-emacs/swift-mode")
     :mode "\\.swift\\'")

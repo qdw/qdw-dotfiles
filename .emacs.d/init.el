@@ -556,12 +556,12 @@ but it calls defvar under the hood."
 (defun kill-all-file-buffers-without-prompting-qdw ()
   "Kill all file buffers, first saving any that need it (without prompting)"
   (interactive)
-  (buffer-saver-killer-helpert))
+  (buffer-saver-killer-helper))
 
 (defun kill-emacs-qdw ()
   "Save file buffers and kill emacs, all without prompting"
   (interactive)
-  (buffer-saver-killer-helpert)
+  (buffer-saver-killer-helper)
   (kill-emacs))
 
 (defun start-at-column-qdw (col-num-zero-based)

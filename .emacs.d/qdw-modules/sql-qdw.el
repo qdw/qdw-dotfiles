@@ -22,8 +22,8 @@
     ;;   'set)
 
 (use-package sql-indent
-    :straight (:host github
-               :repo "alex-hhh/emacs-sql-indent"
-               :local-repo "sql-indent")
+    ;; :straight (:host github
+    ;;            :repo "alex-hhh/emacs-sql-indent"
+    ;;            :local-repo "sql-indent")
     :hook ((sql-mode . sqlind-minor-mode)))
    ;; :config (...))

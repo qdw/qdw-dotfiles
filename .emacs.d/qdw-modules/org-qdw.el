@@ -2,7 +2,7 @@
 
 (use-package org
   :after (url-util)
-  :straight (:host github :repo "emacs-straight/org-mode" :local-repo "org")
+  ;; :straight (:host github :repo "emacs-straight/org-mode" :local-repo "org")
   
   :config
 
