@@ -122,10 +122,6 @@ source-section "network.bash"
 
 # source-section "fzf.bash"
 
-#### Terminal emulators (including helper functions for ANSI SGR colors)
-
-source-section "terminal.bash"
-
 #### Filename/path/dir/cd-related functions
 
 function dashify-path {
