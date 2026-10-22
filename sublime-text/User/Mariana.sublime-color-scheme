@@ -1,0 +1,15 @@
+// -*- mode: json indent-tabs-mode: t -*-
+// Documentation at https://www.sublimetext.com/docs/color_schemes.html
+{
+	"variables":
+	{
+	},
+	"globals":
+	{
+		"foreground": "hsl(219, 28%, 60%)",
+	},
+	"rules":
+	[
+		
+	]
+}
