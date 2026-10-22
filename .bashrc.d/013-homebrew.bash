@@ -30,6 +30,23 @@ else
     export MY_LS_OPTIONS="$MY_LS_BASE_OPTIONS"
 fi
 
+## Set *PATH
+
+# If some of the variables that I interpolated in my PATH are undefined,
+# then I will wind up with '::' in my PATH. That's equivalent to having
+# '.' (the current working directory) in one's path, which is a security
+# risk, because there's a silly trick that hackers can use where they
+# put a malicious binary named ls or grep or something inside a directory
+# and a privileged user cd's there and accidentally runs it.
+# Plus it looks bad. So remove any instances of two (or more)
+# consecutive colons. Same goes for a single leading or trailing colon.
+
+function decolonize {
+    check-args 1 1 'STRING # like PATH or MANPATH' "$@" || return 1
+    STRING="$1"
+    echo "$STRING" | sed -e 's/^[:]//' -e 's/[:]\{2,\}/:/g' -e 's/[:]$//'
+}
+
 for HDIR in "/opt/homebrew" "/usr/local"; do
     if [[ -x "$HDIR/bin/brew" ]]; then
         export HOMEBREW_MANPATH="$HDIR/manpages:$HDIR/share/man"
