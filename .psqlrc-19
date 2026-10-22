@@ -1,0 +1,53 @@
+-- -*- mode: sql -*-
+
+-- ---- Important semantics
+
+\set ON_ERROR_ROLLBACK interactive
+\set HISTSIZE -1
+\set statement_timeout = 0;
+\set idle_session_timeout = '2 days';
+\set idle_in_transaction_session_timeout = '5 minutes';
+
+-- ---- Output formatting
+
+\x auto
+\pset null '[NULL]'
+-- \pset null 🐙
+-- \set QUIET on
+
+-- ---- Prompt
+
+-- Customize my prompt to reassure me when I'm on a replica (read-only)
+-- and warn me when I'm on a primary (writeable!)
+--
+-- Originally I was using emoji to indicate role, but my terminal (iTerm2)
+-- formats them with variable width, which messes up the alignment
+-- of the text you type (a readline bug?)
+-- 
+-- So I fell back to using ANSI SGR colors:
+-- green for replica, red for primary. In the code below, chr(27)
+-- is the ESC character.
+
+SELECT
+  CASE WHEN inet_client_addr() IS NULL THEN
+      -- It's a local connection [to my laptop], so replication is irrelevant
+      ''
+  ELSE
+      CASE WHEN pg_is_in_recovery() THEN
+          '%[' || chr(27) || '[32m%]%i' || chr(27) || '[0m%]'
+      ELSE
+          '%[' || chr(27) || '[31m%]%i' || chr(27) || '[0m%]️'
+      END
+  END
+AS replication_role_marker \gset
+
+-- ---- psql built-in escape codes:
+-- %i - replication role (new in psql 19)
+-- %n - (n)ame of user
+-- %m - (m)achine, that is, host (for Unix domain sockets, will be '[local]')
+-- %/ - database, e.g. 'postgres'
+-- %# - '#' if logged in as a role with SUPERUSER; '>' otherwise.
+
+-- Full prompt without emoji
+\set PROMPT1 '%n@%m:%/ ' :replication_role_marker ' %# '
+-- \set PROMPT1 '🐘 %n@%m:%/' :replication_role_marker ' %# '
