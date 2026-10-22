@@ -1,6 +1,6 @@
 ######## Dependencies:
-########     ./0x-homebrew.bash # if you want a recent SSH
-########     ./03-fd.bash
+########     013-homebrew.bash # if you want a recent SSH
+########     03-fd.bash
 
 function ssh-keygen {
     command ssh-keygen -t ed25519 "$@"

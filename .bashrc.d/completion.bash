@@ -1,8 +1,8 @@
 ## Bash completion
 ## Dependencies:
 ##     - Homebrew itself
-##     - ./0x-homebrew.bash
-##     - ./terminal.bash
+##     - 013-homebrew.bash
+##     - terminal.bash
 ##     - Homebrewed bash >= 5 (set as your login shell)
 ##     - The following additional Homebrew formulas:
 ##         - bash-completion@2

@@ -1,6 +1,6 @@
 ########     dependencies:
 ########         00-bash-metaprogramming.bash
-########         0x-homebrew.bash
+########         013-homebrew.bash
 ########     third-party dependencies:
 ########         PostgreSQL itself, of course
 

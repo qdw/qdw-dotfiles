@@ -2,7 +2,7 @@
 
 ######## dependencies:
 ############ 00-bash-metaprogramming.bash
-############ 0x-homebrew.bash
+############ 013-homebrew.bash
 ############ 03-fd.bash
 ################ fd(1)
 
