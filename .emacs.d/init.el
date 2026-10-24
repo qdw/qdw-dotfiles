@@ -94,6 +94,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 
 (setopt inhibit-startup-screen t)
 (menu-bar-mode -1)
+(use-package tool-bar)
 (tool-bar-mode -1)
 (use-package scroll-bar :config (scroll-bar-mode -1)
                         :demand t
@@ -307,7 +308,6 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
       (error nil))))
 
 ;; (setopt treesit-auto-install-grammar 'always)
-(load-qdw-module "swift-qdw.el")
 (use-package ansi-color)
 (load-qdw-module "c-qdw.el")
 (use-package comint)
@@ -1306,22 +1306,6 @@ This command does the reverse of `fill-region'."
 (define-key 'help-command (kbd "C-l") 'find-library)
 (define-key 'help-command (kbd "C-v") 'find-variable)
 
-;;; org-mode keybindings
-
-(keymap-set org-mode-map "C-c L" 'org-link-word-at-point-qdw)
-(keymap-set org-mode-map "C-c ;"   'insert-current-song-qdw)
-(keymap-set org-mode-map "C-c RET" 'org-open-at-point)
-(keymap-set org-mode-map "C-c >"   'org-insert-subheading-respect-content-qdw)
-(keymap-set org-mode-map "C-c ["   'org-table-move-column-left)
-(keymap-set org-mode-map "C-c ]"   'org-table-move-column-right)
-(keymap-set org-mode-map "C-c s"   'org-insert-slack-link)
-(keymap-set org-mode-map "C-c j"   'org-insert-jira-link-qdw)
-(keymap-set org-mode-map "C-c ("   'org-promote-subtree)
-(keymap-set org-mode-map "C-c )"   'org-demote-subtree)
-(keymap-set org-mode-map "C-c ["   'org-table-move-column-left)
-(keymap-set org-mode-map "C-c ]"   'org-table-move-column-right)
-(keymap-set org-mode-map "C-c s"   'org-insert-slack-link)
-
 ;;; shell-script-editing-mode keybindings
 
 ;; (define-prefix-command 'sh-mode-prefix-map)
@@ -1409,10 +1393,6 @@ This command does the reverse of `fill-region'."
 ;; Experimenting with ghosttext (emacsclient as editor for web textareas)
 
 ;; (use-package ghosttext :ensure t)
-
-;; Experimenting with straight men (package management with version-pinning)
-
-;; (use-package straight :ensure t)
 
 ;;;; HTTP client
 ;; (Use-package verb :ensure t)

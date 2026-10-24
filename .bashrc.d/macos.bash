@@ -5,15 +5,6 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-if [[ -f "$HOMEBREW_BIN/trash" ]]; then
-    # function rm {
-    #     "$HOMEBREW_BIN/trash" -F "$@"
-    # }
-    function trash {
-        "$HOMEBREW_BIN/trash" -F "$@"
-    }
-fi
-
 # source-section "macos-apps.bash" ### Shortcuts for macOS apps, e.g. Mail, Mail.app, Finder, Finder.app
 
 source-section "macos-light-and-dark.bash" ### Set light/dark mode in all apps, web pages, and other contexts
@@ -71,21 +62,21 @@ function plist-bin-to-text {
 
 ## Safer deletion settings for macOS
 
-if [[ -f "$HOMEBREW_BIN/trash" ]]; then
+CANDIDATE=""
+for BINFILE in $HOMEBREW_ROOT/Cellar/trash/*/bin/trash; do
+    CANDIDATE="$BINFILE"
+done
+
+if [[ "$CANDIDATE" ]]; then
     function trash {
-        "$HOMEBREW_BIN/trash" -F "$@"
+        "$CANDIDATE" -F "$@"
     }
-elif [[ -x "/usr/bin/trash" ]]; then
+else
     function trash {
-        /usr/bin/trash "$@"
+        echo "Don't use /usr/bin/trash" >&2
+        return 5
     }
 fi
-
-# if command-exists trash; then
-    # function rm {
-    #     trash "$@"
-    # }
-# fi
 
 ## which(1) settings: extend it to make it work for macOS .app bundles
 
