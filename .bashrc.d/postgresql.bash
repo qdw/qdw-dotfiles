@@ -148,7 +148,7 @@ function envp {
     local MANNAME="show (or clear) PostgreSQL-related env vars"
     check-args 0 1 "[--clear]" "$@" || return 1
     if [[ $# -eq 0 ]]; then
-        env | ggrep --color=always -P '^PG[^=]*'
+        env | ggrep --perl-regexp '^PG[^=]*'
     elif [[ $# -eq 1 ]]; then
         if [[ "$1" = "--clear" ]]; then
             for VAR in "PGDATABASE" "PGHOST" "PGPORT" "PGSERVICE" "PGUSER"; do

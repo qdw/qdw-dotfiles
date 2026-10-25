@@ -219,7 +219,7 @@ function rm-bucket {
 function enva {
     check-args 0 0 "[no arguments]" "$@" || return 1
     env \
-        | ggrep --color=always -P '^AWS_[^=]*' \
+        | ggrep --color=always --perl-regexp '^AWS_[^=]*' \
         | ggrep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' \
         | sort
 }

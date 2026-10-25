@@ -175,7 +175,7 @@ function vl {
 #     local GIT_CURSOR_SUBDIR="Cursor"
 #     local GIT_FULL_CURSOR_PATH="$GIT_WORKING_COPY_ROOT/$GIT_CURSOR_SUBDIR"
 #     cd "$GIT_WORKING_COPY_ROOT" || return 1
-#     local -a CHCHCHCHCHANGES=( "$(git status | grep "$GIT_CURSOR_SUBDIR.*")" )
+#     local -a CHCHCHCHCHANGES=( "$(git status | command grep "$GIT_CURSOR_SUBDIR.*")" )
 # 
 #     if [[ "$CHCHCHCHCHANGES" ]]; then
 #         echo "You have uncommitted changes in $GIT_FULL_CURSOR_PATH/" >&2
