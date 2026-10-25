@@ -14,170 +14,95 @@
 # - recent GNU grep installed via Homebrew (on macOS)
 # - old, pre-GPLv3 GNU grep bundled with macOS
 
-
-set -a
+COMMON_ARG_CHECK_COMMAND="check-args 1 varargs '[MY_GREP_ARG ...] REGEX' \"$@\" || return 1"
 
 if installed "rg"; then
-    # Use rg if installed.
-    MY_GREP="rg"
-    MY_GREP_OPTIONS="--color=always --follow" # --column --no-line-number"
-    GREP_RECURSE="--no-heading --follow --no-one-file-system" # --no-line-number"
-    GREP_EXCLUDE_FLAGS="" # rg uses a .ignore file, not command-line flags
-
-    # These are the default colors; change them if you like.
-    # $MAGENTA and the other color names are defined in ./terminal.bash
-    # GREP_COLOR_FLAGS="--colors path:fg:$MAGENTA --colors line:fg:$GREEN --colors column:fg:$CYAN --colors match:fg:$RED" # the defaults
+    export MY_GREP="rg"
+    function my-grep {
+        # check-args 1 varargs "[MY_GREP_ARG ...] REGEX" "$@" || return 1
+        $COMMON_ARG_CHECK_COMMAND
+        rg \
+            --color=always --follow \
+            --no-heading --follow --no-one-file-system \
+            "$@"
+    }
 else
     # rg not installed? Use the actual grep command.
-    if on-macos && installed "ggrep"; then
-        MY_GREP="ggrep"
+   if on-macos && installed "ggrep"; then
+        export MY_GREP="ggrep"
     else
-        MY_GREP="command grep"
-    fi
-    
-    MY_GREP_OPTIONS="-EIi --color=always"
-    GREP_RECURSE="-R"
-    GREP_EXCLUDE_FLAGS="--exclude-dir=.git --exclude-dir=.github --exclude-dir=cdk.out --exclude-dir=node_modules --exclude=.npmignore --exclude=package-lock.json --exclude-dir=__snapshots__ --exclude '*.js'"
-    FILENAME_COLOR="fn=${MAGENTA}"
-    LINE_NUMBER_COLOR="ln=${GREEN}"
-    GREP_COLOR_FLAGS=""
-    export GREP_COLORS="${FILENAME_COLOR}:${LINE_NUMBER_COLOR}"
-fi
-
-set +a
-
-function grep {
-    # When using rg as my grep implementation, I often type -R out of habit,
-    # but rg has no -R flag (it's recursive by default). So ignore it.
-    if [[ "$MY_GREP" = "rg" ]]; then
-        local -a ARGS
-        remove-arg "-R" ARGS "$@"
-        set -- "${ARGS[@]}"
+        export MY_GREP="grep"
     fi
 
-    $MY_GREP $MY_GREP_OPTIONS $GREP_COLOR_FLAGS $GREP_EXCLUDE_FLAGS "$@" \
-        | $PAGER
-}
+    # Match rg's default color scheme.
+    export GREP_COLORS="fn=${MAGENTA}ln=${GREEN}"
 
-function g {
-    check-args 1 varargs 'REGEX [PATH1 [PATH2 [...]]]' "$@" || return 1
- 
-    local REGEX="$1"
-    shift
-    if [[ $# -eq 0 ]]; then
-        grep $GREP_RECURSE "$REGEX" "."
-    else
-        grep $GREP_RECURSE "$REGEX" "$@"
-    fi
-}
+    function my-grep {
+        # check-args 1 varargs "[${MY_GREP}_ARG ...] REGEX" "$@" || return 1
+        $COMMON_ARG_CHECK_COMMAND
 
-if [[ "$MY_GREP" = "rg" ]]; then
-    function highlight {
-        grep --passthru "$@"
+        if [[ $# -eq 1 ]]; then
+            set -- "."
+        fi
+        
+        "$MY_GREP" \
+            -EIi --color=always \
+            -R \
+            --exclude-dir=.git \
+            --exclude-dir=.github \
+            --exclude-dir=cdk.out \
+            --exclude-dir=node_modules \
+            --exclude=.npmignore \
+            --exclude=package-lock.json \
+            --exclude-dir=__snapshots__ \
+            --exclude '*.js' \
+            "$@"
     }
 fi
 
-function grep-terms {
-    check-args 2 varargs 'FILENAME PATTERN [PATTERN ...]' "$@" || return 1
-    local FILENAMES="$1"; shift
-    local REGEX=""
-
-    for TERM in "$@"; do
-        REGEX="${REGEX}(${TERM})|"
-    done
-    
-    # Remove trailing '|'
-    REGEX="${REGEX%|}"
-    
-    # echo "$REGEX" >&2 # for debugging
-    grep "$REGEX" $FILENAMES
-}
+if [[ "$MY_GREP" = "rg" ]]; then
+    function highlight {
+        local MANNAME="highlight - print everything, using color to highlighting matches"
+        $COMMON_ARG_CHECK_COMMAND
+        my-grep --passthru "$@"
+    }
+fi
 
 function gbr {
-    check-args 1 varargs '[ADDITIONAL_GREP_FLAGS] REGEX' "$@" || return 1
+    local MANNAME="gbr - grep Bash dotfiles"
+    # check-args 1 varargs "[${MY_GREP}_ARG ...] REGEX" "$@" || return 1
+    $COMMON_ARG_CHECK_COMMAND
 
-    local REGEX="$1"
-    shift
-
-    g \
+    my-grep \
         "$@" \
-        "$REGEX" \
         ~/.bashr* \
         ~/.*profile* \
         ~/.site.bash*
 }
 
 function ge {
-    g "$@" ~/.emacs.d/init.el
+    local MANNAME="ge - grep Emacs dotfiles"
+    # check-args 1 varargs "[${MY_GREP}_ARG ...] REGEX" "$@" || return 1
+    $COMMON_ARG_CHECK_COMMAND
+    my-grep "$@" ~/.emacs.d
 }
 
-############ Search a file for section names,
-############ which I, by convention, mark using 4 leading comment chars.
-############ Infer the comment char from the file extension.
-
-function grep-settings {
-    # check-args 2 varargs
-    local GREP_SETTINGS_REGEX="$1"
-    shift
-    
-    function file-ext-in {
-        local FILE
-
-        EXT_REGEX="[.]${EXT}$"
-        for EXT in "$@"; do
-            if [[ "$FILE" =~ $EXT_REGEX ]]; then
-                return 0
-            fi
-        done
-
-        return 1
-    }
-    
-    local COMMENT_PREFIX
-    for FILE in "$@"; do
-        if file-ext-in 'el' 'l' 's'; then
-            COMMENT_PREFIX=';;;; '
-        elif file-ext-in 'ts' 'js' 'c' 'cpp' 'cxx' 'c++'; then
-            COMMENT_PREFIX='//// '
-        elif file-ext-in 'bash' 'py' 'sh' 'pl'; then
-            COMMENT_PREFIX="#### "
-        else
-            complain "Unrecognized file extension for file '$FILE'"
-            return
-        fi
-    done
-
-    grep -i \
-        "^${COMMENT_PREFIX}.*(${GREP_SETTINGS_REGEX}.*settings|settings.*${GREP_SETTINGS_REGEX})"
-}
-
-# count: recursively grep the specified dirs (or '.', if no dirs specified)
-# for a pattern, then print the number of times that pattern occurs
-# in each matching file. Don't show files with zero matches.
-function count { 
-    command grep -Rc $GREP_EXCLUDE_FLAGS "$@" \
-        | command grep -v ':0$' \
-        | sed -e 's/\(.*\):\(.*\)/\2 \1/' \
-        | sort --reverse --general-numeric-sort | grep '.* ' | $PAGER
-}
-
-# occur: recursively grep the specified dirs (or '.', if no dirs specified) and print all filenames with at least one match.
 function occur {
-    $MY_GREP $GREP_RECURSE --files-with-matches --max-count=1 $GREP_EXCLUDE_FLAGS "$@" | $PAGER
+    local MANNAME="occur - print filenames with at least one match"
+    # check-args 1 varargs "[${MY_GREP}_ARG ...] REGEX" "$@" || return 1
+    $COMMON_ARG_CHECK_COMMAND
+    my-grep --files-with-matches --max-count=1 "$@" | $PAGER
 }
 
-# dirs-matching REGEX [DIR ...]
-# Take a list of dirs,
-# and print those whose recursive contents
-# match REGEX (case-insensitive).
 function dirs-matching {
-    check-args 1 varargs 'dirs-matching REGEX [DIR ...]' "$@"
+    local MANNAME="dirs-matching - print directories with descendants that contain REGEX"
+    check-args 1 varargs 'REGEX [DIR ...]' "$@" || return 1
 
     local REGEX="$1"
     shift
     
     for DIR in "$@"; do
-        if rg -i "$REGEX" "$DIR" >/dev/null 2>&1; then
+        if my_grep --max-count=1 "$REGEX" "$DIR" >/dev/null 2>&1; then
             echo "$DIR"
         fi
     done

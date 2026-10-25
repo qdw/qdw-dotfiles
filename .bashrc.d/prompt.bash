@@ -31,7 +31,11 @@ function set-up-prompt {
         PROMPT_COMMAND+=("lazy-load-git-stuff")
     fi
 
-    export PS1="\\[\\e[33m\\]${HOST_EMOJI}\\u@\\h:\\w\\$\\[\\e[0m\\] "
+    if command-exists "override-ps1"; then
+        override-ps1
+    else
+        export PS1="\\[\\e[33m\\]${HOST_EMOJI}\\u@\\h:\\w\\$\\[\\e[0m\\] "
+    fi
 }
 
 function set-host-emoji {

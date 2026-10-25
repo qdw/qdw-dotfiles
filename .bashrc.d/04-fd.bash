@@ -26,35 +26,37 @@ function tsgrep {
 }
 
 function gfd {
-    check-args 1 1 'gfd REGEX' "$@" || return 1
+    check-args 1 1 'REGEX' "$@" || return 1
     local GFD_REGEX="$1"
-    (fd -i "$GFD_REGEX"; g -i "$GFD_REGEX") | $PAGER
+    (fd "$GFD_REGEX"; my-grep "$GFD_REGEX") | $PAGER
 }
 
 function fdgrep {
-    # check-args 1 varargs "fdgrep FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
-    local FILENAME_REGEX="$1"
-    shift
-
-    fdd --type f "$FILENAME_REGEX" \
-        -x $MY_GREP -I --color=always $GREP_EXCLUDE_FLAGS "$@"
+    check-args 2 varargs 'FD_REGEX [GREP_ARGUMENTS ...]' "$@" || return 1
+    local FILENAME_REGEX="$1"; shift
+    fdd --type f "$FILENAME_REGEX" -x my-grep "$@"
 }
 
 function fdoccur {
-    # check-args 2 varargs "fdoccur FILENAME_REGEX [GREP_OPTION ...] GREP_REGEX"
+    check-args 2 varargs 'FILENAME_REGEX [GREP_ARGUMENTS ...]' "$@" || return 1
     local FILENAME_REGEX="$1"; shift
-    fdgrep "$FILENAME_REGEX" -l -m 1 "$@"
+    fdgrep "$FILENAME_REGEX" --files-with-matches --max-count 1 "$@"
+}
+
+function _file_type_helper {
+    fdd -t f "$@" \
+        | sed 's/.*\([.].*\)/\1/' `extract basename` \
+        | my-grep -v '[ ][.]git/' `exclude .git dirs`
 }
 
 function ftypes {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | command grep -Fv ' .git/' \
-        | uniq
+    check-args 0 varargs '[FD_ARGUMENTS ...]' "$@" || return 1
+    _file_type_helper "$@" | sort -u
 }
 
 function file-type-counts {
-    fdd -t f | sed 's/.*\([.].*\)/\1/' | sort \
-        | uniq -c \
-        | command grep -Fv ' .git/' \
+    check-args 0 varargs '[FD_ARGUMENTS ...]' "$@" || return 1
+    _file_type_helper "$@" \
+        | uniq --count \
         | sort --reverse --general-numeric-sort
 }
