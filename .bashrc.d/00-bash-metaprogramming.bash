@@ -398,7 +398,7 @@ function _func_helper {
     FUNCTION_NAME="$1"
 
     if [[ "$FIND_IN_DOTFILES" ]]; then
-        command grep -RE "function $FUNCTION_NAME [{]" \
+        my-grep --line-number "function $FUNCTION_NAME [{]" \
              ~/.bashr* ~/.*profile* ~/.site.bash* \
           || return
     fi
@@ -408,7 +408,7 @@ function _func_helper {
     if [[ "$FIRST_LINE" = "$FUNCTION_NAME is a function" ]]; then
         local SKIP_LINES
         if [[ "$FIND_IN_DOTFILES" ]]; then
-            # Formatting detail: if we just ran rg because the user passed -v,
+            # Formatting detail: if we just ran rg because the user passed -d/--in-dotfiles,
             # then it has already printed a line like this:
             # 
             # 341:function foo {
@@ -419,9 +419,9 @@ function _func_helper {
             # foo is a function
             # foo ()
             # {
-            SKIP_LINES="2"
+            SKIP_LINES="3"
         else
-            # If, in contrast, the user didn't pass -v/verbose, then
+            # If, in contrast, the user didn't pass -d/--in-dotfiles, then
             # all we need to skip is this line:
             #
             # foo is a function
@@ -443,7 +443,7 @@ function func {
 
 function funk {
     local MANNAME="show bash function as it appears in ~/.bashrc.d/*"
-    func --in-dotfiles "$@"
+    _func_helper --in-dotfiles "$@" | bat --language bash
 }
 
 # Save-to-file a function that you defined in an interactive shell
