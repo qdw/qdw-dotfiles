@@ -311,7 +311,19 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
 (use-package ansi-color)
 (load-qdw-module "c-qdw.el")
 (use-package comint)
-(use-package compile)
+(use-package compile
+    :config
+    (defun do-not-underline-qdw ()
+      (dolist (f (face-list))
+        (unless (memq (face-attribute f :underline)
+                      '(nil unspecified))
+          (face-remap-add-relative f :underline nil))))
+
+    (add-hook 'compilation-mode-hook #'do-not-underline-qdw)
+
+    ;; :bind ((:map compilation-mode-map ("C-c ." . open-thing-at-point)))
+)
+
 (load-qdw-module "cperl-qdw.el")
 (load-qdw-module "org-qdw.el")
 (load-qdw-module "dired-qdw.el")

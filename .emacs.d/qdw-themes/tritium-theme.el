@@ -313,7 +313,7 @@ extended-bright-white "#a6acb9")))
    ;;;; font-lock
 
    `(font-lock-builtin-face
-     ((t ((:foreground ,blue)))))
+     ((t ((:foreground ,blue :underline nil)))))
    
    `(font-lock-comment-delimiter-face
      ((t (:foreground ,cyan))))
@@ -334,7 +334,7 @@ extended-bright-white "#a6acb9")))
      ((t (:foreground ,bright-cyan))))
      
    `(font-lock-function-name-face
-     ((t (:foreground ,blue))))
+     ((t (:foreground ,blue) :underline nil)))
 
    `(font-lock-function-call-face
      ((t (:foreground ,blue))))   
@@ -647,17 +647,23 @@ extended-bright-white "#a6acb9")))
    ;;;; compilation
 
    `(compilation-error
-     ((t (:foreground ,bright-red :underline nil))))
+     ((t (:foreground ,magenta :underline nil))))
       
+   `(compilation-warning
+     ((t (:inherit font-lock-warning-face :underline nil))))
+
    `(compilation-info
-     ((t (:inherit default))))
+     ((t (:foreground ,red :underline nil))))
 
    `(compilation-line-number
-     ((t (:inherit font-lock-keyword-face :underline nil))))
-     
-   `(compilation-warning
-     ((t (:inherit font-lock-warning))))
+     ((t (:foreground ,green :underline nil))))
 
+   `(compilation-message
+     ((t (:foreground ,red :underline nil))))
+
+   `(compilation-column-number
+     ((t (:inherit default :underline nil))))
+     
     ;;;; outline
 
     `(outline-1
