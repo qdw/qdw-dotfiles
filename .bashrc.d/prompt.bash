@@ -8,8 +8,6 @@
 
 # PROMPT_EMIT_OSC_7="yes"
 PROMPT_INCLUDE_HOST_EMOJI=
-PROMPT_INCLUDE_GIT="yes"
-PROMPT_ENABLE_GIT_COMPLETION="yes"
 DO_NOT_COMPLETE_REPOS_MATCHING="postgresql|linux"
 
 ## Part 2/2: implementation details
