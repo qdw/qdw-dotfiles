@@ -58,13 +58,7 @@ SYNOPSIS
     Motivation: I prefer grep-style regexes to sed."
     
     check-args 2 varargs 'REGEX FILE [FILE...]' "$@" || return 1
-    
-    local NEGEX="$1"
-    shift
-    
-    for FILE in "$@"; do
-        command grep -vE "$NEGEX" "$FILE" | sponge "$FILE"
-    done
+    my-grep -vE "$@" | sponge "$FILE"
 }
 
 #### Unicode

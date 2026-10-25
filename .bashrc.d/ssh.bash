@@ -25,22 +25,18 @@ function mshost {
     mhost "$COMMAND" "$@"
 }
 
-function ho {
-    command grep -E "Host .*${1}" ~/.ssh/*conf*
-}
-
 # FIXME: doesn't work
 # function stanza {
 #     check-args 1 1 'PATTERN' "$@" || return 1
 #     local PATTERN="$1"
 
 #     para "$PATTERN" ~/.ssh/*.config \
-#         | command grep -e '^' -e "$PATTERN"
+#         | my-grep "$PATTERN"
 # }
 
 # shn ("SSH hostname") - print the canonical hostname for a ~/.ssh/config alias.
 function shn {
-    command grep -A 1 "$1" ~/.ssh/*config* | tail -1 | awk '{ print $3; }'
+    my-grep -A 1 "$1" ~/.ssh/*config* | bnw | tail -1 | awk '{ print $3; }'
 }
 
 # function ssh-tunnel {

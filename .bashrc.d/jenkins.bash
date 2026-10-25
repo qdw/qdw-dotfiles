@@ -30,21 +30,21 @@
 #         JENKINS_OUTPUT_FILENAME="$(mktemp "$HOME/tmp/jenkins-log--$REPO--$BRANCH.XXXXXX")"
 #         /usr/bin/osascript ~/bin/jenkins-fetch-console-output.osascript "$JENKINS_OUTPUT_URL" \
 #             | tee "$JENKINS_OUTPUT_FILENAME" \
-#             | tee >(command grep -m 1 -o "docker://.*" | sed 's/docker:[/][/]//' | tee pbcopy) \
+#             | tee >(my-grep --color=never -m 1 -o "docker://.*" | sed 's/docker:[/][/]//' | tee pbcopy) \
 #             2>&1
 
 #         sms "Jenkins finished the build"
 #         # # This logfile-parsing code is brittle, so disable it for now
-#         # if command grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
+#         # if my-grep --quiet SUCCESS "$LOGFILE" >/dev/null; then
 #         #     SHORT_MESSAGE="Successfully built repo '$REPO', branch '$BRANCH'"
-#         #     DOCKER_IMAGE_URL="$(command grep --color=never --only-matching 'harbor.*:git-.*$' "$LOGFILE" | command uniq)"
+#         #     DOCKER_IMAGE_URL="$(my-grep --color=never --only-matching 'harbor.*:git-.*$' "$LOGFILE" | command uniq)"
 #         #     echo "$SHORT_MESSAGE"
 #         #     echo "Docker image URL copied to clipboard:"            
 #         #     echo "$DOCKER_IMAGE_URL" | tee >(pbcopy)
-#         # elif command grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
+#         # elif my-grep --quiet 'Log in with OpenShift' "$LOGFILE" >/dev/null; then
 #         #     SHORT_MESSAGE="Jenkins login needed"
 #         #     echo "First log in at $JENKINS_BASE_URL"; open "$JENKINS_BASE_URL"
-#         # elif command grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
+#         # elif my-grep --quiet 'FAILURE' "$LOGFILE" >/dev/null; then
 #         #     SHORT_MESSAGE="Failed to build repo '$REPO', branch '$BRANCH'"
 #         #     cat "$LOGFILE"
 #         #     echo

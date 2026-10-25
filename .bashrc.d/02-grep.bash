@@ -24,7 +24,8 @@ if installed "rg"; then
         rg \
             --color=always --follow \
             --no-heading --follow --no-one-file-system \
-            "$@"
+            "$@" \
+          | $PAGER
     }
 else
     # rg not installed? Use the actual grep command.
@@ -56,7 +57,8 @@ else
             --exclude=package-lock.json \
             --exclude-dir=__snapshots__ \
             --exclude '*.js' \
-            "$@"
+            "$@" \
+          | $PAGER
     }
 fi
 

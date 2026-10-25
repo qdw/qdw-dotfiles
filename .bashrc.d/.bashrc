@@ -46,10 +46,10 @@ source-if-exists "$QSITED/preamble.bash" ### machine-specific; git-ignored
 source-if-exists "$HOME/.secrets.bash" ### also exclulded from git
 
 source-section "01-bash-debugging.bash"
+source-section "012-pager.bash" ### less; bat; pandoc->elinks for Markdown
 source-section "013-homebrew.bash"
 source-section "015-terminal.bash"
 source-section "02-grep.bash" ### grep; rg if present. Lots of customizations.
-source-section "03-pagers.bash" ### less; bat; pandoc->elinks for Markdown
 source-section "04-man.bash"
 source-section "04-fd.bash" ### search for files (modern find(1) replacement).
 source-section "04-string-manipulation.bash"

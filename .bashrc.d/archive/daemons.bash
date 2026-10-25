@@ -41,7 +41,7 @@ function start_agent {
 run_ssh_agent_idempotently() {
     if [ -f "${SSH_ENV}" ]; then
         . "${SSH_ENV}" > /dev/null
-        ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+        ps -ef | command grep ${SSH_AGENT_PID} | command grep ssh-agent$ > /dev/null || {
             start_agent;
         }
     else
@@ -50,7 +50,7 @@ run_ssh_agent_idempotently() {
 }
 
 # run_sshd_idempotently() {
-#     if (! ps auxwww | grep ' /usr/local/sbin/sshd$' >/dev/null); then
+#     if (! ps auxwww | command grep ' /usr/local/sbin/sshd$' >/dev/null); then
 #         sudo /usr/local/sbin/sshd
 #     fi
 # }
@@ -58,7 +58,7 @@ run_ssh_agent_idempotently() {
 # Tor
 # ports 9001 and 9003
 run_tor_idempotently() {
-    if ( ! ps aux | awk '{ print $11; }' | grep -q '^tor$'); then
+    if ( ! ps aux | awk '{ print $11; }' | command grep -q '^tor$'); then
         # Use a fully qualified path, avoiding the old trick where someone
         # social-engineers you to run a script that alters PATH, then gets you
         # to execute a Trojan version of (in this case) tor.

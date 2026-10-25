@@ -20,7 +20,7 @@
 #             difference | diff | subtraction | subtract | minus | -)
 #                 comm -23 <(sort "$1") <(sort "$2") ;;
 #             membership | in | E)
-#                 grep -Fxq "$1" "$2" ;;
+#                 command grep -Fxq "$1" "$2" ;;
 #             *)
 #                 err "unsupported set operation '$OP'"
 #                 return 255 ;;

@@ -17,15 +17,19 @@ function ip {
 }
 
 function ips {
+    local MANNAME="ips - show all IPv4 interfaces on thist machine"
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    
     /sbin/ifconfig -a \
-        | command grep --color=never 'inet ' \
-        | command grep --color=never -v 'inet6 ' \
-        | grep 'inet'
+        | my-grep --color=never 'inet ' \
+        | my-grep --color=never -v 'inet6 ' \
+        | my-grep 'inet' # add color
 }
 
 function ipv6 {
-    /sbin/ifconfig -a \
-        | grep 'inet6 '
+    local MANNAME="ipv6 - show all IPv6 interfaces on this machine"
+    check-args 0 0 '[no arguments]' "$@" || return 1
+    /sbin/ifconfig -a | my-grep 'inet6 '
 }
 
 function whois {

@@ -9,13 +9,8 @@ function p {
 
     # assumes set -o pipefail, which I have enabled globally
     ps auxwwwwww \
-        | command grep -vE 'grep|rg' \
-        | $MY_GREP $MY_GREP_OPTIONS $GREP_COLOR_FLAGS "$@" \
-        | $PAGER
-    local EXIT_STATUS=$?
-
-    eval "$ORIG_OPTS"
-    return $EXIT_STATUS
+        | command grep -vE "$MY_GREP" \
+        | my-grep "$@"
 }
 
 function ph {

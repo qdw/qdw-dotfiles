@@ -169,8 +169,10 @@ function git-hist-grep {
 
     git log --format='%H' -- "$FILENAME" \
         | while read -r COMMIT; do
-              git show "$COMMIT:path/to/file" 2>/dev/null \
-                  | grep -HnE "$REGEX" && echo "There was a match in commit '$COMMIT'"
+              if git show "$COMMIT:path/to/file" 2>/dev/null | my-grep -n "$REGEX"
+              then
+                  echo "There was a match in commit '$COMMIT'"
+              fi
           done
 }
 
@@ -338,8 +340,11 @@ function owner {
 function get-main-branch-name {
     local MAIN_OR_MASTER
     
-    MAIN_OR_MASTER="$(command git branch --remotes | command ggrep --perl-regexp --only-matching '  origin/HEAD -> origin/(?=master|main)\K.*$' | sort | head -1)"
-    echo "$MAIN_OR_MASTER"
+    git branch --remotes \
+        | command ggrep --perl-regexp --only-matching \
+              '  origin/HEAD -> origin/(?=master|main)\K.*$' \
+        | sort \
+        | head -1
 }
 
 # gb (Git Branch) - create a new branch based on the main one, and switch to it
@@ -354,7 +359,7 @@ function gb {
             && git switch --quiet "$MAIN_BRANCH" \
             && git pull --quiet --ff-only  \
             && git switch --create "$NEW_BRANCH_NAME" "$MAIN_BRANCH" \
-                | command grep -vE 'remote:'
+                | my-grep -v 'remote:'
     fi
 }
 
@@ -533,14 +538,14 @@ function repos {
         verbose-print "Searching $GITHUB_ORG repos..."
         verbose-print "------------------------------"
         verbose-print
-        gh repo list --no-archived --limit 2000 "$GITHUB_ORG" | command grep -E "$PATTERN"
+        gh repo list --no-archived --limit 2000 "$GITHUB_ORG" | my-grep --color=never "$PATTERN"
     } \
     || \
     {
         verbose-print "Searching personal repos..."
         verbose-print "---------------------------"
         verbose-print
-        gh repo list --no-archived --limit 2000 | command grep -E "$PATTERN"
+        gh repo list --no-archived --limit 2000 | my-grep --color=never "$PATTERN"
     } \
     || \
     {
@@ -693,17 +698,18 @@ function pr {
 }
 
 function prs {
-    gh pr list | command grep -vE '^no open pull requests'
+    gh pr list | my-grep -v '^no open pull requests'
 }
 
 function prm {
-    gh pr list --author '@me' | command grep -vE '^no open pull requests'
+    gh pr list --author '@me' | my-grep -v '^no open pull requests'
 }
 
 # purl ("Pull request URL") - print the URL of the latest pull request on this branch.
 # Also copy it to the clipboard.
 function purl {
-    gh pr view | command grep --color=never --only-matching 'https://.*' | tee >(pbcopy)
+    gh pr view | my-grep --color=never --only-matching 'https://.*' \
+        | tee >(pbcopy)
 }
 
 function pulls {

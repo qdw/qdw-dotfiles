@@ -28,9 +28,9 @@ function yv {
         KEY="$1"
         shift
         
-        #FIXME: figure out how to glob for *.yaml case-insensitively. Maybe use fd?
-        # command grep --no-filename "${KEY}:[ ]*" *.yaml | sort | uniq | sed "s/^[ ]*${KEY}:[ ]*//"
-        fdd "$@" .yaml -X grep "${KEY}:"
+        my-grep "${KEY}:[ ]*" *.yaml *.yml *.YAML *.YML \
+            | sort -u \
+            | sed "s/^[ ]*${KEY}:[ ]*//"
     fi
 }
 
@@ -65,13 +65,11 @@ function json2yaml {
 
 function json-key { 
     check-args 1 varargs 'json-key KEY_NAME [FILE1 [FILE2...]]' "$@"
+
     local KEY_NAME="$1"
     shift
-    if [[ $# -eq 0 ]]; then
-        grep -i -R "\"$KEY_NAME\":"  "."
-    else
-        grep -i "\"$KEY_NAME\":"  "$@"
-    fi
+
+    my-grep "\"$KEY_NAME\":"  "$@"
 }
     
 function yaml2json {

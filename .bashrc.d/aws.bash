@@ -41,7 +41,7 @@ function cdk {
         diff | deploy) SUBCOMMAND="$1"
                        shift
                        command cdk "$SUBCOMMAND" --quiet "$@" \
-                           2> >(grep -v "Hold on while" >&2)
+                           2> >(my-grep -v "Hold on while" >&2)
                        stty sane;;
         *) command cdk "$@";;
     esac
@@ -58,7 +58,7 @@ function tags {
             CDK_OUTPUT_FILES="$(fdd -t f '.json$')"
             if [[ -n "$CDK_OUTPUT_FILES" ]]; then
                 for FILENAME in $CDK_OUTPUT_FILES; do
-                    gron "$FILENAME" | grep tags | awk "{print \"$FILENAME: \" \$0}"
+                    gron "$FILENAME" | my-grep --color=never tags | awk "{print \"$FILENAME: \" \$0}"
                 done
             fi
         fi
@@ -112,13 +112,13 @@ function rds-ls {
         local REGEX="$1"
         aws rds describe-db-instances --no-paginate \
             | jq --raw-output '.DBInstances[].Endpoint.Address' \
-            | grep '^[^.]*' \
-            | grep "$1"
+            | my-grep '^[^.]*' \
+            | my-grep "$1"
         
     else
         aws rds describe-db-instances --no-paginate \
             | jq --raw-output '.DBInstances[].Endpoint.Address' \
-            | grep '^[^.]*'
+            | my-grep '^[^.]*'
     fi
 }
 
@@ -126,21 +126,18 @@ function list-rds-instances { rds-ls "$@" ;}
 
 #### AWS SSM (a.k.a. Secrets Manager) settings
 
+function _list-all-secrets {
+    aws secretsmanager list-secrets \
+        | jq -r '.SecretList[].Name' \
+        | sort -u
+}
+
 function list-secrets {
-    check-args 0 varargs '[GREP_REGEX]' "$@" || return 1
-    local REGEX="$1" # may be ""
-    shift # remaining arguments (if any) are flags to pass to grep
-
-    function list-all-secrets {
-        aws secretsmanager list-secrets \
-            | jq -r '.SecretList[].Name' \
-            | sort -u
-    }
-
-    if [[ "$REGEX" ]]; then
-        list-all-secrets | command grep -E "$@" "$REGEX"
-    else
+    check-args 0 varargs '[GREP_ARG ...]' "$@" || return 1
+    if [[ $# -eq 0 ]]; then
         list-all-secrets
+    else
+        list-all-secrets | my-grep "$@"
     fi
 }
 
@@ -155,7 +152,7 @@ function secret { get-secret "$@" ;}
 
 function rds-ls-log-groups {
     aws logs describe-log-groups --log-group-name-prefix "/aws/rds" \
-        | command grep logGroupName \
+        | command grep --color=never logGroupName \
         | command grep -v "proxy" \
         | sort \
         | sed -e 's|.*/aws/rds/instance/||; s|/postgresql",$||'
@@ -221,7 +218,10 @@ function rm-bucket {
 
 function enva {
     check-args 0 0 "[no arguments]" "$@" || return 1
-    env | ggrep --color=always -P '^AWS_[^=]*' | command grep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' | sort
+    env \
+        | ggrep --color=always -P '^AWS_[^=]*' \
+        | ggrep -vE '(AWS_DEV_ACCOUNT)|(AWS_PAGER)' \
+        | sort
 }
 
 function envap {
@@ -229,4 +229,3 @@ function envap {
     enva
     envp
 }
-
