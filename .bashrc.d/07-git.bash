@@ -375,16 +375,9 @@ function gist {
 
     if [[ $# -eq 0 ]]; then
         local GIST_EDITOR
-        for EDITOR_VAR in GIT_EDITOR VISUAL EDITOR; do
-            if [[ -n "$EDITOR_VAR" ]]; then
-                GIST_EDITOR="$EDITOR_VAR"
-                break
-            fi
-        done
-        if [[ -z "$EDITOR_VAR" ]]; then
-            GIST_EDITOR="vi"
-        fi
 
+        # Use the first defined ENV var (or default to vim)
+        GIST_EDITOR="${GIT_EDITOR:-${VISUAL:-${$EDITOR:-vim}}}"
         "$GIST_EDITOR" "$FILENAME"
 
     elif [[ $# -eq 1 ]]; then
