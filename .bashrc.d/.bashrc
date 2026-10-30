@@ -361,6 +361,10 @@ function ls {
     fi
 }
 
+function lh {
+    $MY_LS --color=always -1Ft "$@" | head
+}
+
 function lsd {
     ls "$@" ~/Desktop
 }
