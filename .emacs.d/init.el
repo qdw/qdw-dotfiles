@@ -338,7 +338,7 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
                       (lambda (orig &rest args)
                         (let ((inhibit-messaget))
                           (apply orig args)))))
-(load-qdw-module "sql-qdw.el")
+;; (load-qdw-module "sql-qdw.el")
 (use-package json) (setq-default json-encoding-default-indentation "    ")
 (use-package markdown-mode)
 (use-package url-util)

@@ -7,23 +7,32 @@
                (0 font-lock-builtin-face t)))
              'append))
 
-    ;; (sql-add-product-keywords
-    ;;  :postgresql
-    ;;  '((MATCH-HIGHLIGHT "\\<FROM\\>"   font-lock-keyword-face 't 't)
-    ;;    (MATCH-HIGHLIGHT "\\<JOIN\\>"   font-lock-keyword-face 't 't)
-    ;;    (MATCH-HIGHLIGHT "\\<ON\\>"     font-lock-keyword-face 't 't)
-    ;;    (MATCH-HIGHLIGHT "\\<WHERE\\>"  font-lock-keyword-face 't 't)
-          ;;;;;;;;;;;;;;; (more MATCH-* lists go here...)
-    ;;    (MATCH-HIGHLIGHT "\\<SELECT\\>" font-lock-builtin-face 't 't)
-    ;;    (MATCH-HIGHLIGHT "\\<AND\\>"    font-lock-builtin-face 't 't)
-    ;;    (MATCH-HIGHLIGHT "\\<OR\\>"     font-lock-builtin-face 't 't)
-    ;;    (MATCH-HIGHLIGHT "\\<IN\\>"     font-lock-builtin-face 't 't)
-    ;;    (MATCH-HIGHLIGHT "\\<ON\\>" font-lock-builtin-face 't 't))
-    ;;   'set)
+    (sql-add-product-keywords
+     :postgresql
+     '((MATCH-HIGHLIGHT "\\<FROM\\>"   font-lock-keyword-face 't 't)
+       (MATCH-HIGHLIGHT "\\<JOIN\\>"   font-lock-keyword-face 't 't)
+       (MATCH-HIGHLIGHT "\\<ON\\>"     font-lock-keyword-face 't 't)
+       (MATCH-HIGHLIGHT "\\<WHERE\\>"  font-lock-keyword-face 't 't)
+          (more MATCH-* lists go here...)
+       (MATCH-HIGHLIGHT "\\<SELECT\\>" font-lock-builtin-face 't 't)
+       (MATCH-HIGHLIGHT "\\<AND\\>"    font-lock-builtin-face 't 't)
+       (MATCH-HIGHLIGHT "\\<OR\\>"     font-lock-builtin-face 't 't)
+       (MATCH-HIGHLIGHT "\\<IN\\>"     font-lock-builtin-face 't 't)
+       (MATCH-HIGHLIGHT "\\<ON\\>" font-lock-builtin-face 't 't))
+      'set)
 
 (use-package sql-indent
-    ;; :straight (:host github
-    ;;            :repo "alex-hhh/emacs-sql-indent"
-    ;;            :local-repo "sql-indent")
+    :straight (:host github
+               :repo "alex-hhh/emacs-sql-indent"
+               :local-repo "sql-indent")
     :hook ((sql-mode . sqlind-minor-mode)))
-   ;; :config (...))
+    
+    :config
+    (setq sqlind-indentation-offsets-alist
+    `((select-clause 0)
+      (insert-clause 0)
+      (delete-clause 0)
+      (update-clause 0)
+      ,@sqlind-default-indentation-offsets-alist))
+
+
