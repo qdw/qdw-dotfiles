@@ -125,6 +125,31 @@ function which {
     fi
 }
 
+function always-open-with {
+    check-args 2 2 'FILE_EXTENSION APPNAME_WITHOUT_.app' "$@" || return 1
+    local EXTEN="$1"
+    local APPNAME="$2"
+
+    if [[ ! "$EXTEN" =~ "[.]$" ]]; then
+        EXTEN="$EXTEN."
+    fi
+    
+    duti \
+        -s "$(osascript -e id of app $APP_NAME)" \
+        "$EXTEN" \
+        all
+}
+
+function opens-with {
+    check-args 1 1 'EXTENSION' "$@" || return 1
+    local EXTEN="$1"
+    if [[ ! "$EXTEN" =~ '^.' ]]; then
+        EXTEN=".$EXTEN"
+    fi
+    
+    duti -x "$EXTEN"
+}
+
 function macos-or-osx {
     sw_vers -productName
 }
