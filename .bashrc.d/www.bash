@@ -60,16 +60,19 @@ function url-file {
     check-args 1 2 'URL [FILENAME]' "$@" || return 1
     local URL="$1"
 
-    function write-that {
-        local THE_URL="$1"
-        printf "[InternetShortcut]\n%s\n" "$THE_URL"
+    function _url-file-write {
+        local URL="$1"
+        printf "[InternetShortcut]\n%s\n" "URL=$URL"
     }
 
     if [[ "$2" ]]; then
         local FILENAME="$2"
-        write-that "$URL" > "$FILENAME"
+        if [[ ! "$FILENAME" =~ [.]url$ ]]; then
+            FILENAME="$FILENAME.url"
+        fi
+        _url-file-write "$URL" > "$FILENAME"
     else
-        write-that "$URL"
+        _url-file-write "$URL" # stdout
     fi
 }
 
