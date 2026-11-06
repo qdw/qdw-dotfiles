@@ -24,7 +24,6 @@ export EDITOR="$MY_EDITOR"
 export VISUAL="$MY_EDITOR"
 
 if command-exists "subl"; then
-    export GIT_EDITOR="subl"
     export PSQL_EDITOR="subl -w"
     export HOMEBREW_EDITOR="subl"
 else

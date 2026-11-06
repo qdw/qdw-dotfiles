@@ -408,8 +408,10 @@ or --fg-daemon mode and then connect to the daemon using emacsclient)."
  cursor-type 'box
  column-number-mode nil
 
- ;; Instead of beeping, flash screen
- visible-bell t)
+ ;; No visual bell; it causes constant flicker-on-type in the minibuffer
+ visible-bell nil
+
+ ring-bell-function #'ignore)
 
 ;;;; Whitespace-handling
 
