@@ -872,7 +872,13 @@ source-section "www.bash"
 
 #### Music
 
-function guit { # download guitar tabs from ultimate-guitar.com
+function stems {
+    check-args 1 1 'AUDIO_FILE' "$@" || return 1
+    local AUDIO_FILE="$1"
+    demucs -n htdemucs_6s --two-stems guitar "$AUDIO_FILE"
+}
+
+function guitar-tabs { # download guitar tabs from ultimate-guitar.com
     check-args 1 1 'SOME_URL.ultimate-guitar.com' "$@" ||return 1
     local URL="$1"
 
@@ -960,7 +966,7 @@ end tell
         echo "$APPLESCRIPT" | /usr/bin/osascript
     }
 fi # end macOS-specific functions
-    
+
 #### Video game music
 
 function zophar {
