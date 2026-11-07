@@ -1,5 +1,6 @@
 # shellcheck shell=bash
-## export QDW_DEBUG_BASH="yeah"; # export QDW_TIMESTAMP="${EPOCHREALTIME/./}"
+## export QDW_DEBUG_BASH="yeah";
+## export QDW_TIMESTAMP="${EPOCHREALTIME/./}"
 
 umask 0022
 set -o pipefail
@@ -8,7 +9,7 @@ function source-if-exists {
     if [[ -f "$1" ]]; then
         source "$1"
     else
-        return 254
+        return 253
     fi
 }
 
@@ -41,7 +42,7 @@ function source-section {
 
 source-section "00-bash-metaprogramming.bash"
 
-#### Machine-specific files, not part of this git repo
+#### Machine-specific files, separate from this git repo
 
 QSITED="$HOME/.site.bash.d"
 source-if-exists "$QSITED/preamble.bash"
@@ -62,88 +63,41 @@ source-section "07-git.bash" ### generic git, plus GitHub.
 
 #### Unnumbered files (in any order) must be sourced after numbered.
 
-#### Time and date
-
 source-section "time-and-date.bash"
 
-#### OS-specific settings
-
 source-section "unix.bash"
-
 if on-macos; then
     source-section "macos.bash"
 else
     source-section "linux.bash"
 fi
 
-#### Networking
-
 source-section "network.bash"
-
-#### Search: fzf
-
 # source-section "fzf.bash"
-
-#### Filename/path/dir/cd-related functions
-
 source-section "filename-manip.bash"
 source-section "file-contents-manip.bash"
 
-######## Bash customizations
-
 source-section "completion.bash"
-
-#### Bash shell prompt
-
 source-section "prompt.bash"
-
-#### Bash history settings
-
 source-section "history.bash"
-
 source-section "alt-shells.bash"
-
 source-section "lisps.bash"
 
-#### AI
-
 source-section "ai.bash"
-
 source-section "fortune.bash"
-
-#### AWS
-
 # source-section "aws.bash" ### slow, so just source manually if needed
-
 source-section "ls.bash"
-
-#### diff settings
-
 source-section "diff.bash"
-
-#### FTP
-
 source-section "ftp-client.bash"
-
-#### Kubernetes (and OpenShift) settings
-
 source-section "k8s.bash"
-
-
-#### Perl settings
-
 # source-section "perl.bash"
-
-
-#### PostgreSQL
-  ## (for additional PostgreSQL-realted settings, see the following files):
-  ##    ~/.psqlrc*
-  ##    ~/.pg_service
-  ##    ~/.pgpass
+source-section "python.bash"
 
 source-section "postgresql.bash"
-
-######## ometers
+# ^ For additional PostgreSQL-realted settings, see the following files):
+#    ~/.psqlrc*
+#    ~/.pg_service
+#    ~/.pgpass
 
 source-section "ometers.bash"
 
@@ -193,10 +147,6 @@ function todo {
 function yak {
     todo "$@"
 }
-
-#### Python
-
-source-section "python.bash"
 
 #### Tor
 
