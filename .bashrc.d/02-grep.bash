@@ -109,3 +109,13 @@ function dirs-matching {
         fi
     done
 }
+
+#### Makefiles
+
+function make-targets {
+    gsed -e 's/^[^:]*$// ; /^$/d ; s/\(.*\):.*/\1/' Makefile | sort
+}
+
+function make-rules {
+    command grep -E --color=never '[[:alpha:]]+:' Makefile
+}

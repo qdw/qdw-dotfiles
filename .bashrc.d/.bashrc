@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# export QDW_DEBUG_BASH="yeah"; # export QDW_TIMESTAMP="${EPOCHREALTIME/./}"
+## export QDW_DEBUG_BASH="yeah"; # export QDW_TIMESTAMP="${EPOCHREALTIME/./}"
 
 umask 0022
 set -o pipefail
@@ -37,13 +37,17 @@ function source-section {
     fi
 }
 
-## Numbered sections must be sourced in order.
+#### Numbered sections must be sourced in order.
 
 source-section "00-bash-metaprogramming.bash"
 
+#### Machine-specific files, not part of this git repo
+
 QSITED="$HOME/.site.bash.d"
-source-if-exists "$QSITED/preamble.bash" ### machine-specific; git-ignored
-source-if-exists "$HOME/.secrets.bash" ### also exclulded from git
+source-if-exists "$QSITED/preamble.bash"
+source-if-exists "$HOME/.secrets.bash"
+
+#### git-controlled code. These files must be sourced in order.
 
 source-section "01-bash-debugging.bash"
 source-section "012-pager.bash" ### less; bat; pandoc->elinks for Markdown
@@ -56,53 +60,11 @@ source-section "04-string-manipulation.bash"
 source-section "06-editors.bash" ### text editors, especially the Emacs daemon.
 source-section "07-git.bash" ### generic git, plus GitHub.
 
-## Non-numbered sections SHOULD be sourced after numbered sections,
-## and MUST be sourced after 00-bash-metaprogramming.bash
+#### Unnumbered files (in any order) must be sourced after numbered.
 
 #### Time and date
 
-# Timestamp with time zone, no special chars, OK to interpolate into filenames
-
-function ts {
-    check-args 0 0 '[no-arguments]' "$@" || return 1
-    date '+%Y-%m-%dT%H%M%S%z' "$@"
-}
-
-function ts-pg {
-    psql --no-psqlrc -tc 'select now()' | sed -e 's/[ ]*//'
-}
-
-# Timestamp in the format used by YAML
-
-function ts-yaml {
-    local TIMEZONE_SHORTCODE="$(date +%Z "$@")"
-    local TS_WITH_NANOSECONDS="$(date +%Y-%m-%dT%H:%M:%S.%N "$@")"
-    local TS_WITH_DECISECONDS=${TS_WITH_NANOSECONDS:0:21}
-    local RETVAL="${TS_WITH_DECISECONDS}${TIMEZONE_SHORTCODE}"
-    echo "$RETVAL"
-}
-
-# d ("date") - give today's date in YYYY-MM-DD format.
-function d {
-    check-args 0 0 '[no arguments]' "$@" || return 1
-    date +%Y-%m-%d
-}
-
-function epoch2human {
-    # check-args 1 1 "epoch2human EPOCH_SECONDS"
-    local EPOCH_SECONDS="$1"
-    date -d "@${EPOCH_SECONDS}"
-}
-
-#### Files and stuff (maybe move to 00-bash-metaprogramming.bash?)
-
-function which-realpath {
-    local MANNAME="show the real (non-symlink) path to an executable program"
-    check-args 1 1 'PROGRAM_NAME' "$@" || return 1
-    local PROG="$1"
-    local PTH=$(which "$PROG")
-    realpath "$PTH"
-}
+source-section "time-and-date.bash"
 
 #### OS-specific settings
 
@@ -124,117 +86,10 @@ source-section "network.bash"
 
 #### Filename/path/dir/cd-related functions
 
-function dashify-path {
-    if ! check-args 0 1 '[PATH] # defaults to current working directory]' "$@"
-    then
-        return 1
-    elif [[ $# -eq 0 ]]; then
-        local ABSOLUTE="$(realpath)"
-    elif [[ $# -eq 1 ]]; then
-        local ABSOLUTE="$(realpath "$1")"
-    fi
-    
-    local DASHIFIED="$(echo "$ABSOLUTE" | sed 's|^/|| ; s|[/]|---|g')"
-    echo "$DASHIFIED"
-}
-
-function cdd { cd "$HOME/Desktop/$1" ;}
-function cdq { cd "$HOME/src/1/qdw-dotfiles/$1" ;}
-function cd3 { cd "$HOME/src-3/$1" ;}
-function cd1 { cd "$HOME/src/1/$1" ;}
-function cds { cd "$HOME/symlinks" ;}
-
-# #FIXME: clean up comments; move to SYNOPSIS -> If the argument is a symlink, resolve it and then cd to the enclosing dir
-# of the file that it point to.
-#
-# If the user passes no arguments, then do that to the directory portion
-# of the previous argument passed ($_).
-function cdl {
-    # shellcheck disable=2016
-    local MANNAME='cd to the enclosing dir of a file (or of $_ if none passed)'
-    local ARG  REALPATH
-
-    # shellcheck disable=2016
-    check-args 0 1 '[TARGET_FILE] # default: $_' "$@" || return 1
-    if [[ $# -eq 0 ]]; then
-        ARG="$_"
-    else
-        ARG="$1"
-    fi
-    
-    REALPATH="$(realpath "$ARG")"
-    if [[ -d "$REALPATH" ]]; then
-        err "makes no sense when called on a directory"
-        return 2
-    else
-        local DIR="$(dirname "$REALPATH")"
-        cd "$DIR"
-    fi
-}
-
-# cdr ("CD Realpath") - cd to the enclosing directory that a symlink points to
-
-function cdr {
-    check-args 1 1 'FILE_OR_DIRECTORY' "$@" || return 1
-    REALPATH="$(realpath "$1")"
-
-    local DIR
-    if [[ -d "$REALPATH" ]]; then
-        DIR="$1"
-    else
-        DIR="$(dirname "$REALPATH")"
-    fi
-    
-    cd "$REALDIR"
-}
-
-function mcd {
-    local DIRNAME
-    DIRNAME="$1"
-    mkdir "$DIRNAME" \
-        && cd "$DIRNAME"
-}
-
-# Tell file(1) to report symlinks as symlinks.
-
-function file { command file --no-dereference "$@" ;}
-
-# path - given a relative path, print its relative path. Does not dereference symlinks. Does not work on absolute paths; hence does not work for tilde expansion.
-function path {
-    local REL_PATH ABS_PATH
-    REL_PATH="$1"
-    ABS_PATH="$(pwd)/$REL_PATH"
-
-    if [[ ! -e "$ABS_PATH" ]]; then
-        echo "Error: file '$ABS_PATH' does not exist"
-    else
-        # If path starts with home dir, convert to tilde notation.
-        ABS_PATH="${ABS_PATH/#${HOME}\//~/}"
-        echo "$ABS_PATH" | tee >(pbcopy)
-    fi
-}
-
-# flast - print the first and last lines of a file
-function flast {
-    local FILENAME
-    FILENAME="$1"
-
-    head -1 "$FILENAME" | awk '{ print $1, $2; }'
-    tail -1 "$FILENAME" | awk '{ print $1, $2; }'
-}
-
-# line N FILE - show line N of file FILE
-function line {
-    local LINE_NUMBER FILENAME
-    LINE_NUMBER="$1"
-    FILENAME="$2"
-
-    head "-${LINE_NUMBER}" "$FILENAME" | tail -1
-}
+source-section "filename-manip.bash"
+source-section "file-contents-manip.bash"
 
 ######## Bash customizations
-
-#### Bash completion
 
 source-section "completion.bash"
 
@@ -244,270 +99,36 @@ source-section "prompt.bash"
 
 #### Bash history settings
 
-# Add a timestamp to history(1) output, using strftime(3) formatting.
-export HISTTIMEFORMAT='  %Y-%m-%d %H:%M:%S %z    '
+source-section "history.bash"
 
-# Keep all history forever
-export HISTFILESIZE=-1
-export HISTSIZE=-1
+source-section "alt-shells.bash"
 
-#### Scheme Shell
-
-if [[ -d "/opt/scsh" ]]; then
-    SCSH_BASE="/opt/scsh"
-    SCSH_PATH="${SCSH_BASE}/bin"
-    LATEST_SCSH_VERSION="$(find "${SCSH_BASE}/lib" | sort --general-numeric-sort | tail -1)"
-    SCSH_LDFLAGS="-L${SCSH_BASE}/lib/${LATEST_SCSH_VERSION}"
-fi
-
-#### Other shells
-
-function shells {
-    MANNAME="list installed Unix shells"
-    check-args 0 0 '[no arguments]' "$@" || return 1
-    (
-        basename "$(which scsh 2>/dev/null)"
-        brew ls \
-            | command grep -E --color=never 'sh$|nushell' \
-            | command grep -vE 'ssh|trash|hash|cash'
-    ) \
-    | sort
-}
-
-#### Other programming languages
-
-function lisps {
-    (
-        brew ls \
-            | command grep -i \
-                      --color=never \
-                      -E 'lisp|scheme|guile|plt|racket|sbcl'
-        
-        for DIR in "$HOME/src-3/sectorlisp" "$HOME/src-3/scheme.rs"; do
-            local LISP_NAME="$(basename "$(ls -d "$DIR" 2>/dev/null)")"
-            if [[ "$LISP_NAME" ]]; then
-                echo "$LISP_NAME (in $DIR/)"
-            fi
-        done
-    ) \
-    | sort
-}
-
-
-#### Makefiles
-
-function make-targets {
-    gsed -e 's/^[^:]*$// ; /^$/d ; s/\(.*\):.*/\1/' Makefile | sort
-}
-
-function make-rules {
-    command grep -E --color=never '[[:alpha:]]+:' Makefile
-}
+source-section "lisps.bash"
 
 #### AI
 
 source-section "ai.bash"
 
-#### fortune(1), an old BSD app that prints a random message from a file
-
-function fortune {
-    check-args 0 1 '[MY_FORTUNE_FILE] # default is "$HOME/fortunes/default"' \
-        "$@" || return 1
-    FILE="${1:-$HOME/fortunes/default}"
-    
-    if [[ -f "$FILE" ]] && [[ "$FILE" -nt "${FILE}.dat" ]]; then
-        command strfile -rs "$FILE" || return
-    fi
-
-    command fortune "$FILE"
-}
+source-section "fortune.bash"
 
 #### AWS
 
 # source-section "aws.bash" ### slow, so just source manually if needed
 
-#### Improvements on core Unix commands #FIXME: maybe move this to macos.bash/linux.bash... actually, I should have a unix.bash, shouldn't I?
-
-function dos2unix { perl -pie 's{ \r\n | \n | \r }{ \n }gx' "$@" ;}
-function unix2dos { perl -pie ' s{$}{\r}x; ' "$@" ;}
-
-if command-exists rsync; then
-    function cp {
-        check-args \
-            2 varargs \
-            'cp FILE_1 FILE_2 | cp FILE_1 [FILE_2 [...]] DIR # uses rsync' \
-            "$@" \
-        || return 1
-        
-        rsync -aq "$@"
-    }
-fi
-
-#### ls settings
-
-# Note: LS_COLORS is specific to GNU ls (macOS's built-in BSD ls uses
-# LSCOLORS instead). For the meanings of these two-letter codes, run
-# dircolors --print-database
-
-export LS_COLORS='rs=0:di=34:ln=32:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=91:mi=35:su=30;31:sg=30;43:ca=00:tw=30;42:ow=39;42:st=37;44:ex=93:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90'
-
-function ls {
-    if [[ "$PWD" = "$HOME" ]] && [[ $# -eq 0 ]]; then
-        # By default, don't show dotfiles in my home dir...
-        command $MY_LS $MY_LS_OPTIONS "$@" | $PAGER
-    else
-        # ... but do show them everywhere else.
-        command $MY_LS $MY_LS_OPTIONS -A "$@" | $PAGER
-    fi
-}
-
-function lh {
-    $MY_LS --color=always -1Ft "$@" | head
-}
-
-function ll {
-    lh -l "$@"
-}
-
-function lsd {
-    ls "$@" ~/Desktop
-}
-
-function recent {
-    check-args 0 0 '[no arguments]'
-    $MY_LS $MY_LS_BASE_OPTIONS -lt | head -5
-}
+source-section "ls.bash"
 
 #### diff settings
 
-function dcc { colordiff -u "$@" | $PAGER ;}
-
-HOMEBREW_DIFF="$HOMEBREW_ROOT/opt/diffutils/bin/diff"
-if [[ -f "$HOMEBREW_DIFF" ]]; then
-    WE_HAVE_GNU_DIFF=0
-    export DIFF_PATH="/opt/homebrew/opt/diffutils/bin"
-
-    # Use custom colors, which are supported by GNU grep but not by macOS grep:
-    # 
-    # ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
-    # de - deleted lines (31 is SGR red, which shows as orange in my terminal)
-    # hd - header        (35 is SGR magenta, which shows as magenta in my term)
-    # ln - line numbers  (34 is SGR blue, which shows as blue in my term)
-    # rs - undocumented, but the default seems fine
-    #
-
-    # shellcheck disable=SC2089
-    MY_GNU_DIFF_OPTIONS='--palette="ad=36:de=31:hd=35:ln=34:rs=0"'
-    function gdiff { "$DIFF_PATH/diff" "$@" ;}
-    function diff-gnu { gdiff "$@" ;}
-else
-    WE_HAVE_GNU_DIFF=1
-fi
-
-function diff-vanilla {
-    local COMMON_DIFF_OPTIONS="-u --color=always"
-    if $WE_HAVE_GNU_DIFF; then
-        # shellcheck disable=SC2090
-        command diff $MY_GNU_DIFF_OPTIONS $COMMON_DIFF_OPTIONS "$@" | $PAGER
-    else
-        # shellcheck disable=SC2090
-        command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
-    fi
-}
-
-function diff-cdk-code {
-    diff-vanilla -Nur \
-        --exclude 'node_modules' \
-        --exclude 'package*.json' \
-        --exclude 'cdk.json' \
-        --exclude 'cdk.out' \
-        --exclude 'CODEOWNERS' \
-        --exclude 'initialize-repo.sh' \
-        --exclude '.gitignore' \
-        --exclude '.husky' \
-        --exclude '.eslintrc.yml' \
-        --exclude '.mergify.yml' \
-        --exclude '.npmignore' \
-        --exclude '.tool-versions' \
-        --exclude 'README.md' \
-        --exclude 'tsconfig.json' \
-        --exclude '*example*' \
-     "$@"
-}
-
-# function alt-diff
-#     # Git diff
-#     git diff --no-index "$@"
-    
-#     ### Other available diff tools, FYI
-#     ### local COMMON_DIFF_OPTIONS="-u --color=always"
-#     # 
-#     ## Recent GNU diff
-#     # 
-#     #   Color legend:
-#     #   ad - added lines   (36 is SGR cyan, which in fact shows as cyan in my term)
-#     #   de - deleted lines (31 is SGR red, which shows as orange in my terminal)
-#     #   hd - header        (35 is SGR magenta, which shows as magenta in my term)
-#     #   ln - line numbers  (34 is SGR blue, which shows as blue in my term)
-#     #   rs - undocumented, but the default seems fine
-#     # 
-#     # command diff $COMMON_DIFF_OPTIONS --palette="ad=36:de=31:hd=35:ln=34:rs=0" "$@" | $PAGER
-#     # 
-#     ## Old GNU diff (shipped with macOS as /usr/bin/diff)
-#     #
-#     # command diff $COMMON_DIFF_OPTIONS "$@" | $PAGER
-# }
-
-GIT_MERGE_HELP_URL="https://howchoo.com/git/git-merge-conflicts-rebase-ours-theirs"
-
-function ours {
-    open "$GIT_MERGE_HELP_URL"
-}
-
-function theirs {
-    ours "$@"
-}
-
-function diff {
-    # I just like git diff's syntax coloring better.
-    # --no-index allows you to use it anywhere on files,
-    # without regard to their history, just like
-    # regular diff.
-    git diff --no-index "$@"
-}
+source-section "diff.bash"
 
 #### FTP
 
-export FTP_LOGIN=anonymous
-export FTP_PASSIVE_MODE=yes
-export FTP_PASSWORD=""
+source-section "ftp-client.bash"
 
 #### Kubernetes (and OpenShift) settings
 
-function oc {
-    if [[ "$1" = "login" ]] && [[ $# -eq 1 ]]; then
-        local AUTH_URL
-        if AUTH_URL=$(command oc login | sed s'/.*\(https.*\)/\1/'); then
-            open "$AUTH_URL"
-        fi
-    else
-        command oc "$@" | $PAGER
-    fi
-}
+source-section "k8s.bash"
 
-# Show all images in use in the current cluster; code ganked from https://kubernetes.io/docs/tasks/access-application-cluster/list-all-running-container-images/
-function kube-ls-images { 
-    kubectl get pods --all-namespaces \
-                      -o jsonpath="{.items[*].spec.containers[*].image}" \
-        | tr -s '[:space:]' '\n' | sort | uniq -c
-}
-
-# If I'm going to make the same typo all the time, I might as well autocorrect it
-function lube-aws { kube-aws "$@" ;}
-function lube-ls-images { kube-ls-images "$@" ;}
-function lubectl { kubectl "$@" ;}
-function lubecfg { kubecfg "$@" ;}
-function minilube { minikube "$@" ;}
 
 #### Perl settings
 
@@ -524,47 +145,7 @@ source-section "postgresql.bash"
 
 ######## ometers
 
-#### Aranet4 air quality monitoring settings
-
-function co2  {
-    "$MY_VIRTUALENV_DIR/claranet4/bin/claranet4" read -r "$MY_ARANET4" 2> /dev/null | jq ".co2"
-}
-
-function co2-verbose {
-    echo "CO2 was $(co2) ppm at $(date '+%I:%M %P') on $(d)"
-}
-
-#### PurpleAir air quality monitor settings
-
-function air {
-    local RESPONSE_FILE
-    RESPONSE_FILE=$(mktemp "$HOME/tmp/air.XXXX")
-
-    if curl -L 'https://www.purpleair.com/json?show=119745&key=NPLQPTWKC54229MU' \
-             > "$RESPONSE_FILE" \
-             2> /dev/null
-    then
-        echo "Problem contacting the PurpleAir API server; maybe rate-limiting?"
-        echo "Try waiting ten minutes and then re-running."
-    else
-        local PM25 STATS TSLM NUMBER_OF_MINUTES INFLECTED
-
-        PM25="$(jq --raw-output '.results[0]."PM2_5Value"' < "$RESPONSE_FILE")"
-        STATS="$(jq --raw-output '.results[0].Stats' < "$RESPONSE_FILE")"
-        TSLM="$(echo "$STATS" | jq --raw-output '.timeSinceModified')"
-
-        # Convert milliseconds to minutes
-        NUMBER_OF_MINUTES=$(( TSLM / 60 ))
-        
-        if [[ "$NUMBER_OF_MINUTES" -eq 1 ]]; then
-            INFLECTED="minute"
-        else
-            INFLECTED="minutes"
-        fi
-
-        echo "PM 2.5 is ${PM25}ppm (as of $NUMBER_OF_MINUTES $INFLECTED ago)"
-    fi
-}
+source-section "ometers.bash"
 
 #### Convenience functions for working with local files
 
@@ -886,15 +467,15 @@ source-section "json-yaml.bash"
 # source-section "jira.bash"
 # source-section "slack.bash"
 
-#### Set PATH, MANPATH, et cetera
+#### Set PATH, MANPATH, et cetera (to debug, uncomment ##-commented code)
 
-# BASH_PID=$$
-# echo; echo "Bash PID is $BASH_PID"; echo
-# read -p "Press enter once you've started ptrace> "
-# setx
+## BASH_PID=$$
+## echo; echo "Bash PID is $BASH_PID"; echo
+## read -p "Press enter once you've started ptrace> "
+## setx
 source-section "zz-paths.bash"
-# set -x
+## set -x
 
-#### Source any final machine-specific code.
+#### Source any final machine-specific code (not part of this git repo)
 
 source-if-exists "$QSITED/postamble.bash"
